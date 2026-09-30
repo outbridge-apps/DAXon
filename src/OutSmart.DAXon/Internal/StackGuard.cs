@@ -121,7 +121,7 @@ namespace OutSmart.DAXon.Internal
                 }
                 catch (DllNotFoundException)
                 {
-                    noApi = true;   // no kernel32 at all: the net10.0 build also runs on Linux and macOS
+                    noApi = true;   // no kernel32 at all: the .NET builds also run on Linux and macOS
                 }
             }
 
