@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- CI smoke: one real transformation against a built engine DLL, per target framework (see build.yml).
+       SmokeTargetFramework picks the TFM, DaxonDll the engine; defaults: net10.0 and the local Release build. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <SmokeTargetFramework Condition="'$(SmokeTargetFramework)' == ''">net10.0</SmokeTargetFramework>
+    <TargetFramework>$(SmokeTargetFramework)</TargetFramework>
+    <LangVersion>7.3</LangVersion>
+    <DaxonDll Condition="'$(DaxonDll)' == ''">$(MSBuildThisFileDirectory)../../src/OutSmart.DAXon/bin/Release/$(SmokeTargetFramework)/OutSmart.DAXon.dll</DaxonDll>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(SmokeTargetFramework)' == 'net472'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="OutSmart.DAXon">
+      <HintPath>$(DaxonDll)</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
