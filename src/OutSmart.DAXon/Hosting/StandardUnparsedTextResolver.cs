@@ -85,9 +85,7 @@ namespace OutSmart.DAXon.Lib
                 var sysUri = new Uri(absoluteURI.ToString());
                 // The Processor's input-size cap applies here too (the http branch reads the whole
                 // resource into memory; the file branch checks the on-disk length and then streams).
-                long maxInput = config.GetProcessor() is OutSmart.DAXon.Api.Processor apiProcessor
-                    ? apiProcessor.MaxInputBytes
-                    : long.MaxValue;
+                long maxInput = OutSmart.DAXon.Internal.Streams.InputSizeLimit.MaxFor(config);
                 string text;
                 if (sysUri.IsFile)
                 {

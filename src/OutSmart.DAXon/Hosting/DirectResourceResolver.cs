@@ -39,9 +39,7 @@ namespace OutSmart.DAXon.Lib
             // fetches (doc/document/collection/unparsed-text/json-doc, compile-time includes).
             // A host-supplied resolver takes precedence over this one and is the host's own
             // code - capping what it returns is its own responsibility.
-            long maxInput = config.GetProcessor() is OutSmart.DAXon.Api.Processor apiProcessor
-                ? apiProcessor.MaxInputBytes
-                : long.MaxValue;
+            long maxInput = OutSmart.DAXon.Internal.Streams.InputSizeLimit.MaxFor(config);
 
             ProtocolRestrictor restrictor = config.GetProtocolRestrictor();
             if (!"all".Equals(restrictor.ToString()))

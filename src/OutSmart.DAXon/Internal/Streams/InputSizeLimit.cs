@@ -15,14 +15,12 @@ namespace OutSmart.DAXon.Internal.Streams
     internal static class InputSizeLimit
     {
         /// <summary>
-        /// The Processor's cap for this configuration, or no cap when the configuration was not
-        /// built by a Processor (the engine's own internal configurations).
+        /// The cap of the configuration's resource policy, or no cap when the configuration was
+        /// not built by a Processor (the engine's own internal configurations).
         /// </summary>
         public static long MaxFor(OutSmart.DAXon.Core.Configuration config)
         {
-            return config != null && config.GetProcessor() is OutSmart.DAXon.Api.Processor p
-                ? p.MaxInputBytes
-                : long.MaxValue;
+            return config?.ResourcePolicy?.MaxInputBytes ?? long.MaxValue;
         }
 
         /// <summary>

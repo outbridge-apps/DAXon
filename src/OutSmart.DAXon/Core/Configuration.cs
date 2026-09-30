@@ -652,6 +652,11 @@ namespace OutSmart.DAXon.Core
             return apiProcessor;
         }
 
+        // The policy of the Processor this configuration serves, which nested Processors over it
+        // inherit; null for the engine's own configurations, left unrestricted and uncapped.
+        internal global::OutSmart.DAXon.Api.ResourceAccessPolicy ResourcePolicy
+            => (GetProcessor() as global::OutSmart.DAXon.Api.Processor)?.Resources;
+
         public virtual void CheckLicensedFeature(int feature, string name, int localLicenseId)
         {
             string require = feature == LicenseFeature.PROFESSIONAL_EDITION ? "PE" : "EE";

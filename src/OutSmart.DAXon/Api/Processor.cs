@@ -55,8 +55,18 @@ namespace OutSmart.DAXon.Api
         /// Largest input accepted, in BYTES, on every entry point: DocumentBuilder, JsonBuilder,
         /// XsltCompiler, DocumentCache, and everything the resolver fetches (doc/document/
         /// collection/unparsed-text/json-doc, compile-time includes). long.MaxValue disables it.
+        /// Same as <c>Resources.MaxInputBytes</c>.
         /// </summary>
-        public long MaxInputBytes { get; }
+        public long MaxInputBytes => Resources.MaxInputBytes;
+
+        /// <summary>
+        /// What stylesheets and queries run by this Processor may reach; frozen. A Processor built
+        /// over a Configuration that already serves one reports (and applies) that one's policy.
+        /// </summary>
+        public ResourceAccessPolicy Resources { get; }
+
+        // For a Processor over a fresh Configuration: allows everything, 150 MB - as in 1.3.3.
+        private static readonly ResourceAccessPolicy DefaultResources = FrozenDefaultPolicy();
 
         private Configuration config;
         private SchemaManager schemaManager;
@@ -115,40 +125,19 @@ namespace OutSmart.DAXon.Api
         /// <param name="maxInputBytes">Largest input DocumentCache accepts; long.MaxValue
         /// effectively disables the check.</param>
         public Processor(TimeSpan? transformTimeout = null, long maxInputBytes = DefaultMaxInputBytes)
-            : this(Configuration.NewLicensedConfiguration())
+            : this(LegacyOptions(transformTimeout, maxInputBytes), Configuration.NewLicensedConfiguration())
         {
-            if (maxInputBytes <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maxInputBytes));
-            }
+        }
 
-            TransformTimeout = transformTimeout ?? DefaultTransformTimeout;
-            MaxInputBytes = maxInputBytes;
+        /// <summary>A Processor with the given options, which it freezes (options and policy).</summary>
+        public Processor(ProcessorOptions options)
+            : this(Frozen(options), Configuration.NewLicensedConfiguration())
+        {
         }
 
         public Processor(bool licensedEdition, TimeSpan? transformTimeout = null, long maxInputBytes = DefaultMaxInputBytes)
+            : this(LegacyOptions(transformTimeout, maxInputBytes), licensedEdition ? Configuration.NewConfiguration() : new Configuration())
         {
-            if (maxInputBytes <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maxInputBytes));
-            }
-
-            if (licensedEdition)
-            {
-                config = Configuration.NewConfiguration();
-                if (config.EditionCode.Equals("EE"))
-                {
-                    schemaManager = MakeSchemaManager();
-                }
-            }
-            else
-            {
-                config = new Configuration();
-            }
-
-            config.SetProcessor(this);
-            TransformTimeout = transformTimeout ?? DefaultTransformTimeout;
-            MaxInputBytes = maxInputBytes;
         }
 
         public Processor(Configuration config)
@@ -159,6 +148,10 @@ namespace OutSmart.DAXon.Api
                 schemaManager = MakeSchemaManager();
             }
 
+            // A configuration already serving a Processor keeps that one's policy, so a nested
+            // fn:transform or xsl:evaluate cannot widen it; a fresh one gets the default.
+            Resources = config.ResourcePolicy ?? DefaultResources;
+
             // Make the Processor discoverable from its Configuration (so config.GetProcessor()
             // yields it, e.g. to read TransformTimeout when a query builds its Controller). Don't
             // clobber a processor already registered on an externally-supplied config.
@@ -168,7 +161,57 @@ namespace OutSmart.DAXon.Api
             }
 
             TransformTimeout = DefaultTransformTimeout;
-            MaxInputBytes = DefaultMaxInputBytes;
+        }
+
+        // Every constructor that makes its own Configuration ends here.
+        private Processor(ProcessorOptions options, Configuration config)
+        {
+            this.config = config;
+            if (config.EditionCode.Equals("EE"))
+            {
+                schemaManager = MakeSchemaManager();
+            }
+
+            TransformTimeout = options.TransformTimeout ?? DefaultTransformTimeout;
+            Resources = options.Resources;
+            if (config.GetProcessor() == null)
+            {
+                config.SetProcessor(this);
+            }
+        }
+
+        private static ProcessorOptions Frozen(ProcessorOptions options)
+        {
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            options.Freeze();
+            return options;
+        }
+
+        private static ProcessorOptions LegacyOptions(TimeSpan? transformTimeout, long maxInputBytes)
+        {
+            if (maxInputBytes <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxInputBytes));
+            }
+
+            var options = new ProcessorOptions
+            {
+                TransformTimeout = transformTimeout,
+                Resources = new ResourceAccessPolicy { MaxInputBytes = maxInputBytes },
+            };
+            options.Freeze();
+            return options;
+        }
+
+        private static ResourceAccessPolicy FrozenDefaultPolicy()
+        {
+            var policy = new ResourceAccessPolicy();
+            policy.Freeze();
+            return policy;
         }
 
         public Processor(ResolvedResource source)
@@ -187,9 +230,9 @@ namespace OutSmart.DAXon.Api
                 throw new DAXonApiException(e.ToXPathException());
             }
 
+            Resources = DefaultResources;
             config.SetProcessor(this);
             TransformTimeout = DefaultTransformTimeout;
-            MaxInputBytes = DefaultMaxInputBytes;
         }
 
         public virtual DocumentBuilder NewDocumentBuilder()
