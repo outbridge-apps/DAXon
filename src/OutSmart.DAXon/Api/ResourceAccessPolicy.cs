@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 using SysRegex = System.Text.RegularExpressions;
 
 namespace OutSmart.DAXon.Api
@@ -212,6 +214,17 @@ namespace OutSmart.DAXon.Api
 
             string host = HostRule.CanonicalHost(uri);
             IReadOnlyList<IPAddress> resolved = Resolve(uri);
+            if (resolved == null)
+            {
+                // A blocking range cannot be ruled out, and the fetch would resolve the name itself.
+                if (HasAddressRules(BlockedHosts))
+                {
+                    return "host '" + host + "' could not be resolved to check the BlockedHosts IP ranges";
+                }
+
+                resolved = NoAddresses;
+            }
+
             try
             {
                 foreach (HostRule rule in BlockedHosts)
@@ -233,6 +246,12 @@ namespace OutSmart.DAXon.Api
                     {
                         return null;
                     }
+                }
+
+                // Several allowing ranges together: every address must be in one of them.
+                if (resolved.Count > 1 && CoveredByAllowed(uri, resolved))
+                {
+                    return null;
                 }
 
                 return "host '" + host + "' matches no AllowedHosts rule";
@@ -265,16 +284,50 @@ namespace OutSmart.DAXon.Api
             return false;
         }
 
+        private bool CoveredByAllowed(Uri uri, IReadOnlyList<IPAddress> resolved)
+        {
+            foreach (IPAddress address in resolved)
+            {
+                bool covered = false;
+                foreach (HostRule rule in AllowedHosts)
+                {
+                    if (rule.Matches(uri, new[] { address }))
+                    {
+                        covered = true;
+                        break;
+                    }
+                }
+
+                if (!covered)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // The addresses a host name resolves to, only when an IP-range rule needs them; empty for a
+        // literal address or when no range rule exists; null when the lookup failed or ran past the
+        // run's deadline (the run itself then fails on its own deadline check).
         private IReadOnlyList<IPAddress> Resolve(Uri uri)
         {
-            if (HostRule.LiteralAddress(uri) != null || uri.DnsSafeHost.Length == 0 || !HasAddressRules())
+            if (HostRule.LiteralAddress(uri) != null || uri.DnsSafeHost.Length == 0
+                || !(HasAddressRules(BlockedHosts) || HasAddressRules(AllowedHosts)))
             {
                 return NoAddresses;
             }
 
             try
             {
-                IPAddress[] addresses = Dns.GetHostAddresses(uri.DnsSafeHost);
+                Task<IPAddress[]> lookup = Dns.GetHostAddressesAsync(uri.DnsSafeHost);
+                int remaining = OutSmart.DAXon.Core.Controller.RemainingMillis();
+                if (!lookup.Wait(remaining < 0 ? Timeout.Infinite : remaining))
+                {
+                    return null;
+                }
+
+                IPAddress[] addresses = lookup.Result;
                 for (int i = 0; i < addresses.Length; i++)
                 {
                     addresses[i] = HostRule.Normalize(addresses[i]);
@@ -282,27 +335,23 @@ namespace OutSmart.DAXon.Api
 
                 return addresses;
             }
+            catch (AggregateException)
+            {
+                return null;
+            }
             catch (SocketException)
             {
-                return NoAddresses;
+                return null;
             }
             catch (ArgumentException)
             {
-                return NoAddresses;
+                return null;
             }
         }
 
-        private bool HasAddressRules()
+        private static bool HasAddressRules(HostRuleCollection rules)
         {
-            foreach (HostRule rule in BlockedHosts)
-            {
-                if (rule.NeedsResolution)
-                {
-                    return true;
-                }
-            }
-
-            foreach (HostRule rule in AllowedHosts)
+            foreach (HostRule rule in rules)
             {
                 if (rule.NeedsResolution)
                 {

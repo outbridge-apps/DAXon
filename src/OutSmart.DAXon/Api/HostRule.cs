@@ -59,7 +59,9 @@ namespace OutSmart.DAXon.Api
         /// <summary>
         /// True when the rule matches the host of <paramref name="uri"/>. <paramref name="resolved"/>
         /// holds the addresses the host name resolved to (empty when it was not resolved); only
-        /// address rules use it, and they match a name only when every address is in range.
+        /// address rules use it, and they match a name only when every address is in range. The
+        /// policy blocks a name when any address is in a blocking range, and allows it when every
+        /// address is in one of the allowing ranges.
         /// </summary>
         public abstract bool Matches(Uri uri, IReadOnlyList<IPAddress> resolved);
 

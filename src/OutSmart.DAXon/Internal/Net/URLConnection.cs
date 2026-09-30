@@ -13,6 +13,8 @@ namespace OutSmart.DAXon.Internal.Net
     {
         protected readonly global::System.Uri _url;
         protected global::System.Net.WebResponse _resp;
+        // false only on the resource-policy path, which follows redirects itself (ResourceLoader)
+        protected bool followRedirects = true;
         private bool IsFile => _url != null && _url.IsAbsoluteUri && _url.Scheme == global::System.Uri.UriSchemeFile;
         // Translate native I/O failures to the OutSmart.DAXon.Internal.IO family — transpiled callers
         // catch IOException per the Java contract (DirectResourceResolver "carry on", UnparsedTextFunction
@@ -52,7 +54,17 @@ namespace OutSmart.DAXon.Internal.Net
                 {
                     global::System.Net.WebRequest req = global::System.Net.WebRequest.Create(_url);
                     NetworkDeadline.Apply(req);   // a stalled connect must not outlive the run
+                    if (!followRedirects && req is global::System.Net.HttpWebRequest http)
+                    {
+                        http.AllowAutoRedirect = false;
+                    }
+
                     _resp = req.GetResponse();
+                }
+                catch (global::System.Net.WebException we) when (!followRedirects && IsRedirect(we.Response))
+                {
+                    // Some stacks raise a 3xx as an error once auto-redirect is off; it is the answer here.
+                    _resp = we.Response;
                 }
                 catch (global::System.Net.WebException we)
                 {
@@ -80,6 +92,12 @@ namespace OutSmart.DAXon.Internal.Net
                 try { r.Close(); } catch (global::System.Exception) { }
             }
         }
+        private static bool IsRedirect(global::System.Net.WebResponse response)
+        {
+            int status = response is global::System.Net.HttpWebResponse h ? (int)h.StatusCode : 0;
+            return status >= 300 && status <= 399;
+        }
+
         // Static helpers used by AbstractResourceCollection.
         public static string GuessContentTypeFromName(string name) => null;
         public static string GuessContentTypeFromStream(global::System.IO.Stream stream) => null;

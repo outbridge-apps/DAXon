@@ -63,12 +63,7 @@ namespace OutSmart.DAXon.Lib
             string denied = ResourceGate.CheckRead(config, AbsoluteTarget(request), kind);
             if (denied != null)
             {
-                // The code a missing resource of this kind gets; query modules are coded by their callers.
-                string code = kind == OutSmart.DAXon.Api.ResourceKind.Text ? "FOUT1170"
-                    : kind == OutSmart.DAXon.Api.ResourceKind.Document ? "FODC0002"
-                    : kind == OutSmart.DAXon.Api.ResourceKind.StylesheetModule ? "XTSE0165"
-                    : null;
-                throw code == null ? new ResourceDeniedException(denied) : new ResourceDeniedException(denied, code);
+                throw ResourceGate.Denied(denied, kind);
             }
 
             System.IO.Stream stream;
@@ -112,7 +107,7 @@ namespace OutSmart.DAXon.Lib
             {
 
                 // Get an input stream from the request URI
-                stream = ResourceLoader.UrlStream(config, request.uri);
+                stream = ResourceLoader.UrlStream(config, request.uri, kind);
             }
             catch (IOException e)
             {

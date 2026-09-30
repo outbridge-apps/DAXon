@@ -84,6 +84,25 @@ namespace OutSmart.DAXon.Internal
             }
         }
 
+        // Any policy but the unrestricted default: the built-in HTTP fetchers then follow redirects
+        // themselves and check every hop.
+        public static bool IsRestricted(Configuration config)
+        {
+            ResourceAccessPolicy policy = config?.ResourcePolicy;
+            return policy != null && !policy.IsUnrestricted;
+        }
+
+        // A denial carrying the code a missing resource of this kind gets; query modules and
+        // external entities are coded by their callers.
+        public static ResourceDeniedException Denied(string text, ResourceKind kind)
+        {
+            string code = kind == ResourceKind.Text ? "FOUT1170"
+                : kind == ResourceKind.Document || kind == ResourceKind.Collection ? "FODC0002"
+                : kind == ResourceKind.StylesheetModule ? "XTSE0165"
+                : null;
+            return code == null ? new ResourceDeniedException(text) : new ResourceDeniedException(text, code);
+        }
+
         // For the built-in result-document resolvers: gates a write only when href names a target.
         public static string CheckOutput(Configuration config, string href, string baseUri)
         {

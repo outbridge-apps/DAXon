@@ -151,7 +151,7 @@ namespace OutSmart.DAXon.Resources
                     // This connection is opened for its headers alone - the body is fetched again
                     // below by UrlStream - so it must be released here rather than left to
                     // finalization, which would hold a pooled socket per collection member.
-                    URLConnection connection = ResourceLoader.UrlConnection(uri.Inner);
+                    URLConnection connection = ResourceLoader.UrlConnection(uri.Inner, config, OutSmart.DAXon.Api.ResourceKind.Collection);
                     try
                     {
                         inputDetails.contentType = connection.ContentType;
@@ -191,7 +191,7 @@ namespace OutSmart.DAXon.Resources
                     }
                     else
                     {
-                        stream = ResourceLoader.UrlStream(config, uri.ToString());
+                        stream = ResourceLoader.UrlStream(config, uri.ToString(), OutSmart.DAXon.Api.ResourceKind.Collection);
                     }
 
                     // finally, not a bare Dispose after the call: a throw out of the sniffer used to
@@ -385,7 +385,7 @@ namespace OutSmart.DAXon.Resources
             public int onError = URIQueryParameters.ON_ERROR_FAIL;
             public virtual System.IO.Stream GetInputStream(Configuration config)
             {
-                return ResourceLoader.UrlStream(config, resourceUri);
+                return ResourceLoader.UrlStream(config, resourceUri, OutSmart.DAXon.Api.ResourceKind.Collection);
             }
 
             public virtual byte[] ObtainBinaryContent(Configuration config)

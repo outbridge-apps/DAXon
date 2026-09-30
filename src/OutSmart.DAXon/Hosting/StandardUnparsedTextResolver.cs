@@ -107,6 +107,11 @@ namespace OutSmart.DAXon.Lib
 
                     return OpenTextFile(sysUri.LocalPath, encoding);
                 }
+                else if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config))
+                {
+                    // WebClient follows redirects on its own; under a policy every hop is checked.
+                    text = ReadRestricted(sysUri, encoding, config, maxInput, absoluteURI.ToString());
+                }
                 else
                 {
                     // Remote fetch: no length known up front, so read through the counting wrapper.
@@ -170,6 +175,10 @@ namespace OutSmart.DAXon.Lib
                     {
                         return OpenTextFile(u.LocalPath, encoding);
                     }
+                    if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config))
+                    {
+                        return new StringReader(ReadRestricted(u, encoding, config, OutSmart.DAXon.Internal.Streams.InputSizeLimit.MaxFor(config), sysId));
+                    }
                     using (var wc = new TimedWebClient()) { return new StringReader(wc.DownloadString(u)); }
                 }
             }
@@ -180,6 +189,30 @@ namespace OutSmart.DAXon.Lib
             catch (ArgumentException e) { throw new XPathException("unparsed-text(): unknown encoding " + encoding + " (" + e.Message + ")", "FOUT1190"); }
             catch (Exception e) { throw new XPathException("unparsed-text(): cannot read " + (src.SystemId ?? "(anonymous source)") + ": " + e.Message, "FOUT1170"); }
             throw new XPathException("unparsed-text(): resource has no reader, stream or system ID", "FOUT1170");
+        }
+
+        // The policy path of a remote fetch: redirects followed by ResourceLoader, hop by hop. Same
+        // encoding precedence as the WebClient path: argument, Content-Type charset, BOM, UTF-8.
+        private static string ReadRestricted(Uri uri, string encoding, Configuration config, long maxInput, string systemId)
+        {
+            OutSmart.DAXon.Internal.Net.URLConnection conn = OutSmart.DAXon.Resources.ResourceLoader.UrlConnection(uri, config, OutSmart.DAXon.Api.ResourceKind.Text);
+            string effective = encoding;
+            if (string.IsNullOrEmpty(effective) && conn.ContentType != null)
+            {
+                var cm = System.Text.RegularExpressions.Regex.Match(conn.ContentType, "charset\\s*=\\s*[\"']?([A-Za-z0-9._-]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                if (cm.Success)
+                {
+                    effective = cm.Groups[1].Value;
+                }
+            }
+
+            using (var raw = OutSmart.DAXon.Internal.Streams.InputSizeLimit.Apply(conn.InputStream, maxInput, systemId, "FOUT1170"))
+            using (var sr = string.IsNullOrEmpty(effective)
+                ? new StreamReader(raw, new UTF8Encoding(false), detectEncodingFromByteOrderMarks: true)
+                : new StreamReader(raw, Encoding.GetEncoding(effective)))
+            {
+                return sr.ReadToEnd();
+            }
         }
 
         // WebClient builds its request internally, so this is the only place its timeouts can be
