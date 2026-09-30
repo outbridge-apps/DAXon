@@ -35,7 +35,7 @@ namespace OutSmart.DAXon.Lib
             }
             else
             {
-                IList<Func<URI, bool>> permitted = (IList<Func<URI, bool>>)(new List<object>());
+                IList<Func<URI, bool>> permitted = new List<Func<URI, bool>>();
                 string[] tokens = value.SplitRegex(",\\s*");
                 foreach (string token in tokens)
                 {
