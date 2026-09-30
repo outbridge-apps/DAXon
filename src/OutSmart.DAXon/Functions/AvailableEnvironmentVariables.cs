@@ -27,9 +27,14 @@ namespace OutSmart.DAXon.Functions
             IList<IItem> myList = new List<IItem>();
             if (context.GetConfiguration().GetBooleanProperty(Feature<bool>.ALLOW_EXTERNAL_FUNCTIONS))
             {
+                // Only the names the policy would let environment-variable() read.
+                bool gated = resolver is StandardEnvironmentVariableResolver;
                 foreach (string s in resolver.GetAvailableEnvironmentVariables())
                 {
-                    myList.Add(new StringValue(s));
+                    if (!gated || OutSmart.DAXon.Internal.ResourceGate.PermitsEnvironment(context.GetConfiguration(), s))
+                    {
+                        myList.Add(new StringValue(s));
+                    }
                 }
             }
 

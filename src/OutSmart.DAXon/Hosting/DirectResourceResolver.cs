@@ -58,6 +58,19 @@ namespace OutSmart.DAXon.Lib
                 }
             }
 
+            // The Processor's resource policy, before any file or network access.
+            OutSmart.DAXon.Api.ResourceKind kind = ResourceGate.KindOfNature(request.nature);
+            string denied = ResourceGate.CheckRead(config, AbsoluteTarget(request), kind);
+            if (denied != null)
+            {
+                // The code a missing resource of this kind gets; query modules are coded by their callers.
+                string code = kind == OutSmart.DAXon.Api.ResourceKind.Text ? "FOUT1170"
+                    : kind == OutSmart.DAXon.Api.ResourceKind.Document ? "FODC0002"
+                    : kind == OutSmart.DAXon.Api.ResourceKind.StylesheetModule ? "XTSE0165"
+                    : null;
+                throw code == null ? new ResourceDeniedException(denied) : new ResourceDeniedException(denied, code);
+            }
+
             System.IO.Stream stream;
             if (ResourceRequest.BINARY_NATURE.Equals(request.nature))
             {
@@ -123,6 +136,26 @@ namespace OutSmart.DAXon.Lib
             xml.SystemId = request.uri;
             xml.PleaseCloseAfterUse = stream != null;
             return xml;
+        }
+
+        // What this resolver will actually open: the URI itself, or resolved against the base.
+        private static string AbsoluteTarget(ResourceRequest request)
+        {
+            Uri absolute;
+            if (Uri.TryCreate(request.uri, UriKind.Absolute, out absolute))
+            {
+                return request.uri;
+            }
+
+            Uri baseUri;
+            if (request.uri != null && request.baseUri != null
+                && Uri.TryCreate(request.baseUri, UriKind.Absolute, out baseUri)
+                && Uri.TryCreate(baseUri, request.uri, out absolute))
+            {
+                return absolute.AbsoluteUri;
+            }
+
+            return request.uri;
         }
     }
 }

@@ -32,6 +32,13 @@ namespace OutSmart.DAXon.Lib
 
         public virtual IReceiver Resolve(IXPathContext context, string href, string baseUri, SerializationProperties properties)
         {
+            // Outside Resolve(href, base): its catch-all would re-wrap the denial without its code.
+            string denied = OutSmart.DAXon.Internal.ResourceGate.CheckOutput(context.GetConfiguration(), href, baseUri);
+            if (denied != null)
+            {
+                throw new XPathException(denied, DAXonErrorCode.SXRD0004);
+            }
+
             StreamResult result = Resolve(href, baseUri);
             SerializerFactory factory = context.GetConfiguration().SerializerFactory;
             PipelineConfiguration pipe = context.GetController().MakePipelineConfiguration();

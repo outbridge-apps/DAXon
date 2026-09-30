@@ -28,9 +28,31 @@ namespace OutSmart.DAXon.Lib
             set { }
         }
 
+        private readonly OutSmart.DAXon.Core.Configuration config;
+        private readonly Uri principal;
+
         public ResourceResolverXmlResolver(IResourceResolver resolver)
+            : this(resolver, null, null)
+        {
+        }
+
+        // config gates this resolver's own file fallback (the wrapped resolver is the host's and is
+        // trusted); principal is the document itself when the parser opens it by system id.
+        public ResourceResolverXmlResolver(IResourceResolver resolver, OutSmart.DAXon.Core.Configuration config, string principalSystemId)
         {
             this.resolver = resolver;
+            this.config = config;
+            if (config != null && !string.IsNullOrEmpty(principalSystemId))
+            {
+                try
+                {
+                    principal = ResolveUri(null, principalSystemId);
+                }
+                catch (Exception)
+                {
+                    principal = null;
+                }
+            }
         }
 
         public override Uri ResolveUri(Uri baseUri, string relativeUri)
@@ -49,6 +71,15 @@ namespace OutSmart.DAXon.Lib
             {
                 // Java's SAX parser fetches file-relative external DTDs/entities itself when no
                 // user resolver claims them; a null here makes System.Xml fail the whole parse.
+                if (absoluteUri != null && absoluteUri.IsFile && config != null && !absoluteUri.Equals(principal))
+                {
+                    string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, absoluteUri.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity);
+                    if (denied != null)
+                    {
+                        throw new IOException(denied);
+                    }
+                }
+
                 if (absoluteUri != null && absoluteUri.IsFile && File.Exists(absoluteUri.LocalPath))
                 {
                     return File.OpenRead(absoluteUri.LocalPath);

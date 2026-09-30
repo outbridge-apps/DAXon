@@ -214,7 +214,7 @@ namespace OutSmart.DAXon.Api
                 throw new NullReferenceException("input");
             bool ws = StripsIgnorableWhitespace();
             return BuildFromXmlReader(() => global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(
-                null, InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), systemId, null, ws, ws), systemId);
+                null, InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), systemId, null, ws, ws, config), systemId);
         }
 
         public virtual XdmNode Build(global::System.IO.TextReader input, string systemId)
@@ -223,7 +223,7 @@ namespace OutSmart.DAXon.Api
                 throw new NullReferenceException("input");
             bool ws = StripsIgnorableWhitespace();
             return BuildFromXmlReader(() => global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(
-                InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), null, systemId, null, ws, ws), systemId);
+                InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), null, systemId, null, ws, ws, config), systemId);
         }
 
         // Round B1: MaxInputBytes reads as a Processor-wide cap, but only resolver-routed fetches
@@ -290,7 +290,7 @@ namespace OutSmart.DAXon.Api
         {
             // P5: build via the native XmlReader path (a bare systemId opens through XmlReader.Create), no JAXP Source.
             bool ws = StripsIgnorableWhitespace();
-            return BuildFromXmlReader(() => global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, null, file, null, ws, ws), file);
+            return BuildFromXmlReader(() => global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, null, file, null, ws, ws, config), file);
         }
 
         private IReceiver InjectValidator(IReceiver r, Builder builder)
@@ -381,7 +381,7 @@ namespace OutSmart.DAXon.Api
             {
                 ParseOptions options = GetParseOptions();
                 PipelineConfiguration pipe = config.MakePipelineConfiguration();
-                using (global::System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, null, file))
+                using (global::System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, null, file, null, false, false, config))
                 {
                     Sender.Send(reader, file, destination.GetReceiver(pipe, new SerializationProperties()), options);
                 }

@@ -43,6 +43,12 @@ namespace OutSmart.DAXon.Resources
                 throw new XPathException("Invalid collection URI " + collectionURI + " passed to collection() function: " + e.Message, "FODC0004", context);
             }
 
+            string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(context.GetConfiguration(), resolvedURI.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.Collection);
+            if (denied != null)
+            {
+                throw new XPathException(denied, "FODC0002", context);
+            }
+
             if (resolvedURI.IsFile)
             {
                 // Java's new File(URI) throws for a URI with a fragment ("##invalid" resolves to

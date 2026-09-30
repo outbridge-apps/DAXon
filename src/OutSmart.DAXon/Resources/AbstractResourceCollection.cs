@@ -123,6 +123,13 @@ namespace OutSmart.DAXon.Resources
 
         protected virtual InputDetails GetInputDetails(string resourceURI)
         {
+            // Every member, before it is sniffed or opened.
+            string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, resourceURI, OutSmart.DAXon.Api.ResourceKind.Collection);
+            if (denied != null)
+            {
+                throw new XPathException(denied, "FODC0002");
+            }
+
             InputDetails inputDetails = new InputDetails();
             try
             {

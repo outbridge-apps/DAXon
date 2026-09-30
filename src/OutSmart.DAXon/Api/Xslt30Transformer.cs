@@ -155,7 +155,7 @@ namespace OutSmart.DAXon.Api
                 try
                 {
                     IReceiver sOut = GetDestinationReceiver(controller, destination);
-                    using (global::System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, input, systemId))
+                    using (global::System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, input, systemId, null, false, false, processor.UnderlyingConfiguration))
                     {
                         ApplyTemplatesToXmlReader(reader, systemId, sOut);
                     }

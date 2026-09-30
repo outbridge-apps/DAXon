@@ -366,6 +366,11 @@ namespace OutSmart.DAXon.Functions
                                                         config.GetResourceResolver(),
                                                         new DirectResourceResolver(config));
                             }
+                            catch (OutSmart.DAXon.Internal.ResourceDeniedException e)
+                            {
+                                // as for a stylesheet that cannot be read
+                                throw new XPathException(e.Message, "FOXT0002");
+                            }
                             catch (XPathException)
                             {
                                 throw;

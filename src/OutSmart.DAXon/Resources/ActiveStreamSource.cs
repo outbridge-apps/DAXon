@@ -59,12 +59,12 @@ namespace OutSmart.DAXon.Resources
             // External entities / an external DTD subset resolve through the config's ResourceResolver. A bare
             // non-validating parse with no external references needs no resolver (null = no external fetch).
             System.Xml.XmlResolver resolver = (dtdValidate || options.EntityResolverClass != null)
-                ? new ResourceResolverXmlResolver(config.GetResourceResolver())
+                ? new ResourceResolverXmlResolver(config.GetResourceResolver(), config, IsStreamless ? url : null)
                 : null;
 
             try
             {
-                using (System.Xml.XmlReader xr = XmlReaderToReceiver.CreateXmlReader(charStream, byteStream, url, resolver, dtdValidate))
+                using (System.Xml.XmlReader xr = XmlReaderToReceiver.CreateXmlReader(charStream, byteStream, url, resolver, dtdValidate, false, config))
                 {
                     XmlReaderToReceiver.Send(xr, receiver);
                 }

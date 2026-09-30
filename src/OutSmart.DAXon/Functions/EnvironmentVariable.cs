@@ -44,6 +44,12 @@ namespace OutSmart.DAXon.Functions
             string environValue = "";
             if (context.GetConfiguration().GetBooleanProperty(Feature<bool>.ALLOW_EXTERNAL_FUNCTIONS))
             {
+                // A host-installed resolver is the host's own policy; the built-in one reads the process environment.
+                if (resolver is StandardEnvironmentVariableResolver && !OutSmart.DAXon.Internal.ResourceGate.PermitsEnvironment(context.GetConfiguration(), environVarName))
+                {
+                    return null;
+                }
+
                 try
                 {
                     environValue = resolver.GetEnvironmentVariable(environVarName);

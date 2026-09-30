@@ -80,6 +80,13 @@ namespace OutSmart.DAXon.Lib
 
         public TextReader Resolve(URI absoluteURI, string encoding, Configuration config)
         {
+            // Before FileInfo or any fetch, so a denied existing file and a missing one look the same.
+            string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, absoluteURI?.ToString(), OutSmart.DAXon.Api.ResourceKind.Text);
+            if (denied != null)
+            {
+                throw new OutSmart.DAXon.Internal.ResourceDeniedException(denied, "FOUT1170");
+            }
+
             try
             {
                 var sysUri = new Uri(absoluteURI.ToString());

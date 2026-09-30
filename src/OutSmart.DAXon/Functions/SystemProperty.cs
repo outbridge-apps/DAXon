@@ -116,6 +116,11 @@ namespace OutSmart.DAXon.Functions
             }
             else if ((uri.Length == 0) && config.GetBooleanProperty(Feature<bool>.ALLOW_EXTERNAL_FUNCTIONS))
             {
+                if (!OutSmart.DAXon.Internal.ResourceGate.PermitsEnvironment(config, local))
+                {
+                    return "";
+                }
+
                 string val = Environment.GetEnvironmentVariable(local);
                 return val == null ? "" : val;
             }

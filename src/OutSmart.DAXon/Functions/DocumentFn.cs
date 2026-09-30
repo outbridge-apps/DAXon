@@ -365,6 +365,12 @@ namespace OutSmart.DAXon.Functions
             {
                 return request.Resolve(resolver, config.GetResourceResolver(), new DirectResourceResolver(config));
             }
+            catch (OutSmart.DAXon.Internal.ResourceDeniedException err)
+            {
+                // keeps FODC0002, the code of a document that cannot be retrieved
+                err.MaybeSetContext(context);
+                throw;
+            }
             catch (XPathException err)
             {
                 err.SetErrorCode("FODC0005");

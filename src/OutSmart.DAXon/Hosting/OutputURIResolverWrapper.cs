@@ -31,6 +31,16 @@ namespace OutSmart.DAXon.Lib
 
         public virtual IReceiver Resolve(IXPathContext context, string href, string baseUri, SerializationProperties properties)
         {
+            // Only the built-in resolver is gated; a host-installed one is the host's own policy.
+            if (outputURIResolver is StandardOutputResolver)
+            {
+                string denied = OutSmart.DAXon.Internal.ResourceGate.CheckOutput(context.GetConfiguration(), href, baseUri);
+                if (denied != null)
+                {
+                    throw new XPathException(denied, DAXonErrorCode.SXRD0004);
+                }
+            }
+
             IOutputURIResolver r2 = outputURIResolver.NewInstance();
             try
             {

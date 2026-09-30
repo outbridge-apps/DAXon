@@ -139,7 +139,9 @@ namespace OutSmart.DAXon.Events
             return CreateXmlReader(charStream, byteStream, systemId, resolver, false);
         }
 
-        public static XmlReader CreateXmlReader(TextReader charStream, Stream byteStream, string systemId, XmlResolver resolver, bool dtdValidate, bool suppressValidationErrors = false)
+        // config: the configuration whose resource policy gates the default resolver's file reads
+        // (external DTD subsets and entities); null for the engine's own embedded resources.
+        public static XmlReader CreateXmlReader(TextReader charStream, Stream byteStream, string systemId, XmlResolver resolver, bool dtdValidate, bool suppressValidationErrors = false, Configuration config = null)
         {
             var settings = new XmlReaderSettings
             {
@@ -147,7 +149,7 @@ namespace OutSmart.DAXon.Events
                 // is processed for entity expansion. When a resolver is supplied, external entities/DTD
                 // resolve through it instead.
                 DtdProcessing = DtdProcessing.Parse,
-                XmlResolver = resolver ?? new FileOnlyXmlResolver(),
+                XmlResolver = resolver ?? new FileOnlyXmlResolver(config, charStream == null && byteStream == null ? systemId : null),
                 ValidationType = dtdValidate ? ValidationType.DTD : ValidationType.None,
                 IgnoreComments = false,
                 IgnoreProcessingInstructions = false,
@@ -487,6 +489,11 @@ namespace OutSmart.DAXon.Events
                     return;
                 }
 
+                if (OutSmart.DAXon.Internal.ResourceGate.CheckRead(pipe.GetConfiguration(), abs.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity) != null)
+                {
+                    return;
+                }
+
                 if (abs.IsFile && System.IO.File.Exists(abs.LocalPath))
                 {
                     ParseDtdAttTypes(System.IO.File.ReadAllText(abs.LocalPath));
@@ -739,10 +746,46 @@ namespace OutSmart.DAXon.Events
         // network fetch can happen implicitly.
         internal sealed class FileOnlyXmlResolver : XmlUrlResolver
         {
+            private readonly Configuration config;
+            private readonly Uri principal;
+
+            public FileOnlyXmlResolver()
+                : this(null, null)
+            {
+            }
+
+            // principal: the document itself when the parser opens it by system id. It was asked
+            // for by the host or already passed the gate as a document; only what it references is
+            // an external entity.
+            public FileOnlyXmlResolver(Configuration config, string principalSystemId)
+            {
+                this.config = config;
+                if (config != null && !string.IsNullOrEmpty(principalSystemId))
+                {
+                    try
+                    {
+                        principal = ResolveUri(null, principalSystemId);
+                    }
+                    catch (Exception)
+                    {
+                        principal = null;
+                    }
+                }
+            }
+
             public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
             {
                 if (absoluteUri != null && absoluteUri.IsFile)
                 {
+                    if (config != null && !absoluteUri.Equals(principal))
+                    {
+                        string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, absoluteUri.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity);
+                        if (denied != null)
+                        {
+                            throw new System.IO.IOException(denied);
+                        }
+                    }
+
                     return base.GetEntity(absoluteUri, role, ofObjectToReturn);
                 }
 
