@@ -434,6 +434,8 @@ namespace OutSmart.DAXon.Core
 
         static Configuration()
         {
+            // Before anything parses or serializes: System.Xml resolves an input declaration on its own.
+            global::OutSmart.DAXon.Internal.PlatformEncodings.EnsureRegistered();
             booleanFeatures.Add(FeatureCode.ALLOW_EXTERNAL_FUNCTIONS);
             booleanFeatures.Add(FeatureCode.ALLOW_MULTITHREADING);
             booleanFeatures.Add(FeatureCode.ALLOW_SYNTAX_EXTENSIONS);
