@@ -18,8 +18,8 @@ namespace OutSmart.DAXon.Model
 {
     public class DocumentKey
     {
-        // Upstream: new File("a").equals(new File("A")), true on Windows; this port has always used false.
-        public static readonly bool CASE_BLIND_FILES = false;
+        // As upstream's new File("a").equals(new File("A")): file URIs are keyed case-blind on Windows.
+        public static readonly bool CASE_BLIND_FILES = Path.DirectorySeparatorChar == '\\';
         private string displayValue;
         private string normalizedValue;
         private string packageName = "";
