@@ -8,7 +8,6 @@ using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Internal.Net;
 using OutSmart.DAXon.Internal.Charsets;
 using OutSmart.DAXon.Internal.Collections;
-using static OutSmart.DAXon.Resources.EncodingDetector;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

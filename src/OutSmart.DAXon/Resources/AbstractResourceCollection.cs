@@ -182,7 +182,8 @@ namespace OutSmart.DAXon.Resources
                     {
                         string file = new Uri(uri.ToString()).LocalPath;
                         stream = new FileStream(file, FileMode.Open, FileAccess.Read);
-                        if (new FileInfo(file).Length <= 1024)
+                        // kept only within the policy's input cap: the members read these bytes as content
+                        if (new FileInfo(file).Length <= Math.Min(1024, InputSizeLimit.MaxFor(config)))
                         {
                             inputDetails.binaryContent = BinaryResource.ReadBinaryFromStream(stream, resourceURI);
                             stream.Dispose();
@@ -412,47 +413,37 @@ namespace OutSmart.DAXon.Resources
                     }
                     catch (IOException e)
                     {
-                        throw new XPathException(e?.Message);
+                        throw new XPathException(e.Message, "FODC0002");
                     }
                 }
             }
 
+            // Strict, unlike a text resource: undecodable bytes are an error.
             public virtual string ObtainCharacterContent(Configuration config)
             {
-                if (characterContent != null)
+                if (characterContent == null)
                 {
-                    return characterContent;
+                    byte[] bytes = ObtainBinaryContent(config);
+                    string enc = encoding ?? EncodingDetector.InferEncoding(bytes, bytes.Length, "UTF-8");
+                    characterContent = BinaryResource.Decode(bytes, enc);
                 }
-                else if (binaryContent != null && encoding != null)
-                {
-                    return BinaryResource.Decode(binaryContent, encoding);
-                }
-                else
-                {
-                    try
-                    {
-                        System.IO.Stream stream = GetInputStream(config);
-                        string enc = encoding;
-                        if (enc == null)
-                        {
-                            stream = InputStreamMarker.EnsureMarkSupported(stream);
-                            enc = EncodingDetector.InferStreamEncoding(stream, "UTF-8", null);
-                        }
 
-                        return characterContent = CatalogCollection.MakeStringFromStream(stream, enc);
-                    }
-                    catch (IOException e)
-                    {
-                        if (onError == URIQueryParameters.ON_ERROR_FAIL)
-                        {
-                            throw new XPathException(e?.Message);
-                        }
-                        else
-                        {
-                            return null;
-                        }
-                    }
+                return characterContent;
+            }
+
+            // A member that fails when its item is read obeys the collection's on-error choice.
+            internal IItem Skip(IXPathContext context, XPathException e)
+            {
+                if (onError == URIQueryParameters.ON_ERROR_FAIL)
+                {
+                    throw e;
                 }
+                else if (onError == URIQueryParameters.ON_ERROR_WARNING)
+                {
+                    context.GetController()?.Warning("collection(): failed to read " + resourceUri + ": " + e.Message, e.ShowErrorCode(), null);
+                }
+
+                return null;
             }
         }
     }

@@ -120,8 +120,114 @@ namespace OutSmart.DAXon.Internal.Net
             return status >= 300 && status <= 399;
         }
 
-        // Static helpers used by AbstractResourceCollection.
-        public static string GuessContentTypeFromName(string name) => null;
-        public static string GuessContentTypeFromStream(global::System.IO.Stream stream) => null;
+        // The JDK's file-name map, reduced to entries whose media type has a resource factory; the
+        // configuration's extension table answers for the rest, as it does after the JDK upstream.
+        public static string GuessContentTypeFromName(string name)
+        {
+            int i = Math.Max(name.LastIndexOf('.'), Math.Max(name.LastIndexOf('/'), name.LastIndexOf('?')));
+            if (i < 0 || name[i] != '.')
+            {
+                return null;
+            }
+
+            switch (name.Substring(i).ToLowerInvariant())
+            {
+                case ".text":
+                case ".txt":
+                case ".java":
+                case ".c":
+                case ".cc":
+                case ".c++":
+                case ".h":
+                case ".pl":
+                    return "text/plain";
+                case ".htm":
+                case ".html":
+                    return "text/html";
+                case ".xml":
+                    return "application/xml";
+                default:
+                    return null;
+            }
+        }
+
+        // Reads up to 16 bytes, restoring the position of a seekable stream.
+        public static string GuessContentTypeFromStream(global::System.IO.Stream stream)
+        {
+            long start = stream.CanSeek ? stream.Position : 0;
+            byte[] head = new byte[16];
+            int n = 0;
+            int got;
+            while (n < head.Length && (got = stream.Read(head, n, head.Length - n)) > 0)
+            {
+                n += got;
+            }
+
+            if (stream.CanSeek)
+            {
+                stream.Position = start;
+            }
+
+            return GuessContentTypeFromBytes(head, n);
+        }
+
+        // The markup tests of the JDK's guessContentTypeFromStream. The binary formats it also knows
+        // (images, audio) have no resource factory, so they end as binary resources either way.
+        public static string GuessContentTypeFromBytes(byte[] bytes, int count)
+        {
+            int[] c = new int[16];
+            for (int i = 0; i < c.Length; i++)
+            {
+                c[i] = i < count ? bytes[i] : -1;
+            }
+
+            if (c[0] == '<')
+            {
+                if (c[1] == '!'
+                    || (c[1] == 'h' && ((c[2] == 't' && c[3] == 'm' && c[4] == 'l') || (c[2] == 'e' && c[3] == 'a' && c[4] == 'd')))
+                    || (c[1] == 'b' && c[2] == 'o' && c[3] == 'd' && c[4] == 'y')
+                    || (c[1] == 'H' && ((c[2] == 'T' && c[3] == 'M' && c[4] == 'L') || (c[2] == 'E' && c[3] == 'A' && c[4] == 'D')))
+                    || (c[1] == 'B' && c[2] == 'O' && c[3] == 'D' && c[4] == 'Y'))
+                {
+                    return "text/html";
+                }
+
+                if (c[1] == '?' && c[2] == 'x' && c[3] == 'm' && c[4] == 'l' && c[5] == ' ')
+                {
+                    return "application/xml";
+                }
+            }
+
+            // "<?x" after a UTF-8, UTF-16 or UTF-32 byte order mark
+            if ((c[0] == 0xEF && c[1] == 0xBB && c[2] == 0xBF && c[3] == '<' && c[4] == '?' && c[5] == 'x')
+                || (c[0] == 0xFE && c[1] == 0xFF && Units(c, 2, 2, false))
+                || (c[0] == 0xFF && c[1] == 0xFE && Units(c, 2, 2, true))
+                || (c[0] == 0 && c[1] == 0 && c[2] == 0xFE && c[3] == 0xFF && Units(c, 4, 4, false))
+                || (c[0] == 0xFF && c[1] == 0xFE && c[2] == 0 && c[3] == 0 && Units(c, 4, 4, true)))
+            {
+                return "application/xml";
+            }
+
+            return null;
+        }
+
+        // "<?x" as three code units of the given width from position at.
+        private static bool Units(int[] c, int at, int width, bool littleEndian)
+        {
+            string s = "<?x";
+            for (int k = 0; k < s.Length; k++)
+            {
+                for (int b = 0; b < width; b++)
+                {
+                    int expected = (littleEndian ? b == 0 : b == width - 1) ? s[k] : 0;
+                    if (c[at + k * width + b] != expected)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
     }
 }

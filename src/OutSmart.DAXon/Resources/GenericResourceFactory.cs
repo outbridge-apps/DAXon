@@ -6,16 +6,21 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using System;
-using System.Collections.Generic;
-using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Lib;
 
 namespace OutSmart.DAXon.Resources
 {
-    // Shared no-op IResourceFactory impl for the various Resource subtypes.
+    // The upstream FACTORY lambdas of the Resource classes.
     internal sealed class GenericResourceFactory : IResourceFactory
     {
-        public IResource MakeResource(IXPathContext context, AbstractResourceCollection.InputDetails details) => throw new NotImplementedException("STUB: GenericResourceFactory.MakeResource not ported (excluded stub)");
+        private readonly Func<IXPathContext, AbstractResourceCollection.InputDetails, IResource> make;
+
+        public GenericResourceFactory(Func<IXPathContext, AbstractResourceCollection.InputDetails, IResource> make)
+        {
+            this.make = make;
+        }
+
+        public IResource MakeResource(IXPathContext context, AbstractResourceCollection.InputDetails details) => make(context, details);
     }
 }
