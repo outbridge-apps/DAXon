@@ -49,16 +49,17 @@ namespace OutSmart.DAXon.Text
 
         public Twine8(char[] chars, int start, int len)
         {
+            // upstream copied chars[start..len) to bytes[start..), wrong whenever start > 0
             bytes = new byte[len];
-            for (int i = start; i < len; i++)
+            for (int i = 0; i < len; i++)
             {
-                int c = chars[i];
+                int c = chars[start + i];
                 if (CHECKING && c > 255)
                 {
                     throw new ArgumentException();
                 }
 
-                bytes[i] = (byte)(chars[i] & 0xff);
+                bytes[i] = (byte)(c & 0xff);
             }
         }
         public Twine8(string str)
@@ -374,7 +375,7 @@ namespace OutSmart.DAXon.Text
 
         public override long IndexWhere(Func<int, bool> predicate, long from)
         {
-            for (int i = requireNonNegativeInt(from); i < Length(); i++)
+            for (int i = requireNonNegativeInt(from); i < bytes.Length; i++)
             {
                 if (predicate(bytes[i] & 0xff))
                 {

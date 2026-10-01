@@ -256,7 +256,7 @@ namespace OutSmart.DAXon.Text
 
         public override long IndexWhere(Func<int, bool> predicate, long from)
         {
-            for (int i = requireNonNegativeInt(from); i < Length(); i++)
+            for (int i = requireNonNegativeInt(from); i < bytes.Length / 3; i++)
             {
                 int offset = i * 3;
                 int cp = ((bytes[offset] << 16 | (bytes[offset + 1] & 0xff) << 8) | (bytes[offset + 2] & 0xff)) & 0xffffff;

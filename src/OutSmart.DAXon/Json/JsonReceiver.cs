@@ -242,7 +242,7 @@ namespace OutSmart.DAXon.Json
                     }
                 }
 
-                key = (alreadyEscaped ? HandleEscapedString(key) : Escape(key, false, false, isControlChar));
+                key = (alreadyEscaped ? HandleEscapedString(key) : EscapeText(key));
                 string normalizedKey = alreadyEscaped ? Unescape(key) : key;
                 bool added = keyChecker.Peek().Add(normalizedKey);
                 if (!added)
@@ -317,21 +317,63 @@ namespace OutSmart.DAXon.Json
             pendingChunk = null;
         }
 
-        // True when Escape(s, false, false, isControlChar) would return the input unchanged; must stay
-        // CONSERVATIVE (false negatives only send the value down the slow path, never change output).
+        // The one "Escape(s, false, false, isControlChar) leaves it alone" rule behind both fast paths.
+        // CONSERVATIVE: 0x1F counts as special though Escape keeps it raw - it only takes the slow path.
+        private static bool IsPlainJsonChar(int c)
+        {
+            return c >= 32 && c != '\\' && c != '"' && c != '/' && (c < 127 || c > 159);
+        }
+
+        // 8-bit strings are scanned on their bytes: a virtual CodePointAt per character was 1.5% of Trans
         private static bool IsCleanString(UnicodeString s)
         {
+            if (s is Slice8 slice)
+            {
+                return IsCleanBytes(slice.ByteArray, slice.Start, slice.End);
+            }
+
+            if (s is Twine8 twine)
+            {
+                return IsCleanBytes(twine.ByteArray, 0, twine.ByteArray.Length);
+            }
+
             long len = s.Length();
             for (long i = 0; i < len; i++)
             {
-                int c = s.CodePointAt(i);
-                if (c == '\\' || c == '"' || c == '/' || c < 32 || (c >= 127 && c <= 159))
+                if (!IsPlainJsonChar(s.CodePointAt(i)))
                 {
                     return false;
                 }
             }
 
             return true;
+        }
+
+        private static bool IsCleanBytes(byte[] bytes, int start, int end)
+        {
+            for (int i = start; i < end; i++)
+            {
+                if (!IsPlainJsonChar(bytes[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Escape(s, false, false, isControlChar) without a delegate call per character on a clean string
+        private static string EscapeText(string s)
+        {
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (!IsPlainJsonChar(s[i]))
+                {
+                    return Escape(s, false, false, isControlChar);
+                }
+            }
+
+            return s;
         }
 
         private void CheckParent(string child, string parent)
@@ -406,7 +448,7 @@ namespace OutSmart.DAXon.Json
                 }
                 else
                 {
-                    output.Accept(StringView.Of(Escape(content, false, false, isControlChar)));
+                    output.Accept(StringView.Of(EscapeText(content)));
                 }
 
                 output.Accept(TOK_QUOTE);

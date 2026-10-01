@@ -437,14 +437,16 @@ namespace OutSmart.DAXon.Serialization
                 cs = cs.Normalize(normalizationForm);
             }
 
-            // Table-driven clean scan; only dirty or non-ASCII strings pay the delegate-per-char path.
+            // Table-driven clean scan; only dirty strings pay the delegate-per-char path. Past ASCII a
+            // charset that encodes everything (UTF-8/16) hex-escapes nothing but the C1 controls.
             bool[] dirty = DirtyTable();
+            bool allEncodable = characterSet is UTF8CharacterSet || characterSet is UTF16CharacterSet;
             int n = cs.Length;
             int i = 0;
             while (i < n)
             {
                 char c = cs[i];
-                if (c >= 128 || dirty[c])
+                if (c < 128 ? dirty[c] : (!allEncodable || c <= 159))
                 {
                     break;
                 }
