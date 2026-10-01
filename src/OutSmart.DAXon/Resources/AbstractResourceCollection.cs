@@ -216,11 +216,12 @@ namespace OutSmart.DAXon.Resources
             }
             catch (URISyntaxException e)
             {
-                throw new XPathException(e?.Message);
+                throw new XPathException(e.Message, "FODC0004");
             }
             catch (IOException e)
             {
-                throw new XPathException(e?.Message);
+                // a catalog can name a file that is not there: FODC0002 like doc(), not an uncoded error
+                throw new XPathException(e.Message, "FODC0002");
             }
         }
 

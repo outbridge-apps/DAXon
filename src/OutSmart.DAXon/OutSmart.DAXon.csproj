@@ -65,5 +65,7 @@
          does not depend on a locally installed 4.7.2 targeting pack. Nothing from it ships - the
          produced DLL is byte-identical with and without it (verified). -->
     <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All" />
+    <!-- ZipArchive for collection() over .zip/.jar/.docx/.xlsx; part of the Framework, nothing ships -->
+    <Reference Include="System.IO.Compression" />
   </ItemGroup>
 </Project>

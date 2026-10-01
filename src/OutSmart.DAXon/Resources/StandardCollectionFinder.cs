@@ -15,8 +15,8 @@ namespace OutSmart.DAXon.Resources
     /// <summary>
     /// Default implementation of the <see cref="ICollectionFinder"/> interface (upstream
     /// lib/StandardCollectionFinder.findCollection). Recognises file: directories (DirectoryCollection)
-    /// with optional URI query parameters. Port deviations: JarCollection (.jar/.zip archives) and
-    /// CatalogCollection (an XML catalog of URIs) are not yet ported — those URIs raise FODC0002.
+    /// with optional URI query parameters, ZIP archives (JarCollection) and XML catalogs of URIs
+    /// (CatalogCollection).
     /// </summary>
     internal sealed class StandardCollectionFinder : ICollectionFinder
     {
@@ -73,8 +73,15 @@ namespace OutSmart.DAXon.Resources
                 }
             }
 
-            // JarCollection / CatalogCollection are not yet ported.
-            throw new XPathException("Cannot resolve collection URI to a collection: " + collectionURI, "FODC0002", context);
+            // Anything else is a ZIP archive when its URI says so, and otherwise a catalog of URIs.
+            string zipPattern = context.GetConfiguration().GetConfigurationProperty(Feature<string>.ZIP_URI_PATTERN)
+                ?? "^jar:|\\.jar$|\\.zip$|\\.docx$|\\.xlsx$";
+            if (Regex.ARegularExpression.Compile(zipPattern, "").ContainsMatch(Text.StringView.Of(collectionURI).Tidy()))
+            {
+                return new JarCollection(context, collectionURI, @params);
+            }
+
+            return new CatalogCollection(context.GetConfiguration(), collectionURI, @params);
         }
     }
 }

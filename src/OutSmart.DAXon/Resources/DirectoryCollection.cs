@@ -10,6 +10,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
+using OutSmart.DAXon.Values;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,8 +21,6 @@ namespace OutSmart.DAXon.Resources
     // collection('some-directory/') — the standard multi-document input pattern (xsl:merge log-files
     // tests etc.) — raised FODC0002 from the finder.
     // A resource collection containing all, or selected, files within a filestore directory.
-    // Port deviation: metadata resources (?metadata=yes) return the plain content resource — the
-    // MetadataResource class is still a shell.
     internal sealed class DirectoryCollection : AbstractResourceCollection
     {
         private readonly DirectoryInfo dirFile;
@@ -60,6 +59,7 @@ namespace OutSmart.DAXon.Resources
         public override IEnumerator<IResource> GetResources(IXPathContext context)
         {
             ParseOptions options = OptionsFromQueryParameters(@params, context).WithSpaceStrippingRule(whitespaceRules);
+            bool metadata = @params.MetaData == true;
             IEnumerator<string> resourceURIs = GetResourceURIs(context);
             while (resourceURIs.MoveNext())
             {
@@ -76,6 +76,10 @@ namespace OutSmart.DAXon.Resources
                     }
 
                     resource = MakeResource(context, details);
+                    if (metadata)
+                    {
+                        resource = new MetadataResource(resource.ResourceURI, resource, FileProperties(details));
+                    }
                 }
                 catch (XPathException e)
                 {
@@ -100,6 +104,70 @@ namespace OutSmart.DAXon.Resources
                     yield return resource;
                 }
             }
+        }
+
+        // Upstream's java.io.File properties of a member; canonical-path does not resolve links here.
+        private static IDictionary<string, IGroundedValue> FileProperties(InputDetails details)
+        {
+            var properties = new Dictionary<string, IGroundedValue>();
+            if (details.contentType != null)
+            {
+                properties["content-type"] = StringValue.MakeStringValue(details.contentType);
+            }
+
+            if (details.encoding != null)
+            {
+                properties["encoding"] = StringValue.MakeStringValue(details.encoding);
+            }
+
+            var file = new FileInfo(new Uri(details.resourceUri).LocalPath);
+            if (!file.Exists)
+            {
+                return properties;
+            }
+
+            properties["path"] = StringValue.MakeStringValue(file.FullName);
+            properties["absolute-path"] = StringValue.MakeStringValue(file.FullName);
+            properties["canonical-path"] = StringValue.MakeStringValue(file.FullName);
+            properties["can-read"] = BooleanValue.Get(CanRead(file));
+            properties["can-write"] = BooleanValue.Get((file.Attributes & FileAttributes.ReadOnly) == 0);
+            properties["can-execute"] = BooleanValue.Get(CanExecute(file));
+            properties["is-hidden"] = BooleanValue.Get((file.Attributes & FileAttributes.Hidden) != 0);
+            properties["last-modified"] = DateTimeValue.FromJavaTime(new DateTimeOffset(file.LastWriteTimeUtc).ToUnixTimeMilliseconds());
+            properties["length"] = new Int64Value(file.Length);
+            return properties;
+        }
+
+        // A permission, as Java's canRead: a file another process holds locked still counts as readable.
+        private static bool CanRead(FileInfo file)
+        {
+            try
+            {
+                using (file.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                {
+                    return true;
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return false;
+            }
+            catch (IOException)
+            {
+                return true;
+            }
+        }
+
+        // Java on Windows reports every existing file executable; elsewhere it is the owner's x bit.
+        private static bool CanExecute(FileInfo file)
+        {
+#if NET
+            if (!OperatingSystem.IsWindows())
+            {
+                return (File.GetUnixFileMode(file.FullName) & UnixFileMode.UserExecute) != 0;
+            }
+#endif
+            return true;
         }
 
         /// <summary>

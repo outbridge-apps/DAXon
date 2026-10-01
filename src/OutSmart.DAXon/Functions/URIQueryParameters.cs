@@ -277,9 +277,10 @@ namespace OutSmart.DAXon.Functions
                 this.pattern = regex;
             }
 
+            // dir is null for an archive entry: there is no directory on disk to look at
             public bool Accept(string dir, string name)
             {
-                return Directory.Exists(Path.Combine(dir, name)) || pattern.Matches(StringView.Of(name).Tidy());
+                return (dir != null && Directory.Exists(Path.Combine(dir, name))) || pattern.Matches(StringView.Of(name).Tidy());
             }
         }
     }
