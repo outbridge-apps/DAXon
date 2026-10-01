@@ -243,7 +243,7 @@ namespace OutSmart.DAXon.Trees.Linked
                 }
             }
 
-            IList<AttributeInfo> atts = new List<AttributeInfo>(Attributes().Count());
+            IList<AttributeInfo> atts = new List<AttributeInfo>(Attributes().Size());
             foreach (AttributeInfo att in Attributes())
             {
                 ISimpleType attributeType = BuiltInAtomicType.UNTYPED_ATOMIC;

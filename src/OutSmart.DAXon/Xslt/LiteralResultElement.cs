@@ -102,7 +102,7 @@ namespace OutSmart.DAXon.Xslt
             // values (especially AVTs), but we do not apply namespace aliasing to the
             // attribute names.
             IAttributeMap atts = Attributes();
-            int num = atts.Count();
+            int num = atts.Size();
             if (num == 0)
             {
                 numberOfAttributes = 0;

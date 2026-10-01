@@ -766,7 +766,7 @@ namespace OutSmart.DAXon.Functions
         {
 
             // Keep it simple for now - independent of the options
-            return node.GetNodeKind() << 24 ^ node.Fingerprint ^ (node.Attributes().Count() << 10);
+            return node.GetNodeKind() << 24 ^ node.Fingerprint ^ (node.Attributes().Size() << 10);
         }
 
         /*

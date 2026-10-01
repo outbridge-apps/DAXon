@@ -81,7 +81,7 @@ namespace OutSmart.DAXon.Collections.Zeno
                 start = 0;
             }
 
-            int size = chain.Count();
+            int size = chain.Size();
             if (start >= size || length <= 0)
             {
                 return EmptySequence.GetInstance();
@@ -104,7 +104,7 @@ namespace OutSmart.DAXon.Collections.Zeno
 
         public int GetLength()
         {
-            return chain.Count();
+            return chain.Size();
         }
 
         public string GetStringValue()

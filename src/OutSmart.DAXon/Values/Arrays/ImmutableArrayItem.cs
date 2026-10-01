@@ -71,7 +71,7 @@ namespace OutSmart.DAXon.Values.Arrays
 
         public override int ArrayLength()
         {
-            return vector.Count();
+            return vector.Size();
         }
 
         public override bool IsEmpty()

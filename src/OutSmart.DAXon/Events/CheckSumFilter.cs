@@ -161,7 +161,7 @@ namespace OutSmart.DAXon.Events
             // because INodeName doesn't implement Comparable).
             Dictionary<string, INodeName> namemap = new Dictionary<string, INodeName>();
             Dictionary<string, string> attrmap = new Dictionary<string, string>();
-            string[] names = new string[attributes.Count()];
+            string[] names = new string[attributes.Size()];
             int index = 0;
             foreach (AttributeInfo att in attributes)
             {
