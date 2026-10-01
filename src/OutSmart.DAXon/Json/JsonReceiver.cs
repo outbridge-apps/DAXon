@@ -319,6 +319,8 @@ namespace OutSmart.DAXon.Json
 
         // The one "Escape(s, false, false, isControlChar) leaves it alone" rule behind both fast paths.
         // CONSERVATIVE: 0x1F counts as special though Escape keeps it raw - it only takes the slow path.
+        // Past the Framework JIT's inlining size limit, so it showed as its own 0.9% frame without the hint.
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static bool IsPlainJsonChar(int c)
         {
             return c >= 32 && c != '\\' && c != '"' && c != '/' && (c < 127 || c > 159);
