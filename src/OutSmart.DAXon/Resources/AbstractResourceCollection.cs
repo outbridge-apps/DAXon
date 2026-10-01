@@ -383,9 +383,11 @@ namespace OutSmart.DAXon.Resources
             public string encoding;
             public ParseOptions parseOptions;
             public int onError = URIQueryParameters.ON_ERROR_FAIL;
+            // Capped like doc(): UrlStream holds only compressed bytes to the policy's MaxInputBytes.
             public virtual System.IO.Stream GetInputStream(Configuration config)
             {
-                return ResourceLoader.UrlStream(config, resourceUri, OutSmart.DAXon.Api.ResourceKind.Collection);
+                return InputSizeLimit.Apply(ResourceLoader.UrlStream(config, resourceUri, OutSmart.DAXon.Api.ResourceKind.Collection),
+                    InputSizeLimit.MaxFor(config), resourceUri, "FODC0002");
             }
 
             public virtual byte[] ObtainBinaryContent(Configuration config)
