@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Serialization
             }
 
             string itemSeparator = properties.GetProperty(DAXonOutputKeys.ITEM_SEPARATOR);
-            if (itemSeparator == null || "#absent".Equals(itemSeparator))
+            if (itemSeparator == null || itemSeparator == "#absent")
             {
                 return new SequenceNormalizerWithSpaceSeparator(next);
             }

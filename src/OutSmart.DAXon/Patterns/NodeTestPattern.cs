@@ -78,7 +78,7 @@ namespace OutSmart.DAXon.Patterns
                 ISchemaDeclaration decl = GetConfiguration().GetElementDeclaration(nodeTest.MatchingNodeName);
                 if (decl == null)
                 {
-                    if ("lax".Equals(val))
+                    if (val == "lax")
                     {
                         return this;
                     }

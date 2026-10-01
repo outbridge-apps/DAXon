@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.Lib
             StringBuilder s = new StringBuilder();
             foreach (string displayname in value.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                if (allowStar && "*".Equals(displayname))
+                if (allowStar && displayname == "*")
                 {
                     s.Append(' ').Append(displayname);
                 }

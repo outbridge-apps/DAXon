@@ -239,7 +239,7 @@ namespace OutSmart.DAXon.Values.Maps
 
             private void Warning(string message)
             {
-                if (!"DONE".Equals(pendingWarning))
+                if (pendingWarning != "DONE")
                 {
                     pendingWarning = message;
                 }
@@ -615,7 +615,7 @@ namespace OutSmart.DAXon.Values.Maps
                         // Single-argument (optimized) form: the merge options have been folded into
                         // instance fields by MakeOptimizedFunctionCall. Consult the stored duplicates
                         // policy so that the "combine" case still widens the value type to a sequence.
-                        maybeCombined = "combine".Equals(this.duplicates);
+                        maybeCombined = this.duplicates == "combine";
                     }
                     else if (args[1] is Literal)
                     {
@@ -625,7 +625,7 @@ namespace OutSmart.DAXon.Values.Maps
                             IGroundedValue dupes = options[StringValue.Bmp("duplicates")];
                             try
                             {
-                                if (dupes != null && !"combine".Equals(dupes.GetStringValue()))
+                                if (dupes != null && dupes.GetStringValue() != "combine")
                                 {
                                     maybeCombined = false;
                                 }
@@ -668,7 +668,7 @@ namespace OutSmart.DAXon.Values.Maps
                     MapMerge fn = call.TargetFunction as MapMerge;
                     if (fn != null
                         && call.GetArity() == 1
-                        && ("use-first".Equals(fn.duplicates) || "unspecified".Equals(fn.duplicates) || "use-any".Equals(fn.duplicates))
+                        && (fn.duplicates == "use-first" || fn.duplicates == "unspecified" || fn.duplicates == "use-any")
                         && fn.onDuplicates == null
                         && !(fn.treatAsFinal && fn.allStringKeys)
                         && call.GetArg(0) is ForExpression forex
@@ -752,7 +752,7 @@ namespace OutSmart.DAXon.Values.Maps
                         duplicates = ((StringValue)values.GetOrDefault("duplicates")).GetStringValue();
                         duplicatesErrorCode = ((StringValue)values.GetOrDefault(errorCodeKey)).GetStringValue();
                         treatAsFinal = ((BooleanValue)values.GetOrDefault(finalKey)).GetBooleanValue();
-                        allStringKeys = "string".Equals(((StringValue)values.GetOrDefault(keyTypeKey)).GetStringValue());
+                        allStringKeys = (((StringValue)values.GetOrDefault(keyTypeKey)).GetStringValue()) == "string";
                         onDuplicates = values.TryGetValue(onDuplicatesKey, out var __od2) ? (IFunctionItem)__od2 : null;
                         if (onDuplicates != null)
                         {

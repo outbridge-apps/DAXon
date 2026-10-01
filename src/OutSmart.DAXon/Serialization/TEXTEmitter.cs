@@ -63,7 +63,7 @@ namespace OutSmart.DAXon.Serialization
                 newlineMatcher = OutSmart.DAXon.Internal.Regex.Pattern.Compile("\\n");
             }
 
-            if ("yes".Equals(byteOrderMark) && ("UTF-8".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16LE".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(encoding, StringComparison.OrdinalIgnoreCase)))
+            if (byteOrderMark == "yes" && ("UTF-8".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16LE".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(encoding, StringComparison.OrdinalIgnoreCase)))
             {
                 try
                 {

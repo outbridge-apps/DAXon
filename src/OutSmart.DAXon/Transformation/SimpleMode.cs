@@ -119,7 +119,7 @@ namespace OutSmart.DAXon.Transformation
                 switch (prop)
                 {
                     case "streamable":
-                        bool streamable = "yes".Equals(value);
+                        bool streamable = value == "yes";
                         SetStreamable(streamable);
 
                         //                    if (streamable) {
@@ -127,8 +127,8 @@ namespace OutSmart.DAXon.Transformation
                         //                    }
                         break;
                     case "typed":
-                        mustBeTyped = "yes".Equals(value) || "strict".Equals(value) || "lax".Equals(value);
-                        mustBeUntyped = "no".Equals(value);
+                        mustBeTyped = value == "yes" || value == "strict" || value == "lax";
+                        mustBeUntyped = value == "no";
                         break;
                     case "on-no-match":
                         IBuiltInRuleSet @base = null;
@@ -161,7 +161,7 @@ namespace OutSmart.DAXon.Transformation
                                 break;
                         }
 
-                        if ("yes".Equals(explicitPropertyValues.GetOrDefault("warning-on-no-match")))
+                        if (explicitPropertyValues.GetOrDefault("warning-on-no-match") == "yes")
                         {
                             @base = new RuleSetWithWarnings(@base);
                         }
@@ -254,8 +254,8 @@ namespace OutSmart.DAXon.Transformation
             }
 
             string typed = explicitPropertyValues.GetOrDefault("typed");
-            mustBeTyped = "yes".Equals(typed) || "strict".Equals(typed) || "lax".Equals(typed);
-            mustBeUntyped = "no".Equals(typed);
+            mustBeTyped = typed == "yes" || typed == "strict" || typed == "lax";
+            mustBeUntyped = typed == "no";
         }
 
         public virtual string GetPropertyValue(string name)

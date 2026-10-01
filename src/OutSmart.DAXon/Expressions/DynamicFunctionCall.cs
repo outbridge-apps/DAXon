@@ -163,7 +163,7 @@ namespace OutSmart.DAXon.Expressions
 
         public override void Export(ExpressionPresenter @out)
         {
-            if ("JS".Equals(@out.GetOptions().target) && @out.GetOptions().targetVersion == 2)
+            if (@out.GetOptions().target == "JS" && @out.GetOptions().targetVersion == 2)
             {
 
                 // for backwards compatibility, output a call on saxon:apply

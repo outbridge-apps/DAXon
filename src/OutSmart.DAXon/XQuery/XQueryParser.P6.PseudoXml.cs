@@ -222,7 +222,7 @@ namespace OutSmart.DAXon.XQuery
                     Grumble("Expected ' or \" as attribute delimiter - found '" + c + "'");
                 }
 
-                bool isNamespace = "xmlns".Equals(attName) || attName.StartsWith("xmlns:", StringComparison.Ordinal);
+                bool isNamespace = attName == "xmlns" || attName.StartsWith("xmlns:", StringComparison.Ordinal);
                 int end;
                 if (isNamespace)
                 {
@@ -342,7 +342,7 @@ namespace OutSmart.DAXon.XQuery
                     }
 
                     string prefix;
-                    if ("xmlns".Equals(attName))
+                    if (attName == "xmlns")
                     {
                         prefix = "";
                         if (uri.Equals(NamespaceUri.XML))
@@ -446,7 +446,7 @@ namespace OutSmart.DAXon.XQuery
                 AttributeDetails a = entry.Value;
                 string attValue = a.value;
                 int attOffset = a.startOffset;
-                if ("xmlns".Equals(attName) || attName.StartsWith("xmlns:", StringComparison.Ordinal))
+                if (attName == "xmlns" || attName.StartsWith("xmlns:", StringComparison.Ordinal))
                 {
                 }
                 else if (scanOnly)
@@ -1431,23 +1431,23 @@ namespace OutSmart.DAXon.XQuery
 
             public virtual string AnalyzeEntityReference(string entity)
             {
-                if ("lt".Equals(entity))
+                if (entity == "lt")
                 {
                     return "<";
                 }
-                else if ("gt".Equals(entity))
+                else if (entity == "gt")
                 {
                     return ">";
                 }
-                else if ("amp".Equals(entity))
+                else if (entity == "amp")
                 {
                     return "&";
                 }
-                else if ("quot".Equals(entity))
+                else if (entity == "quot")
                 {
                     return "\"";
                 }
-                else if ("apos".Equals(entity))
+                else if (entity == "apos")
                 {
                     return "'";
                 }

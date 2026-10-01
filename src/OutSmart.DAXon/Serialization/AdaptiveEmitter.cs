@@ -50,7 +50,7 @@ namespace OutSmart.DAXon.Serialization
         {
             outputProperties = props;
             string sep = props.GetProperty(DAXonOutputKeys.ITEM_SEPARATOR);
-            if (sep != null && !"#absent".Equals(sep))
+            if (sep != null && sep != "#absent")
             {
                 itemSeparator = sep;
             }

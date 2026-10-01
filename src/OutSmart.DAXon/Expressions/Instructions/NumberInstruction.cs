@@ -131,7 +131,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 return e;
             }
 
-            if ("EE".Equals(GetPackageData().TargetEdition))
+            if (GetPackageData().TargetEdition == "EE")
             {
                 e = visitor.ObtainOptimizer().OptimizeNumberInstruction(this, contextInfo);
                 if (e != null)

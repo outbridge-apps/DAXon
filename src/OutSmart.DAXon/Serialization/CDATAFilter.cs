@@ -251,8 +251,8 @@ namespace OutSmart.DAXon.Serialization
         /// <param name="details">the output properties</param>
         private void GetCdataElements(Properties details)
         {
-            bool isHTML = "html".Equals(details.GetProperty(DAXonOutputKeys.METHOD));
-            bool isHTML5 = isHTML && "5.0".Equals(details.GetProperty(DAXonOutputKeys.VERSION));
+            bool isHTML = details.GetProperty(DAXonOutputKeys.METHOD) == "html";
+            bool isHTML5 = isHTML && details.GetProperty(DAXonOutputKeys.VERSION) == "5.0";
             bool isHTML4 = isHTML && !isHTML5;
             string cdata = details.GetProperty(DAXonOutputKeys.CDATA_SECTION_ELEMENTS);
             if (cdata == null)

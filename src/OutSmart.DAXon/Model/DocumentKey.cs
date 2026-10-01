@@ -18,7 +18,8 @@ namespace OutSmart.DAXon.Model
 {
     public class DocumentKey
     {
-        public static readonly bool CASE_BLIND_FILES = "a".Equals("A");
+        // Upstream: new File("a").equals(new File("A")), true on Windows; this port has always used false.
+        public static readonly bool CASE_BLIND_FILES = false;
         private string displayValue;
         private string normalizedValue;
         private string packageName = "";

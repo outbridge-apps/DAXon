@@ -340,10 +340,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         }
                     }
 
-                    if (uri.Equals(NamespaceUri.XML) != "xml".Equals(prefix))
+                    if (uri.Equals(NamespaceUri.XML) != (prefix == "xml"))
                     {
                         string message;
-                        if ("xml".Equals(prefix))
+                        if (prefix == "xml")
                         {
                             message = "When the prefix is 'xml', the namespace URI must be " + NamespaceConstant.XML;
                         }
@@ -358,7 +358,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     }
                 }
 
-                if ("xmlns".Equals(prefix))
+                if (prefix == "xmlns")
                 {
                     XPathException err = new XPathException("Invalid attribute namespace: http://www.w3.org/2000/xmlns/", "XQDY0044", this.GetLocation());
                     throw DynamicError(GetLocation(), err, context);

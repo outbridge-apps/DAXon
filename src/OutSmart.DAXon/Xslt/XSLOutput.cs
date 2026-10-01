@@ -134,7 +134,7 @@ namespace OutSmart.DAXon.Xslt
             SerializerFactory sf = GetConfiguration().SerializerFactory;
             if (method != null)
             {
-                if ("xml".Equals(method) || "html".Equals(method) || "text".Equals(method) || "xhtml".Equals(method) || "json".Equals(method) || "adaptive".Equals(method))
+                if (method == "xml" || method == "html" || method == "text" || method == "xhtml" || method == "json" || method == "adaptive")
                 {
                     CheckAndPut(sf, DAXonOutputKeys.METHOD, method, details, precedences, thisPrecedence); //details.put(DAXonOutputKeys.METHOD, method);
                 }

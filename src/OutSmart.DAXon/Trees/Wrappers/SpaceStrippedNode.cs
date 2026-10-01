@@ -118,11 +118,11 @@ namespace OutSmart.DAXon.Trees.Wrappers
                     string val = p.GetAttributeValue(NamespaceUri.XML, "space");
                     if (val != null)
                     {
-                        if ("preserve".Equals(val))
+                        if (val == "preserve")
                         {
                             return true;
                         }
-                        else if ("default".Equals(val))
+                        else if (val == "default")
                         {
                             break;
                         }

@@ -106,7 +106,7 @@ namespace OutSmart.DAXon.XPath
                 throw new NullReferenceException("Null namespace URI supplied to declareNamespace()");
             }
 
-            if ("".Equals(prefix))
+            if (prefix == "")
             {
                 SetDefaultElementNamespace(uri);
             }
@@ -168,7 +168,7 @@ namespace OutSmart.DAXon.XPath
                 }
 
                 string prefix = ns.GetLocalPart();
-                if ("".Equals(prefix))
+                if (prefix == "")
                 {
                     SetDefaultElementNamespace(NamespaceUri.Of(ns.GetStringValue()));
                 }

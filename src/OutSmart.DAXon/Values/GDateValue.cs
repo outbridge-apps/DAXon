@@ -106,12 +106,12 @@ namespace OutSmart.DAXon.Values
 
                 string part = tok.NextToken();
                 int era = +1;
-                if ("+".Equals(part))
+                if (part == "+")
                 {
                     m.error = BadDate("Date must not start with '+' sign", s);
                     return;
                 }
-                else if ("-".Equals(part))
+                else if (part == "-")
                 {
                     era = -1;
                     if (!tok.HasMoreTokens())
@@ -168,7 +168,7 @@ namespace OutSmart.DAXon.Values
                     return;
                 }
 
-                if (!"-".Equals(tok.NextToken()))
+                if (tok.NextToken() != "-")
                 {
                     m.error = BadDate("Wrong delimiter after year", s);
                     return;
@@ -207,7 +207,7 @@ namespace OutSmart.DAXon.Values
                     return;
                 }
 
-                if (!"-".Equals(tok.NextToken()))
+                if (tok.NextToken() != "-")
                 {
                     m.error = BadDate("Wrong delimiter after month", s);
                     return;
@@ -266,12 +266,12 @@ namespace OutSmart.DAXon.Values
             if (tok.HasMoreTokens())
             {
                 string delim = tok.NextToken();
-                if ("T".Equals(delim))
+                if (delim == "T")
                 {
                     m.error = BadDate("Value includes time", s);
                     return;
                 }
-                else if ("Z".Equals(delim))
+                else if (delim == "Z")
                 {
                     tzOffset = 0;
                     if (tok.HasMoreTokens())
@@ -282,7 +282,7 @@ namespace OutSmart.DAXon.Values
 
                     m.tzMinutes = tzOffset;
                 }
-                else if (!(!"+".Equals(delim) && !"-".Equals(delim)))
+                else if (!(delim != "+" && delim != "-"))
                 {
                     if (!tok.HasMoreTokens())
                     {
@@ -317,7 +317,7 @@ namespace OutSmart.DAXon.Values
                         return;
                     }
 
-                    if (!":".Equals(tok.NextToken()))
+                    if (tok.NextToken() != ":")
                     {
                         m.error = BadDate("Wrong delimiter after timezone hour", s);
                         return;
@@ -357,7 +357,7 @@ namespace OutSmart.DAXon.Values
                     }
 
                     tzOffset = tzhour * 60 + tzminute;
-                    if ("-".Equals(delim))
+                    if (delim == "-")
                     {
                         tzOffset = -tzOffset;
                     }

@@ -652,12 +652,12 @@ namespace OutSmart.DAXon.Xslt
             functionLibrary.AddFunctionLibrary(new StylesheetFunctionLibrary(this, true));
             functionLibrary.AddFunctionLibrary(config.GetBuiltInExtensionLibraryList(hostLanguageVersion == 40 ? 40 : 31));
             functionLibrary.AddFunctionLibrary(new ConstructorFunctionLibrary(config));
-            if ("JS".Equals(TargetEdition) || "JS2".Equals(TargetEdition))
+            if (TargetEdition == "JS" || TargetEdition == "JS2")
             {
                 AddIxslFunctionLibrary(functionLibrary);
             }
 
-            if ("JS3".Equals(TargetEdition))
+            if (TargetEdition == "JS3")
             {
                 AddIxsl3FunctionLibrary(functionLibrary);
             }

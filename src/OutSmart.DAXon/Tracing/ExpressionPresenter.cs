@@ -82,7 +82,6 @@ namespace OutSmart.DAXon.Tracing
             }
             catch (XPathException err)
             {
-                err.ToString();
                 throw new InvalidOperationException(err.Message);
             }
         }
@@ -108,7 +107,6 @@ namespace OutSmart.DAXon.Tracing
             }
             catch (XPathException err)
             {
-                err.ToString();
                 throw new InvalidOperationException(err.Message);
             }
 
@@ -120,7 +118,6 @@ namespace OutSmart.DAXon.Tracing
             }
             catch (XPathException err)
             {
-                err.ToString();
                 throw new InvalidOperationException(err.Message);
             }
         }
@@ -143,7 +140,6 @@ namespace OutSmart.DAXon.Tracing
             }
             catch (XPathException err)
             {
-                err.ToString();
                 throw new InvalidOperationException(err.Message);
             }
         }
@@ -231,7 +227,7 @@ namespace OutSmart.DAXon.Tracing
             {
 
                 // If not exporting the base URI, cut the filename used for diagnostic location of errors down to its last component
-                string[] parts = module.SplitRegex("/");
+                string[] parts = module.Split('/');
                 for (int p = parts.Length - 1; p >= 0; p--)
                 {
                     if (!(parts[p].Length == 0))
@@ -271,7 +267,7 @@ namespace OutSmart.DAXon.Tracing
 
                 if (!options.suppressStaticContext && (parentSC == null || !sc.DeclaresSameNamespaces(parentSC)))
                 {
-                    bool includeXmlNamespace = "JS".Equals(GetOptions().target) && GetOptions().targetVersion >= 2;
+                    bool includeXmlNamespace = GetOptions().target == "JS" && GetOptions().targetVersion >= 2;
                     EmitAttribute("ns", GetNamespacesAsString(sc.GetNamespaceMap(), includeXmlNamespace));
                 }
             }
@@ -357,7 +353,6 @@ namespace OutSmart.DAXon.Tracing
             }
             catch (XPathException err)
             {
-                err.ToString();
                 throw new InvalidOperationException(err.Message);
             }
 
@@ -385,7 +380,6 @@ namespace OutSmart.DAXon.Tracing
                 }
                 catch (XPathException err)
                 {
-                    err.ToString();
                     throw new InvalidOperationException(err.Message);
                 }
             }
@@ -400,7 +394,6 @@ namespace OutSmart.DAXon.Tracing
             }
             catch (XPathException err)
             {
-                err.ToString();
                 throw new InvalidOperationException(err.Message);
             }
         }
@@ -413,7 +406,6 @@ namespace OutSmart.DAXon.Tracing
             }
             catch (XPathException e)
             {
-                e.ToString();
                 throw new InvalidOperationException(e.Message);
             }
         }
@@ -433,7 +425,6 @@ namespace OutSmart.DAXon.Tracing
             }
             catch (XPathException err)
             {
-                err.ToString();
                 throw new InvalidOperationException(err.Message);
             }
 
@@ -479,7 +470,6 @@ namespace OutSmart.DAXon.Tracing
             }
             catch (XPathException err)
             {
-                err.ToString();
                 throw new InvalidOperationException(err.Message);
             }
         }

@@ -187,7 +187,7 @@ namespace OutSmart.DAXon.Xslt
                     if (GetLocalPart().Equals("package") && (fp == StandardNames.XSL_USE_PACKAGE || fp == StandardNames.XSL_EXPOSE))
                     {
                     }
-                    else if (!((StyleElement)child).IsInXsltNamespace() && !"".Equals(child.GetNamespaceUri()))
+                    else if (!((StyleElement)child).IsInXsltNamespace() && child.GetNamespaceUri() != "")
                     {
                     }
                     else if (child is AbsentExtensionElement && ((StyleElement)child).ForwardsCompatibleModeIsEnabled())

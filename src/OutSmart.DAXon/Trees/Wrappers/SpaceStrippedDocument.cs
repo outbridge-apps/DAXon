@@ -78,7 +78,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
                 while ((node = iter.Next()) != null)
                 {
                     string val = node.GetAttributeValue(NamespaceUri.XML, "space");
-                    if ("preserve".Equals(val))
+                    if (val == "preserve")
                     {
                         return true;
                     }

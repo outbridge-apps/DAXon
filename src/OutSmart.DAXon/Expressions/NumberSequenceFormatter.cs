@@ -471,7 +471,7 @@ namespace OutSmart.DAXon.Expressions
                     else
                     {
                         letterVal = letterValueEvaluator.Eval(context).ToString();
-                        if (!("alphabetic".Equals(letterVal) || "traditional".Equals(letterVal)))
+                        if (!(letterVal == "alphabetic" || letterVal == "traditional"))
                         {
                             throw new XPathException("letter-value must be \"traditional\" or \"alphabetic\"").WithXPathContext(context).WithErrorCode("XTDE0030").WithLocation(expr.GetLocation());
                         }

@@ -296,7 +296,7 @@ namespace OutSmart.DAXon.Expressions
                 if (roleSupplier != null)
                 {
                     string errorCode = roleSupplier().ErrorCode;
-                    if (!"XPTY0004".Equals(errorCode))
+                    if (errorCode != "XPTY0004")
                     {
                         mapper.SetErrorCode(errorCode);
                     }
@@ -392,7 +392,7 @@ namespace OutSmart.DAXon.Expressions
                 destination.EmitAttribute("diag", RoleSupplier().Save());
             }
 
-            if (converter.IsPromoter() && "JS".Equals(destination.GetOptions().target) && destination.GetOptions().targetVersion >= 2)
+            if (converter.IsPromoter() && destination.GetOptions().target == "JS" && destination.GetOptions().targetVersion >= 2)
             {
 
                 // See bug 6239. For backwards compatibility, output a cvUntyped instruction. This is no longer needed for SaxonJ

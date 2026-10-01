@@ -33,7 +33,7 @@ namespace OutSmart.DAXon.Events
 
         public NamespaceDifferencer(IReceiver next, Properties details) : this(next)
         {
-            undeclareNamespaces = "yes".Equals(details.GetProperty(DAXonOutputKeys.UNDECLARE_PREFIXES));
+            undeclareNamespaces = details.GetProperty(DAXonOutputKeys.UNDECLARE_PREFIXES) == "yes";
         }
 
         public override void StartElement(INodeName elemName, ISchemaType type, IAttributeMap attributes, NamespaceMap namespaces, ILocation location, int properties)

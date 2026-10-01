@@ -353,7 +353,7 @@ namespace OutSmart.DAXon.Xslt
 
             if (newEachTimeAtt != null)
             {
-                if ("maybe".Equals(newEachTimeAtt))
+                if (newEachTimeAtt == "maybe")
                 {
                     determinism = UserFunction.Determinism.ELIDABLE;
                 }

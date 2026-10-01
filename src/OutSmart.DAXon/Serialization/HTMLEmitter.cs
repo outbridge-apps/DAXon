@@ -137,7 +137,7 @@ namespace OutSmart.DAXon.Serialization
             }
 
             string byteOrderMark = outputProperties.GetProperty(DAXonOutputKeys.BYTE_ORDER_MARK);
-            if ("yes".Equals(byteOrderMark) && "UTF-8".Equals(outputProperties.GetProperty(DAXonOutputKeys.ENCODING), StringComparison.OrdinalIgnoreCase))
+            if (byteOrderMark == "yes" && "UTF-8".Equals(outputProperties.GetProperty(DAXonOutputKeys.ENCODING), StringComparison.OrdinalIgnoreCase))
             {
                 try
                 {
@@ -148,7 +148,7 @@ namespace OutSmart.DAXon.Serialization
                 }
             }
 
-            if ("yes".Equals(outputProperties.GetProperty(DAXonOutputKeys.SINGLE_QUOTES)))
+            if (outputProperties.GetProperty(DAXonOutputKeys.SINGLE_QUOTES) == "yes")
             {
                 delimiter = '\'';
                 attSpecials = specialInAttSingle;

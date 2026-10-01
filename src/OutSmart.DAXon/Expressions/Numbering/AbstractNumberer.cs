@@ -798,7 +798,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
         public virtual string HalfDayName(int minutes, int minWidth, int maxWidth)
         {
             string s;
-            if (minutes == 0 && maxWidth >= 8 && "gb".Equals(country))
+            if (minutes == 0 && maxWidth >= 8 && country == "gb")
             {
                 s = "Midnight";
             }
@@ -818,7 +818,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                         break;
                 }
             }
-            else if (minutes == 12 * 60 && maxWidth >= 8 && "gb".Equals(country))
+            else if (minutes == 12 * 60 && maxWidth >= 8 && country == "gb")
             {
                 s = "Noon";
             }

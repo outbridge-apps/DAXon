@@ -175,11 +175,7 @@ namespace OutSmart.DAXon.Resources
             else
             {
                 URLConnection conn = ResourceLoader.UrlConnection(new Uri(url), config, OutSmart.DAXon.Api.ResourceKind.Text);
-                System.IO.Stream inputStream = conn.DecodedStream(InputSizeLimit.MaxFor(config), url, "FOUT1170");
-                if (true)
-                {
-                    inputStream = new BufferedStream(inputStream);
-                }
+                System.IO.Stream inputStream = new BufferedStream(conn.DecodedStream(InputSizeLimit.MaxFor(config), url, "FOUT1170"));
 
                 return new ResolvedResource { Stream = inputStream, ContentType = conn.ContentType, SystemId = url };
             }

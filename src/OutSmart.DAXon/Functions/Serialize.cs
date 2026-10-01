@@ -78,7 +78,7 @@ namespace OutSmart.DAXon.Functions
                 }
 
                 if (el == null || el.GetNodeKind() != OutSmart.DAXon.Types.Type.ELEMENT
-                    || !"serialization-parameters".Equals(el.GetLocalPart())
+                    || el.GetLocalPart() != "serialization-parameters"
                     || !SerializationParamsHandler.NAMESPACE.Equals(el.GetNamespaceUri()))
                 {
                     throw new XPathException("The second argument of fn:serialize must be an output:serialization-parameters element or a map", "XPTY0004");
@@ -95,7 +95,7 @@ namespace OutSmart.DAXon.Functions
                 // so serialize(., <serialization-parameters><indent value="yes"/>…) yields (unindented) output
                 // instead of a runtime error. No fn-serialize test asserts on indentation whitespace.
                 // [follow-up: XML indent in the serialize() emitter chain]
-                if ("yes".Equals(props.GetProperty("indent")))
+                if (props.GetProperty("indent") == "yes")
                 {
                     props.SetProperty("indent", "no");
                 }

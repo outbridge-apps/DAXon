@@ -457,7 +457,7 @@ namespace OutSmart.DAXon.Functions.Registry
                     keywords = "a|b|c|d|e|f";
                 }
 
-                this.paramNames = keywords.SplitRegex("\\|");
+                this.paramNames = keywords.Split('|');
                 return this;
             }
 

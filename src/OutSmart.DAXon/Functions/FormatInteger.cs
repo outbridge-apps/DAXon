@@ -217,8 +217,8 @@ namespace OutSmart.DAXon.Functions
             int rightParen = modifier.LastIndexOf(')');
             parenthetical = leftParen < 0 ? "" : modifier.Substring(leftParen + 1, rightParen - leftParen - 1);
             string letterValue = alphabetic ? "alphabetic" : "traditional";
-            string ordinalValue = ordinal ? "".Equals(parenthetical) ? "yes" : parenthetical : "";
-            string cardinalValue = cardinal ? "".Equals(parenthetical) ? "yes" : parenthetical : "";
+            string ordinalValue = ordinal ? parenthetical == "" ? "yes" : parenthetical : "";
+            string cardinalValue = cardinal ? parenthetical == "" ? "yes" : parenthetical : "";
             UnicodeString primary = StringView.Tidy(primaryToken);
             Categories.Category isDecimalDigit = Categories.GetCategory("Nd");
             bool isDecimalDigitPattern = false;

@@ -162,8 +162,8 @@ namespace OutSmart.DAXon.Expressions.Instructions
             TypeCheckChildren(visitor, contextInfo);
             string method = GetStaticSerializationProperty(XSLResultDocument.METHOD);
             bool contentDependentMethod = method == null && formatOp == null && !serializationAttributes.ContainsKey(XSLResultDocument.METHOD);
-            bool buildTree = "yes".Equals(GetStaticSerializationProperty(XSLResultDocument.BUILD_TREE));
-            if (buildTree || contentDependentMethod || "xml".Equals(method) || "html".Equals(method) || "xhtml".Equals(method) || "text".Equals(method))
+            bool buildTree = GetStaticSerializationProperty(XSLResultDocument.BUILD_TREE) == "yes";
+            if (buildTree || contentDependentMethod || method == "xml" || method == "html" || method == "xhtml" || method == "text")
             {
                 try
                 {
@@ -416,7 +416,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 }
                 catch (Exception err)
                 {
-                    err.ToString();
                     throw new XPathException("Exception thrown by output resolver", err);
                 }
             }
@@ -555,7 +554,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         e.SetErrorCode("XTDE0030");
                         e.MaybeSetLocation(GetLocation());
                         e.MaybeSetContext(context);
-                        if (e.ErrorCodeQName.HasURI(NamespaceUri.SAXON) && "SXWN".Equals(e.ErrorCodeQName.GetLocalPart().Substring(0, 4)))
+                        if (e.ErrorCodeQName.HasURI(NamespaceUri.SAXON) && e.ErrorCodeQName.GetLocalPart().Substring(0, 4) == "SXWN")
                         {
                             XmlProcessingException ee = new XmlProcessingException(e);
                             ee.SetWarning(true);

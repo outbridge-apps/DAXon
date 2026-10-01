@@ -310,7 +310,7 @@ namespace OutSmart.DAXon.Core
         {
             get => defaultRegexEngine; set
             {
-                if (!("J".Equals(value) || "N".Equals(value) || "S".Equals(value)))
+                if (!(value == "J" || value == "N" || value == "S"))
                 {
                     throw new ArgumentException("Regex engine must be S|J|N");
                 }
@@ -1714,7 +1714,7 @@ namespace OutSmart.DAXon.Core
 
         public virtual XPathParser NewExpressionParser(string language, bool updating, IStaticContext env)
         {
-            if ("XQ".Equals(language))
+            if (language == "XQ")
             {
                 if (updating)
                 {
@@ -1725,11 +1725,11 @@ namespace OutSmart.DAXon.Core
                     return new XQueryParser(env);
                 }
             }
-            else if ("XP".Equals(language))
+            else if (language == "XP")
             {
                 return new XPathParser(env);
             }
-            else if ("PATTERN".Equals(language))
+            else if (language == "PATTERN")
             {
                 return new PatternParser(env);
             }
@@ -2321,7 +2321,7 @@ namespace OutSmart.DAXon.Core
                             {
 
                                 // For backwards compatibility
-                                optimizerOptions = "0".Equals(s) ? new OptimizerOptions(0) : OptimizerOptions.FULL_EE_OPTIMIZATION.Intersect(PermittedOptimizerOptions);
+                                optimizerOptions = s == "0" ? new OptimizerOptions(0) : OptimizerOptions.FULL_EE_OPTIMIZATION.Intersect(PermittedOptimizerOptions);
                             }
                             else
                             {
@@ -2673,12 +2673,12 @@ namespace OutSmart.DAXon.Core
             }
             else if (value is string)
             {
-                value = ((string)value).Trim();
-                if ("true".Equals(value) || "on".Equals(value) || "yes".Equals(value) || "1".Equals(value))
+                string s = ((string)value).Trim();
+                if (s == "true" || s == "on" || s == "yes" || s == "1")
                 {
                     return true;
                 }
-                else if ("false".Equals(value) || "off".Equals(value) || "no".Equals(value) || "0".Equals(value))
+                else if (s == "false" || s == "off" || s == "no" || s == "0")
                 {
                     return false;
                 }

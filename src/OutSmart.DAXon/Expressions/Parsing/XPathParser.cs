@@ -310,7 +310,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
             ILocation loc = MakeNestedLocation(env.GetContainingLocation(), line, column, nearbyText);
             XPathException err = new XPathException(message).WithLocation(loc).AsStaticError().WithErrorCode(errorCode);
-            err.SetIsSyntaxError("XPST0003".Equals(errorCode.GetLocalPart()));
+            err.SetIsSyntaxError(errorCode.GetLocalPart() == "XPST0003");
             err.SetHostLanguage(GetLanguage());
             throw err;
         }

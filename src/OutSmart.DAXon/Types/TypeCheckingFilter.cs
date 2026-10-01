@@ -225,7 +225,7 @@ namespace OutSmart.DAXon.Types
                 XPathException err = new XPathException("An empty sequence is not allowed as the " +
                                                         roleDiagnostic.GetMessage())
                     .WithErrorCode(errorCode);
-                if (!"XPDY0050".Equals(errorCode))
+                if (errorCode != "XPDY0050")
                 {
                     err.SetIsTypeError(true);
                 }
@@ -324,7 +324,7 @@ namespace OutSmart.DAXon.Types
 
             string errorCode = roleDiagnostic.ErrorCode;
             throw new XPathException(message, errorCode)
-                .AsTypeErrorIf(!"XPDY0050".Equals(errorCode))
+                .AsTypeErrorIf(errorCode != "XPDY0050")
                 .WithLocation(locationId == null ? locator : locationId.SaveLocation());
         }
 
@@ -335,7 +335,7 @@ namespace OutSmart.DAXon.Types
                 throw new XPathException("A sequence of more than one item is not allowed as the " +
                                          roleDiagnostic.GetMessage())
                     .WithErrorCode(roleDiagnostic.ErrorCode)
-                    .AsTypeErrorIf(!"XPDY0050".Equals(roleDiagnostic.ErrorCode))
+                    .AsTypeErrorIf(roleDiagnostic.ErrorCode != "XPDY0050")
                     .WithLocation(locationId == null || locationId == Loc.NONE ? locator : locationId);
             }
         }

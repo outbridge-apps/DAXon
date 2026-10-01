@@ -89,7 +89,7 @@ namespace OutSmart.DAXon.Lib
             else if (loc is Instruction)
             {
                 string instructionName = GetInstructionName((Instruction)loc);
-                if (!"".Equals(instructionName))
+                if (instructionName != "")
                 {
                     nodeMessage = "at " + instructionName + ' ';
                 }

@@ -91,7 +91,7 @@ namespace OutSmart.DAXon.Lib
 
         protected IResultTarget CreateResult(URI absoluteURI)
         {
-            if ("file".Equals(absoluteURI.Scheme))
+            if (absoluteURI.Scheme == "file")
             {
                 return StandardResultDocumentResolver.MakeOutputFile(absoluteURI);
             }

@@ -81,7 +81,7 @@ namespace OutSmart.DAXon.Expressions
                 RoleDiagnostic role = roleSupplier();
                 string message = role.ComposeErrorMessage(requiredItemType, item, th);
                 string errorCode = role.ErrorCode;
-                if ("XPDY0050".Equals(errorCode))
+                if (errorCode == "XPDY0050")
                 {
 
                     // error in "treat as" assertion

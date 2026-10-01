@@ -441,7 +441,7 @@ namespace OutSmart.DAXon.XQuery
             string localName = pragmaName.GetLocalPart();
             if (uri.Equals(NamespaceUri.SAXON))
             {
-                if ("validate-type".Equals(localName))
+                if (localName == "validate-type")
                 {
                     if (!env.GetConfiguration().IsLicensedFeature(Configuration.LicenseFeature.ENTERPRISE_XQUERY))
                     {

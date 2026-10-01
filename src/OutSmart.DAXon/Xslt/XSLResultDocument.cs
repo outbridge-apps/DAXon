@@ -147,7 +147,7 @@ namespace OutSmart.DAXon.Xslt
                     {
                         async = false;
                     }
-                    else if (!"EE".Equals(GetConfiguration().EditionCode))
+                    else if (GetConfiguration().EditionCode != "EE")
                     {
                         IssueWarning("saxon:asynchronous - ignored when not running Saxon-EE", DAXonErrorCode.SXWN9013);
                         async = false;

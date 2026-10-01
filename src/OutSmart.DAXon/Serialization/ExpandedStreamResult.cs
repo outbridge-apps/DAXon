@@ -87,7 +87,7 @@ namespace OutSmart.DAXon.Serialization
             }
 
             string byteOrderMark = outputProperties.GetProperty(DAXonOutputKeys.BYTE_ORDER_MARK);
-            if ("no".Equals(byteOrderMark) && "UTF16".Equals(encoding))
+            if (byteOrderMark == "no" && encoding == "UTF16")
             {
 
                 // Java always writes a bom for UTF-16, so if the user doesn't want one, use utf16-be
@@ -177,7 +177,7 @@ namespace OutSmart.DAXon.Serialization
             string file = new Uri(uri.ToString()).LocalPath;
             try
             {
-                if ("file".Equals(uri.Scheme) && !(File.Exists(file) || Directory.Exists(file)))
+                if (uri.Scheme == "file" && !(File.Exists(file) || Directory.Exists(file)))
                 {
                     string directory = Path.GetDirectoryName(file);
                     if (directory != null && !(File.Exists(directory) || Directory.Exists(directory)))

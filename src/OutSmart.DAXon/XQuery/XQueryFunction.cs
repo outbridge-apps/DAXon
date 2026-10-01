@@ -466,11 +466,11 @@ namespace OutSmart.DAXon.XQuery
         // module.
         public virtual object GetProperty(string name)
         {
-            if ("name".Equals(name))
+            if (name == "name")
             {
                 return functionName.DisplayName;
             }
-            else if ("as".Equals(name))
+            else if (name == "as")
             {
                 return resultType.ToString();
             }

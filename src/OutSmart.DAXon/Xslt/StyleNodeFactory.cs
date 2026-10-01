@@ -234,7 +234,7 @@ namespace OutSmart.DAXon.Xslt
                 foreach (string s0 in attValue.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     string s = s0;
-                    if ("#default".Equals(s))
+                    if (s == "#default")
                     {
                         s = "";
                     }

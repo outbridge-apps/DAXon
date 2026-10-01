@@ -397,7 +397,7 @@ namespace OutSmart.DAXon.Expressions
                 string localPart = GetFunctionName().GetLocalPart();
                 @out.EmitAttribute("name", localPart);
                 TargetFunction.ExportAttributes(@out);
-                if (localPart.Equals("concat") && "JS".Equals(@out.GetOptions().target) && @out.GetOptions().targetVersion >= 2 && GetArity() == 1 && GetArg(0) is Block)
+                if (localPart.Equals("concat") && @out.GetOptions().target == "JS" && @out.GetOptions().targetVersion >= 2 && GetArity() == 1 && GetArg(0) is Block)
                 {
 
                     // We've reduced concat to a single sequence-valued argument; now we need to spread it out to multiple

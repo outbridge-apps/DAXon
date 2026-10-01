@@ -101,7 +101,7 @@ namespace OutSmart.DAXon.Functions
                     case "supports-namespace-axis":
                         return "yes";
                     case "supports-streaming":
-                        return YesOrNo("EE".Equals(edition) && config.IsLicensedFeature(Configuration.LicenseFeature.ENTERPRISE_XSLT) && !config.GetConfigurationProperty(Feature<string>.STREAMABILITY).Equals("off"));
+                        return YesOrNo(edition == "EE" && config.IsLicensedFeature(Configuration.LicenseFeature.ENTERPRISE_XSLT) && !config.GetConfigurationProperty(Feature<string>.STREAMABILITY).Equals("off"));
                     case "supports-dynamic-evaluation":
                         return YesOrNo(!config.GetBooleanProperty(Feature<bool>.DISABLE_XSL_EVALUATE));
                     case "supports-higher-order-functions":

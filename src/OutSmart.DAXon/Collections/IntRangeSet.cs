@@ -271,7 +271,7 @@ namespace OutSmart.DAXon.Collections
                 }
                 catch (Exception err)
                 {
-                    err.ToString();
+                    // ignored, as upstream does (it only printed the stack trace)
                 }
 
                 startPoints[i] = value;

@@ -392,7 +392,7 @@ namespace OutSmart.DAXon.Lib
                 IReceiver receiver = (IReceiver)result;
                 receiver.SetSystemId(result.GetSystemId());
                 receiver.SetPipelineConfiguration(pipe);
-                if (((IReceiver)result).HandlesAppend() && "no".Equals(props.GetProperty(DAXonOutputKeys.BUILD_TREE)))
+                if (((IReceiver)result).HandlesAppend() && props.GetProperty(DAXonOutputKeys.BUILD_TREE) == "no")
                 {
                     return receiver; // TODO: handle item-separator
                 }
@@ -427,7 +427,7 @@ namespace OutSmart.DAXon.Lib
         public virtual SequenceReceiver MakeSequenceNormalizer(IReceiver receiver, Properties properties)
         {
             string method = properties.GetProperty(DAXonOutputKeys.METHOD);
-            if ("json".Equals(method) || "adaptive".Equals(method))
+            if (method == "json" || method == "adaptive")
             {
                 return receiver is SequenceReceiver ? (SequenceReceiver)receiver : new TreeReceiver(receiver);
             }
@@ -436,7 +436,7 @@ namespace OutSmart.DAXon.Lib
                 PipelineConfiguration pipe = receiver.GetPipelineConfiguration();
                 SequenceReceiver result;
                 string separator = properties.GetProperty(DAXonOutputKeys.ITEM_SEPARATOR);
-                if (separator == null || "#absent".Equals(separator))
+                if (separator == null || separator == "#absent")
                 {
                     result = new SequenceNormalizerWithSpaceSeparator(receiver);
                 }
@@ -455,7 +455,7 @@ namespace OutSmart.DAXon.Lib
             IReceiver target;
             target = emitter;
             Properties props = @params.GetProperties();
-            if (!"no".Equals(props.GetProperty(DAXonOutputKeys.INDENT)))
+            if (props.GetProperty(DAXonOutputKeys.INDENT) != "no")
             {
                 target = NewHTMLIndenter(target, props);
             }
@@ -474,12 +474,12 @@ namespace OutSmart.DAXon.Lib
                 target = AddHtml5Component(target, props);
             }
 
-            if (!"no".Equals(props.GetProperty(DAXonOutputKeys.ESCAPE_URI_ATTRIBUTES)))
+            if (props.GetProperty(DAXonOutputKeys.ESCAPE_URI_ATTRIBUTES) != "no")
             {
                 target = NewHTMLURIEscaper(target, props);
             }
 
-            if (!"no".Equals(props.GetProperty(DAXonOutputKeys.INCLUDE_CONTENT_TYPE)))
+            if (props.GetProperty(DAXonOutputKeys.INCLUDE_CONTENT_TYPE) != "no")
             {
                 target = NewHTMLMetaTagAdjuster(target, props);
             }
@@ -549,7 +549,7 @@ namespace OutSmart.DAXon.Lib
         {
             IReceiver target = emitter;
             Properties props = @params.GetProperties();
-            if (!"no".Equals(props.GetProperty(DAXonOutputKeys.INDENT)))
+            if (props.GetProperty(DAXonOutputKeys.INDENT) != "no")
             {
                 target = NewXHTMLIndenter(target, props);
             }
@@ -568,12 +568,12 @@ namespace OutSmart.DAXon.Lib
                 target = AddHtml5Component(target, props);
             }
 
-            if (!"no".Equals(props.GetProperty(DAXonOutputKeys.ESCAPE_URI_ATTRIBUTES)))
+            if (props.GetProperty(DAXonOutputKeys.ESCAPE_URI_ATTRIBUTES) != "no")
             {
                 target = NewXHTMLURIEscaper(target, props);
             }
 
-            if (!"no".Equals(props.GetProperty(DAXonOutputKeys.INCLUDE_CONTENT_TYPE)))
+            if (props.GetProperty(DAXonOutputKeys.INCLUDE_CONTENT_TYPE) != "no")
             {
                 target = NewXHTMLMetaTagAdjuster(target, props);
             }
@@ -603,8 +603,8 @@ namespace OutSmart.DAXon.Lib
         {
             IReceiver target;
             Properties props = @params.GetProperties();
-            bool canonical = "yes".Equals(props.GetProperty(DAXonOutputKeys.CANONICAL));
-            if ("yes".Equals(props.GetProperty(DAXonOutputKeys.INDENT)) || canonical)
+            bool canonical = props.GetProperty(DAXonOutputKeys.CANONICAL) == "yes";
+            if (props.GetProperty(DAXonOutputKeys.INDENT) == "yes" || canonical)
             {
                 target = NewXMLIndenter(emitter, props);
             }
@@ -614,7 +614,7 @@ namespace OutSmart.DAXon.Lib
             }
 
             target = new NamespaceDifferencer(target, props);
-            if ("1.0".Equals(props.GetProperty(DAXonOutputKeys.VERSION)) && config.XMLVersion == Configuration.XML11)
+            if (props.GetProperty(DAXonOutputKeys.VERSION) == "1.0" && config.XMLVersion == Configuration.XML11)
             {
 
                 // Check result meets XML 1.0 constraints if configuration allows XML 1.1 input but
@@ -1005,11 +1005,11 @@ namespace OutSmart.DAXon.Lib
 
         protected static string CheckYesOrNo(string key, string value)
         {
-            if ("yes".Equals(value) || "true".Equals(value) || "1".Equals(value))
+            if (value == "yes" || value == "true" || value == "1")
             {
                 return "yes";
             }
-            else if ("no".Equals(value) || "false".Equals(value) || "0".Equals(value))
+            else if (value == "no" || value == "false" || value == "0")
             {
                 return "no";
             }
@@ -1021,7 +1021,7 @@ namespace OutSmart.DAXon.Lib
 
         private string CheckMethod(string key, string value)
         {
-            if (!"xml".Equals(value) && !"html".Equals(value) && !"xhtml".Equals(value) && !"text".Equals(value))
+            if (value != "xml" && value != "html" && value != "xhtml" && value != "text")
             {
                 string allowed;
                 if (DAXonOutputKeys.JSON_NODE_OUTPUT_METHOD.Equals(key))
@@ -1031,7 +1031,7 @@ namespace OutSmart.DAXon.Lib
                 else
                 {
                     allowed = "xml|html|xhtml|text|json|adaptive";
-                    if ("json".Equals(value) || "adaptive".Equals(value))
+                    if (value == "json" || value == "adaptive")
                     {
                         return value;
                     }
@@ -1154,7 +1154,7 @@ namespace OutSmart.DAXon.Lib
             while ((tok = tokenizer.Next()) != null)
             {
                 string s = tok.GetStringValue();
-                if ("*".Equals(s) || IsValidEQName(s) || NameChecker.IsValidNCName(s))
+                if (s == "*" || IsValidEQName(s) || NameChecker.IsValidNCName(s))
                 {
                     builder.Append(s);
                 }

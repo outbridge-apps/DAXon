@@ -190,7 +190,7 @@ namespace OutSmart.DAXon.Core
             // case-order / caseFirst : as in Java, force the base collator to ignore case differences
             // (setStrength(SECONDARY)) so the CaseFirstCollator wrapper decides the case order.
             string caseOrder = props.GetProperty("case-order");
-            if (caseOrder != null && !"#default".Equals(caseOrder))
+            if (caseOrder != null && caseOrder != "#default")
             {
                 comparer.Options = CompareOptions.IgnoreCase;
                 stringCollator = OutSmart.DAXon.Expressions.Sorting.CaseFirstCollator.MakeCaseOrderedCollator(uri, stringCollator, caseOrder);
@@ -198,7 +198,7 @@ namespace OutSmart.DAXon.Core
 
             // alphanumeric=yes|codepoint  (pure algorithm; byte-identical to Java)
             string alphanumeric = props.GetProperty("alphanumeric");
-            if (alphanumeric != null && !"no".Equals(alphanumeric))
+            if (alphanumeric != null && alphanumeric != "no")
             {
                 switch (alphanumeric)
                 {

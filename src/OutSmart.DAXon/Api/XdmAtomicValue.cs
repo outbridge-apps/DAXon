@@ -290,7 +290,7 @@ namespace OutSmart.DAXon.Api
             else if (av is StringValue)
             {
                 string s = Whitespace.Trim(av.UnicodeStringValue.Tidy()).ToString();
-                return "1".Equals(s) || "true".Equals(s);
+                return s == "1" || s == "true";
             }
             else
             {

@@ -331,7 +331,7 @@ namespace OutSmart.DAXon.Expressions
                 @out.EmitAttribute("onEmpty", resultWhenEmpty.GetBooleanValue() ? "1" : "0");
             }
 
-            if ("JS".Equals(@out.GetOptions().target) && @out.GetOptions().targetVersion >= 2)
+            if (@out.GetOptions().target == "JS" && @out.GetOptions().targetVersion >= 2)
             {
 
                 // for backwards compatibility, output a comp attribute

@@ -373,7 +373,7 @@ namespace OutSmart.DAXon.XQuery
                 }
                 catch (XPathException e)
                 {
-                    e.ToString();
+                    // ignored, as upstream does (it only printed the stack trace)
                 }
             }
 

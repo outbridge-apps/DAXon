@@ -84,7 +84,7 @@ namespace OutSmart.DAXon.Xslt
                         IssueWarning("saxon:threads - no multithreading takes place when compiling with trace enabled", DAXonErrorCode.SXWN9012);
                         threads = new StringLiteral("0");
                     }
-                    else if (!"EE".Equals(GetConfiguration().EditionCode))
+                    else if (GetConfiguration().EditionCode != "EE")
                     {
                         IssueWarning("saxon:threads - ignored when not running Saxon-EE", DAXonErrorCode.SXWN9013);
                         threads = new StringLiteral("0");

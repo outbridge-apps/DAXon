@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.XQuery
                 }
 
                 NextToken();
-                if ("encoding".Equals(t.currentTokenValue))
+                if (t.currentTokenValue == "encoding")
                 {
                     NextToken();
                     Expect(Token.STRING_LITERAL);
@@ -800,11 +800,11 @@ namespace OutSmart.DAXon.XQuery
             foundBoundarySpaceDeclaration = true;
             NextToken();
             Expect(Token.NAME);
-            if ("preserve".Equals(t.currentTokenValue))
+            if (t.currentTokenValue == "preserve")
             {
                 ((QueryModule)env).SetPreserveBoundarySpace(true);
             }
-            else if ("strip".Equals(t.currentTokenValue))
+            else if (t.currentTokenValue == "strip")
             {
                 ((QueryModule)env).SetPreserveBoundarySpace(false);
             }
@@ -826,7 +826,7 @@ namespace OutSmart.DAXon.XQuery
             foundOrderingDeclaration = true;
             NextToken();
             Expect(Token.NAME);
-            if (!"ordered".Equals(t.currentTokenValue) && !"unordered".Equals(t.currentTokenValue))
+            if (t.currentTokenValue != "ordered" && t.currentTokenValue != "unordered")
             {
                 Grumble("ordering mode must be 'ordered' or 'unordered'");
             }
@@ -844,11 +844,11 @@ namespace OutSmart.DAXon.XQuery
             foundCopyNamespaces = true;
             NextToken();
             Expect(Token.NAME);
-            if ("preserve".Equals(t.currentTokenValue))
+            if (t.currentTokenValue == "preserve")
             {
                 ((QueryModule)env).SetPreserveNamespaces(true);
             }
-            else if ("no-preserve".Equals(t.currentTokenValue))
+            else if (t.currentTokenValue == "no-preserve")
             {
                 ((QueryModule)env).SetPreserveNamespaces(false);
             }
@@ -861,11 +861,11 @@ namespace OutSmart.DAXon.XQuery
             Expect(Token.COMMA);
             NextToken();
             Expect(Token.NAME);
-            if ("inherit".Equals(t.currentTokenValue))
+            if (t.currentTokenValue == "inherit")
             {
                 ((QueryModule)env).SetInheritNamespaces(true);
             }
-            else if ("no-inherit".Equals(t.currentTokenValue))
+            else if (t.currentTokenValue == "no-inherit")
             {
                 ((QueryModule)env).SetInheritNamespaces(false);
             }
@@ -888,13 +888,13 @@ namespace OutSmart.DAXon.XQuery
             NextToken();
             Expect(Token.NAME);
             int val;
-            if ("preserve".Equals(t.currentTokenValue))
+            if (t.currentTokenValue == "preserve")
             {
                 val = Validation.PRESERVE; //            if (!env.getExecutable().isSchemaAware()) {
                 //                grumble("construction mode preserve is allowed only with a schema-aware query");
                 //            }
             }
-            else if ("strip".Equals(t.currentTokenValue))
+            else if (t.currentTokenValue == "strip")
             {
                 val = Validation.STRIP;
             }
@@ -1507,7 +1507,7 @@ namespace OutSmart.DAXon.XQuery
             foundDefaultFunctionNamespace = true;
             NextToken();
             Expect(Token.NAME);
-            if (!"namespace".Equals(t.currentTokenValue))
+            if (t.currentTokenValue != "namespace")
             {
                 Grumble("After 'declare default function', expected 'namespace'");
             }
@@ -1534,7 +1534,7 @@ namespace OutSmart.DAXon.XQuery
             foundDefaultElementNamespace = true;
             NextToken();
             Expect(Token.NAME);
-            if (!"namespace".Equals(t.currentTokenValue))
+            if (t.currentTokenValue != "namespace")
             {
                 Grumble("After 'declare default element', expected 'namespace'");
             }
@@ -1567,7 +1567,7 @@ namespace OutSmart.DAXon.XQuery
             Expect(Token.STRING_LITERAL);
             NamespaceUri uri = NamespaceUri.Of(UriLiteral(t.currentTokenValue));
             CheckProhibitedPrefixes(prefix, uri);
-            if ("xml".Equals(prefix))
+            if (prefix == "xml")
             {
 
                 // disallowed here even if bound to the correct @namespace - erratum XQ.E19
@@ -1604,7 +1604,7 @@ namespace OutSmart.DAXon.XQuery
                 uri = NamespaceUri.NULL;
             }
 
-            if ("xmlns".Equals(prefix))
+            if (prefix == "xmlns")
             {
                 Grumble("The namespace prefix 'xmlns' cannot be redeclared", "XQST0070");
             }
@@ -1688,7 +1688,7 @@ namespace OutSmart.DAXon.XQuery
             }
             else if (t.currentToken == Token.NAME)
             {
-                if ("external".Equals(t.currentTokenValue))
+                if (t.currentTokenValue == "external")
                 {
                     GlobalParam par = new GlobalParam();
                     par.SetPackageData(env.GetPackageData());
@@ -1799,7 +1799,7 @@ namespace OutSmart.DAXon.XQuery
                 req.DefaultValue = exp;
                 req.SetExternal(false);
             }
-            else if (t.currentToken == Token.NAME && "external".Equals(t.currentTokenValue))
+            else if (t.currentToken == Token.NAME && t.currentTokenValue == "external")
             {
                 req.SetAbsentFocus(false);
                 req.SetExternal(true);

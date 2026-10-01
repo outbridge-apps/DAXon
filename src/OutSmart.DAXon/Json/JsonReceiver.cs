@@ -123,7 +123,7 @@ namespace OutSmart.DAXon.Json
         {
             string local = elemName.GetLocalPart();
             string parent = stack.Count == 0 ? null : stack.Peek();
-            bool inMap = "map".Equals(parent) || stack.Count == 0;
+            bool inMap = parent == "map" || stack.Count == 0;
             stack.Push(local);
 
             if (!elemName.HasURI(NamespaceUri.FN))
@@ -188,7 +188,7 @@ namespace OutSmart.DAXon.Json
         internal void StartEntryDirect(string local, string key, string escapedAtt, string escapedKey)
         {
             string parent = stack.Count == 0 ? null : stack.Peek();
-            bool inMap = "map".Equals(parent) || stack.Count == 0;
+            bool inMap = parent == "map" || stack.Count == 0;
             stack.Push(local);
             if (key != null && !inMap)
             {
@@ -380,7 +380,7 @@ namespace OutSmart.DAXon.Json
 
         private void CheckParent(string child, string parent)
         {
-            if ("null".Equals(parent) || "string".Equals(parent) || "number".Equals(parent) || "boolean".Equals(parent))
+            if (parent == "null" || parent == "string" || parent == "number" || parent == "boolean")
             {
                 throw new XPathException("xml-to-json: " + Err.IndefiniteArticleFor(child, true) + " " + Err.Wrap(child, Err.ELEMENT) + " element cannot appear as a child of " + Err.Wrap(parent, Err.ELEMENT), ERR_INPUT);
             }

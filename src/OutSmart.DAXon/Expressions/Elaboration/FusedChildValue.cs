@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             if (sfc.TargetFunction is StringJoin && sfc.GetArity() == 2
                 && sfc.GetArg(1) is Literal sep
                 && sep.GroundedValue is StringValue sepValue
-                && " ".Equals(sepValue.UnicodeStringValue.ToString()))
+                && sepValue.UnicodeStringValue.ToString() == " ")
             {
                 core = sfc.GetArg(0);
             }

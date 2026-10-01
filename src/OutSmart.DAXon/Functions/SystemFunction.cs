@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.Functions
                 }
                 catch (IndexOutOfRangeException e)
                 {
-                    e.ToString();
+                    // ignored, as upstream does (it only printed the stack trace)
                 }
 
                 return roles;

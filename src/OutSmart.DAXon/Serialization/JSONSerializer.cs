@@ -53,17 +53,17 @@ namespace OutSmart.DAXon.Serialization
         public virtual void SetOutputProperties(Properties details)
         {
             this.outputProperties = details;
-            if ("yes".Equals(details.GetProperty(DAXonOutputKeys.ALLOW_DUPLICATE_NAMES)))
+            if (details.GetProperty(DAXonOutputKeys.ALLOW_DUPLICATE_NAMES) == "yes")
             {
                 allowDuplicateKeys = true;
             }
 
-            if ("yes".Equals(details.GetProperty(DAXonOutputKeys.INDENT)))
+            if (details.GetProperty(DAXonOutputKeys.INDENT) == "yes")
             {
                 isIndenting = true;
             }
 
-            if ("yes".Equals(details.GetProperty(DAXonOutputKeys.UNFAILING)))
+            if (details.GetProperty(DAXonOutputKeys.UNFAILING) == "yes")
             {
                 unfailing = true;
                 allowDuplicateKeys = true;

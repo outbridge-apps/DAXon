@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Xslt
                 }
             }
 
-            if ("".Equals(@namespace))
+            if (@namespace == "")
             {
                 CompileError("The zero-length string is not a valid namespace URI. " + "For a schema with no @namespace, omit the namespace attribute");
             }

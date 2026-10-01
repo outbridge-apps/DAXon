@@ -105,7 +105,7 @@ namespace OutSmart.DAXon.Functions
             }
             else if (keyword.Equals("recurse"))
             {
-                recurse = ("yes".Equals(value));
+                recurse = (value == "yes");
             }
             else if (keyword.Equals("validation"))
             {

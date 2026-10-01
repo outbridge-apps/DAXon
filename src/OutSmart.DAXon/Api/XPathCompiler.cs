@@ -69,24 +69,24 @@ namespace OutSmart.DAXon.Api
                 }
 
                 int version;
-                if ("1.0".Equals(value))
+                if (value == "1.0")
                 {
                     version = 20;
                     env.SetBackwardsCompatibilityMode(true);
                 }
-                else if ("2.0".Equals(value))
+                else if (value == "2.0")
                 {
                     version = 20;
                 }
-                else if ("3.0".Equals(value) || "3.05".Equals(value))
+                else if (value == "3.0" || value == "3.05")
                 {
                     version = 30;
                 }
-                else if ("3.1".Equals(value))
+                else if (value == "3.1")
                 {
                     version = 31;
                 }
-                else if ("4.0".Equals(value))
+                else if (value == "4.0")
                 {
                     version = 40;
                 }

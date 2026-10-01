@@ -144,11 +144,11 @@ namespace OutSmart.DAXon.Serialization
                 outputProperties = new Properties();
             }
 
-            undeclareNamespaces = "yes".Equals(outputProperties.GetProperty(DAXonOutputKeys.UNDECLARE_PREFIXES));
-            canonical = "yes".Equals(outputProperties.GetProperty(DAXonOutputKeys.CANONICAL));
-            unfailing = "yes".Equals(outputProperties.GetProperty(DAXonOutputKeys.UNFAILING));
+            undeclareNamespaces = outputProperties.GetProperty(DAXonOutputKeys.UNDECLARE_PREFIXES) == "yes";
+            canonical = outputProperties.GetProperty(DAXonOutputKeys.CANONICAL) == "yes";
+            unfailing = outputProperties.GetProperty(DAXonOutputKeys.UNFAILING) == "yes";
             internalSubset = outputProperties.GetProperty(DAXonOutputKeys.INTERNAL_DTD_SUBSET);
-            if ("yes".Equals(outputProperties.GetProperty(DAXonOutputKeys.SINGLE_QUOTES)))
+            if (outputProperties.GetProperty(DAXonOutputKeys.SINGLE_QUOTES) == "yes")
             {
                 delimiter = '\'';
                 attSpecials = specialInAttSingle;
@@ -178,7 +178,7 @@ namespace OutSmart.DAXon.Serialization
             declarationIsWritten = true;
             try
             {
-                indenting = "yes".Equals(outputProperties.GetProperty(DAXonOutputKeys.INDENT));
+                indenting = outputProperties.GetProperty(DAXonOutputKeys.INDENT) == "yes";
                 string byteOrderMark = outputProperties.GetProperty(DAXonOutputKeys.BYTE_ORDER_MARK);
                 string encoding = outputProperties.GetProperty(DAXonOutputKeys.ENCODING);
                 if (encoding == null || encoding.Equals("utf8", StringComparison.OrdinalIgnoreCase) || canonical)
@@ -186,7 +186,7 @@ namespace OutSmart.DAXon.Serialization
                     encoding = "UTF-8";
                 }
 
-                if ("yes".Equals(byteOrderMark) && !canonical && ("UTF-8".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16LE".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(encoding, StringComparison.OrdinalIgnoreCase)))
+                if (byteOrderMark == "yes" && !canonical && ("UTF-8".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16LE".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(encoding, StringComparison.OrdinalIgnoreCase)))
                 {
                     writer.WriteCodePoint(0xFEFF);
                 }
@@ -231,7 +231,7 @@ namespace OutSmart.DAXon.Serialization
                 }
 
                 string undeclare = outputProperties.GetProperty(DAXonOutputKeys.UNDECLARE_PREFIXES);
-                if ("yes".Equals(undeclare))
+                if (undeclare == "yes")
                 {
                     undeclareNamespaces = true;
                 }
@@ -249,7 +249,7 @@ namespace OutSmart.DAXon.Serialization
                 }
 
                 string standalone = outputProperties.GetProperty(DAXonOutputKeys.STANDALONE);
-                if ("omit".Equals(standalone))
+                if (standalone == "omit")
                 {
                     standalone = null;
                 }
@@ -264,7 +264,7 @@ namespace OutSmart.DAXon.Serialization
                 }
 
                 string systemId = outputProperties.GetProperty(DAXonOutputKeys.DOCTYPE_SYSTEM);
-                if (systemId != null && !"".Equals(systemId))
+                if (systemId != null && systemId != "")
                 {
                     requireWellFormed = true;
                 }
@@ -431,12 +431,12 @@ namespace OutSmart.DAXon.Serialization
                     string publicId = outputProperties.GetProperty(DAXonOutputKeys.DOCTYPE_PUBLIC);
 
                     // Treat "" as equivalent to absent. This goes beyond what the spec strictly allows.
-                    if ("".Equals(systemId))
+                    if (systemId == "")
                     {
                         systemId = null;
                     }
 
-                    if ("".Equals(publicId))
+                    if (publicId == "")
                     {
                         publicId = null;
                     }

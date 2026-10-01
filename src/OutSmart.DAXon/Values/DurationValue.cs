@@ -282,11 +282,11 @@ namespace OutSmart.DAXon.Values
             }
 
             string part = tok.NextToken();
-            if ("+".Equals(part))
+            if (part == "+")
             {
                 return BadDuration("+ sign not allowed in a duration", s);
             }
-            else if ("-".Equals(part))
+            else if (part == "-")
             {
                 negative = true;
                 if (tok.HasMoreTokens())
@@ -299,7 +299,7 @@ namespace OutSmart.DAXon.Values
                 }
             }
 
-            if (!"P".Equals(part))
+            if (part != "P")
             {
                 return BadDuration("missing 'P'", s);
             }
@@ -308,7 +308,7 @@ namespace OutSmart.DAXon.Values
             while (tok.HasMoreTokens())
             {
                 part = tok.NextToken();
-                if ("T".Equals(part))
+                if (part == "T")
                 {
                     state = 4;
                     if (!tok.HasMoreTokens())

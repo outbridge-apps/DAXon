@@ -253,12 +253,12 @@ namespace OutSmart.DAXon.Types
             }
 
             string n = containsWhitespace ? Whitespace.Trim(s).ToString() : s.ToString();
-            if ("INF".Equals(n))
+            if (n == "INF")
             {
                 result = double.PositiveInfinity;
                 return null;
             }
-            else if ("+INF".Equals(n))
+            else if (n == "+INF")
             {
                 // Allowed in XSD 1.1 but not in XSD 1.0
                 if (!PlusInfAllowed)
@@ -269,12 +269,12 @@ namespace OutSmart.DAXon.Types
                 result = double.PositiveInfinity;
                 return null;
             }
-            else if ("-INF".Equals(n))
+            else if (n == "-INF")
             {
                 result = double.NegativeInfinity;
                 return null;
             }
-            else if ("NaN".Equals(n))
+            else if (n == "NaN")
             {
                 result = double.NaN;
                 return null;

@@ -701,12 +701,12 @@ namespace OutSmart.DAXon.Xslt
 
         public static bool IsYes(string s)
         {
-            return "yes".Equals(s) || "true".Equals(s) || "1".Equals(s);
+            return s == "yes" || s == "true" || s == "1";
         }
 
         public static bool IsNo(string s)
         {
-            return "no".Equals(s) || "false".Equals(s) || "0".Equals(s);
+            return s == "no" || s == "false" || s == "0";
         }
 
         protected virtual bool ProcessStreamableAtt(string streamableAtt)
@@ -720,7 +720,7 @@ namespace OutSmart.DAXon.Xslt
                     return false;
                 }
 
-                if ("off".Equals(GetConfiguration().GetConfigurationProperty(Feature<string>.STREAMABILITY)))
+                if (GetConfiguration().GetConfigurationProperty(Feature<string>.STREAMABILITY) == "off")
                 {
                     IssueWarning("Request for streaming ignored: streaming is disabled in this Saxon configuration", DAXonErrorCode.SXST0068);
                     return false;
@@ -760,7 +760,7 @@ namespace OutSmart.DAXon.Xslt
                 foreach (string s0 in ext.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     string s = s0;
-                    if ("#default".Equals(s))
+                    if (s == "#default")
                     {
                         s = "";
                     }
@@ -789,7 +789,7 @@ namespace OutSmart.DAXon.Xslt
             string ext = GetAttributeValue(ns, "exclude-result-prefixes");
             if (ext != null)
             {
-                if ("#all".Equals(Whitespace.Trim(ext)))
+                if (Whitespace.Trim(ext) == "#all")
                 {
                     IList<NamespaceUri> excluded = new List<NamespaceUri>();
                     foreach (NamespaceBinding binding in AllNamespaces)
@@ -808,11 +808,11 @@ namespace OutSmart.DAXon.Xslt
                     foreach (string s0 in ext.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries))
                     {
                         string s = s0;
-                        if ("#default".Equals(s))
+                        if (s == "#default")
                         {
                             s = "";
                         }
-                        else if ("#all".Equals(s))
+                        else if (s == "#all")
                         {
                             CompileError("In exclude-result-prefixes, cannot mix #all with other values", "XTSE0020");
                         }
@@ -1194,7 +1194,7 @@ namespace OutSmart.DAXon.Xslt
                 {
                     string[] parts = NameChecker.GetQNameParts(typeAtt);
                     lname = parts[1];
-                    if ("".Equals(parts[0]))
+                    if (parts[0] == "")
                     {
 
                         // Name is unprefixed: use the default-xpath-namespace

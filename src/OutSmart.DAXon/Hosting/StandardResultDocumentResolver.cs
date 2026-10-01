@@ -107,7 +107,7 @@ namespace OutSmart.DAXon.Lib
 
         protected StreamResult CreateResult(URI absoluteURI)
         {
-            if ("file".Equals(absoluteURI.Scheme))
+            if (absoluteURI.Scheme == "file")
             {
                 return MakeOutputFile(absoluteURI);
             }

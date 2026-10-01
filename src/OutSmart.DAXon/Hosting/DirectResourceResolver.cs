@@ -42,7 +42,7 @@ namespace OutSmart.DAXon.Lib
             long maxInput = OutSmart.DAXon.Internal.Streams.InputSizeLimit.MaxFor(config);
 
             ProtocolRestrictor restrictor = config.GetProtocolRestrictor();
-            if (!"all".Equals(restrictor.ToString()))
+            if (restrictor.ToString() != "all")
             {
                 try
                 {

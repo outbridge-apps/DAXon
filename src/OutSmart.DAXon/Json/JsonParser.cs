@@ -141,7 +141,7 @@ namespace OutSmart.DAXon.Json
                         break;
                 }
 
-                if (validate && "retain".Equals(duplicates))
+                if (validate && duplicates == "retain")
                 {
                     Error("The options validate:true and duplicates:retain cannot be used together", ERR_OPTIONS);
                 }

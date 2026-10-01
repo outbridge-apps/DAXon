@@ -135,7 +135,7 @@ namespace OutSmart.DAXon.Resources
             {
                 inputDetails.resourceUri = resourceURI;
                 URI uri = new URI(resourceURI);
-                if ("file".Equals(uri.Scheme))
+                if (uri.Scheme == "file")
                 {
                     if (@params != null && @params.ContentType != null)
                     {
@@ -162,11 +162,11 @@ namespace OutSmart.DAXon.Resources
                         connection.Disconnect();
                     }
 
-                    foreach (string param in inputDetails.contentType.Replace(" ", "").SplitRegex(";"))
+                    foreach (string param in inputDetails.contentType.Replace(" ", "").Split(';'))
                     {
                         if (param.StartsWith("charset=", StringComparison.Ordinal))
                         {
-                            inputDetails.encoding = param.SplitRegex("=", 2)[1];
+                            inputDetails.encoding = param.Split(new[] { '=' }, 2)[1];
                         }
                         else
                         {
@@ -178,7 +178,7 @@ namespace OutSmart.DAXon.Resources
                 if (inputDetails.contentType == null || config.GetResourceFactoryForMediaType(inputDetails.contentType) == null)
                 {
                     System.IO.Stream stream;
-                    if ("file".Equals(uri.Scheme))
+                    if (uri.Scheme == "file")
                     {
                         string file = new Uri(uri.ToString()).LocalPath;
                         stream = new FileStream(file, FileMode.Open, FileAccess.Read);

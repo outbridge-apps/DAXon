@@ -179,19 +179,19 @@ namespace OutSmart.DAXon.Functions
         private int RequireDSep(IList<string> tokens, int i, string input)
         {
             bool found = false;
-            if (" ".Equals(tokens[i]))
+            if (tokens[i] == " ")
             {
                 i++;
                 found = true;
             }
 
-            if ("-".Equals(tokens[i]))
+            if (tokens[i] == "-")
             {
                 i++;
                 found = true;
             }
 
-            if (" ".Equals(tokens[i]))
+            if (tokens[i] == " ")
             {
                 i++;
                 found = true;
@@ -277,12 +277,12 @@ namespace OutSmart.DAXon.Functions
             if (currentToken.MatchesRegex("[A-Za-z]+") && IsDayName(currentToken))
             {
                 currentToken = tokens[++i];
-                if (",".Equals(currentToken))
+                if (currentToken == ",")
                 {
                     currentToken = tokens[++i];
                 }
 
-                if (!" ".Equals(currentToken))
+                if (currentToken != " ")
                 {
                     BadDate("Space missing after day name", input);
                 }
@@ -307,7 +307,7 @@ namespace OutSmart.DAXon.Functions
 
                 day = (byte)int.Parse(currentToken);
                 currentToken = tokens[++i];
-                if (!" ".Equals(currentToken))
+                if (currentToken != " ")
                 {
                     BadDate("Space missing after day number", input);
                 }
@@ -315,7 +315,7 @@ namespace OutSmart.DAXon.Functions
                 /* Now expect time string */
                 i = ParseTime(tokens, ++i, timeValue, input);
                 currentToken = tokens[++i];
-                if (!" ".Equals(currentToken))
+                if (currentToken != " ")
                 {
                     BadDate("Space missing after time string", input);
                 }
@@ -358,7 +358,7 @@ namespace OutSmart.DAXon.Functions
                 }
 
                 currentToken = tokens[++i];
-                if (!" ".Equals(currentToken))
+                if (currentToken != " ")
                 {
                     BadDate("Space missing after year number", input);
                 }
@@ -443,7 +443,7 @@ namespace OutSmart.DAXon.Functions
 
             hour = (byte)int.Parse(currentToken.ToString());
             currentToken = new StringBuilder(tokens[++i]);
-            if (!":".Equals(currentToken.ToString()))
+            if (currentToken.ToString() != ":")
             {
                 BadDate("Separator ':' missing after hour", input);
             }
@@ -468,7 +468,7 @@ namespace OutSmart.DAXon.Functions
                 n = i - 1;
                 finished = true;
             }
-            else if (":".Equals(currentToken.ToString()))
+            else if (currentToken.ToString() == ":")
             {
                 currentToken = new StringBuilder(tokens[++i]);
                 if (!currentToken.ToString().MatchesRegex("[0-9]+"))
@@ -489,7 +489,7 @@ namespace OutSmart.DAXon.Functions
                     n = i - 1;
                     finished = true;
                 }
-                else if (".".Equals(currentToken.ToString()))
+                else if (currentToken.ToString() == ".")
                 {
                     currentToken = new StringBuilder(tokens[++i]);
                     if (!currentToken.ToString().MatchesRegex("[0-9]+"))
@@ -514,7 +514,7 @@ namespace OutSmart.DAXon.Functions
 
             if (!finished)
             {
-                if (" ".Equals(currentToken.ToString()))
+                if (currentToken.ToString() == " ")
                 {
                     currentToken = new StringBuilder(tokens[++i]);
                     if (currentToken.ToString().MatchesRegex("[0-9]+"))
@@ -538,7 +538,7 @@ namespace OutSmart.DAXon.Functions
                         n = i;
                         finished = true;
                     }
-                    else if ("+".Equals(currentToken.ToString()) | "-".Equals(currentToken.ToString()))
+                    else if (currentToken.ToString() == "+" | currentToken.ToString() == "-")
                     {
                         string sign = currentToken.ToString();
                         int tzOffsetHours = 0;
@@ -564,7 +564,7 @@ namespace OutSmart.DAXon.Functions
                         {
                             tzOffsetHours = int.Parse(currentToken.ToString());
                             currentToken = new StringBuilder(tokens[++i]);
-                            if (":".Equals(currentToken.ToString()))
+                            if (currentToken.ToString() == ":")
                             {
                                 currentToken = new StringBuilder(tokens[++i]);
                                 if (currentToken.ToString().MatchesRegex("[0-9]+"))
@@ -599,7 +599,7 @@ namespace OutSmart.DAXon.Functions
                             n = i - 1;
                             finished = true;
                         }
-                        else if (" ".Equals(currentToken.ToString()))
+                        else if (currentToken.ToString() == " ")
                         {
                             currentToken = new StringBuilder(tokens[++i]);
                             if (currentToken.ToString().MatchesRegex("[0-9]+"))
@@ -610,10 +610,10 @@ namespace OutSmart.DAXon.Functions
                             }
                         }
 
-                        if (!finished && "(".Equals(currentToken.ToString()))
+                        if (!finished && currentToken.ToString() == "(")
                         {
                             currentToken = new StringBuilder(tokens[++i]);
-                            if (" ".Equals(currentToken.ToString()))
+                            if (currentToken.ToString() == " ")
                             {
                                 currentToken = new StringBuilder(tokens[++i]);
                             }
@@ -632,12 +632,12 @@ namespace OutSmart.DAXon.Functions
                                 currentToken = new StringBuilder(tokens[++i]);
                             }
 
-                            if (" ".Equals(currentToken.ToString()))
+                            if (currentToken.ToString() == " ")
                             {
                                 currentToken = new StringBuilder(tokens[++i]);
                             }
 
-                            if (!")".Equals(currentToken.ToString()))
+                            if (currentToken.ToString() != ")")
                             {
                                 BadDate("Expected ')' after timezone name", input);
                             }

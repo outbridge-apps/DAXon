@@ -130,7 +130,7 @@ namespace OutSmart.DAXon.Serialization
                 else if (name.Equals("html") && uri.Equals(NamespaceUri.XHTML))
                 {
                     string version = this.properties.GetProperties().GetProperty(DAXonOutputKeys.STYLESHEET_VERSION);
-                    if ("10".Equals(version))
+                    if (version == "10")
                     {
                         SwitchToMethod("xml");
                     }

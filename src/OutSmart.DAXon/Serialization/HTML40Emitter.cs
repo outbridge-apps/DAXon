@@ -87,12 +87,12 @@ namespace OutSmart.DAXon.Serialization
                 string publicId = outputProperties.GetProperty(DAXonOutputKeys.DOCTYPE_PUBLIC);
 
                 // Treat "" as equivalent to absent. This goes beyond what the spec strictly allows.
-                if ("".Equals(systemId))
+                if (systemId == "")
                 {
                     systemId = null;
                 }
 
-                if ("".Equals(publicId))
+                if (publicId == "")
                 {
                     publicId = null;
                 }

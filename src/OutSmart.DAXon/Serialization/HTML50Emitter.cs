@@ -82,7 +82,7 @@ namespace OutSmart.DAXon.Serialization
                     if (name.GetLocalPart().Equals("html", StringComparison.OrdinalIgnoreCase))
                     {
                         writer.WriteAscii(DOCTYPE);
-                        if ("yes".Equals(outputProperties.GetProperty("indent", "yes")))
+                        if (outputProperties.GetProperty("indent", "yes") == "yes")
                         {
                             writer.WriteAscii(NEWLINE);
                         }
@@ -115,12 +115,12 @@ namespace OutSmart.DAXon.Serialization
                 string publicId = outputProperties.GetProperty(DAXonOutputKeys.DOCTYPE_PUBLIC);
 
                 // Treat "" as equivalent to absent. This goes beyond what the spec strictly allows.
-                if ("".Equals(systemId))
+                if (systemId == "")
                 {
                     systemId = null;
                 }
 
-                if ("".Equals(publicId))
+                if (publicId == "")
                 {
                     publicId = null;
                 }

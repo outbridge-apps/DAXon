@@ -192,7 +192,7 @@ namespace OutSmart.DAXon.Transformation
             {
                 if (level == 0)
                 {
-                    if (!"configuration".Equals(localName))
+                    if (localName != "configuration")
                     {
                         Error(localName, null, null, "configuration");
                     }
@@ -260,39 +260,39 @@ namespace OutSmart.DAXon.Transformation
                 if (level == 1)
                 {
                     section = localName;
-                    if ("global".Equals(localName))
+                    if (localName == "global")
                     {
                         ReadGlobalElement(atts);
                     }
-                    else if ("serialization".Equals(localName))
+                    else if (localName == "serialization")
                     {
                         ReadSerializationElement(atts, namespaces);
                     }
-                    else if ("xquery".Equals(localName))
+                    else if (localName == "xquery")
                     {
                         ReadXQueryElement(atts);
                     }
-                    else if ("xslt".Equals(localName))
+                    else if (localName == "xslt")
                     {
                         ReadXsltElement(atts);
                     }
-                    else if ("xsltPackages".Equals(localName))
+                    else if (localName == "xsltPackages")
                     {
                     }
-                    else if ("xsd".Equals(localName))
+                    else if (localName == "xsd")
                     {
                         ReadXsdElement(atts);
                     }
-                    else if ("resources".Equals(localName))
+                    else if (localName == "resources")
                     {
 
                         // Initialize the list of catalog files
                         catalogFiles = new List<string>();
                     }
-                    else if ("collations".Equals(localName))
+                    else if (localName == "collations")
                     {
                     }
-                    else if ("localizations".Equals(localName))
+                    else if (localName == "localizations")
                     {
                         ReadLocalizationsElement(atts);
                     }
@@ -307,7 +307,7 @@ namespace OutSmart.DAXon.Transformation
                     switch (section)
                     {
                         case "resources":
-                            if ("fileExtension".Equals(localName))
+                            if (localName == "fileExtension")
                             {
                                 ReadFileExtension(atts);
                             }
@@ -316,7 +316,7 @@ namespace OutSmart.DAXon.Transformation
                             // no action until endElement()
                             break;
                         case "collations":
-                            if (!"collation".Equals(localName))
+                            if (localName != "collation")
                             {
                                 Error(localName, null, null, "collation");
                             }
@@ -327,7 +327,7 @@ namespace OutSmart.DAXon.Transformation
 
                             break;
                         case "localizations":
-                            if (!"localization".Equals(localName))
+                            if (localName != "localization")
                             {
                                 Error(localName, null, null, "localization");
                             }
@@ -338,7 +338,7 @@ namespace OutSmart.DAXon.Transformation
 
                             break;
                         case "xslt":
-                            if ("extensionElement".Equals(localName))
+                            if (localName == "extensionElement")
                             {
                                 ReadExtensionElement(atts);
                             }
@@ -349,7 +349,7 @@ namespace OutSmart.DAXon.Transformation
 
                             break;
                         case "xsltPackages":
-                            if ("package".Equals(localName))
+                            if (localName == "package")
                             {
                                 ReadXsltPackage(atts);
                             }
@@ -359,9 +359,9 @@ namespace OutSmart.DAXon.Transformation
                 }
                 else if (level == 3)
                 {
-                    if ("package".Equals(subsection))
+                    if (subsection == "package")
                     {
-                        if ("withParam".Equals(localName))
+                        if (localName == "withParam")
                         {
                             ReadWithParam(atts, namespaces);
                         }
@@ -562,7 +562,7 @@ namespace OutSmart.DAXon.Transformation
                         continue;
                     }
 
-                    if ("uri".Equals(name))
+                    if (name == "uri")
                     {
                         collationUri = value;
                     }
@@ -600,12 +600,12 @@ namespace OutSmart.DAXon.Transformation
                 string value = a.Value;
                 if (uri.IsEmpty())
                 {
-                    if ("defaultLanguage".Equals(name) && !(value.Length == 0))
+                    if (name == "defaultLanguage" && !(value.Length == 0))
                     {
                         targetConfig.SetConfigurationProperty(FeatureKeys.DEFAULT_LANGUAGE, value);
                     }
 
-                    if ("defaultCountry".Equals(name) && !(value.Length == 0))
+                    if (name == "defaultCountry" && !(value.Length == 0))
                     {
                         targetConfig.SetConfigurationProperty(FeatureKeys.DEFAULT_COUNTRY, value);
                     }
@@ -624,7 +624,7 @@ namespace OutSmart.DAXon.Transformation
                 string value = a.Value;
                 if (uri.IsEmpty())
                 {
-                    if ("lang".Equals(name) && !(value.Length == 0))
+                    if (name == "lang" && !(value.Length == 0))
                     {
                         lang = value;
                     }
@@ -994,12 +994,12 @@ namespace OutSmart.DAXon.Transformation
         public virtual void EndElement()
         {
             string localName = localNameStack.Pop();
-            if (level == 3 && "resources".Equals(section))
+            if (level == 3 && section == "resources")
             {
                 string content = buffer.ToString();
                 if (!(content.Length == 0))
                 {
-                    if ("externalObjectModel".Equals(localName))
+                    if (localName == "externalObjectModel")
                     {
                         try
                         {
@@ -1015,7 +1015,7 @@ namespace OutSmart.DAXon.Transformation
                             ErrorClass("externalObjectModel", null, content, typeof(IExternalObjectModel), e);
                         }
                     }
-                    else if ("extensionFunction".Equals(localName))
+                    else if (localName == "extensionFunction")
                     {
                         try
                         {
@@ -1035,7 +1035,7 @@ namespace OutSmart.DAXon.Transformation
                             ErrorClass("extensionFunction", null, content, typeof(ExtensionFunctionDefinition), e);
                         }
                     }
-                    else if ("schemaDocument".Equals(localName))
+                    else if (localName == "schemaDocument")
                     {
                         try
                         {
@@ -1047,7 +1047,7 @@ namespace OutSmart.DAXon.Transformation
                             errors.Add(new XmlProcessingException(e));
                         }
                     }
-                    else if ("schemaComponentModel".Equals(localName))
+                    else if (localName == "schemaComponentModel")
                     {
                         try
                         {
@@ -1059,12 +1059,12 @@ namespace OutSmart.DAXon.Transformation
                             errors.Add(new XmlProcessingException(e));
                         }
                     }
-                    else if ("catalogFile".Equals(localName))
+                    else if (localName == "catalogFile")
                     {
                         URI baseURI = URI.Create(systemId);
                         catalogFiles.Add(baseURI.Resolve(content).ToString());
                     }
-                    else if ("fileExtension".Equals(localName))
+                    else if (localName == "fileExtension")
                     {
                     }
                     else
@@ -1074,7 +1074,7 @@ namespace OutSmart.DAXon.Transformation
                 }
             }
 
-            if (level == 2 && "resources".Equals(localName) && catalogFiles.Count != 0 && targetConfig.GetResourceResolver() is CatalogResourceResolver)
+            if (level == 2 && localName == "resources" && catalogFiles.Count != 0 && targetConfig.GetResourceResolver() is CatalogResourceResolver)
             {
                 ((CatalogResourceResolver)targetConfig.GetResourceResolver()).SetFeature((ResolverFeature.CATALOG_FILES).ToString(), catalogFiles);
             }

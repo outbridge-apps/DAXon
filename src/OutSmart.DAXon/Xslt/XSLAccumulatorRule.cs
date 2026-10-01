@@ -58,11 +58,11 @@ namespace OutSmart.DAXon.Xslt
                             break;
                         case "phase":
                             string phaseAtt = Whitespace.Trim(value);
-                            if ("start".Equals(phaseAtt))
+                            if (phaseAtt == "start")
                             {
                                 postDescent = false;
                             }
-                            else if ("end".Equals(phaseAtt))
+                            else if (phaseAtt == "end")
                             {
                                 postDescent = true;
                             }

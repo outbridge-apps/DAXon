@@ -100,7 +100,7 @@ namespace OutSmart.DAXon.Xslt
                     foreach (string s in tokens)
                     {
                         StructuredQName mname;
-                        if ("#default".Equals(s))
+                        if (s == "#default")
                         {
                             mname = DefaultMode;
                             if (mname == null)
@@ -108,11 +108,11 @@ namespace OutSmart.DAXon.Xslt
                                 mname = Mode.UNNAMED_MODE_NAME;
                             }
                         }
-                        else if ("#unnamed".Equals(s))
+                        else if (s == "#unnamed")
                         {
                             mname = Mode.UNNAMED_MODE_NAME;
                         }
-                        else if ("#all".Equals(s))
+                        else if (s == "#all")
                         {
                             allModes = true;
                             mname = Mode.OMNI_MODE_NAME;
@@ -1114,7 +1114,7 @@ namespace OutSmart.DAXon.Xslt
                     if (subPatterns.Count == 1)
                     {
                         string typed = mode.ActivePart.GetPropertyValue("typed");
-                        if ("strict".Equals(typed) || "lax".Equals(typed))
+                        if (typed == "strict" || typed == "lax")
                         {
                             Patterns.Pattern localPattern2;
                             try
@@ -1145,7 +1145,7 @@ namespace OutSmart.DAXon.Xslt
                         {
                             Patterns.Pattern localSubPattern1 = (Patterns.Pattern)subPattern.Copy(new RebindingMap());
                             string typed = mode.ActivePart.GetPropertyValue("typed");
-                            if ("strict".Equals(typed) || "lax".Equals(typed))
+                            if (typed == "strict" || typed == "lax")
                             {
                                 Patterns.Pattern localSubPattern2;
                                 try

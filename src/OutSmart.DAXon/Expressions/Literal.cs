@@ -657,7 +657,7 @@ namespace OutSmart.DAXon.Expressions
       */
         public static void ExportAtomicValue(AtomicValue value, ExpressionPresenter @out)
         {
-            if ("JS".Equals(@out.GetOptions().target))
+            if (@out.GetOptions().target == "JS")
             {
                 value.CheckValidInJavascript();
             }

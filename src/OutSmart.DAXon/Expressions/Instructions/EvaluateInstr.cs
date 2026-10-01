@@ -398,11 +398,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
                     string schemaAwareAttr = Whitespace.Trim(schemaAwareEval.Eval(context));
                     bool isSchemaAware;
-                    if ("yes".Equals(schemaAwareAttr) || "true".Equals(schemaAwareAttr) || "1".Equals(schemaAwareAttr))
+                    if (schemaAwareAttr == "yes" || schemaAwareAttr == "true" || schemaAwareAttr == "1")
                     {
                         isSchemaAware = true;
                     }
-                    else if ("no".Equals(schemaAwareAttr) || "false".Equals(schemaAwareAttr) || "0".Equals(schemaAwareAttr))
+                    else if (schemaAwareAttr == "no" || schemaAwareAttr == "false" || schemaAwareAttr == "0")
                     {
                         isSchemaAware = false;
                     }

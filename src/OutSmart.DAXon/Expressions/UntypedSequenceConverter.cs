@@ -242,7 +242,7 @@ namespace OutSmart.DAXon.Expressions
                 if (expr.RoleSupplier != null)
                 {
                     string errorCode = expr.RoleSupplier().ErrorCode;
-                    mapper.SetErrorCode("XPTY0004".Equals(errorCode) ? "FORG0001" : errorCode);
+                    mapper.SetErrorCode(errorCode == "XPTY0004" ? "FORG0001" : errorCode);
                 }
 
                 IPullEvaluator baseEval = expr.BaseExpression.MakeElaborator().ElaborateForPull();

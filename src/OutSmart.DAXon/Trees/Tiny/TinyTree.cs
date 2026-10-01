@@ -796,7 +796,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         {
             for (int i = 0; i < numberOfAttributes; i++)
             {
-                if ((attCode[i] & NamePool.FP_MASK) == StandardNames.XML_SPACE && "preserve".Equals(attValue[i].ToString()))
+                if ((attCode[i] & NamePool.FP_MASK) == StandardNames.XML_SPACE && attValue[i].ToString() == "preserve")
                 {
                     return true;
                 }

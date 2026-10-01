@@ -173,7 +173,7 @@ namespace OutSmart.DAXon.Expressions
                     RoleDiagnostic role = roleSupplier();
                     string message = role.ComposeErrorMessage(requiredItemType, item, th);
                     string errorCode = role.ErrorCode;
-                    XPathException te = new XPathException(message, errorCode).WithFailingExpression(baseExpr).WithLocation(baseExpr.GetLocation()).AsTypeErrorIf(!"XPDY0050".Equals(errorCode));
+                    XPathException te = new XPathException(message, errorCode).WithFailingExpression(baseExpr).WithLocation(baseExpr.GetLocation()).AsTypeErrorIf(errorCode != "XPDY0050");
                     throw new UncheckedXPathException(te);
                 }
             };
@@ -200,7 +200,7 @@ namespace OutSmart.DAXon.Expressions
                 RoleDiagnostic role = roleSupplier();
                 string message = role.ComposeErrorMessage(requiredItemType, item, th);
                 string errorCode = role.ErrorCode;
-                if ("XPDY0050".Equals(errorCode))
+                if (errorCode == "XPDY0050")
                 {
 
                     // error in "treat as" assertion

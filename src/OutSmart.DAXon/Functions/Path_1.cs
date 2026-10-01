@@ -73,7 +73,7 @@ namespace OutSmart.DAXon.Functions
                     case Types.Type.ATTRIBUTE:
                         fsb2.Append("/@");
                         string attURI = n.GetNamespaceUri().ToString();
-                        if (!"".Equals(attURI))
+                        if (attURI != "")
                         {
                             fsb2.Append("Q{").Append(attURI).Append('}');
                         }

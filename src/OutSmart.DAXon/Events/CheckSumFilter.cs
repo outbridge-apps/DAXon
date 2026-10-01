@@ -111,7 +111,7 @@ namespace OutSmart.DAXon.Events
             if (rootElement)
             {
                 rootElement = false;
-                bool scm_schema = elemName.GetNamespaceUri() == NamespaceUri.Of(NamespaceConstant.SCM) && "schema".Equals(elemName.GetLocalPart());
+                bool scm_schema = elemName.GetNamespaceUri() == NamespaceUri.Of(NamespaceConstant.SCM) && elemName.GetLocalPart() == "schema";
 
                 // A digest is required for version 12.5+
                 string version = attributes.GetValue("saxonVersion");
@@ -261,7 +261,7 @@ namespace OutSmart.DAXon.Events
                 return false;
             }
 
-            return checksumCorrect || "skip".Equals(Environment.GetEnvironmentVariable("saxon-checksum"));
+            return checksumCorrect || Environment.GetEnvironmentVariable("saxon-checksum") == "skip";
         }
 
         //

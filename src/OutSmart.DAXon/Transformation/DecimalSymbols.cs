@@ -337,12 +337,12 @@ namespace OutSmart.DAXon.Transformation
                 }
             }
 
-            if (!"Infinity".Equals(Infinity))
+            if (Infinity != "Infinity")
             {
                 @out.EmitAttribute("infinity", Infinity);
             }
 
-            if (!"NaN".Equals(NaN))
+            if (NaN != "NaN")
             {
                 @out.EmitAttribute("NaN", NaN);
             }

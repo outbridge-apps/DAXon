@@ -100,7 +100,7 @@ namespace OutSmart.DAXon.Events
             {
                 return NamespaceUri.NULL;
             }
-            else if ("xml".Equals(prefix))
+            else if (prefix == "xml")
             {
                 return NamespaceUri.XML;
             }

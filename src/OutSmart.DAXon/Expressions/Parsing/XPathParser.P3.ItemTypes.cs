@@ -78,7 +78,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
             if (builtInNamespace)
             {
                 Types.ItemType t = Types.Type.GetBuiltInItemType(uri, local);
-                if (t == null && "numeric".Equals(local))
+                if (t == null && local == "numeric")
                 {
                     // xs:numeric is the built-in union double|float|decimal. NumericType registers itself in
                     // BuiltInType only when GetInstance() is first called (a deliberate dodge of a static-init

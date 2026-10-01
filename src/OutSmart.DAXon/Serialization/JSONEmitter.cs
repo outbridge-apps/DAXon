@@ -53,17 +53,17 @@ namespace OutSmart.DAXon.Serialization
             get => outputProperties; set
             {
                 this.outputProperties = value;
-                if ("yes".Equals(value.GetProperty(DAXonOutputKeys.INDENT)))
+                if (value.GetProperty(DAXonOutputKeys.INDENT) == "yes")
                 {
                     isIndenting = true;
                 }
 
-                if ("yes".Equals(value.GetProperty(DAXonOutputKeys.UNFAILING)))
+                if (value.GetProperty(DAXonOutputKeys.UNFAILING) == "yes")
                 {
                     unfailing = true;
                 }
 
-                if ("no".Equals(value.GetProperty(DAXonOutputKeys.ESCAPE_SOLIDUS)))
+                if (value.GetProperty(DAXonOutputKeys.ESCAPE_SOLIDUS) == "no")
                 {
                     escapeSolidus = false;
                 }

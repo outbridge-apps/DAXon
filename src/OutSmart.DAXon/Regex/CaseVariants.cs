@@ -88,7 +88,7 @@ namespace OutSmart.DAXon.Regex
                 string code = item.GetAttributeValue(NamespaceUri.NULL, "n");
                 int icode = Convert.ToInt32(code, 16);
                 string variants = item.GetAttributeValue(NamespaceUri.NULL, "v");
-                string[] vhex = variants.SplitRegex(",");
+                string[] vhex = variants.Split(',');
                 int[] vint = new int[vhex.Length];
                 for (int i = 0; i < vhex.Length; i++)
                 {

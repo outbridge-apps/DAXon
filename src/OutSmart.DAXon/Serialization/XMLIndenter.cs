@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Serialization
         public void SetOutputProperties(Properties props)
         {
             string omit = props.GetProperty(DAXonOutputKeys.OMIT_XML_DECLARATION);
-            afterEndTag = omit == null || !"yes".Equals(Whitespace.Trim(omit)) || props.GetProperty(DAXonOutputKeys.DOCTYPE_SYSTEM) != null;
+            afterEndTag = omit == null || Whitespace.Trim(omit) != "yes" || props.GetProperty(DAXonOutputKeys.DOCTYPE_SYSTEM) != null;
             string s = props.GetProperty(DAXonOutputKeys.SUPPRESS_INDENTATION);
             if (s == null)
             {

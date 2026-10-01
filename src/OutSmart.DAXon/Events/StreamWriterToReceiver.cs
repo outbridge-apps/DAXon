@@ -303,12 +303,12 @@ namespace OutSmart.DAXon.Events
             pendingAttribute = new Triple();
             // xmlns declarations arrive through the attribute API: xmlns:p="uri" (prefix "xmlns")
             // or xmlns="uri" (local name "xmlns", no prefix).
-            if ("xmlns".Equals(prefix) || NamespaceUri.XMLNS.ToString().Equals(ns))
+            if (prefix == "xmlns" || NamespaceUri.XMLNS.ToString().Equals(ns))
             {
                 pendingAttributeIsNamespaceDecl = true;
-                pendingAttribute.prefix = "xmlns".Equals(prefix) ? localName : "";
+                pendingAttribute.prefix = prefix == "xmlns" ? localName : "";
             }
-            else if (string.IsNullOrEmpty(prefix) && "xmlns".Equals(localName) && string.IsNullOrEmpty(ns))
+            else if (string.IsNullOrEmpty(prefix) && localName == "xmlns" && string.IsNullOrEmpty(ns))
             {
                 pendingAttributeIsNamespaceDecl = true;
                 pendingAttribute.prefix = "";

@@ -243,7 +243,7 @@ namespace OutSmart.DAXon.Transformation
                 flags += "s";
             }
 
-            if (!"".Equals(flags))
+            if (flags != "")
             {
                 @out.EmitAttribute("flags", flags);
             }

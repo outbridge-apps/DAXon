@@ -148,7 +148,7 @@ namespace OutSmart.DAXon.Values
                 return BadTime("too short", s);
             }
 
-            if (!":".Equals(tok.NextToken()))
+            if (tok.NextToken() != ":")
             {
                 return BadTime("wrong delimiter after hour", s);
             }
@@ -186,7 +186,7 @@ namespace OutSmart.DAXon.Values
                 return BadTime("too short", s);
             }
 
-            if (!":".Equals(tok.NextToken()))
+            if (tok.NextToken() != ":")
             {
                 return BadTime("wrong delimiter after minute", s);
             }
@@ -253,7 +253,7 @@ namespace OutSmart.DAXon.Values
                 }
 
                 string delim = tok.NextToken();
-                if (".".Equals(delim))
+                if (delim == ".")
                 {
                     if (state != 0)
                     {
@@ -286,7 +286,7 @@ namespace OutSmart.DAXon.Values
 
                     state = 1;
                 }
-                else if ("Z".Equals(delim))
+                else if (delim == "Z")
                 {
                     if (state > 1)
                     {
@@ -296,7 +296,7 @@ namespace OutSmart.DAXon.Values
                     tz = 0;
                     state = 9; // we've finished
                 }
-                else if ("+".Equals(delim) || "-".Equals(delim))
+                else if (delim == "+" || delim == "-")
                 {
                     if (state > 1)
                     {
@@ -327,12 +327,12 @@ namespace OutSmart.DAXon.Values
                         return BadTime("timezone hour is out of range", s);
                     }
 
-                    if ("-".Equals(delim))
+                    if (delim == "-")
                     {
                         negativeTz = true;
                     }
                 }
-                else if (":".Equals(delim))
+                else if (delim == ":")
                 {
                     if (state != 2)
                     {

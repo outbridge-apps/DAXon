@@ -282,11 +282,11 @@ namespace OutSmart.DAXon.Xslt
                 {
                     string trimmed = Whitespace.Trim(attValue);
                     string normalizedAtt;
-                    if ("true".Equals(trimmed) || "1".Equals(trimmed))
+                    if (trimmed == "true" || trimmed == "1")
                     {
                         normalizedAtt = "yes";
                     }
-                    else if ("false".Equals(trimmed) || "0".Equals(trimmed))
+                    else if (trimmed == "false" || trimmed == "0")
                     {
                         normalizedAtt = "no";
                     }

@@ -385,11 +385,6 @@ namespace OutSmart.DAXon.Functions
                 // XPathException with NO error code (surfaced as a bare "ERR"). Classify: a genuinely missing
                 // resource is FODC0002; an unusable URI/path is FODC0005 (K2-SeqDocFunc-14, fn-doc-1).
                 de.SetErrorCode(ex is System.IO.FileNotFoundException || ex is System.IO.DirectoryNotFoundException ? "FODC0002" : "FODC0005");
-                if (config.GetBooleanProperty(Feature<bool>.TRACE_EXTERNAL_FUNCTIONS))
-                {
-                    ex.ToString();
-                }
-
                 throw de;
             }
         }
@@ -509,11 +504,6 @@ namespace OutSmart.DAXon.Functions
             catch (Exception ex)
             {
                 XPathException de = new XPathException("Exception thrown by IResourceResolver", ex);
-                if (config.GetBooleanProperty(Feature<bool>.TRACE_EXTERNAL_FUNCTIONS))
-                {
-                    ex.ToString();
-                }
-
                 de.SetLocator(locator);
                 throw de;
             }

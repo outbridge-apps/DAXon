@@ -191,7 +191,7 @@ namespace OutSmart.DAXon.Patterns
                 pat.OriginalText = pattern;
                 if (pat is UnionPattern)
                 {
-                    string[] parts = pattern.SplitRegex("\\|");
+                    string[] parts = pattern.Split('|');
                     if (parts.Length == 2)
                     {
                         ((UnionPattern)pat).p1.OriginalText = parts[0];

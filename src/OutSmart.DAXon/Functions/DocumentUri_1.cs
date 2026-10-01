@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Functions
                 {
                     return null;
                 }
-                else if ("".Equals(docURI))
+                else if (docURI == "")
                 {
                     return null;
                 }
