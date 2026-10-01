@@ -15,7 +15,7 @@ using OutSmart.DAXon.Values;
 namespace OutSmart.DAXon.Functions
 {
     /// <summary>Implements fn:escape-html-uri — percent-escapes only non-ASCII/control chars for HTML URI attributes.</summary>
-    internal class EscapeHtmlUri : ScalarSystemFunction
+    internal sealed class EscapeHtmlUri : ScalarSystemFunction
     {
         public override AtomicValue Evaluate(IItem arg, IXPathContext context)
         {

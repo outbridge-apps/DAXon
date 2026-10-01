@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
     // WRONG namespace OutSmart.DAXon.Core, root of src) whose IsPreservedNode always returned true.
     // A view of a node in a virtual tree with whitespace text nodes stripped: axis iterations skip
     // whitespace-only text nodes that xsl:strip-space says should be absent.
-    internal class SpaceStrippedNode : AbstractVirtualNode, IWrappingFunction
+    internal sealed class SpaceStrippedNode : AbstractVirtualNode, IWrappingFunction
     {
 
         public override UnicodeString UnicodeStringValue
@@ -60,7 +60,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
             return wrapper;
         }
 
-        public virtual IVirtualNode MakeWrapper(NodeInfo node, IVirtualNode parent)
+        public IVirtualNode MakeWrapper(NodeInfo node, IVirtualNode parent)
         {
             SpaceStrippedNode wrapper = new SpaceStrippedNode(node, (SpaceStrippedNode)parent);
             wrapper.docWrapper = this.docWrapper;
@@ -278,7 +278,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
         /// A StrippingIterator delivers wrappers for the nodes delivered by its underlying iterator,
         /// skipping whitespace text nodes that are to be stripped.
         /// </summary>
-        private class StrippingIterator : IAxisIterator
+        private sealed class StrippingIterator : IAxisIterator
         {
             private readonly IAxisIterator @base;
             private readonly SpaceStrippedNode parent;
@@ -294,7 +294,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
                 position = 0;
             }
 
-            public virtual NodeInfo Next()
+            public NodeInfo Next()
             {
                 NodeInfo nextRealNode;
                 do

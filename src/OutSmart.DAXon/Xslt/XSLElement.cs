@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:element element in the stylesheet. <br>
     /// </summary>
-    internal class XSLElement : StyleElement
+    internal sealed class XSLElement : StyleElement
     {
         private Expression elementName;
         private Expression @namespace = null;

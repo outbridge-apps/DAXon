@@ -21,7 +21,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions.HigherOrder
 {
-    internal class FunctionLiteral : Literal
+    internal sealed class FunctionLiteral : Literal
     {
 
         public override IGroundedValue GroundedValue => (IFunctionItem)base.GroundedValue;

@@ -22,13 +22,13 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Transformation
 {
-    internal class XmlProcessingException : IXmlProcessingError
+    internal sealed class XmlProcessingException : IXmlProcessingError
     {
         private readonly XPathException exception;
         private bool _isWarning;
         private string fatalErrorMessage;
 
-        public virtual string TerminationMessage
+        public string TerminationMessage
         {
             get => this.fatalErrorMessage; set
             {
@@ -36,18 +36,18 @@ namespace OutSmart.DAXon.Transformation
             }
         }
 
-        public virtual string ModuleUri => exception.GetLocator()?.GetSystemId(); // module of the error locus
+        public string ModuleUri => exception.GetLocator()?.GetSystemId(); // module of the error locus
         public XmlProcessingException(XPathException exception)
         {
             this.exception = exception;
         }
 
-        public virtual XPathException GetXPathException()
+        public XPathException GetXPathException()
         {
             return exception;
         }
 
-        public virtual HostLanguage GetHostLanguage()
+        public HostLanguage GetHostLanguage()
         {
             ILocation loc = GetLocation();
             if (loc is Instruction || loc is AttributeLocation)
@@ -60,70 +60,70 @@ namespace OutSmart.DAXon.Transformation
             }
         }
 
-        public virtual bool IsStaticError()
+        public bool IsStaticError()
         {
             return exception.IsStaticError();
         }
 
-        public virtual bool IsTypeError()
+        public bool IsTypeError()
         {
             return exception.IsTypeError();
         }
 
-        public virtual QName GetErrorCode()
+        public QName GetErrorCode()
         {
             StructuredQName errorCodeQName = exception.ErrorCodeQName;
             return errorCodeQName == null ? null : new QName(errorCodeQName);
         }
 
-        public virtual string GetMessage()
+        public string GetMessage()
         {
             return exception.Message;
         }
 
-        public virtual ILocation GetLocation()
+        public ILocation GetLocation()
         {
             return exception.GetLocator() == null ? Loc.NONE : exception.GetLocator();
         }
 
-        public virtual bool IsWarning()
+        public bool IsWarning()
         {
             return _isWarning;
         }
 
-        public virtual string GetPath()
+        public string GetPath()
         {
             return null;
         }
 
-        public virtual Exception GetCause()
+        public Exception GetCause()
         {
             return (Exception)exception.InnerException;
         }
 
-        public virtual Expression GetFailingExpression()
+        public Expression GetFailingExpression()
         {
             return exception.GetFailingExpression();
         }
 
-        public virtual void SetWarning(bool warning)
+        public void SetWarning(bool warning)
         {
             _isWarning = warning;
         }
 
-        public virtual XmlProcessingException AsWarning()
+        public XmlProcessingException AsWarning()
         {
             XmlProcessingException e2 = new XmlProcessingException(exception);
             e2.SetWarning(true);
             return e2;
         }
 
-        public virtual bool IsAlreadyReported()
+        public bool IsAlreadyReported()
         {
             return exception.HasBeenReported();
         }
 
-        public virtual void SetAlreadyReported(bool reported)
+        public void SetAlreadyReported(bool reported)
         {
             exception.SetHasBeenReported(reported);
         }

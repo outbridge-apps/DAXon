@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Text
 {
-    internal class StringConstants
+    internal sealed class StringConstants
     {
 
         public static readonly UnicodeString SINGLE_SPACE = new Twine8(Bytes(" "));

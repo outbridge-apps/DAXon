@@ -22,12 +22,12 @@ namespace OutSmart.DAXon.Patterns
     // calls current() died at compile time (match-049/099/216/240* family).
     // Wraps another pattern and binds fn:current to a local variable holding the matched item, so
     // predicates can refer to current() while the wrapped pattern shifts the context.
-    internal class PatternThatSetsCurrent : Pattern
+    internal sealed class PatternThatSetsCurrent : Pattern
     {
         private readonly LocalVariableBinding binding;
         private Pattern wrappedPattern;
 
-        public virtual ILocalBinding CurrentBinding => binding;
+        public ILocalBinding CurrentBinding => binding;
 
         public override int Fingerprint => wrappedPattern.Fingerprint;
 

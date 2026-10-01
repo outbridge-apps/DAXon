@@ -18,7 +18,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Lib
 {
-    internal class StandardCollationURIResolver : ICollationURIResolver
+    internal sealed class StandardCollationURIResolver : ICollationURIResolver
     {
         private static readonly StandardCollationURIResolver theInstance = new StandardCollationURIResolver();
         public StandardCollationURIResolver()
@@ -68,7 +68,7 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        public virtual IStringCollator Resolve(string uri, Configuration config)
+        public IStringCollator Resolve(string uri, Configuration config)
         {
             if (uri.Equals("http://saxon.sf.net/collation"))
             {

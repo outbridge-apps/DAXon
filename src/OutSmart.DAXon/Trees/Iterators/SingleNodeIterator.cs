@@ -19,14 +19,14 @@ namespace OutSmart.DAXon.Trees.Iterators
     /// <summary>
     /// SingleNodeIterator: an iterator over a sequence of zero or one nodes
     /// </summary>
-    internal class SingleNodeIterator : IAxisIterator, IReversibleIterator, ILastPositionFinder, IGroundedIterator, ILookaheadIterator
+    internal sealed class SingleNodeIterator : IAxisIterator, IReversibleIterator, ILastPositionFinder, IGroundedIterator, ILookaheadIterator
     {
         private readonly NodeInfo item;
         private int position = 0;
 
-        public virtual bool HasNext => position == 0;
+        public bool HasNext => position == 0;
 
-        public virtual NodeInfo Value => item;
+        public NodeInfo Value => item;
         private SingleNodeIterator(NodeInfo value)
         {
             this.item = value;
@@ -44,12 +44,12 @@ namespace OutSmart.DAXon.Trees.Iterators
             }
         }
 
-        public virtual bool SupportsHasNext()
+        public bool SupportsHasNext()
         {
             return true;
         }
 
-        public virtual NodeInfo Next()
+        public NodeInfo Next()
         {
             if (position == 0)
             {
@@ -67,37 +67,37 @@ namespace OutSmart.DAXon.Trees.Iterators
             }
         }
 
-        public virtual bool SupportsGetLength()
+        public bool SupportsGetLength()
         {
             return true;
         }
 
-        public virtual int GetLength()
+        public int GetLength()
         {
             return 1;
         }
 
-        public virtual ISequenceIterator GetReverseIterator()
+        public ISequenceIterator GetReverseIterator()
         {
             return new SingleNodeIterator(item);
         }
 
-        public virtual bool IsActuallyGrounded()
+        public bool IsActuallyGrounded()
         {
             return true;
         }
 
-        public virtual IGroundedValue Materialize()
+        public IGroundedValue Materialize()
         {
             return SequenceTool.ItemOrEmpty(item);
         }
 
-        public virtual IGroundedValue GetResidue()
+        public IGroundedValue GetResidue()
         {
             return SequenceTool.ItemOrEmpty(item);
         }
         IItem ISequenceIterator.Next() => Next(); // runtime: StubGen wrote => default (null) which re-broke the single-child CHILD axis; delegate to the real NodeInfo Next()
-        public virtual void Dispose() { }
+        public void Dispose() { }
     }
 }
 

@@ -828,7 +828,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new ResultDocumentElaborator();
         }
 
-        private class ResultDocumentElaborator : PushElaborator
+        private sealed class ResultDocumentElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

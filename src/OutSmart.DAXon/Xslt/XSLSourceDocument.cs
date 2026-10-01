@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:source-document element in XSLT 3.0 stylesheet. <br>
     /// </summary>
-    internal class XSLSourceDocument : StyleElement
+    internal sealed class XSLSourceDocument : StyleElement
     {
         private Expression href = null;
         private HashSet<Accumulator> accumulators = new HashSet<Accumulator>();

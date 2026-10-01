@@ -16,7 +16,7 @@ using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Trees.Linked
 {
-    internal class LineNumberMap
+    internal sealed class LineNumberMap
     {
         private readonly object syncLock = new object();
         private int[] sequenceNumbers;
@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Trees.Linked
             allocated = 0;
         }
 
-        public virtual void SetLineAndColumn(int sequence, int line, int column)
+        public void SetLineAndColumn(int sequence, int line, int column)
         {
             if (sequenceNumbers.Length <= allocated + 1)
             {
@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Trees.Linked
             allocated++;
         }
 
-        public virtual int GetLineNumber(int sequence)
+        public int GetLineNumber(int sequence)
         {
             if (sequenceNumbers.Length > allocated)
             {
@@ -69,7 +69,7 @@ namespace OutSmart.DAXon.Trees.Linked
             return lineNumbers[index];
         }
 
-        public virtual int GetColumnNumber(int sequence)
+        public int GetColumnNumber(int sequence)
         {
             if (sequenceNumbers.Length > allocated)
             {

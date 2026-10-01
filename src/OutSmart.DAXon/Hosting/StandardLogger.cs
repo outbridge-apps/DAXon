@@ -21,13 +21,13 @@ using System.IO;
 using OutSmart.DAXon.Serialization;
 namespace OutSmart.DAXon.Lib
 {
-    internal class StandardLogger : Logger
+    internal sealed class StandardLogger : Logger
     {
         private TextWriter writer = Console.Error;
         private int threshold = Logger.INFO;
         private bool mustClose = false;
 
-        public virtual TextWriter PrintWriter
+        public TextWriter PrintWriter
         {
             get => writer; set
             {
@@ -45,7 +45,7 @@ namespace OutSmart.DAXon.Lib
             PrintWriter = (TextWriter)writer;
         }
 
-        public virtual void SetPrintStream(TextWriter stream)
+        public void SetPrintStream(TextWriter stream)
         {
             this.writer = stream;
         }

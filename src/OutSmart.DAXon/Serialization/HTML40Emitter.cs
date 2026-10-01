@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Serialization
     /// <summary>
     /// This class generates HTML 4.0 output
     /// </summary>
-    internal class HTML40Emitter : HTMLEmitter
+    internal sealed class HTML40Emitter : HTMLEmitter
     {
         static HTML40Emitter()
         {

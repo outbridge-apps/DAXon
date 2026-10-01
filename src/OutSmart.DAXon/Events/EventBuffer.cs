@@ -21,7 +21,7 @@ using OutSmart.DAXon.Internal;
 
 namespace OutSmart.DAXon.Events
 {
-    internal class EventBuffer : SequenceReceiver
+    internal sealed class EventBuffer : SequenceReceiver
     {
         private readonly IList<object> buffer = new List<object>();
         public EventBuffer(PipelineConfiguration pipe) : base(pipe)
@@ -75,7 +75,7 @@ namespace OutSmart.DAXon.Events
         }
 
         // no action
-        public virtual void Replay(IReceiver @out)
+        public void Replay(IReceiver @out)
         {
             foreach (Event @event in buffer)
             {

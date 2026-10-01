@@ -10,7 +10,7 @@ namespace OutSmart.DAXon.Trees.Iterators
 {
     // Iterates the node array directly as a real IAxisIterator (ParentNodeImpl.IterateChildren casts to it);
     // equivalent to upstream ArrayIterator.OfNodes without the ArrayIterator/Of/Reverse cascade.
-    internal class OfNodes<N> : IAxisIterator
+    internal sealed class OfNodes<N> : IAxisIterator
     {
         private readonly N[] _items;
         private int _pos;

@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Functions
 
     // fn:substring-after: same pattern as SubstringBefore above (the full upstream port is excluded only
     // because its elaborator drags the StringElaborator cluster).
-    internal class SubstringAfter : CollatingFunctionFixed
+    internal sealed class SubstringAfter : CollatingFunctionFixed
     {
         public SubstringAfter() { }
         public static Func<SubstringAfter> New() => () => new SubstringAfter();

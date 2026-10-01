@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// The XPath 2.0 index-of() function, with the collation already known
     /// </summary>
-    internal class IndexOf : CollatingFunctionFixed
+    internal sealed class IndexOf : CollatingFunctionFixed
     {
         public override IntegerValue[] IntegerBounds => new IntegerValue[]
             {
@@ -52,7 +52,7 @@ namespace OutSmart.DAXon.Functions
             return SequenceTool.ToLazySequence(new IndexIterator(seq, searchType, val, comparer));
         }
 
-        private class IndexIterator : ISequenceIterator
+        private sealed class IndexIterator : ISequenceIterator
         {
             private int index = 0;
             private readonly ISequenceIterator @base;
@@ -67,12 +67,12 @@ namespace OutSmart.DAXon.Functions
                 this.comparer = comparer;
             }
 
-            public virtual void Dispose()
+            public void Dispose()
             {
                 @base.Dispose();
             }
 
-            public virtual Int64Value Next()
+            public Int64Value Next()
             {
                 try
                 {

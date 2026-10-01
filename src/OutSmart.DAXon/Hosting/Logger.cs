@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.Lib
             return new StreamResult(AsWriter());
         }
 
-        private class LoggingWriter : TextWriter
+        private sealed class LoggingWriter : TextWriter
         {
             private readonly StringBuilder builder = new StringBuilder();
             private readonly Logger logger;

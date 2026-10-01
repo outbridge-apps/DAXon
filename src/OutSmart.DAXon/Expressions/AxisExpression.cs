@@ -1283,7 +1283,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for an AxisExpression
         /// </summary>
-        internal class AxisExpressionElaborator : PullElaborator
+        internal sealed class AxisExpressionElaborator : PullElaborator
         {
             private void ReportDoesNotExist(Expression expression, IXPathContext context)
             {

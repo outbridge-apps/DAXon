@@ -400,7 +400,7 @@ namespace OutSmart.DAXon.Expressions
             return new ForExprElaborator();
         }
 
-        internal class MappingAction : IMappingFunction, IItemMappingFunction
+        internal sealed class MappingAction : IMappingFunction, IItemMappingFunction
         {
             protected IXPathContext context;
             private readonly int slotNumber;
@@ -412,20 +412,20 @@ namespace OutSmart.DAXon.Expressions
                 this.action = action;
             }
 
-            public virtual ISequenceIterator IMap(IItem item)
+            public ISequenceIterator IMap(IItem item)
             {
                 context.SetLocalVariable(slotNumber, item);
                 return action.Iterate(context);
             }
 
-            public virtual IItem MapItem(IItem item)
+            public IItem MapItem(IItem item)
             {
                 context.SetLocalVariable(slotNumber, item);
                 return action.EvaluateItem(context);
             }
         }
 
-        internal class ForExprElaborator : PullElaborator
+        internal sealed class ForExprElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

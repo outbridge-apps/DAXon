@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Events
     /// <summary>
     /// A receiver that performs specified actions when closed
     /// </summary>
-    internal class CloseNotifier : ProxyReceiver
+    internal sealed class CloseNotifier : ProxyReceiver
     {
         private readonly IList<IAction> actionList;
         public CloseNotifier(IReceiver next, IList<IAction> actionList) : base(next)

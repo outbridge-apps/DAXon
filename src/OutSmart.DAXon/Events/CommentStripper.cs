@@ -21,7 +21,7 @@ using OutSmart.DAXon.Internal.Collections;
 
 namespace OutSmart.DAXon.Events
 {
-    internal class CommentStripper : ProxyReceiver
+    internal sealed class CommentStripper : ProxyReceiver
     {
         private UnicodeString currentTextNode = null;
         private Func<INodeName, bool> skippedElementTest = (INodeName name) => false;
@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Events
         {
         }
 
-        public virtual void SetSkippedElementTest(Func<INodeName, bool> test)
+        public void SetSkippedElementTest(Func<INodeName, bool> test)
         {
             this.skippedElementTest = test;
         }

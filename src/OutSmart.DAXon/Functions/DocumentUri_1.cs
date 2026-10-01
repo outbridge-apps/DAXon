@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the document-uri() function
     /// </summary>
-    internal class DocumentUri_1 : ScalarSystemFunction
+    internal sealed class DocumentUri_1 : ScalarSystemFunction
     {
         public override AtomicValue Evaluate(IItem item, IXPathContext context)
         {

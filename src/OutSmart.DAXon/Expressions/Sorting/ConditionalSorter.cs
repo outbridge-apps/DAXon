@@ -25,14 +25,14 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class ConditionalSorter : Expression
+    internal sealed class ConditionalSorter : Expression
     {
 
         private static readonly OperandRole DOC_SORTER_ROLE = new OperandRole(OperandRole.CONSTRAINED_CLASS, OperandUsage.TRANSMISSION, SequenceType.ANY_SEQUENCE, (expr) => expr is DocumentSorter);
         private readonly Operand conditionOp;
         private readonly Operand sorterOp;
 
-        public virtual Expression Condition
+        public Expression Condition
         {
             get => conditionOp.GetChildExpression(); set
             {
@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual DocumentSorter DocumentSorter
+        public DocumentSorter DocumentSorter
         {
             get => (DocumentSorter)sorterOp.GetChildExpression(); set
             {
@@ -172,7 +172,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         // IRewriteAction interface->delegate.
         private delegate Expression IRewriteAction(Expression e);
 
-        internal class ConditionalSorterElaborator : PullElaborator
+        internal sealed class ConditionalSorterElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

@@ -97,7 +97,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for a "last item expression" (typically {@code SEQ[last()]})
         /// </summary>
-        internal class LastItemExprElaborator : ItemElaborator
+        internal sealed class LastItemExprElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

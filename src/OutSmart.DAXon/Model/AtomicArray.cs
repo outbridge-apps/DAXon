@@ -21,15 +21,15 @@ using OutSmart.DAXon.Collections.Trie;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Model
 {
-    internal class AtomicArray : IAtomicSequence
+    internal sealed class AtomicArray : IAtomicSequence
     {
         private static readonly IList<AtomicValue> emptyAtomicList = new List<AtomicValue>();
         public static AtomicArray EMPTY_ATOMIC_ARRAY = new AtomicArray(emptyAtomicList);
         private readonly IList<AtomicValue> content;
 
-        public virtual UnicodeString CanonicalLexicalRepresentation => UnicodeStringValue;
+        public UnicodeString CanonicalLexicalRepresentation => UnicodeStringValue;
 
-        public virtual UnicodeString UnicodeStringValue
+        public UnicodeString UnicodeStringValue
         {
             get
             {
@@ -64,18 +64,18 @@ namespace OutSmart.DAXon.Model
             content = list;
         }
 
-        public virtual AtomicValue Head()
+        public AtomicValue Head()
         {
             return content.Count == 0 ? null : content[0];
         }
 
-        public virtual IAtomicIterator Iterate()
+        public IAtomicIterator Iterate()
         {
 
             return new ListIterator.OfAtomic<AtomicValue>(content);
         }
 
-        public virtual AtomicValue ItemAt(int n)
+        public AtomicValue ItemAt(int n)
         {
             if (n >= 0 && n < content.Count)
             {
@@ -87,12 +87,12 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        public virtual int GetLength()
+        public int GetLength()
         {
             return content.Count;
         }
 
-        public virtual AtomicArray Subsequence(int start, int length)
+        public AtomicArray Subsequence(int start, int length)
         {
             if (start < 0)
             {
@@ -107,7 +107,7 @@ namespace OutSmart.DAXon.Model
             return new AtomicArray(content.GetRange(start, (start + length) - (start)));
         }
 
-        public virtual string GetStringValue()
+        public string GetStringValue()
         {
             StringBuilder sb = new StringBuilder(64);
             bool first = true;
@@ -128,12 +128,12 @@ namespace OutSmart.DAXon.Model
             return sb.ToString();
         }
 
-        public virtual bool EffectiveBooleanValue()
+        public bool EffectiveBooleanValue()
         {
             return ExpressionTool.EffectiveBooleanValue(Iterate());
         }
 
-        public virtual IGroundedValue Reduce()
+        public IGroundedValue Reduce()
         {
             int len = GetLength();
             if (len == 0)
@@ -162,17 +162,17 @@ namespace OutSmart.DAXon.Model
         // trivial. These were auto-generated NotImplementedException stubs: Materialize() threw during
         // ApplyFunctionConversionRules when e.g. xs:IDREFS('a b c') (an AtomicArray) was passed through a
         // dynamic function call (function-lookup(...)(...)). It contains no nodes.
-        public virtual IGroundedValue Materialize() => this;
-        public virtual string ToShortString() => "atomic sequence of length " + GetLength();
-        public virtual IEnumerable<IItem> AsIterable()
+        public IGroundedValue Materialize() => this;
+        public string ToShortString() => "atomic sequence of length " + GetLength();
+        public IEnumerable<IItem> AsIterable()
         {
             foreach (AtomicValue __v in content)
             {
                 yield return __v;
             }
         }
-        public virtual bool ContainsNode(NodeInfo sought) => false;
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
+        public bool ContainsNode(NodeInfo sought) => false;
+        public IGroundedValue Concatenate(IGroundedValue[] others)
         {
             // upstream GroundedValue default: chain this value's items with the others
             var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
@@ -180,6 +180,6 @@ namespace OutSmart.DAXon.Model
                 __chain = __chain.AddAll(__v.AsIterable());
             return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
         }
-        public virtual ISequence MakeRepeatable() => this;
+        public ISequence MakeRepeatable() => this;
     }
 }

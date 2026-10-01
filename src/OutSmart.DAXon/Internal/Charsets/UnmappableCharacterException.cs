@@ -11,7 +11,7 @@ using System.IO;
 
 namespace OutSmart.DAXon.Internal.Charsets
 {
-    internal class UnmappableCharacterException : CharacterCodingException
+    internal sealed class UnmappableCharacterException : CharacterCodingException
     {
     }
 }

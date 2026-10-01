@@ -18,7 +18,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Elaboration
 {
-    internal class LearningEvaluator : ISequenceEvaluator
+    internal sealed class LearningEvaluator : ISequenceEvaluator
     {
         private const int EVAL_LIMIT = 20;
         private readonly Expression expression;
@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
         // is not a blanket win, so it is applied only where it pays.
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
 #endif
-        public virtual ISequence Evaluate(IXPathContext context)
+        public ISequence Evaluate(IXPathContext context)
         {
             // Counter updates are deliberately race-tolerant (as in Java): a stale value only
             // delays or repeats the strategy switch, and both evaluators are equivalent. This
@@ -63,7 +63,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             }
         }
 
-        public virtual void ReportCompletion(int serialNumber)
+        public void ReportCompletion(int serialNumber)
         {
 
             // Note, does thread-unsafe updates to the statistics

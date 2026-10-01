@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Functions
     /// as a sequence of strings. Line endings (#xA, #xD, #xD#xA) are the separators and are not returned;
     /// a trailing line-ending does not produce a final empty line.
     /// </summary>
-    internal class UnparsedTextLines : UnparsedTextFunction
+    internal sealed class UnparsedTextLines : UnparsedTextFunction
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

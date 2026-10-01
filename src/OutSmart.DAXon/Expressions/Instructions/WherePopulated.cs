@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// A compiled xsl:where-populated instruction (formerly xsl:conditional-content).
     /// </summary>
-    internal class WherePopulated : UnaryExpression, IItemMappingFunction
+    internal sealed class WherePopulated : UnaryExpression, IItemMappingFunction
     {
 
         public override int ImplementationMethod => ITERATE_METHOD | PROCESS_METHOD;
@@ -131,7 +131,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new WherePopulatedElaborator();
         }
 
-        private class WherePopulatedElaborator : PushElaborator
+        private sealed class WherePopulatedElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

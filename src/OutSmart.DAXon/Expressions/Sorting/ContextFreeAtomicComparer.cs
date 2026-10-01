@@ -17,11 +17,11 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class ContextFreeAtomicComparer : IAtomicComparer
+    internal sealed class ContextFreeAtomicComparer : IAtomicComparer
     {
         private static readonly ContextFreeAtomicComparer THE_INSTANCE = new ContextFreeAtomicComparer();
 
-        public virtual IStringCollator Collator => null;
+        public IStringCollator Collator => null;
 
         protected ContextFreeAtomicComparer()
         {
@@ -31,24 +31,24 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return THE_INSTANCE;
         }
 
-        public virtual IAtomicComparer ProvideContext(IXPathContext context)
+        public IAtomicComparer ProvideContext(IXPathContext context)
         {
             return this;
         }
 
-        public virtual int CompareAtomicValues(AtomicValue a, AtomicValue b)
+        public int CompareAtomicValues(AtomicValue a, AtomicValue b)
         {
 
             //        return ((IContextFreeAtomicValue) a).getXPathComparable()
             return ((IXPathComparable)a).CompareTo((IXPathComparable)b);
         }
 
-        public virtual bool ComparesEqual(AtomicValue a, AtomicValue b)
+        public bool ComparesEqual(AtomicValue a, AtomicValue b)
         {
             return a.Equals(b);
         }
 
-        public virtual string Save()
+        public string Save()
         {
             return "CAVC";
         }

@@ -20,7 +20,7 @@ using System.Numerics;
 using System.Globalization;
 namespace OutSmart.DAXon.Values
 {
-    internal class FloatingPointConverter
+    internal sealed class FloatingPointConverter
     {
         public const long DOUBLE_SIGN_MASK = unchecked((long)0x8000000000000000);
         private const long doubleExpMask = 0x7ff0000000000000;

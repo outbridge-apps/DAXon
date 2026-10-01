@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Resources
     // threw, so DirectoryCollection could never deliver XML documents.
     // A Resource (typically an item in a collection) representing an XML document, parsed lazily.
     // Port note: the deleted JAXP Source hierarchy is replaced by ActiveStreamSource.
-    internal class XmlResource : IResource
+    internal sealed class XmlResource : IResource
     {
 
         public static readonly IResourceFactory FACTORY = new XmlResourceFactory();

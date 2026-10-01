@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implements the XSLT document() function
     /// </summary>
-    internal class DocumentFn : SystemFunction, ICallable
+    internal sealed class DocumentFn : SystemFunction, ICallable
     {
         private ILocation location;
         public override int GetCardinality(Expression[] arguments)
@@ -632,7 +632,7 @@ namespace OutSmart.DAXon.Functions
             return doc.SelectID(fragmentId, false);
         }
 
-        private class DocumentMappingFunction : IItemMappingFunction
+        private sealed class DocumentMappingFunction : IItemMappingFunction
         {
             public string baseURI;
             public string stylesheetURI;
@@ -644,7 +644,7 @@ namespace OutSmart.DAXon.Functions
                 this.context = context;
             }
 
-            public virtual IItem MapItem(IItem item)
+            public IItem MapItem(IItem item)
             {
                 string b = baseURI;
                 if (b == null)

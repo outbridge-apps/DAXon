@@ -16,7 +16,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Numbering
 {
-    internal class NamedTimeZone
+    internal sealed class NamedTimeZone
     {
         static HashSet<string> knownTimeZones = new HashSet<string>();
         static Dictionary<string, IList<string>> idForCountry = new Dictionary<string, IList<string>>(50);

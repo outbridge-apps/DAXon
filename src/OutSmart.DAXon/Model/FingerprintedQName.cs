@@ -14,14 +14,14 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Model
 {
-    internal class FingerprintedQName : INodeName
+    internal sealed class FingerprintedQName : INodeName
     {
         private readonly StructuredQName qName;
         private int fingerprint = -1;
 
-        public virtual int Fingerprint => fingerprint;
+        public int Fingerprint => fingerprint;
 
-        public virtual string DisplayName => qName.DisplayName;
+        public string DisplayName => qName.DisplayName;
         public FingerprintedQName(string prefix, NamespaceUri uri, string localName)
         {
             qName = new StructuredQName(prefix, uri, localName);
@@ -102,12 +102,12 @@ namespace OutSmart.DAXon.Model
             return new FingerprintedQName("", NamespaceUri.Of(@namespace), localName);
         }
 
-        public virtual bool HasFingerprint()
+        public bool HasFingerprint()
         {
             return fingerprint != -1;
         }
 
-        public virtual int ObtainFingerprint(NamePool pool)
+        public int ObtainFingerprint(NamePool pool)
         {
             if (fingerprint == -1)
             {
@@ -117,37 +117,37 @@ namespace OutSmart.DAXon.Model
             return fingerprint;
         }
 
-        public virtual string GetPrefix()
+        public string GetPrefix()
         {
             return qName.GetPrefix();
         }
 
-        public virtual NamespaceUri GetNamespaceUri()
+        public NamespaceUri GetNamespaceUri()
         {
             return qName.GetNamespaceUri();
         }
 
-        public virtual string GetLocalPart()
+        public string GetLocalPart()
         {
             return qName.GetLocalPart();
         }
 
-        public virtual StructuredQName GetStructuredQName()
+        public StructuredQName GetStructuredQName()
         {
             return qName;
         }
 
-        public virtual bool HasURI(NamespaceUri ns)
+        public bool HasURI(NamespaceUri ns)
         {
             return qName.HasURI(ns);
         }
 
-        public virtual NamespaceBinding GetNamespaceBinding()
+        public NamespaceBinding GetNamespaceBinding()
         {
             return qName.GetNamespaceBinding();
         }
 
-        public virtual int IdentityHashCode()
+        public int IdentityHashCode()
         {
             return 0;
         }
@@ -185,7 +185,7 @@ namespace OutSmart.DAXon.Model
         /*
      * Compare two names for equality
      */
-        public virtual bool IsIdentical(IIdentityComparable other)
+        public bool IsIdentical(IIdentityComparable other)
         {
             return other is INodeName && this.Equals(other) && this.GetPrefix().Equals(((INodeName)other).GetPrefix());
         }
@@ -198,6 +198,6 @@ namespace OutSmart.DAXon.Model
             return qName.DisplayName;
         }
 
-        public virtual string GetURI() => GetNamespaceUri().ToString(); // NodeImpl/Orphan.GetURI() route through this
+        public string GetURI() => GetNamespaceUri().ToString(); // NodeImpl/Orphan.GetURI() route through this
     }
 }

@@ -25,7 +25,7 @@ using OutSmart.DAXon.Internal.Streams;
 using System.IO;
 namespace OutSmart.DAXon.Functions
 {
-    internal class ParseXml : SystemFunction, ICallable
+    internal sealed class ParseXml : SystemFunction, ICallable
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

@@ -22,7 +22,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class UntypedNumericComparer : IAtomicComparer
+    internal sealed class UntypedNumericComparer : IAtomicComparer
     {
         private static readonly double[][] bounds = new double[][]
         {
@@ -194,7 +194,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         };
         private ConversionRules rules = ConversionRules.DEFAULT;
 
-        public virtual IStringCollator Collator => null;
+        public IStringCollator Collator => null;
         public static bool QuickCompare(StringValue a0, NumericValue a1, int @operator, ConversionRules rules)
         {
             if (a1.IsNaN())
@@ -333,7 +333,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return ab == bb ? 0 : (ab < bb ? -1 : 1);
         }
 
-        public virtual int CompareAtomicValues(AtomicValue a, AtomicValue b)
+        public int CompareAtomicValues(AtomicValue a, AtomicValue b)
         {
             try
             {
@@ -345,18 +345,18 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual IAtomicComparer ProvideContext(IXPathContext context)
+        public IAtomicComparer ProvideContext(IXPathContext context)
         {
             rules = context.GetConfiguration().GetConversionRules();
             return this;
         }
 
-        public virtual bool ComparesEqual(AtomicValue a, AtomicValue b)
+        public bool ComparesEqual(AtomicValue a, AtomicValue b)
         {
             return CompareAtomicValues(a, b) == 0;
         }
 
-        public virtual string Save()
+        public string Save()
         {
             return "QUNC";
         }

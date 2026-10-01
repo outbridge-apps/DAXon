@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
     // COLLATION_KEY_NaN is IAtomicMatchKey: callers assign it from GetMapKey()/AsMapKey().
     // Implements IComparer<NodeInfo> for DocumentSorter's `(IComparer<NodeInfo>)GetInstance()` cast;
     // Compare delegates to NodeInfo.CompareOrder (faithful to upstream LocalOrderComparer).
-    internal class LocalOrderComparer : IComparer<NodeInfo>
+    internal sealed class LocalOrderComparer : IComparer<NodeInfo>
     {
         private static readonly LocalOrderComparer _instance = new LocalOrderComparer();
         public LocalOrderComparer() { }

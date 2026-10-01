@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Expressions
     /// <summary>
     /// A SubsequenceIterator selects a subsequence of a sequence
     /// </summary>
-    internal class SubsequenceIterator : ISequenceIterator, ILastPositionFinder, ILookaheadIterator
+    internal sealed class SubsequenceIterator : ISequenceIterator, ILastPositionFinder, ILookaheadIterator
     {
         private readonly ISequenceIterator @base;
         private int basePosition = 0;
@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Test whether there are any more items available in the sequence
         /// </summary>
-        public virtual bool HasNext => nextItem != null;
+        public bool HasNext => nextItem != null;
         private SubsequenceIterator(ISequenceIterator @base, int min, int max)
         {
             this.@base = @base;
@@ -90,12 +90,12 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        public virtual bool SupportsHasNext()
+        public bool SupportsHasNext()
         {
             return true;
         }
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             if (nextItem == null)
             {
@@ -117,12 +117,12 @@ namespace OutSmart.DAXon.Expressions
             return current;
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             @base.Dispose();
         }
 
-        public virtual bool SupportsGetLength()
+        public bool SupportsGetLength()
         {
             return SequenceTool.SupportsGetLength(@base);
         }
@@ -130,7 +130,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Get the last position (that @is, the number of items in the sequence).
         /// </summary>
-        public virtual int GetLength()
+        public int GetLength()
         {
             int lastBase = SequenceTool.GetLength(@base);
             int z = Math.Min(lastBase, max);

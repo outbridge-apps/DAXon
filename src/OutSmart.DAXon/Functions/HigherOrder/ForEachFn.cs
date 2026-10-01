@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
     /// <summary>
     /// This class implements the function fn:for-each() (formerly fn:map), which is a standard function in XQuery 3.0
     /// </summary>
-    internal class ForEachFn : SystemFunction
+    internal sealed class ForEachFn : SystemFunction
     {
         public override ItemType GetResultItemType(Expression[] args)
         {

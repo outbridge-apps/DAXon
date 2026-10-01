@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// Non-streamable implementation of the xsl:source-document instruction
     /// </summary>
-    internal class SourceDocument : Instruction
+    internal sealed class SourceDocument : Instruction
     {
         protected Operand hrefOp;
         protected Operand bodyOp;
@@ -41,9 +41,9 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override string ExpressionName => "xsl:source-document";
 
-        public virtual string ExportTag => "sourceDoc";
+        public string ExportTag => "sourceDoc";
 
-        public virtual Expression Href
+        public Expression Href
         {
             get => hrefOp.GetChildExpression(); set
             {
@@ -51,7 +51,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual Expression Body
+        public Expression Body
         {
             get => bodyOp.GetChildExpression(); set
             {
@@ -210,7 +210,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new SourceDocumentElaborator();
         }
 
-        private class SourceDocumentElaborator : PushElaborator
+        private sealed class SourceDocumentElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

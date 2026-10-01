@@ -20,7 +20,7 @@ using OutSmart.DAXon.Internal.Collections;
 using System.Numerics;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class BigRangeIterator : RangeIterator, IAtomicIterator, ILastPositionFinder, ILookaheadIterator
+    internal sealed class BigRangeIterator : RangeIterator, IAtomicIterator, ILastPositionFinder, ILookaheadIterator
     {
         BigInteger start;
         BigInteger step;

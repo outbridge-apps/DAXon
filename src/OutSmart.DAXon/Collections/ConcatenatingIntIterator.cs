@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Collections
     /// <summary>
     /// An iterator over nodes, that concatenates the nodes returned by two supplied iterators.
     /// </summary>
-    internal class ConcatenatingIntIterator : AbstractIntIterator
+    internal sealed class ConcatenatingIntIterator : AbstractIntIterator
     {
         IIntIterator first;
         Func<IIntIterator> second;

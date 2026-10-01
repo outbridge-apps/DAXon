@@ -24,7 +24,7 @@ using System.Text;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class UseWhenStaticContext : AbstractStaticContext, IStaticContext
+    internal sealed class UseWhenStaticContext : AbstractStaticContext, IStaticContext
     {
         private readonly INamespaceResolver namespaceContext;
         private readonly IFunctionLibrary functionLibrary;

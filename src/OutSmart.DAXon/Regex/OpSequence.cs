@@ -21,11 +21,11 @@ namespace OutSmart.DAXon.Regex
     /// <summary>
     /// A sequence of multiple pieces in a regular expression
     /// </summary>
-    internal class OpSequence : Operation
+    internal sealed class OpSequence : Operation
     {
         protected readonly IList<Operation> operations;
 
-        public virtual IList<Operation> Operations => operations;
+        public IList<Operation> Operations => operations;
 
         public override int MatchLength
         {

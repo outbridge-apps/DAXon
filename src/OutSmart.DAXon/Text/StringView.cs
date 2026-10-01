@@ -20,7 +20,7 @@ using OutSmart.DAXon.Collections;
 
 namespace OutSmart.DAXon.Text
 {
-    internal class StringView : UnicodeString
+    internal sealed class StringView : UnicodeString
     {
         private readonly string _s;
         private readonly int[] _cps; // non-null only when _s contains a surrogate pair

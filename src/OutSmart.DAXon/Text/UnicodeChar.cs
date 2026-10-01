@@ -19,11 +19,11 @@ namespace OutSmart.DAXon.Text
     /// <summary>
     /// A UnicodeString containing a single codepoint
     /// </summary>
-    internal class UnicodeChar : UnicodeString
+    internal sealed class UnicodeChar : UnicodeString
     {
         private readonly int codepoint;
 
-        public virtual int Codepoint => codepoint;
+        public int Codepoint => codepoint;
 
         public override int Width
         {

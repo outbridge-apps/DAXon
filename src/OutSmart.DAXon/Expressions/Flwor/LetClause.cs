@@ -28,14 +28,14 @@ namespace OutSmart.DAXon.Expressions.Flwor
     /// <summary>
     /// A "let" clause in a FLWOR expression
     /// </summary>
-    internal class LetClause : Clause
+    internal sealed class LetClause : Clause
     {
         private LocalVariableBinding rangeVariable;
         private Operand sequenceOp;
         private ISequenceEvaluator variableEvaluator;
         public override ClauseName ClauseKey => LET;
 
-        public virtual Expression Sequence
+        public Expression Sequence
         {
             get => sequenceOp.GetChildExpression(); set
             {
@@ -43,7 +43,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public virtual LocalVariableBinding RangeVariable
+        public LocalVariableBinding RangeVariable
         {
             get => rangeVariable; set
             {
@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                 rangeVariable
             };
 
-        public virtual ISequenceEvaluator GetEvaluator()
+        public ISequenceEvaluator GetEvaluator()
         {
             if (variableEvaluator == null)
             {
@@ -76,12 +76,12 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return let2;
         }
 
-        public virtual void InitSequence(FLWORExpression flwor, Expression sequence)
+        public void InitSequence(FLWORExpression flwor, Expression sequence)
         {
             sequenceOp = new Operand(flwor, sequence, IsRepeated() ? OperandRole.REPEAT_NAVIGATE : OperandRole.NAVIGATE);
         }
 
-        public virtual void EvaluateRangeVariable(IXPathContext context)
+        public void EvaluateRangeVariable(IXPathContext context)
         {
             if (variableEvaluator == null)
             {

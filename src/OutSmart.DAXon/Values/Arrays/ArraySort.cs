@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Values.Arrays
     /// <summary>
     /// Implementation of the extension function array:sort(array, function) =&gt; array
     /// </summary>
-    internal class ArraySort : ArrayFunctionSet.ArrayGeneratingFunction
+    internal sealed class ArraySort : ArrayFunctionSet.ArrayGeneratingFunction
     {
 
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
@@ -194,7 +194,7 @@ namespace OutSmart.DAXon.Values.Arrays
                 throw e.GetXPathException();
             }
         }
-        private class MemberToBeSorted
+        private sealed class MemberToBeSorted
         {
             public IGroundedValue value;
             public IGroundedValue sortKey;

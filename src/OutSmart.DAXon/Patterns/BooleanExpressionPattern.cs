@@ -21,12 +21,12 @@ namespace OutSmart.DAXon.Patterns
     // implicit conversion to Pattern returned NULL, so every XSLT 3.0 selection pattern `.[ Expr ]`
     // silently yielded a null Pattern -> NRE in Pattern.Make.
     // Matches an item if the predicate expression has EBV true() with that item as the singleton focus.
-    internal class BooleanExpressionPattern : Pattern, IPatternWithPredicate
+    internal sealed class BooleanExpressionPattern : Pattern, IPatternWithPredicate
     {
         private readonly Operand expressionOp;
         private volatile IBooleanEvaluator predicateEvaluator;   // volatile: published once, read per node match (round 11)
 
-        public virtual Expression Predicate => expressionOp.GetChildExpression();
+        public Expression Predicate => expressionOp.GetChildExpression();
 
         public override int Fingerprint => -1;
 

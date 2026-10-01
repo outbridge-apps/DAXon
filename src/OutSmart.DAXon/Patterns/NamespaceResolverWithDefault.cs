@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Patterns
     // NamespaceResolverWithDefault). Was a hollow stub that DROPPED both ctor args and threw from
     // GetURIForPrefix - the XQuery parser builds one for direct constructors with a default
     // element namespace.
-    internal class NamespaceResolverWithDefault : INamespaceResolver
+    internal sealed class NamespaceResolverWithDefault : INamespaceResolver
     {
         private readonly INamespaceResolver baseResolver;
         private readonly NamespaceUri defaultNamespace;

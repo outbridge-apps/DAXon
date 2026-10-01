@@ -21,14 +21,14 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:namespace-alias element in the stylesheet. <br>
     /// </summary>
-    internal class XSLNamespaceAlias : StyleElement
+    internal sealed class XSLNamespaceAlias : StyleElement
     {
         private NamespaceUri stylesheetURI;
         private NamespaceBinding resultNamespaceBinding;
 
-        public virtual NamespaceUri StylesheetURI => stylesheetURI;
+        public NamespaceUri StylesheetURI => stylesheetURI;
 
-        public virtual NamespaceBinding ResultNamespaceBinding => resultNamespaceBinding;
+        public NamespaceBinding ResultNamespaceBinding => resultNamespaceBinding;
         public override bool IsDeclaration()
         {
             return true;

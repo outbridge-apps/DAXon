@@ -14,7 +14,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
 namespace OutSmart.DAXon.Expressions.Flwor
 {
-    internal class OrderByClausePull : TuplePull
+    internal sealed class OrderByClausePull : TuplePull
     {
         private readonly TuplePull @base;
         private readonly OrderByClause orderByClause;

@@ -24,7 +24,7 @@ using OutSmart.DAXon.Internal.Streams;
 using System.IO;
 namespace OutSmart.DAXon.Regex
 {
-    internal class CaseVariants
+    internal sealed class CaseVariants
     {
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        private class Holder
+        private sealed class Holder
         {
             // See https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom
             // The idea here is that the initialization occurs the first time getInstance() is called,

@@ -26,7 +26,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class LiteralResultElement : StyleElement
+    internal sealed class LiteralResultElement : StyleElement
     {
         private static readonly IntHashSet STANDARD_ATTRIBUTES = IntHashSet.Of(StandardNames.XSL_USE_ATTRIBUTE_SETS, StandardNames.XSL_DEFAULT_COLLATION, StandardNames.XSL_DEFAULT_MODE, StandardNames.XSL_DEFAULT_VALIDATION, StandardNames.XSL_EXTENSION_ELEMENT_PREFIXES, StandardNames.XSL_EXCLUDE_RESULT_PREFIXES, StandardNames.XSL_EXPAND_TEXT, StandardNames.XSL_VERSION, StandardNames.XSL_XPATH_DEFAULT_NAMESPACE, StandardNames.XSL_TYPE, StandardNames.XSL_USE_WHEN, StandardNames.XSL_VALIDATION);
         private INodeName resultNodeName;
@@ -380,7 +380,7 @@ namespace OutSmart.DAXon.Xslt
             return inst;
         }
 
-        public virtual DocumentImpl MakeStylesheet(bool topLevel)
+        public DocumentImpl MakeStylesheet(bool topLevel)
         {
 
             // the implementation grafts the LRE node onto a containing xsl:template and

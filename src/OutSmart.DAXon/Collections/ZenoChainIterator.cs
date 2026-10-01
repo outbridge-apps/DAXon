@@ -14,7 +14,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Collections.Zeno
 {
-    internal class ZenoChainIterator<U> : IEnumerator<U>
+    internal sealed class ZenoChainIterator<U> : IEnumerator<U>
     {
         private int majorIndex = 0;
         private int minorIndex = 0;
@@ -27,12 +27,12 @@ namespace OutSmart.DAXon.Collections.Zeno
             this.masterList = masterList;
         }
 
-        public virtual bool HasNext()
+        public bool HasNext()
         {
             return majorIndex < masterList.Count && minorIndex < masterList[majorIndex].Count;
         }
 
-        public virtual U Next()
+        public U Next()
         {
             List<U> currentSegment = masterList[majorIndex];
             U result = currentSegment[minorIndex];

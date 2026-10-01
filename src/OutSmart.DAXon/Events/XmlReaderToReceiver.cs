@@ -31,7 +31,7 @@ namespace OutSmart.DAXon.Events
     /// contract the tree builders (TinyBuilder / LinkedTreeBuilder) rely on for base-URI and entity tracking.
     /// Unlike the SAX path it carries no SAX types: its locator reads the XmlReader directly.
     /// </summary>
-    internal class XmlReaderToReceiver
+    internal sealed class XmlReaderToReceiver
     {
 
         // The XML declaration is ASCII-compatible in every XML-supported encoding, so peeking the first bytes

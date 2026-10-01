@@ -20,7 +20,7 @@ using System.Text;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Functions
 {
-    internal class Replace : RegexFunction
+    internal sealed class Replace : RegexFunction
     {
         private int version = 20;
 

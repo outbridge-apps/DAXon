@@ -21,7 +21,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
-    internal class Number_1 : ScalarSystemFunction
+    internal sealed class Number_1 : ScalarSystemFunction
     {
         public override AtomicValue Evaluate(IItem arg, IXPathContext context)
         {
@@ -119,7 +119,7 @@ namespace OutSmart.DAXon.Functions
             return new NumberFnElaborator();
         }
 
-        internal class NumberFnElaborator : ItemElaborator
+        internal sealed class NumberFnElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

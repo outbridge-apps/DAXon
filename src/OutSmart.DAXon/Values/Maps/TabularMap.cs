@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Values.Maps
     /// live in a shared TabularShape and whose values are a plain slot array. Modification
     /// (AddEntry/Remove) converts to a HashTrieMap, exactly like DictionaryMap.
     /// </summary>
-    internal class TabularMap : MapItem
+    internal sealed class TabularMap : MapItem
     {
         private readonly TabularShape shape;
         private readonly IGroundedValue[] values;
@@ -165,7 +165,7 @@ namespace OutSmart.DAXon.Values.Maps
             return target;
         }
 
-        private class KeyIterator : IAtomicIterator
+        private sealed class KeyIterator : IAtomicIterator
         {
             private readonly string[] keys;
             private int position;
@@ -175,13 +175,13 @@ namespace OutSmart.DAXon.Values.Maps
                 this.keys = keys;
             }
 
-            public virtual AtomicValue Next()
+            public AtomicValue Next()
             {
                 return position < keys.Length ? new StringValue(keys[position++]) : null;
             }
 
             IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
-            public virtual void Dispose() { }
+            public void Dispose() { }
         }
     }
 }

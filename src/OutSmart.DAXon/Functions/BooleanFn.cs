@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the XPath function boolean()
     /// </summary>
-    internal class BooleanFn : SystemFunction
+    internal sealed class BooleanFn : SystemFunction
     {
 
         public override string StreamerName => "BooleanFn";
@@ -165,7 +165,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class BooleanFnElaborator : BooleanElaborator
+        internal sealed class BooleanFnElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

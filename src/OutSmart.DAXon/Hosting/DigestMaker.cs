@@ -17,12 +17,12 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Lib
 {
-    internal class DigestMaker
+    internal sealed class DigestMaker
     {
         private string hexDigest = null;
         private readonly System.Security.Cryptography.SHA256 digest = System.Security.Cryptography.SHA256.Create();
 
-        public virtual string Digest
+        public string Digest
         {
             get
             {
@@ -47,13 +47,13 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        public virtual void Update(int value)
+        public void Update(int value)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(Convert.ToString(value));
             digest.TransformBlock(bytes, 0, bytes.Length, null, 0);
         }
 
-        public virtual void Update(string value)
+        public void Update(string value)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(value);
             digest.TransformBlock(bytes, 0, bytes.Length, null, 0);

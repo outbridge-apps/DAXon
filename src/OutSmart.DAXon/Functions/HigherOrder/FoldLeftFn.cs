@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
     /// <summary>
     /// This class implements the function fn:fold-left(), which is a standard function in XPath 3.0
     /// </summary>
-    internal class FoldLeftFn : FoldingFunction
+    internal sealed class FoldLeftFn : FoldingFunction
     {
         public override IFold GetFold(IXPathContext context, params ISequence[] arguments)
         {
@@ -96,7 +96,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             }
         }
 
-        internal class FoldLeftFold : IFold
+        internal sealed class FoldLeftFold : IFold
         {
             private readonly IXPathContext context;
             private readonly IFunctionItem function;
@@ -127,7 +127,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 }
             }
 
-            public virtual void ProcessItem(IItem item)
+            public void ProcessItem(IItem item)
             {
                 if (laneActive)
                 {
@@ -172,12 +172,12 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 }
             }
 
-            public virtual bool IsFinished()
+            public bool IsFinished()
             {
                 return false;
             }
 
-            public virtual ISequence Result()
+            public ISequence Result()
             {
                 return laneActive ? Values.Int64Value.MakeIntegerValue(acc) : data;
             }

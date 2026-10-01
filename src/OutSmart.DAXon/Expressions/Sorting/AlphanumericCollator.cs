@@ -23,19 +23,19 @@ using System.IO;
 using System.Numerics;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class AlphanumericCollator : IStringCollator
+    internal sealed class AlphanumericCollator : IStringCollator
     {
         public const string PREFIX = "http://saxon.sf.net/collation/alphaNumeric?base=";
         private static readonly ARegularExpression pattern = ARegularExpression.Compile("\\d+", "");
         private readonly IStringCollator baseCollator;
 
-        public virtual string CollationURI => PREFIX + baseCollator.CollationURI;
+        public string CollationURI => PREFIX + baseCollator.CollationURI;
         public AlphanumericCollator(IStringCollator @base)
         {
             baseCollator = @base;
         }
 
-        public virtual int CompareStrings(UnicodeString cs1, UnicodeString cs2)
+        public int CompareStrings(UnicodeString cs1, UnicodeString cs2)
         {
             IRegexIterator iter1 = pattern.Analyze(cs1);
             IRegexIterator iter2 = pattern.Analyze(cs2);
@@ -81,16 +81,16 @@ namespace OutSmart.DAXon.Expressions.Sorting
         }
 
         // Java IStringCollator.isEqualToEmpty default method (no DIM on net472 -> emitted per-impl).
-        public virtual bool IsEqualToEmpty(UnicodeString s1)
+        public bool IsEqualToEmpty(UnicodeString s1)
         {
             return ComparesEqual(s1, EmptyUnicodeString.GetInstance());
         }
-        public virtual bool ComparesEqual(UnicodeString s1, UnicodeString s2)
+        public bool ComparesEqual(UnicodeString s1, UnicodeString s2)
         {
             return CompareStrings(s1, s2) == 0;
         }
 
-        public virtual IAtomicMatchKey GetCollationKey(UnicodeString cs)
+        public IAtomicMatchKey GetCollationKey(UnicodeString cs)
         {
 
             // See bug 5049

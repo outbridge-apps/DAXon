@@ -17,23 +17,23 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class DecimalSortComparer : IAtomicComparer
+    internal sealed class DecimalSortComparer : IAtomicComparer
     {
         private static readonly DecimalSortComparer THE_INSTANCE = new DecimalSortComparer();
         public static DecimalSortComparer DecimalSortComparerInstance => THE_INSTANCE;
 
-        public virtual IStringCollator Collator => null;
+        public IStringCollator Collator => null;
 
         private DecimalSortComparer()
         {
         }
 
-        public virtual IAtomicComparer ProvideContext(IXPathContext context)
+        public IAtomicComparer ProvideContext(IXPathContext context)
         {
             return this;
         }
 
-        public virtual int CompareAtomicValues(AtomicValue a, AtomicValue b)
+        public int CompareAtomicValues(AtomicValue a, AtomicValue b)
         {
             if (a == null)
             {
@@ -47,12 +47,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return ((NumericValue)a).CompareTo((NumericValue)b);
         }
 
-        public virtual bool ComparesEqual(AtomicValue a, AtomicValue b)
+        public bool ComparesEqual(AtomicValue a, AtomicValue b)
         {
             return a.Equals(b);
         }
 
-        public virtual string Save()
+        public string Save()
         {
             return "DecSC";
         }

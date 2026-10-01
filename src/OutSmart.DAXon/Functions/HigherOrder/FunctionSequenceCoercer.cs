@@ -165,7 +165,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             }
         }
 
-        internal class Coercer : IItemMappingFunction
+        internal sealed class Coercer : IItemMappingFunction
         {
             private readonly SpecificFunctionType requiredItemType;
             private readonly Configuration config;
@@ -179,7 +179,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 this.allow40 = allow40;
             }
 
-            public virtual IItem MapItem(IItem item) /*Java covariant IFunctionItem widened (C# 7.3)*/
+            public IItem MapItem(IItem item) /*Java covariant IFunctionItem widened (C# 7.3)*/
             {
                 if (!(item is IFunctionItem))
                 {
@@ -199,7 +199,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             IItem IItemMappingFunction.MapItem(IItem arg0) => MapItem(arg0); // covariant bridge
         }
 
-        private class FunctionSequenceCoercerElaborator : PullElaborator
+        private sealed class FunctionSequenceCoercerElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

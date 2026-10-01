@@ -21,18 +21,18 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implements the XSLT 3.0 function current-merge-group()
     /// </summary>
-    internal class CurrentMergeGroup : SystemFunction
+    internal sealed class CurrentMergeGroup : SystemFunction
     {
         private bool inLoop = false;
         private MergeInstr controllingInstruction = null; // may be unknown, when current group has dynamic scope
         private readonly HashSet<string> allowedNames = new HashSet<string>();
 
-        public virtual MergeInstr ControllingInstruction => controllingInstruction;
+        public MergeInstr ControllingInstruction => controllingInstruction;
 
         public override ItemType ResultItemType => AnyItemType.GetInstance();
 
         public override string StreamerName => "CurrentMergeGroup";
-        public virtual void SetControllingInstruction(MergeInstr instruction, bool isInLoop)
+        public void SetControllingInstruction(MergeInstr instruction, bool isInLoop)
         {
             this.controllingInstruction = instruction;
             this.inLoop = isInLoop;

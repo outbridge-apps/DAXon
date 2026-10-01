@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions
     // XQuery while working under XSLT (whose flattened XSLT30FunctionSet registers everything). Registration
     // lines are shared verbatim with XSLT30FunctionSet.cs (same Entry shapes as upstream, where the XSLT set
     // imports this one).
-    internal class XPath20FunctionSet : BuiltInFunctionSet
+    internal sealed class XPath20FunctionSet : BuiltInFunctionSet
     {
         private static readonly XPath20FunctionSet _i = new XPath20FunctionSet();
         public XPath20FunctionSet()

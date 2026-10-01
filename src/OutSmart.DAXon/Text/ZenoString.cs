@@ -18,7 +18,7 @@ using OutSmart.DAXon.Internal;
 using System.IO;
 namespace OutSmart.DAXon.Text
 {
-    internal class ZenoString : UnicodeString
+    internal sealed class ZenoString : UnicodeString
     {
 
         public static readonly ZenoString EMPTY = new ZenoString();
@@ -327,7 +327,7 @@ namespace OutSmart.DAXon.Text
             }
         }
 
-        public virtual void WriteSegments(IUnicodeWriter writer)
+        public void WriteSegments(IUnicodeWriter writer)
         {
             foreach (UnicodeString str in segments)
             {

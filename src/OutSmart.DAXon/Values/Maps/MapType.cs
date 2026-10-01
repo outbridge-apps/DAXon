@@ -22,7 +22,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Values.Maps
 {
-    internal class MapType : AnyFunctionType
+    internal sealed class MapType : AnyFunctionType
     {
         public static readonly MapType ANY_MAP_TYPE = new MapType(BuiltInAtomicType.ANY_ATOMIC, SequenceType.ANY_SEQUENCE);
         public static readonly MapType EMPTY_MAP_TYPE = new MapType(BuiltInAtomicType.ANY_ATOMIC, SequenceType.ANY_SEQUENCE, true);
@@ -31,9 +31,9 @@ namespace OutSmart.DAXon.Values.Maps
         private readonly SequenceType valueType;
         private readonly bool mustBeEmpty;
 
-        public virtual IPlainType KeyType => keyType;
+        public IPlainType KeyType => keyType;
 
-        public virtual SequenceType ValueType => valueType;
+        public SequenceType ValueType => valueType;
 
         public override string BasicAlphaCode => "FM";
 

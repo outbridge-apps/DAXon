@@ -18,7 +18,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Elaboration
 {
-    internal class MemoClosureEvaluator : ISequenceEvaluator
+    internal sealed class MemoClosureEvaluator : ISequenceEvaluator
     {
         readonly Expression input;
         readonly IPullEvaluator inputEvaluator;
@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             this.singleton = !Cardinality.AllowsMany(input.GetCardinality());
         }
 
-        public virtual ISequence Evaluate(IXPathContext context)
+        public ISequence Evaluate(IXPathContext context)
         {
             try
             {

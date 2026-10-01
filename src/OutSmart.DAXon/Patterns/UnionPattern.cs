@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Patterns
     /// <summary>
     /// A pattern formed as the union (or) of two other patterns
     /// </summary>
-    internal class UnionPattern : VennPattern
+    internal sealed class UnionPattern : VennPattern
     {
 
         protected override string OperatorName => "union";

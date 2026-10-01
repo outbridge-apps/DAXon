@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 {
     // The initial tuple source of a FLWOR pull pipeline: delivers exactly ONE (empty) tuple, then reports
     // exhaustion. The previous stub always returned false, so every FLWOR tuple stream yielded ZERO tuples.
-    internal class SingularityPull : TuplePull
+    internal sealed class SingularityPull : TuplePull
     {
         private bool done = false;
         public SingularityPull() { }

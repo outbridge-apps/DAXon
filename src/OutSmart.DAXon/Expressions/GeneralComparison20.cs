@@ -16,7 +16,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class GeneralComparison20 : GeneralComparison
+    internal sealed class GeneralComparison20 : GeneralComparison
     {
 
         protected override GeneralComparison InverseComparison

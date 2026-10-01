@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
-    internal class UnparsedTextAvailable : UnparsedTextFunction, ICallable
+    internal sealed class UnparsedTextAvailable : UnparsedTextFunction, ICallable
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Functions
             return BooleanValue.Get(EvalUnparsedTextAvailable(hrefVal, encoding, context));
         }
 
-        public virtual bool EvalUnparsedTextAvailable(StringValue hrefVal, string encoding, IXPathContext context)
+        public bool EvalUnparsedTextAvailable(StringValue hrefVal, string encoding, IXPathContext context)
         {
             try
             {

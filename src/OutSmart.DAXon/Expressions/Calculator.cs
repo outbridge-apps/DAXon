@@ -304,7 +304,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: anyAtomicType + AnyAtomicType
         /// </summary>
-        internal class AnyPlusAny : Calculator
+        internal sealed class AnyPlusAny : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -328,7 +328,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: anyAtomicType - AnyAtomicType
         /// </summary>
-        internal class AnyMinusAny : Calculator
+        internal sealed class AnyMinusAny : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -352,7 +352,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: anyAtomicType * AnyAtomicType
         /// </summary>
-        internal class AnyTimesAny : Calculator
+        internal sealed class AnyTimesAny : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -376,7 +376,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: anyAtomicType div AnyAtomicType
         /// </summary>
-        internal class AnyDivAny : Calculator
+        internal sealed class AnyDivAny : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -400,7 +400,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: anyAtomicType mod AnyAtomicType
         /// </summary>
-        internal class AnyModAny : Calculator
+        internal sealed class AnyModAny : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -424,7 +424,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: anyAtomicType idiv AnyAtomicType
         /// </summary>
-        internal class AnyIdivAny : Calculator
+        internal sealed class AnyIdivAny : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -448,7 +448,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: double + double (including types that promote to double)
         /// </summary>
-        internal class DoublePlusDouble : Calculator, IDoubleOpDouble
+        internal sealed class DoublePlusDouble : Calculator, IDoubleOpDouble
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -464,7 +464,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: double - double (including types that promote to double)
         /// </summary>
-        internal class DoubleMinusDouble : Calculator, IDoubleOpDouble
+        internal sealed class DoubleMinusDouble : Calculator, IDoubleOpDouble
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -480,7 +480,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: double * double (including types that promote to double)
         /// </summary>
-        internal class DoubleTimesDouble : Calculator, IDoubleOpDouble
+        internal sealed class DoubleTimesDouble : Calculator, IDoubleOpDouble
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -496,7 +496,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: double div double (including types that promote to double)
         /// </summary>
-        internal class DoubleDivDouble : Calculator, IDoubleOpDouble
+        internal sealed class DoubleDivDouble : Calculator, IDoubleOpDouble
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -512,7 +512,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: double mod double (including types that promote to double)
         /// </summary>
-        internal class DoubleModDouble : Calculator, IDoubleOpDouble
+        internal sealed class DoubleModDouble : Calculator, IDoubleOpDouble
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -528,7 +528,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: double idiv double (including types that promote to double)
         /// </summary>
-        private class DoubleIdivDouble : Calculator, IDoubleOpDouble
+        private sealed class DoubleIdivDouble : Calculator, IDoubleOpDouble
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -561,7 +561,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: float + float (including types that promote to float)
         /// </summary>
-        internal class FloatPlusFloat : Calculator
+        internal sealed class FloatPlusFloat : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -577,7 +577,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: float - float (including types that promote to float)
         /// </summary>
-        internal class FloatMinusFloat : Calculator
+        internal sealed class FloatMinusFloat : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -593,7 +593,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: float * float (including types that promote to float)
         /// </summary>
-        internal class FloatTimesFloat : Calculator
+        internal sealed class FloatTimesFloat : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -609,7 +609,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: float div float (including types that promote to float)
         /// </summary>
-        internal class FloatDivFloat : Calculator
+        internal sealed class FloatDivFloat : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -625,7 +625,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: float mod float (including types that promote to float)
         /// </summary>
-        internal class FloatModFloat : Calculator
+        internal sealed class FloatModFloat : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -641,7 +641,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: float idiv float (including types that promote to float)
         /// </summary>
-        internal class FloatIdivFloat : Calculator
+        internal sealed class FloatIdivFloat : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -684,7 +684,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: decimal + decimal (including types that promote to decimal, that @is, integer)
         /// </summary>
-        internal class DecimalPlusDecimal : Calculator
+        internal sealed class DecimalPlusDecimal : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -707,7 +707,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: decimal - decimal (including types that promote to decimal, that @is, integer)
         /// </summary>
-        internal class DecimalMinusDecimal : Calculator
+        internal sealed class DecimalMinusDecimal : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -730,7 +730,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: decimal * decimal (including types that promote to decimal, that @is, integer)
         /// </summary>
-        internal class DecimalTimesDecimal : Calculator
+        internal sealed class DecimalTimesDecimal : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -753,7 +753,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: decimal div decimal (including types that promote to decimal, that @is, integer)
         /// </summary>
-        internal class DecimalDivDecimal : Calculator
+        internal sealed class DecimalDivDecimal : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -769,7 +769,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: decimal mod decimal (including types that promote to decimal, that @is, integer)
         /// </summary>
-        internal class DecimalModDecimal : Calculator
+        internal sealed class DecimalModDecimal : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -797,7 +797,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: decimal idiv decimal (including types that promote to decimal, that @is, integer)
         /// </summary>
-        internal class DecimalIdivDecimal : Calculator
+        internal sealed class DecimalIdivDecimal : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -826,7 +826,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: integer + integer
         /// </summary>
-        internal class IntegerPlusInteger : Calculator
+        internal sealed class IntegerPlusInteger : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -842,7 +842,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: integer - integer
         /// </summary>
-        internal class IntegerMinusInteger : Calculator
+        internal sealed class IntegerMinusInteger : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -858,7 +858,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: integer * integer
         /// </summary>
-        internal class IntegerTimesInteger : Calculator
+        internal sealed class IntegerTimesInteger : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -874,7 +874,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: integer div integer
         /// </summary>
-        internal class IntegerDivInteger : Calculator
+        internal sealed class IntegerDivInteger : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -890,7 +890,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: integer mod integer
         /// </summary>
-        internal class IntegerModInteger : Calculator
+        internal sealed class IntegerModInteger : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -906,7 +906,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: integer idiv integer
         /// </summary>
-        internal class IntegerIdivInteger : Calculator
+        internal sealed class IntegerIdivInteger : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -922,7 +922,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: date/time/dateTime - date/time/dateTime
         /// </summary>
-        private class DateTimeMinusDateTime : Calculator
+        private sealed class DateTimeMinusDateTime : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -938,7 +938,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: date/time/dateTime + duration
         /// </summary>
-        private class DateTimePlusDuration : Calculator
+        private sealed class DateTimePlusDuration : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -954,7 +954,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: date/time/dateTime - duration
         /// </summary>
-        private class DateTimeMinusDuration : Calculator
+        private sealed class DateTimeMinusDuration : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -970,7 +970,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: duration + date/time/dateTime
         /// </summary>
-        private class DurationPlusDateTime : Calculator
+        private sealed class DurationPlusDateTime : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -986,7 +986,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: duration + duration
         /// </summary>
-        private class DurationPlusDuration : Calculator
+        private sealed class DurationPlusDuration : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -1002,7 +1002,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: duration - duration
         /// </summary>
-        private class DurationMinusDuration : Calculator
+        private sealed class DurationMinusDuration : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -1018,7 +1018,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: duration div duration
         /// </summary>
-        private class DurationDivDuration : Calculator
+        private sealed class DurationDivDuration : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -1034,7 +1034,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: duration * number
         /// </summary>
-        private class DurationTimesNumeric : Calculator
+        private sealed class DurationTimesNumeric : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -1061,7 +1061,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: number * duration
         /// </summary>
-        private class NumericTimesDuration : Calculator
+        private sealed class NumericTimesDuration : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {
@@ -1084,7 +1084,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Arithmetic: duration div number
         /// </summary>
-        private class DurationDivNumeric : Calculator
+        private sealed class DurationDivNumeric : Calculator
         {
             public override AtomicValue Compute(AtomicValue a, AtomicValue b, IXPathContext c)
             {

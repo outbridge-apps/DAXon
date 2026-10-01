@@ -21,15 +21,15 @@ namespace OutSmart.DAXon.Expressions.Sorting
     /// <summary>
     /// A simple collation that just wraps a supplied Comparator
     /// </summary>
-    internal class SimpleCollation : IStringCollator
+    internal sealed class SimpleCollation : IStringCollator
     {
         private static readonly IPlatform platform = Core.Version.platform;
         private IComparer<string> comparator;
         private readonly string uri;
 
-        public virtual string CollationURI => uri;
+        public string CollationURI => uri;
 
-        public virtual IComparer<string> Comparator
+        public IComparer<string> Comparator
         {
             get => comparator; set
             {
@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual ISubstringMatcher SubstringMatcher
+        public ISubstringMatcher SubstringMatcher
         {
             get
             {
@@ -65,22 +65,22 @@ namespace OutSmart.DAXon.Expressions.Sorting
             this.comparator = comparator;
         }
 
-        public virtual int CompareStrings(UnicodeString o1, UnicodeString o2)
+        public int CompareStrings(UnicodeString o1, UnicodeString o2)
         {
             return comparator.Compare(o1.ToString(), o2.ToString());
         }
 
         // Java IStringCollator.isEqualToEmpty default method (no DIM on net472 -> emitted per-impl).
-        public virtual bool IsEqualToEmpty(UnicodeString s1)
+        public bool IsEqualToEmpty(UnicodeString s1)
         {
             return ComparesEqual(s1, EmptyUnicodeString.GetInstance());
         }
-        public virtual bool ComparesEqual(UnicodeString s1, UnicodeString s2)
+        public bool ComparesEqual(UnicodeString s1, UnicodeString s2)
         {
             return comparator.Compare(s1.ToString(), s2.ToString()) == 0;
         }
 
-        public virtual IAtomicMatchKey GetCollationKey(UnicodeString s)
+        public IAtomicMatchKey GetCollationKey(UnicodeString s)
         {
             return platform.GetCollationKey(this, s.ToString());
         }

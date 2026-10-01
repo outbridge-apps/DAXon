@@ -227,7 +227,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new NumberInstructionElaborator();
         }
 
-        private class NumberInstructionElaborator : PullElaborator
+        private sealed class NumberInstructionElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

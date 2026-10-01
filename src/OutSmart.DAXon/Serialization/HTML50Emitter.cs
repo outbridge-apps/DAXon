@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Serialization
     /// <summary>
     /// This class generates HTML 5.0 output
     /// </summary>
-    internal class HTML50Emitter : HTMLEmitter
+    internal sealed class HTML50Emitter : HTMLEmitter
     {
 
         private static readonly byte[] DOCTYPE = StringConstants.Bytes("<!DOCTYPE HTML>");

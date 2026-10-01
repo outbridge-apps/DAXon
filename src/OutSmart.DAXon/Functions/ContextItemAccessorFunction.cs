@@ -81,7 +81,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class StringAccessor : ContextItemAccessorFunction
+        internal sealed class StringAccessor : ContextItemAccessorFunction
         {
             public override Expression MakeFunctionCall(Expression[] arguments)
             {
@@ -98,7 +98,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class Number_0 : ContextItemAccessorFunction
+        internal sealed class Number_0 : ContextItemAccessorFunction
         {
             public override Expression MakeFunctionCall(Expression[] arguments)
             {

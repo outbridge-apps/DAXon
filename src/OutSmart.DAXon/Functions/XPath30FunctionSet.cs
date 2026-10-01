@@ -18,7 +18,7 @@ using OutSmart.DAXon.Values.Arrays;
 namespace OutSmart.DAXon.Functions
 {
     // XPath 3.0 additions on top of XPath 2.0 (upstream registry/XPath30FunctionSet.java).
-    internal class XPath30FunctionSet : BuiltInFunctionSet
+    internal sealed class XPath30FunctionSet : BuiltInFunctionSet
     {
         private static readonly XPath30FunctionSet _i = new XPath30FunctionSet();
         public XPath30FunctionSet()

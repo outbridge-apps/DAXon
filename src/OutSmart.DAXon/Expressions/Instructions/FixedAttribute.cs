@@ -242,7 +242,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new FixedAttributeElaborator();
         }
 
-        private class FixedAttributeElaborator : SimpleNodePushElaborator
+        private sealed class FixedAttributeElaborator : SimpleNodePushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

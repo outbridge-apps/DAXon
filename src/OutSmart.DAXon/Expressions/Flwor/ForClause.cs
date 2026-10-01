@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
     /// <summary>
     /// A "for" clause in a FLWOR expression
     /// </summary>
-    internal class ForClause : Clause
+    internal sealed class ForClause : Clause
     {
         protected LocalVariableBinding rangeVariable;
         protected LocalVariableBinding positionVariable;
@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override ClauseName ClauseKey => FOR;
 
-        public virtual Expression Sequence
+        public Expression Sequence
         {
             get => sequenceOp.GetChildExpression(); set
             {
@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public virtual LocalVariableBinding RangeVariable
+        public LocalVariableBinding RangeVariable
         {
             get => rangeVariable; set
             {
@@ -57,7 +57,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public virtual LocalVariableBinding PositionVariable
+        public LocalVariableBinding PositionVariable
         {
             get => positionVariable; set
             {
@@ -106,12 +106,12 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return f2;
         }
 
-        public virtual void InitSequence(FLWORExpression flwor, Expression sequence)
+        public void InitSequence(FLWORExpression flwor, Expression sequence)
         {
             sequenceOp = new Operand(flwor, sequence, IsRepeated() ? OperandRole.REPEAT_NAVIGATE : OperandRole.NAVIGATE);
         }
 
-        protected internal virtual ISequenceIterator GetIterator(IXPathContext context)
+        protected internal ISequenceIterator GetIterator(IXPathContext context)
         {
             if (sequenceOperandEvaluator == null)
             {
@@ -121,12 +121,12 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return sequenceOperandEvaluator.Iterate(context);
         }
 
-        public virtual void SetAllowingEmpty(bool option)
+        public void SetAllowingEmpty(bool option)
         {
             allowsEmpty = option;
         }
 
-        public virtual bool IsAllowingEmpty()
+        public bool IsAllowingEmpty()
         {
             return allowsEmpty;
         }
@@ -178,7 +178,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public virtual bool AddPredicate(FLWORExpression flwor, ExpressionVisitor visitor, ContextItemStaticInfo contextItemType, Expression condition)
+        public bool AddPredicate(FLWORExpression flwor, ExpressionVisitor visitor, ContextItemStaticInfo contextItemType, Expression condition)
         {
             Configuration config = GetConfiguration();
             Optimizer opt = visitor.ObtainOptimizer();

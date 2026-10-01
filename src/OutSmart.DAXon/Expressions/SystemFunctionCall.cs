@@ -476,7 +476,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for a system function call, used in cases where the specific function call has no custom support
         /// </summary>
-        internal class SystemFunctionCallElaborator : FunctionCallElaborator
+        internal sealed class SystemFunctionCallElaborator : FunctionCallElaborator
         {
             public override void SetExpression(Expression expr)
             {

@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
     /// It is used when no whitespace stripping is actually needed, e.g. for the attribute axis,
     /// so that further iteration remains in the virtual layer rather than switching to real nodes.
     /// </summary>
-    internal class WrappingIterator : IAxisIterator
+    internal sealed class WrappingIterator : IAxisIterator
     {
         internal IAxisIterator @base;
         internal IVirtualNode parent;
@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
             this.parent = parent;
         }
 
-        public virtual NodeInfo Next()
+        public NodeInfo Next()
         {
             NodeInfo n = @base.Next();
             if (n == null)

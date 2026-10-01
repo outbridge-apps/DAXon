@@ -22,7 +22,7 @@ using OutSmart.DAXon.Internal.Collections;
 
 namespace OutSmart.DAXon.Events
 {
-    internal class DocumentValidator : ProxyReceiver
+    internal sealed class DocumentValidator : ProxyReceiver
     {
         private bool foundElement = false;
         private int level = 0;

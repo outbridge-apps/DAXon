@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
     /// <summary>
     /// This class represents one of the rules making up the definition of an accumulator
     /// </summary>
-    internal class AccumulatorRule : IRuleTarget, ITraceableComponent
+    internal sealed class AccumulatorRule : IRuleTarget, ITraceableComponent
     {
         private Expression newValueExpression;
         private readonly SlotManager stackFrameMap;
@@ -33,9 +33,9 @@ namespace OutSmart.DAXon.Expressions.Accumulators
         private ILocation location;
         private StructuredQName accumulatorName;
 
-        public virtual Expression NewValueExpression => newValueExpression;
+        public Expression NewValueExpression => newValueExpression;
 
-        public virtual string TracingTag => "xsl:accumulator-rule";
+        public string TracingTag => "xsl:accumulator-rule";
         public AccumulatorRule(Expression newValueExpression, SlotManager stackFrameMap, bool postDescent)
         {
             this.newValueExpression = newValueExpression;
@@ -43,67 +43,67 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             this.postDescent = postDescent;
         }
 
-        public virtual void Export(ExpressionPresenter @out)
+        public void Export(ExpressionPresenter @out)
         {
             newValueExpression.Export(@out);
         }
 
-        public virtual SlotManager GetStackFrameMap()
+        public SlotManager GetStackFrameMap()
         {
             return stackFrameMap;
         }
 
-        public virtual void RegisterRule(Rule rule)
+        public void RegisterRule(Rule rule)
         {
         }
 
-        public virtual void SetCapturing(bool capturing)
+        public void SetCapturing(bool capturing)
         {
             this.capturing = capturing;
         }
 
-        public virtual bool IsCapturing()
+        public bool IsCapturing()
         {
             return capturing;
         }
 
-        public virtual bool IsPostDescent()
+        public bool IsPostDescent()
         {
             return postDescent;
         }
 
         // ITraceableComponent interface
-        public virtual Expression GetBody()
+        public Expression GetBody()
         {
             return newValueExpression;
         }
 
-        public virtual void SetLocation(ILocation loc)
+        public void SetLocation(ILocation loc)
         {
             this.location = loc;
         }
 
-        public virtual ILocation GetLocation()
+        public ILocation GetLocation()
         {
             return location;
         }
 
-        public virtual StructuredQName GetObjectName()
+        public StructuredQName GetObjectName()
         {
             return null;
         }
 
-        public virtual void SetBody(Expression expression)
+        public void SetBody(Expression expression)
         {
             newValueExpression = expression;
         }
 
-        public virtual void SetAccumulatorName(StructuredQName name)
+        public void SetAccumulatorName(StructuredQName name)
         {
             this.accumulatorName = name;
         }
 
-        public virtual void GatherProperties(Action<string, object> consumer)
+        public void GatherProperties(Action<string, object> consumer)
         {
             if (accumulatorName != null)
             {

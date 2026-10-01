@@ -13,7 +13,7 @@ using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Functions
 {
     /// <summary>Implements fn:head — the first item of a sequence (or the empty sequence).</summary>
-    internal class HeadFn : SystemFunction
+    internal sealed class HeadFn : SystemFunction
     {
         // NB: no makeFunctionCall override — the upstream one rewrites to FirstItemExpression, which is
         // only a hollow stub in this port (MakeFirstItemExpression returns its operand unchanged, so

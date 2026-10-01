@@ -22,14 +22,14 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class TailExpression : UnaryExpression
+    internal sealed class TailExpression : UnaryExpression
     {
         int start; // 1-based offset of first item from base expression
 
         public override int ImplementationMethod => ITERATE_METHOD;
 
         /* | StaticProperty.ALLOWS_ONE */
-        public virtual int Start => start;
+        public int Start => start;
 
         /* | StaticProperty.ALLOWS_ONE */
         public override string StreamerName => "TailExpression";
@@ -149,7 +149,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for a tail expression
         /// </summary>
-        internal class TailExprElaborator : PullElaborator
+        internal sealed class TailExprElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

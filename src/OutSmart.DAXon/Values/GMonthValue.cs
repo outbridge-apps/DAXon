@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Values
     /// <summary>
     /// Implementation of the xs:gMonth data type
     /// </summary>
-    internal class GMonthValue : GDateValue
+    internal sealed class GMonthValue : GDateValue
     {
         private static readonly OutSmart.DAXon.Internal.Regex.Pattern regex = OutSmart.DAXon.Internal.Regex.Pattern.Compile("--([0-9][0-9])(Z|[+-][0-9][0-9]:[0-9][0-9])?");
 

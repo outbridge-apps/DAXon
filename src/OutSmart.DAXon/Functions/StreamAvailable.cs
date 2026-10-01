@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Functions
     // (no Call override -> AbstractFunction.Call NIE on every fn:stream-available()).
     // Probes whether a source document can be opened: parses until the first startElement, then
     // aborts via QuitParsingException — arrival there means the stream is available.
-    internal class StreamAvailable : SystemFunction
+    internal sealed class StreamAvailable : SystemFunction
     {
         public StreamAvailable() { }
 
@@ -54,7 +54,7 @@ namespace OutSmart.DAXon.Functions
             return false;
         }
 
-        private class StreamTester : ProxyReceiver
+        private sealed class StreamTester : ProxyReceiver
         {
             public StreamTester(PipelineConfiguration pipe) : base(new Sink(pipe))
             {

@@ -18,29 +18,29 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Model
 {
-    internal class NodeSource : IActiveSource
+    internal sealed class NodeSource : IActiveSource
     {
         private readonly NodeInfo node;
         private string systemId;
 
-        public virtual NodeInfo Node => node;
+        public NodeInfo Node => node;
         public NodeSource(NodeInfo node)
         {
             this.node = node;
             this.systemId = node.GetSystemId();
         }
 
-        public virtual void Deliver(IReceiver receiver, ParseOptions options)
+        public void Deliver(IReceiver receiver, ParseOptions options)
         {
             Sender.SendDocumentInfo(node, receiver, new Loc(GetSystemId(), -1, -1));
         }
 
-        public virtual void SetSystemId(string systemId)
+        public void SetSystemId(string systemId)
         {
             this.systemId = systemId;
         }
 
-        public virtual string GetSystemId()
+        public string GetSystemId()
         {
             if (systemId == null)
             {

@@ -24,15 +24,15 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Functions
 {
-    internal class KeyFn : SystemFunction, IStatefulSystemFunction
+    internal sealed class KeyFn : SystemFunction, IStatefulSystemFunction
     {
         private KeyDefinitionSet staticKeySet = null;
-        public virtual KeyManager GetKeyManager()
+        public KeyManager GetKeyManager()
         {
             return GetRetainedStaticContext().GetPackageData().GetKeyManager();
         }
 
-        public virtual INamespaceResolver GetNamespaceResolver()
+        public INamespaceResolver GetNamespaceResolver()
         {
             return GetRetainedStaticContext();
         }
@@ -67,7 +67,7 @@ namespace OutSmart.DAXon.Functions
             return null;
         }
 
-        public virtual PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
+        public PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
         {
             if (staticKeySet != null)
             {

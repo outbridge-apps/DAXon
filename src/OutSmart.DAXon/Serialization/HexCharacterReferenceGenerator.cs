@@ -15,14 +15,14 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Serialization
 {
-    internal class HexCharacterReferenceGenerator : ICharacterReferenceGenerator
+    internal sealed class HexCharacterReferenceGenerator : ICharacterReferenceGenerator
     {
         public static readonly HexCharacterReferenceGenerator THE_INSTANCE = new HexCharacterReferenceGenerator();
         private HexCharacterReferenceGenerator()
         {
         }
 
-        public virtual void OutputCharacterReference(int charval, IUnicodeWriter writer)
+        public void OutputCharacterReference(int charval, IUnicodeWriter writer)
         {
             writer.WriteCodePoint('&');
             writer.WriteCodePoint('#');

@@ -16,24 +16,24 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class ItemCheckingIterator : ISequenceIterator, ILookaheadIterator, ILastPositionFinder
+    internal sealed class ItemCheckingIterator : ISequenceIterator, ILookaheadIterator, ILastPositionFinder
     {
         private readonly ISequenceIterator @base;
         private readonly Action<IItem> action;
 
-        public virtual bool HasNext => ((ILookaheadIterator)@base).HasNext;
+        public bool HasNext => ((ILookaheadIterator)@base).HasNext;
         public ItemCheckingIterator(ISequenceIterator @base, Action<IItem> action)
         {
             this.@base = @base;
             this.action = action;
         }
 
-        public virtual bool SupportsHasNext()
+        public bool SupportsHasNext()
         {
             return @base is ILookaheadIterator && ((ILookaheadIterator)@base).SupportsHasNext();
         }
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             IItem nextSource = @base.Next();
             if (nextSource == null)
@@ -47,17 +47,17 @@ namespace OutSmart.DAXon.Expressions
             return nextSource;
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             @base.Dispose();
         }
 
-        public virtual bool SupportsGetLength()
+        public bool SupportsGetLength()
         {
             return SequenceTool.SupportsGetLength(@base);
         }
 
-        public virtual int GetLength()
+        public int GetLength()
         {
             return SequenceTool.GetLength(@base);
         }

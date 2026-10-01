@@ -28,7 +28,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Caching;
 namespace OutSmart.DAXon.Functions
 {
-    internal class FormatDate : SystemFunction, ICallable
+    internal sealed class FormatDate : SystemFunction, ICallable
     {
         // Widths beyond this are rejected with FOFD1340: the padded component must fit the
         // engine's int[]-backed strings (hard ceiling ~536M codepoints), and a width of

@@ -11,7 +11,7 @@ namespace OutSmart.DAXon.Expressions
     // Upstream: a LetExpression marker used when compiling with tracing, so variable values are
     // materialized eagerly and visible to the trace listener. Was a stub whose implicit conversion
     // to LetExpression THREW - compiling any XQuery FLWOR let with tracing enabled crashed.
-    internal class EagerLetExpression : LetExpression
+    internal sealed class EagerLetExpression : LetExpression
     {
     }
 }

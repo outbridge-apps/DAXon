@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the function string-to-codepoints()
     /// </summary>
-    internal class StringToCodepoints : SystemFunction
+    internal sealed class StringToCodepoints : SystemFunction
     {
         public override IntegerValue[] IntegerBounds => new IntegerValue[]
             {

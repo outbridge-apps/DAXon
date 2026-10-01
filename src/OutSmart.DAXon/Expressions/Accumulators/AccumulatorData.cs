@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
     /// <summary>
     /// Holds the values of an accumulator function for one non-streamed document
     /// </summary>
-    internal class AccumulatorData : IIAccumulatorData
+    internal sealed class AccumulatorData : IIAccumulatorData
     {
         private readonly Accumulator accumulator;
         private readonly IList<DataPoint> values = new List<DataPoint>();
@@ -37,12 +37,12 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             this.accumulator = acc;
         }
 
-        public virtual Accumulator GetAccumulator()
+        public Accumulator GetAccumulator()
         {
             return accumulator;
         }
 
-        public virtual void BuildIndex(NodeInfo doc, IXPathContext context)
+        public void BuildIndex(NodeInfo doc, IXPathContext context)
         {
 
             try
@@ -173,7 +173,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
         /*
      * Diagnostic output of the entire data structure
      */
-        public virtual ISequence GetValue(NodeInfo node, bool postDescent)
+        public ISequence GetValue(NodeInfo node, bool postDescent)
         {
             Visit visit = new Visit(node, postDescent);
             return Search(0, values.Count, visit); //System.Console.Error.println("Searched " + values.size() + " " + ((TinyNodeImpl) visit.node).getNodeNumber() + " : " + seq);
@@ -219,7 +219,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
         /// <summary>
         /// Class representing one of the two visits to a node during a tree-walk
         /// </summary>
-        private class Visit : IComparable<Visit>
+        private sealed class Visit : IComparable<Visit>
         {
             public NodeInfo node;
             public bool isPostDescent;
@@ -229,7 +229,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
                 this.isPostDescent = isPostDescent;
             }
 
-            public virtual int CompareTo(Visit other)
+            public int CompareTo(Visit other)
             {
                 int relation = Navigator.ComparePosition(node, other.node);
                 switch (relation)
@@ -266,7 +266,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
         /// <summary>
         /// Class representing a value of the accumulator immediately after a particular visit to a node.
         /// </summary>
-        private class DataPoint
+        private sealed class DataPoint
         {
             public Visit visit;
             public ISequence value;

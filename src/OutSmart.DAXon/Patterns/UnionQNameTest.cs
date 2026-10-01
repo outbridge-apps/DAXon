@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Patterns
     /// Ported from upstream Saxon (was a hollow excluded stub — the (IQNameTest) cast in
     /// XQueryParser.ParseTryCatchExpression / XSLCatch threw InvalidCastException at runtime).
     /// </summary>
-    internal class UnionQNameTest : IQNameTest
+    internal sealed class UnionQNameTest : IQNameTest
     {
         private readonly IList<IQNameTest> tests;
 

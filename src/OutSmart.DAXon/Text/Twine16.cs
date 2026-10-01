@@ -12,10 +12,10 @@ using OutSmart.DAXon.Collections;
 
 namespace OutSmart.DAXon.Text
 {
-    internal class Twine16 : UnicodeString
+    internal sealed class Twine16 : UnicodeString
     {
         private readonly string _s;
-        public virtual char[] CharArray => _s.ToCharArray(); // batch6: real UTF8Writer fast path
+        public char[] CharArray => _s.ToCharArray(); // batch6: real UTF8Writer fast path
         public override int Width => 16;
         public Twine16(string s) { _s = s ?? ""; }
         public Twine16(char[] chars) { _s = new string(chars); }

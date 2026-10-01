@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// A xsl:break element in the stylesheet
     /// </summary>
-    internal class XSLBreak : XSLBreakOrContinue
+    internal sealed class XSLBreak : XSLBreakOrContinue
     {
         private Expression select;
         public override void PrepareAttributes()

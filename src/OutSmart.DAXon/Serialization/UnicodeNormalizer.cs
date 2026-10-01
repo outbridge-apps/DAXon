@@ -21,11 +21,11 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Serialization
 {
-    internal class UnicodeNormalizer : ProxyReceiver
+    internal sealed class UnicodeNormalizer : ProxyReceiver
     {
         private readonly NormalizationForm normForm;
 
-        public virtual NormalizationForm NormalizationForm => normForm;
+        public NormalizationForm NormalizationForm => normForm;
         public UnicodeNormalizer(string form, IReceiver next) : base(next)
         {
             switch (form)
@@ -75,7 +75,7 @@ namespace OutSmart.DAXon.Serialization
         /// <summary>
         /// Output character data
         /// </summary>
-        public virtual UnicodeString Normalize(UnicodeString @in, bool containsNullMarkers)
+        public UnicodeString Normalize(UnicodeString @in, bool containsNullMarkers)
         {
             if (@in is WhitespaceString)
             {

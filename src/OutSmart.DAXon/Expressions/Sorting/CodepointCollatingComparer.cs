@@ -18,12 +18,12 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class CodepointCollatingComparer : IAtomicComparer
+    internal sealed class CodepointCollatingComparer : IAtomicComparer
     {
         private static readonly CodepointCollator collator = CodepointCollator.GetInstance();
         private static readonly CodepointCollatingComparer THE_INSTANCE = new CodepointCollatingComparer();
 
-        public virtual IStringCollator Collator => collator;
+        public IStringCollator Collator => collator;
 
         private CodepointCollatingComparer()
         {
@@ -33,12 +33,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return THE_INSTANCE;
         }
 
-        public virtual IAtomicComparer ProvideContext(IXPathContext context)
+        public IAtomicComparer ProvideContext(IXPathContext context)
         {
             return this;
         }
 
-        public virtual int CompareAtomicValues(AtomicValue a, AtomicValue b)
+        public int CompareAtomicValues(AtomicValue a, AtomicValue b)
         {
             if (a == null)
             {
@@ -106,12 +106,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return collator.CompareStrings(ua, ub);
         }
 
-        public virtual bool ComparesEqual(AtomicValue a, AtomicValue b)
+        public bool ComparesEqual(AtomicValue a, AtomicValue b)
         {
             return ((StringValue)a).Equals((StringValue)b);
         }
 
-        public virtual string Save()
+        public string Save()
         {
             return "CCC";
         }

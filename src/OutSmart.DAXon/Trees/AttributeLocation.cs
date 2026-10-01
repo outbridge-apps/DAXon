@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Trees
     /// <summary>
     /// A ILocation corresponding to an attribute in a document (often a stylesheet)
     /// </summary>
-    internal class AttributeLocation : ILocation
+    internal sealed class AttributeLocation : ILocation
     {
         private readonly string systemId;
         private readonly int lineNumber;
@@ -30,9 +30,9 @@ namespace OutSmart.DAXon.Trees
         private readonly StructuredQName attributeName;
         private NodeInfo elementNode;
 
-        public virtual StructuredQName ElementName => elementName;
+        public StructuredQName ElementName => elementName;
 
-        public virtual StructuredQName AttributeName => attributeName;
+        public StructuredQName AttributeName => attributeName;
         public AttributeLocation(NodeInfo element, StructuredQName attributeName)
         {
             this.systemId = element.GetSystemId();
@@ -55,27 +55,27 @@ namespace OutSmart.DAXon.Trees
             this.attributeName = attributeName;
         }
 
-        public virtual int GetColumnNumber()
+        public int GetColumnNumber()
         {
             return columnNumber;
         }
 
-        public virtual string GetSystemId()
+        public string GetSystemId()
         {
             return systemId;
         }
 
-        public virtual string GetPublicId()
+        public string GetPublicId()
         {
             return null;
         }
 
-        public virtual int GetLineNumber()
+        public int GetLineNumber()
         {
             return lineNumber;
         }
 
-        public virtual ILocation SaveLocation()
+        public ILocation SaveLocation()
         {
             return this;
         }

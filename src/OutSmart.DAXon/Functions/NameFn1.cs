@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Functions
 
     // fn:name#1/local-name#1: Call-only impls — the full Name_1/LocalName_1 ports drag the StringElaborator
     // cluster. Java: StringValue.makeStringValue(node.getDisplayName()/getLocalPart()).
-    internal class NameFn1 : ScalarSystemFunction
+    internal sealed class NameFn1 : ScalarSystemFunction
     {
         private readonly bool _local;
         public NameFn1(bool local) { _local = local; }

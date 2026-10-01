@@ -20,11 +20,11 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Values
 {
-    internal class MemoClosure : Closure, IContextOriginator
+    internal sealed class MemoClosure : Closure, IContextOriginator
     {
         private ISequence sequence;
 
-        public virtual ISequence SequenceAsIs => sequence;
+        public ISequence SequenceAsIs => sequence;
         public MemoClosure(Expression expr, IPullEvaluator inputEvaluator, IXPathContext context)
         {
 
@@ -81,7 +81,7 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        public virtual IItem ItemAt(int n)
+        public IItem ItemAt(int n)
         {
             lock (this)
             {

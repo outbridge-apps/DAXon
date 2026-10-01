@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// Exception indicating that an attribute or namespace node has been written when there is no open
     /// element to write it to. (Upstream lives in net.sf.saxon.event; kept here where the stub lived.)
     /// </summary>
-    internal class NoOpenStartTagException : XPathException
+    internal sealed class NoOpenStartTagException : XPathException
     {
 
         public NoOpenStartTagException(string message) : base(message)

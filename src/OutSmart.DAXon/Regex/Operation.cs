@@ -53,7 +53,7 @@ namespace OutSmart.DAXon.Regex
 
         public abstract string Display();
 
-        protected class ForceProgressIterator : AbstractIntIterator
+        protected sealed class ForceProgressIterator : AbstractIntIterator
         {
             private readonly IIntIterator @base;
             private readonly REMatcher matcher;

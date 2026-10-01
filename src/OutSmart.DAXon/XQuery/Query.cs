@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.XQuery
 {
     // Real Query.cs (the XQuery command-line main) is excluded; XsltPackage.Save uses only
     // the static utility Query.CreateFileIfNecessary. Faithful re-impl (identical to Query.cs:1298).
-    internal class Query
+    internal sealed class Query
     {
         // IO-removal: compat File eliminated -> path string + System.IO statics (faithful to Query.cs:1298).
         public static void CreateFileIfNecessary(string file)

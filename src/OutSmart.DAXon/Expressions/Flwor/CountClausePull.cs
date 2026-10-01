@@ -14,7 +14,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
 namespace OutSmart.DAXon.Expressions.Flwor
 {
-    internal class CountClausePull : TuplePull
+    internal sealed class CountClausePull : TuplePull
     {
         private readonly TuplePull @base;
         private readonly int slot;

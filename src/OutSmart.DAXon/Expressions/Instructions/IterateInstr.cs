@@ -197,7 +197,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new IterateElaborator();
         }
 
-        internal class IterateElaborator : PushElaborator
+        internal sealed class IterateElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

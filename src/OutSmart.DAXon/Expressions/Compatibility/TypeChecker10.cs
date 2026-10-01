@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Expressions.Compatibility
     /// <summary>
     /// This class provides type checking capability with XPath 1.0 backwards compatibility enabled.
     /// </summary>
-    internal class TypeChecker10 : TypeChecker
+    internal sealed class TypeChecker10 : TypeChecker
     {
         public TypeChecker10()
         {

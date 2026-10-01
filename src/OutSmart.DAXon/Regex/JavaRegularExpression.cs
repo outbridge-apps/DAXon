@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Regex
     //                         Unicode-aware by default; bit kept so it participates in the cache key)
     //   q LITERAL          -> emulated by Regex.Escape on the whole pattern before compilation
     //   c CANON_EQ         -> NOT supported by System.Text.RegularExpressions; fails loud (XPathException)
-    internal class JavaRegularExpression : IRegularExpression
+    internal sealed class JavaRegularExpression : IRegularExpression
     {
         private readonly JPattern pattern;
         private readonly string javaRegex;
@@ -39,7 +39,7 @@ namespace OutSmart.DAXon.Regex
         /// <summary>
         /// Get the flags used at the time the regular expression was compiled (the original flag string).
         /// </summary>
-        public virtual string Flags => originalFlags;
+        public string Flags => originalFlags;
 
         /// <summary>
         /// Create a regular expression from an already-translated Java regex.
@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.Regex
         /// <summary>
         /// Analyze an input string in support of xsl:analyze-string / fn:analyze-string.
         /// </summary>
-        public virtual IRegexIterator Analyze(UnicodeString input)
+        public IRegexIterator Analyze(UnicodeString input)
         {
             // Faithful port would be: return new JRegexIterator(input.ToString(), pattern);
             // but poc\output\full\regex\JRegexIterator.cs is <Compile Remove>d and IRegexIterator's
@@ -88,7 +88,7 @@ namespace OutSmart.DAXon.Regex
         /// Determine whether the regular expression contains a match for a given string
         /// (Java semantics: Matcher.find()).
         /// </summary>
-        public virtual bool ContainsMatch(UnicodeString input)
+        public bool ContainsMatch(UnicodeString input)
         {
             return pattern.Matcher(input.ToString()).Find();
         }
@@ -97,7 +97,7 @@ namespace OutSmart.DAXon.Regex
         /// Determine whether the regular expression matches a given string in its entirety
         /// (Java semantics: Matcher.matches()).
         /// </summary>
-        public virtual bool Matches(UnicodeString input)
+        public bool Matches(UnicodeString input)
         {
             return pattern.Matcher(input.ToString()).Matches();
         }
@@ -106,7 +106,7 @@ namespace OutSmart.DAXon.Regex
         /// Replace all substrings of a supplied input string that match the regular expression
         /// with a replacement string ($N group references are passed through to the engine).
         /// </summary>
-        public virtual UnicodeString Replace(UnicodeString input, UnicodeString replacement)
+        public UnicodeString Replace(UnicodeString input, UnicodeString replacement)
         {
             JMatcher matcher = pattern.Matcher(input.ToString());
             try
@@ -124,7 +124,7 @@ namespace OutSmart.DAXon.Regex
         /// Replace matching substrings via a callback. Upstream Java throws unconditionally:
         /// "fn:replace#5 is not supported with the Java regex engine" - ported as-is.
         /// </summary>
-        public virtual UnicodeString ReplaceWith(UnicodeString input, Func<UnicodeString, UnicodeString[], UnicodeString> replacement)
+        public UnicodeString ReplaceWith(UnicodeString input, Func<UnicodeString, UnicodeString[], UnicodeString> replacement)
         {
             throw new XPathException("fn:replace#5 is not supported with the Java regex engine");
         }
@@ -132,7 +132,7 @@ namespace OutSmart.DAXon.Regex
         /// <summary>
         /// Use this regular expression to tokenize an input string (fn:tokenize semantics).
         /// </summary>
-        public virtual IAtomicIterator Tokenize(UnicodeString input)
+        public IAtomicIterator Tokenize(UnicodeString input)
         {
             if (input.IsEmpty())
             {
@@ -190,7 +190,7 @@ namespace OutSmart.DAXon.Regex
         /// <summary>
         /// Ask whether the regular expression is using platform-native syntax (Java or .NET), or XPath syntax
         /// </summary>
-        public virtual bool IsPlatformNative()
+        public bool IsPlatformNative()
         {
             return true;
         }

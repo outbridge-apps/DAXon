@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class implements the XPath 2.0 function fn:in-scope-prefixes()
     /// </summary>
-    internal class InScopePrefixes : SystemFunction
+    internal sealed class InScopePrefixes : SystemFunction
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

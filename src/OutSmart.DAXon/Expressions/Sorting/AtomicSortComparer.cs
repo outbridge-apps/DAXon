@@ -20,7 +20,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class AtomicSortComparer : IAtomicComparer
+    internal sealed class AtomicSortComparer : IAtomicComparer
     {
 
         //} else
@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private readonly int itemType;
         private readonly int implicitTimezone; // dynamic-context constant: hoisted from per-comparison GetImplicitTimezone() chase
 
-        public virtual IStringCollator Collator => collator;
+        public IStringCollator Collator => collator;
 
         protected AtomicSortComparer(IStringCollator collator, int itemType, IXPathContext context)
         {
@@ -78,12 +78,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual IAtomicComparer ProvideContext(IXPathContext context)
+        public IAtomicComparer ProvideContext(IXPathContext context)
         {
             return new AtomicSortComparer(collator, itemType, context);
         }
 
-        public virtual int CompareAtomicValues(AtomicValue a, AtomicValue b)
+        public int CompareAtomicValues(AtomicValue a, AtomicValue b)
         {
             if (a == null)
             {
@@ -167,24 +167,24 @@ namespace OutSmart.DAXon.Expressions.Sorting
         }
 
         //} else
-        protected virtual int CompareNonComparables(AtomicValue a, AtomicValue b)
+        protected int CompareNonComparables(AtomicValue a, AtomicValue b)
         {
             XPathException err = new XPathException("Values are not comparable (" + Types.Type.DisplayTypeName(a) + ", " + Types.Type.DisplayTypeName(b) + ')', "XPTY0004");
             throw new ComparisonException(err);
         }
 
-        public virtual bool ComparesEqual(AtomicValue a, AtomicValue b)
+        public bool ComparesEqual(AtomicValue a, AtomicValue b)
         {
             return CompareAtomicValues(a, b) == 0;
         }
-        public virtual string Save()
+        public string Save()
         {
             return "AtSC|" + itemType + "|" + Collator.CollationURI;
         }
 
-        private class MatchKeyForNaN : IAtomicMatchKey
+        private sealed class MatchKeyForNaN : IAtomicMatchKey
         {
-            public virtual AtomicValue AsAtomic()
+            public AtomicValue AsAtomic()
             {
 
                 // The logic here is to choose a value that compares equal to itself but not equal to any other

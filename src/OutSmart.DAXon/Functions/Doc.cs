@@ -24,10 +24,10 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement the fn:doc() function - a simplified form of the IDocument function
     /// </summary>
-    internal class Doc : SystemFunction, ICallable
+    internal sealed class Doc : SystemFunction, ICallable
     {
         private ParseOptions parseOptions;
-        public virtual ParseOptions GetParseOptions()
+        public ParseOptions GetParseOptions()
         {
             return parseOptions;
         }

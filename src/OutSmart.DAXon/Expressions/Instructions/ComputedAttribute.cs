@@ -493,7 +493,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new ComputedAttributeElaborator();
         }
 
-        private class ComputedAttributeElaborator : SimpleNodePushElaborator
+        private sealed class ComputedAttributeElaborator : SimpleNodePushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

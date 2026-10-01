@@ -21,11 +21,11 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Collections.Zeno
 {
-    internal class ZenoSequence : IGroundedValue
+    internal sealed class ZenoSequence : IGroundedValue
     {
         private readonly ZenoChain<IItem> chain;
 
-        public virtual UnicodeString UnicodeStringValue
+        public UnicodeString UnicodeStringValue
         {
             get
             {
@@ -59,12 +59,12 @@ namespace OutSmart.DAXon.Collections.Zeno
             this.chain = chain;
         }
 
-        public virtual ISequenceIterator Iterate()
+        public ISequenceIterator Iterate()
         {
             return new ZenoSequenceIterator(this);
         }
 
-        public virtual IItem ItemAt(int n)
+        public IItem ItemAt(int n)
         {
             try
             {
@@ -76,12 +76,12 @@ namespace OutSmart.DAXon.Collections.Zeno
             }
         }
 
-        public virtual IItem Head()
+        public IItem Head()
         {
             return chain.IsEmpty() ? null : chain[0];
         }
 
-        public virtual IGroundedValue Subsequence(int start, int length)
+        public IGroundedValue Subsequence(int start, int length)
         {
             if (start < 0)
             {
@@ -109,12 +109,12 @@ namespace OutSmart.DAXon.Collections.Zeno
             }
         }
 
-        public virtual int GetLength()
+        public int GetLength()
         {
             return chain.Count();
         }
 
-        public virtual string GetStringValue()
+        public string GetStringValue()
         {
             switch (GetLength())
             {
@@ -136,12 +136,12 @@ namespace OutSmart.DAXon.Collections.Zeno
             }
         }
 
-        public virtual ZenoSequence Append(IItem item)
+        public ZenoSequence Append(IItem item)
         {
             return new ZenoSequence(chain.Add(item));
         }
 
-        public virtual ZenoSequence AppendSequence(IGroundedValue items)
+        public ZenoSequence AppendSequence(IGroundedValue items)
         {
             if (chain.IsEmpty() && items is ZenoSequence)
             {
@@ -170,16 +170,16 @@ namespace OutSmart.DAXon.Collections.Zeno
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual bool EffectiveBooleanValue() => OutSmart.DAXon.Expressions.Parsing.ExpressionTool.EffectiveBooleanValue(Iterate()); // upstream GroundedValue default
-        public virtual IGroundedValue Reduce() => this;
+        public bool EffectiveBooleanValue() => OutSmart.DAXon.Expressions.Parsing.ExpressionTool.EffectiveBooleanValue(Iterate()); // upstream GroundedValue default
+        public IGroundedValue Reduce() => this;
         // A ZenoSequence is already a GroundedValue, so materialize()/reduce() return itself
         // (GroundedValue defaults). The stubs threw, breaking fold-left etc. whose accumulator is a
         // ZenoSequence sequence value.
-        public virtual IGroundedValue Materialize() => this;
-        public virtual string ToShortString() => OutSmart.DAXon.Transformation.Err.DepictSequence(this); // upstream GroundedValue default
-        public virtual IEnumerable<IItem> AsIterable() { ISequenceIterator it = Iterate(); IItem i; while ((i = it.Next()) != null) yield return i; } // upstream GroundedValue.asIterable
-        public virtual bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
+        public IGroundedValue Materialize() => this;
+        public string ToShortString() => OutSmart.DAXon.Transformation.Err.DepictSequence(this); // upstream GroundedValue default
+        public IEnumerable<IItem> AsIterable() { ISequenceIterator it = Iterate(); IItem i; while ((i = it.Next()) != null) yield return i; } // upstream GroundedValue.asIterable
+        public bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
+        public IGroundedValue Concatenate(IGroundedValue[] others)
         {
             // upstream GroundedValue default: chain this value's items with the others
             var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
@@ -190,12 +190,12 @@ namespace OutSmart.DAXon.Collections.Zeno
         // A ZenoSequence is an immutable grounded value (Materialize() => this), so it is already
         // repeatable — matches AtomicValue/EmptySequence/IntegerRange. Was a hollow stub that threw when a
         // `let $x := <zeno-seq>` binding is read more than once (XPathContextMinor.SetLocalVariable).
-        public virtual ISequence MakeRepeatable() => this;
+        public ISequence MakeRepeatable() => this;
 
         /// <summary>
         /// A ISequenceIterator over a ZenoSequence
         /// </summary>
-        internal class ZenoSequenceIterator : IGroundedIterator, ILastPositionFinder, ILookaheadIterator
+        internal sealed class ZenoSequenceIterator : IGroundedIterator, ILastPositionFinder, ILookaheadIterator
         {
             // This class is not a LookAheadIterator on C#, because the underlying C# enumerator has no side-effect-free
             // hasNext() operation.
@@ -205,7 +205,7 @@ namespace OutSmart.DAXon.Collections.Zeno
             private bool lookaheadFilled;
             private int position = 0;
 
-            public virtual bool HasNext
+            public bool HasNext
             {
                 get
                 {
@@ -224,7 +224,7 @@ namespace OutSmart.DAXon.Collections.Zeno
                 this.chainIterator = sequence.chain.IIterator();
             }
 
-            public virtual IItem Next()
+            public IItem Next()
             {
                 position++;
                 if (lookaheadFilled)
@@ -236,36 +236,36 @@ namespace OutSmart.DAXon.Collections.Zeno
                 return chainIterator.MoveNext() ? chainIterator.Current : null;
             }
 
-            public virtual bool SupportsGetLength()
+            public bool SupportsGetLength()
             {
                 return true;
             }
 
-            public virtual int GetLength()
+            public int GetLength()
             {
                 return sequence.GetLength();
             }
 
-            public virtual bool IsActuallyGrounded()
+            public bool IsActuallyGrounded()
             {
                 return true;
             }
 
-            public virtual IGroundedValue GetResidue()
+            public IGroundedValue GetResidue()
             {
                 return sequence.Subsequence(position, int.MaxValue);
             }
 
-            public virtual IGroundedValue Materialize()
+            public IGroundedValue Materialize()
             {
                 return sequence;
             }
 
-            public virtual bool SupportsHasNext()
+            public bool SupportsHasNext()
             {
                 return true;
             }
-            public virtual void Dispose() { }
+            public void Dispose() { }
         }
     }
 }

@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Functions
             return new AbsElaborator();
         }
 
-        internal class AbsElaborator : ItemElaborator
+        internal sealed class AbsElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

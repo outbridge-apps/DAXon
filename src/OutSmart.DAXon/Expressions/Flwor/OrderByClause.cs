@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
     /// <summary>
     /// This class represents an "order by" clause in a FLWOR expression
     /// </summary>
-    internal class OrderByClause : Clause
+    internal sealed class OrderByClause : Clause
     {
         public static readonly OperandRole SORT_KEYS_ROLE = new OperandRole(OperandRole.HIGHER_ORDER | OperandRole.CONSTRAINED_CLASS, OperandUsage.NAVIGATION, SequenceType.ANY_SEQUENCE, (expr) => expr is SortKeyDefinitionList);
         Operand sortKeysOp; // Holds a SortKeyDefinitionList
@@ -36,9 +36,9 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override ClauseName ClauseKey => ORDER_BY;
 
-        public virtual SortKeyDefinitionList SortKeyDefinitions => (SortKeyDefinitionList)sortKeysOp.GetChildExpression();
+        public SortKeyDefinitionList SortKeyDefinitions => (SortKeyDefinitionList)sortKeysOp.GetChildExpression();
 
-        public virtual IAtomicComparer[] AtomicComparers => comparators;
+        public IAtomicComparer[] AtomicComparers => comparators;
         public OrderByClause(FLWORExpression flwor, SortKeyDefinition[] sortKeys, TupleExpression tupleExpression)
         {
             this.sortKeysOp = new Operand(flwor, new SortKeyDefinitionList(sortKeys), SORT_KEYS_ROLE);
@@ -66,7 +66,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return obc;
         }
 
-        public virtual TupleExpression GetTupleExpression()
+        public TupleExpression GetTupleExpression()
         {
             return (TupleExpression)tupleOp.GetChildExpression();
         }
@@ -164,7 +164,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return fsb.ToString();
         }
 
-        public virtual AtomicValue EvaluateSortKey(int n, IXPathContext c)
+        public AtomicValue EvaluateSortKey(int n, IXPathContext c)
         {
             SortKeyDefinitionList sortKeys = SortKeyDefinitions;
             return (AtomicValue)sortKeys.GetSortKeyDefinition(n).SortKey.EvaluateItem(c);

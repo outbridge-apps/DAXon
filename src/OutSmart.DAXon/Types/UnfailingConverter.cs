@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Types
         // NRE'd CastExpression.PreEvaluate for downcasts like xs:integer -> xs:positiveInteger). Checks that a
         // value belonging to a supertype is a valid instance of the subtype, returning the subtype instance or
         // a ValidationFailure.
-        internal class DownCastingConverter : Converter
+        internal sealed class DownCastingConverter : Converter
         {
             private readonly IAtomicType newType;
             private readonly string errorCode = null;

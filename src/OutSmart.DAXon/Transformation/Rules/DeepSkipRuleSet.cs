@@ -22,11 +22,11 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Transformation.Rules
 {
-    internal class DeepSkipRuleSet : IBuiltInRuleSet
+    internal sealed class DeepSkipRuleSet : IBuiltInRuleSet
     {
         private static readonly DeepSkipRuleSet THE_INSTANCE = new DeepSkipRuleSet();
 
-        public virtual string Name => "deep-skip";
+        public string Name => "deep-skip";
 
         private DeepSkipRuleSet()
         {
@@ -36,7 +36,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             return THE_INSTANCE;
         }
 
-        public virtual void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter output, IXPathContext context, ILocation locationId)
+        public void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter output, IXPathContext context, ILocation locationId)
         {
             if (item is NodeInfo && ((NodeInfo)item).GetNodeKind() == Types.Type.DOCUMENT)
             {
@@ -52,7 +52,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             } // otherwise, do nothing
         }
 
-        public virtual BuiltInRules[] GetActionForParentNodes(int nodeKind)
+        public BuiltInRules[] GetActionForParentNodes(int nodeKind)
         {
             if (nodeKind == Types.Type.DOCUMENT)
             {

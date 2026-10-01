@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     // in functions/ whose implicit UserFunction conversion threw NIE — every xsl:function with
     // cache="yes" / new-each-time="no" died at compile time (function-1025..1035).
     // A user-defined function that remembers the results of previous calls.
-    internal class MemoFunction : UserFunction
+    internal sealed class MemoFunction : UserFunction
     {
         private bool lookForNodes = false;  // true if the function signature allows nodes within argument values
 
@@ -104,7 +104,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        private class MemoFunctionCache
+        private sealed class MemoFunctionCache
         {
             private readonly bool lookForNodes;
 
@@ -306,7 +306,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         // A NodeSurrogate represents a node via a predicate that tests whether a
         // particular node is the one it stands for.
-        internal class NodeSurrogate : ObjectValue<Func<NodeInfo, bool>>
+        internal sealed class NodeSurrogate : ObjectValue<Func<NodeInfo, bool>>
         {
             public NodeSurrogate(NodeInfo node) : base(Matcher(node))
             {

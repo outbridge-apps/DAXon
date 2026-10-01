@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Elaboration
 {
-    internal class SingleItemEvaluator : ISequenceEvaluator
+    internal sealed class SingleItemEvaluator : ISequenceEvaluator
     {
         readonly IItemEvaluator evaluator;
         public SingleItemEvaluator(IItemEvaluator eval)
@@ -31,7 +31,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
         // is not a blanket win, so it is applied only where it pays.
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
 #endif
-        public virtual ISequence Evaluate(IXPathContext context)
+        public ISequence Evaluate(IXPathContext context)
         {
             try
             {

@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:output element in the stylesheet.
     /// </summary>
-    internal class XSLOutput : StyleElement
+    internal sealed class XSLOutput : StyleElement
     {
         private StructuredQName outputFormatName;
         private readonly string method = null;
@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Xslt
         private readonly Dictionary<string, string> serializationAttributes = new Dictionary<string, string>(10);
         private Dictionary<string, string> userAttributes = null;
 
-        public virtual StructuredQName FormatQName => outputFormatName;
+        public StructuredQName FormatQName => outputFormatName;
         public override bool IsDeclaration()
         {
             return true;
@@ -129,7 +129,7 @@ namespace OutSmart.DAXon.Xslt
             version = ((StyleElement)GetParent()).EffectiveVersion;
         }
 
-        public virtual void GatherOutputProperties(Properties details, Dictionary<string, int> precedences, int thisPrecedence)
+        public void GatherOutputProperties(Properties details, Dictionary<string, int> precedences, int thisPrecedence)
         {
             SerializerFactory sf = GetConfiguration().SerializerFactory;
             if (method != null)

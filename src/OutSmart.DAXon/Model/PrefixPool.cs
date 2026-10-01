@@ -15,7 +15,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Model
 {
-    internal class PrefixPool
+    internal sealed class PrefixPool
     {
         private const int LIMIT = 2047;
         string[] prefixes = new string[8];
@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Model
             used = 1;
         }
 
-        public virtual int ObtainPrefixCode(string prefix)
+        public int ObtainPrefixCode(string prefix)
         {
             if ((prefix.Length == 0))
             {
@@ -93,7 +93,7 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        public virtual string GetPrefix(int code)
+        public string GetPrefix(int code)
         {
             if (code < used)
             {
@@ -103,7 +103,7 @@ namespace OutSmart.DAXon.Model
             throw new ArgumentException("Unknown prefix code " + code);
         }
 
-        public virtual void Condense()
+        public void Condense()
         {
             Array.Resize(ref prefixes, used);
             index = null;

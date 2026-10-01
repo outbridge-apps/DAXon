@@ -20,7 +20,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class ItemTypeCheckingFunction : IItemMappingFunction
+    internal sealed class ItemTypeCheckingFunction : IItemMappingFunction
     {
         private readonly Types.ItemType requiredItemType;
         private readonly Func<RoleDiagnostic> roleSupplier;
@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Expressions
             this.config = config;
         }
 
-        public virtual IItem MapItem(IItem item)
+        public IItem MapItem(IItem item)
         {
             TestConformance(item, config);
             return item;

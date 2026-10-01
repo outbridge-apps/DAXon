@@ -15,7 +15,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Model
 {
-    internal class CodedName : INodeName
+    internal sealed class CodedName : INodeName
     {
         private readonly int fingerprint;
         private readonly string prefix;
@@ -24,9 +24,9 @@ namespace OutSmart.DAXon.Model
         // tag); resolve the pool lookup once. Benign race: idempotent write of an immutable QName.
         private StructuredQName resolved;
 
-        public virtual string DisplayName => (prefix.Length == 0) ? GetLocalPart() : prefix + ":" + GetLocalPart();
+        public string DisplayName => (prefix.Length == 0) ? GetLocalPart() : prefix + ":" + GetLocalPart();
 
-        public virtual int Fingerprint => fingerprint;
+        public int Fingerprint => fingerprint;
         public CodedName(int fingerprint, string prefix, NamePool pool)
         {
 
@@ -40,22 +40,22 @@ namespace OutSmart.DAXon.Model
             return resolved ?? (resolved = pool.GetUnprefixedQName(fingerprint));
         }
 
-        public virtual string GetPrefix()
+        public string GetPrefix()
         {
             return prefix;
         }
 
-        public virtual NamespaceUri GetNamespaceUri()
+        public NamespaceUri GetNamespaceUri()
         {
             return Resolve().GetNamespaceUri();
         }
 
-        public virtual string GetLocalPart()
+        public string GetLocalPart()
         {
             return Resolve().GetLocalPart();
         }
 
-        public virtual StructuredQName GetStructuredQName()
+        public StructuredQName GetStructuredQName()
         {
             StructuredQName qn = Resolve();
             if ((prefix.Length == 0))
@@ -68,22 +68,22 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        public virtual bool HasURI(NamespaceUri ns)
+        public bool HasURI(NamespaceUri ns)
         {
             return Resolve().HasURI(ns);
         }
 
-        public virtual NamespaceBinding GetNamespaceBinding()
+        public NamespaceBinding GetNamespaceBinding()
         {
             return new NamespaceBinding(prefix, pool.GetURI(fingerprint));
         }
 
-        public virtual bool HasFingerprint()
+        public bool HasFingerprint()
         {
             return true;
         }
 
-        public virtual int ObtainFingerprint(NamePool namePool)
+        public int ObtainFingerprint(NamePool namePool)
         {
             return fingerprint;
         }
@@ -116,12 +116,12 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        public virtual bool IsIdentical(IIdentityComparable other)
+        public bool IsIdentical(IIdentityComparable other)
         {
             return other is INodeName && this.Equals(other) && this.GetPrefix().Equals(((INodeName)other).GetPrefix());
         }
 
-        public virtual int IdentityHashCode()
+        public int IdentityHashCode()
         {
             return GetHashCode() ^ GetPrefix().GetHashCode();
         }
@@ -131,6 +131,6 @@ namespace OutSmart.DAXon.Model
             return DisplayName;
         }
 
-        public virtual string GetURI() => GetNamespaceUri().ToString(); // NodeImpl/Orphan.GetURI() route through this
+        public string GetURI() => GetNamespaceUri().ToString(); // NodeImpl/Orphan.GetURI() route through this
     }
 }

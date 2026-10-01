@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement the XPath 2.0 root() function with one argument
     /// </summary>
-    internal class Root_1 : SystemFunction
+    internal sealed class Root_1 : SystemFunction
     {
 
         public override string StreamerName => "Root";
@@ -54,7 +54,7 @@ namespace OutSmart.DAXon.Functions
             return new RootFnElaborator();
         }
 
-        internal class RootFnElaborator : ItemElaborator
+        internal sealed class RootFnElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

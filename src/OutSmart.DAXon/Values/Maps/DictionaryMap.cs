@@ -19,7 +19,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Values.Maps
 {
-    internal class DictionaryMap : MapItem
+    internal sealed class DictionaryMap : MapItem
     {
         private readonly Dictionary<string, IGroundedValue> hashMap;
 
@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Values.Maps
             hashMap = new Dictionary<string, IGroundedValue>(size);
         }
 
-        public virtual void InitialPut(string key, IGroundedValue value)
+        public void InitialPut(string key, IGroundedValue value)
         {
             hashMap[key] = value;
         }
@@ -168,7 +168,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Convert to a HashTrieMap
         /// </summary>
-        private class KeyIterator : IAtomicIterator
+        private sealed class KeyIterator : IAtomicIterator
         {
             IEnumerator<string> keyIter;
             public KeyIterator(Dictionary<string, IGroundedValue> hashMap)
@@ -176,12 +176,12 @@ namespace OutSmart.DAXon.Values.Maps
                 this.keyIter = hashMap.Keys.GetEnumerator();
             }
 
-            public virtual AtomicValue Next()
+            public AtomicValue Next()
             {
                 return this.keyIter.MoveNext() ? new StringValue(this.keyIter.Current) : null;
             }
             IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
-            public virtual void Dispose() { }
+            public void Dispose() { }
         }
     }
 }

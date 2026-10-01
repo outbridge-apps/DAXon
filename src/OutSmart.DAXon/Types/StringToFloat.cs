@@ -13,7 +13,7 @@ using OutSmart.DAXon.Text;
 
 namespace OutSmart.DAXon.Types
 {
-    internal class StringToFloat : StringConverter
+    internal sealed class StringToFloat : StringConverter
     {
         private readonly StringConverter inner;
         public StringToFloat(object x) : base(x as ConversionRules) { inner = new StringConverter.StringToFloat(x as ConversionRules); }

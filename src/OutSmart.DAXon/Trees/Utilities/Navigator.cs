@@ -1063,7 +1063,7 @@ namespace OutSmart.DAXon.Trees.Utilities
         /// <summary>
         /// A class that delivers the children of a node as a Java Iterable
         /// </summary>
-        internal class ChildrenAsIterable : IEnumerable<NodeInfo>
+        internal sealed class ChildrenAsIterable : IEnumerable<NodeInfo>
         {
             private readonly NodeInfo parent;
             private INodePredicate filter = null;
@@ -1078,7 +1078,7 @@ namespace OutSmart.DAXon.Trees.Utilities
                 this.filter = filter;
             }
 
-            public virtual IEnumerator<NodeInfo> GetEnumerator()
+            public IEnumerator<NodeInfo> GetEnumerator()
             {
                 IAxisIterator basis;
                 if (filter == null)
@@ -1099,7 +1099,7 @@ namespace OutSmart.DAXon.Trees.Utilities
             System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
-        internal class AxisFilter : IAxisIterator
+        internal sealed class AxisFilter : IAxisIterator
         {
             private readonly IAxisIterator @base;
             private readonly INodePredicate nodeTest;
@@ -1109,7 +1109,7 @@ namespace OutSmart.DAXon.Trees.Utilities
                 nodeTest = test;
             }
 
-            public virtual NodeInfo Next()
+            public NodeInfo Next()
             {
                 while (true)
                 {
@@ -1126,7 +1126,7 @@ namespace OutSmart.DAXon.Trees.Utilities
                 }
             }
             IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
-            public virtual void Dispose() { }
+            public void Dispose() { }
         }
 
         /// <summary>

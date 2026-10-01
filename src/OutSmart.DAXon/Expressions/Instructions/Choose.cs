@@ -869,12 +869,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new ChooseExprElaborator();
         }
 
-        internal class ChooseExprElaborator : PullElaborator
+        internal sealed class ChooseExprElaborator : PullElaborator
         {
             private IBooleanEvaluator[] conditions;
             private readonly object conditionsLock = new object();
 
-            public virtual IBooleanEvaluator[] MakeConditionEvaluators(Choose expr)
+            public IBooleanEvaluator[] MakeConditionEvaluators(Choose expr)
             {
                 lock (conditionsLock)
                 {
@@ -1174,7 +1174,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        private class EagerChooseEvaluator : ISequenceEvaluator
+        private sealed class EagerChooseEvaluator : ISequenceEvaluator
         {
             private readonly IBooleanEvaluator[] conditions;
             private readonly ISequenceEvaluator[] actions;
@@ -1192,7 +1192,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             // is not a blanket win, so it is applied only where it pays.
             [MethodImpl(MethodImplOptions.AggressiveOptimization)]
 #endif
-            public virtual ISequence Evaluate(IXPathContext context)
+            public ISequence Evaluate(IXPathContext context)
             {
                 for (int i = 0; i < count; i++)
                 {

@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Functions
     // Invoice; full OptionsParameter validation deferred) and delegates the actual JSON formatting to the already-
     // compiled SerializerFactory -> JSONEmitter/JSONSerializer path (the same path xml-to-json uses), so output is
     // byte-identical to Saxon. SequenceCopier re-included (csproj); UnicodeWriterResult stub made functional (above).
-    internal class Serialize : SystemFunction
+    internal sealed class Serialize : SystemFunction
     {
         public Serialize() { }
         public static Func<Serialize> New() => () => new Serialize();

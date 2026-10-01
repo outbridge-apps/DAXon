@@ -22,7 +22,7 @@ using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Model
 {
-    internal class SelectedElementsSpaceStrippingRule : ISpaceStrippingRule
+    internal sealed class SelectedElementsSpaceStrippingRule : ISpaceStrippingRule
     {
         private Rule anyElementRule = null;
         private Rule unnamedElementRuleChain = null;
@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Model
             this.rejectDuplicates = rejectDuplicates;
         }
 
-        public virtual int IsSpacePreserving(INodeName fingerprint, ISchemaType schemaType)
+        public int IsSpacePreserving(INodeName fingerprint, ISchemaType schemaType)
         {
             Rule rule = GetRule(fingerprint);
             if (rule == null)
@@ -45,7 +45,7 @@ namespace OutSmart.DAXon.Model
             return rule.GetAction() == Stripper.PRESERVE ? Stripper.ALWAYS_PRESERVE : Stripper.STRIP_DEFAULT;
         }
 
-        public virtual void AddRule(NodeTest test, Stripper.StripRuleTarget action, StylesheetModule module, int lineNumber)
+        public void AddRule(NodeTest test, Stripper.StripRuleTarget action, StylesheetModule module, int lineNumber)
         {
 
             // for fast lookup, we maintain one list for each element name for patterns that can only
@@ -58,7 +58,7 @@ namespace OutSmart.DAXon.Model
             AddRule(pattern, action, precedence, minImportPrecedence);
         }
 
-        public virtual void AddRule(NodeTestPattern pattern, Stripper.StripRuleTarget action, int precedence, int minImportPrecedence)
+        public void AddRule(NodeTestPattern pattern, Stripper.StripRuleTarget action, int precedence, int minImportPrecedence)
         {
             NodeTest test = pattern.GetNodeTest();
             double priority = test.DefaultPriority;
@@ -132,7 +132,7 @@ namespace OutSmart.DAXon.Model
             return list;
         }
 
-        public virtual Rule GetRule(INodeName nodeName)
+        public Rule GetRule(INodeName nodeName)
         {
 
             // search the specific list for this node type / node name
@@ -208,12 +208,12 @@ namespace OutSmart.DAXon.Model
             return bestRule;
         }
 
-        public virtual ProxyReceiver MakeStripper(IReceiver next)
+        public ProxyReceiver MakeStripper(IReceiver next)
         {
             return new Stripper(this, next);
         }
 
-        public virtual void Export(ExpressionPresenter presenter)
+        public void Export(ExpressionPresenter presenter)
         {
             presenter.StartElement("strip");
             Rule rule = anyElementRule;

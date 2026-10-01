@@ -32,12 +32,12 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:accumulator elements in a stylesheet (XSLT 3.0).
     /// </summary>
-    internal class XSLAccumulator : StyleElement, IStylesheetComponent
+    internal sealed class XSLAccumulator : StyleElement, IStylesheetComponent
     {
         private readonly Accumulator accumulator = new Accumulator();
         private SlotManager slotManager;
 
-        public virtual SequenceType ResultType => accumulator.GetType();
+        public SequenceType ResultType => accumulator.GetType();
         public Actor GetActor()
         {
             if (accumulator.DeclaringComponent == null)

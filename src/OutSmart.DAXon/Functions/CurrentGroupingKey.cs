@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implements the XSLT function current-grouping-key()
     /// </summary>
-    internal class CurrentGroupingKey : ContextAccessorFunction
+    internal sealed class CurrentGroupingKey : ContextAccessorFunction
     {
         public override Expression MakeFunctionCall(params Expression[] arguments)
         {

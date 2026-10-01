@@ -18,7 +18,7 @@ using OutSmart.DAXon.Internal.Collections;
 
 namespace OutSmart.DAXon.Events
 {
-    internal class LocationCopier : ICopyInformee
+    internal sealed class LocationCopier : ICopyInformee
     {
         private readonly bool wholeDocument;
         private readonly string systemId;
@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Events
             this.systemId = systemId;
         }
 
-        public virtual ILocation NotifyElementNode(NodeInfo element)
+        public ILocation NotifyElementNode(NodeInfo element)
         {
             string systemId = wholeDocument ? element.GetSystemId() : element.GetBaseURI();
 
@@ -43,7 +43,7 @@ namespace OutSmart.DAXon.Events
             return new Loc(systemId, lineNumber, columnNumber);
         }
 
-        public virtual string GetSystemId()
+        public string GetSystemId()
         {
             return systemId;
         }

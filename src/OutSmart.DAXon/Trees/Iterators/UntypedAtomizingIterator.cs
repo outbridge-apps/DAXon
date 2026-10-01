@@ -18,17 +18,17 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Trees.Iterators
 {
-    internal class UntypedAtomizingIterator : ISequenceIterator, ILastPositionFinder, ILookaheadIterator
+    internal sealed class UntypedAtomizingIterator : ISequenceIterator, ILastPositionFinder, ILookaheadIterator
     {
         private readonly ISequenceIterator @base;
 
-        public virtual bool HasNext => ((ILookaheadIterator)@base).HasNext;
+        public bool HasNext => ((ILookaheadIterator)@base).HasNext;
         public UntypedAtomizingIterator(ISequenceIterator @base)
         {
             this.@base = @base;
         }
 
-        public virtual AtomicValue Next()
+        public AtomicValue Next()
         {
             try
             {
@@ -48,22 +48,22 @@ namespace OutSmart.DAXon.Trees.Iterators
             }
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             @base.Dispose();
         }
 
-        public virtual bool SupportsGetLength()
+        public bool SupportsGetLength()
         {
             return SequenceTool.SupportsGetLength(@base);
         }
 
-        public virtual int GetLength()
+        public int GetLength()
         {
             return SequenceTool.GetLength(@base);
         }
 
-        public virtual bool SupportsHasNext()
+        public bool SupportsHasNext()
         {
             return @base is ILookaheadIterator && ((ILookaheadIterator)@base).SupportsHasNext();
         }

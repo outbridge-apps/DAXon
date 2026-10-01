@@ -14,7 +14,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Serialization
 {
-    internal class HTMLTagHashSet
+    internal sealed class HTMLTagHashSet
     {
         string[] strings;
         int size;
@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Serialization
             this.size = size;
         }
 
-        public virtual void Add(string s)
+        public void Add(string s)
         {
             int hash = (GetHashCode(s) & 0x7fffffff) % size;
             while (true)
@@ -44,7 +44,7 @@ namespace OutSmart.DAXon.Serialization
             }
         }
 
-        public virtual bool Contains(string s)
+        public bool Contains(string s)
         {
             int hash = (GetHashCode(s) & 0x7fffffff) % size;
             while (true)

@@ -239,7 +239,7 @@ namespace OutSmart.DAXon.Expressions
             return StaticProperty.EXACTLY_ONE;
         }
 
-        internal class FromObject : JPConverter
+        internal sealed class FromObject : JPConverter
         {
             public static readonly FromObject INSTANCE = new FromObject();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -271,7 +271,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromSequenceIterator : JPConverter
+        internal sealed class FromSequenceIterator : JPConverter
         {
             public static readonly FromSequenceIterator INSTANCE = new FromSequenceIterator();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -297,7 +297,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromXdmValue : JPConverter
+        internal sealed class FromXdmValue : JPConverter
         {
             private readonly Types.ItemType resultType;
             private readonly int cardinality;
@@ -323,7 +323,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromSequence : JPConverter
+        internal sealed class FromSequence : JPConverter
         {
             public static readonly FromSequence INSTANCE = new FromSequence(AnyItemType.GetInstance(), StaticProperty.ALLOWS_ZERO_OR_MORE);
             private readonly Types.ItemType resultType;
@@ -350,7 +350,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromString : JPConverter
+        internal sealed class FromString : JPConverter
         {
             public static readonly FromString INSTANCE = new FromString();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -364,7 +364,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromUnicodeString : JPConverter
+        internal sealed class FromUnicodeString : JPConverter
         {
             public static readonly FromUnicodeString INSTANCE = new FromUnicodeString();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -378,7 +378,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromBoolean : JPConverter
+        internal sealed class FromBoolean : JPConverter
         {
             public static readonly FromBoolean INSTANCE = new FromBoolean();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -392,7 +392,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromDouble : JPConverter
+        internal sealed class FromDouble : JPConverter
         {
             public static readonly FromDouble INSTANCE = new FromDouble();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -406,7 +406,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromFloat : JPConverter
+        internal sealed class FromFloat : JPConverter
         {
             public static readonly FromFloat INSTANCE = new FromFloat();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -420,7 +420,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromBigDecimal : JPConverter
+        internal sealed class FromBigDecimal : JPConverter
         {
             public static readonly FromBigDecimal INSTANCE = new FromBigDecimal();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -434,7 +434,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromBigInteger : JPConverter
+        internal sealed class FromBigInteger : JPConverter
         {
             public static readonly FromBigInteger INSTANCE = new FromBigInteger();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -448,7 +448,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromLong : JPConverter
+        internal sealed class FromLong : JPConverter
         {
             public static readonly FromLong INSTANCE = new FromLong();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -462,7 +462,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromInt : JPConverter
+        internal sealed class FromInt : JPConverter
         {
             public static readonly FromInt INSTANCE = new FromInt();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -476,7 +476,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromShort : JPConverter
+        internal sealed class FromShort : JPConverter
         {
             public static readonly FromShort INSTANCE = new FromShort();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -491,7 +491,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromByte : JPConverter
+        internal sealed class FromByte : JPConverter
         {
             public static readonly FromByte INSTANCE = new FromByte();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -505,7 +505,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromCharacter : JPConverter
+        internal sealed class FromCharacter : JPConverter
         {
             public static readonly FromCharacter INSTANCE = new FromCharacter();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -519,7 +519,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromQName : JPConverter
+        internal sealed class FromQName : JPConverter
         {
             public static readonly FromQName INSTANCE = new FromQName();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -534,7 +534,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromURI : JPConverter
+        internal sealed class FromURI : JPConverter
         {
             public static readonly FromURI INSTANCE = new FromURI();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -548,7 +548,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromDate : JPConverter
+        internal sealed class FromDate : JPConverter
         {
             public static readonly FromDate INSTANCE = new FromDate();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -569,7 +569,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class ExternalObjectWrapper : JPConverter
+        internal sealed class ExternalObjectWrapper : JPConverter
         {
             private readonly JavaExternalObjectType resultType;
             public ExternalObjectWrapper(JavaExternalObjectType resultType)
@@ -599,7 +599,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class VoidConverter : JPConverter
+        internal sealed class VoidConverter : JPConverter
         {
             public static readonly VoidConverter INSTANCE = new VoidConverter();
             public VoidConverter()
@@ -620,7 +620,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromCollection : JPConverter
+        internal sealed class FromCollection : JPConverter
         {
             public static readonly FromCollection INSTANCE = new FromCollection();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -658,7 +658,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromSource : JPConverter
+        internal sealed class FromSource : JPConverter
         {
             public static readonly FromSource INSTANCE = new FromSource();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -684,7 +684,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromLongArray : JPConverter
+        internal sealed class FromLongArray : JPConverter
         {
             public static readonly FromLongArray INSTANCE = new FromLongArray();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -709,7 +709,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromIntArray : JPConverter
+        internal sealed class FromIntArray : JPConverter
         {
             public static readonly FromIntArray INSTANCE = new FromIntArray();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -734,7 +734,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromShortArray : JPConverter
+        internal sealed class FromShortArray : JPConverter
         {
             public static readonly FromShortArray INSTANCE = new FromShortArray();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -759,7 +759,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromByteArray : JPConverter
+        internal sealed class FromByteArray : JPConverter
         {
             public static readonly FromByteArray INSTANCE = new FromByteArray();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -784,7 +784,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromCharArray : JPConverter
+        internal sealed class FromCharArray : JPConverter
         {
             public static readonly FromCharArray INSTANCE = new FromCharArray();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -798,7 +798,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromDoubleArray : JPConverter
+        internal sealed class FromDoubleArray : JPConverter
         {
             public static readonly FromDoubleArray INSTANCE = new FromDoubleArray();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -823,7 +823,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromFloatArray : JPConverter
+        internal sealed class FromFloatArray : JPConverter
         {
             public static readonly FromFloatArray INSTANCE = new FromFloatArray();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -848,7 +848,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromBooleanArray : JPConverter
+        internal sealed class FromBooleanArray : JPConverter
         {
             public static readonly FromBooleanArray INSTANCE = new FromBooleanArray();
             public override IGroundedValue Convert(object @object, IXPathContext context)
@@ -873,7 +873,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        internal class FromObjectArray : JPConverter
+        internal sealed class FromObjectArray : JPConverter
         {
             private readonly JPConverter itemConverter;
             public FromObjectArray(JPConverter itemConverter)

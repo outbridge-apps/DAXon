@@ -15,7 +15,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Lib
 {
-    internal class NamespaceConstant
+    internal sealed class NamespaceConstant
     {
         /// <summary>
         /// Fixed namespace name for XML: "http://www.w3.org/XML/1998/namespace".

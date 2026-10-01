@@ -141,7 +141,7 @@ namespace OutSmart.DAXon.Trees.Iterators
             ISequenceIterator IReversibleIterator.GetReverseIterator() => GetReverseIterator();
         }
 
-        internal class OfAtomic<A> : Of<A>, IAtomicIterator
+        internal sealed class OfAtomic<A> : Of<A>, IAtomicIterator
         {
             public OfAtomic(IList<A> nodes) : base(nodes)
             {

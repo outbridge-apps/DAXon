@@ -20,7 +20,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Regex
 {
-    internal class ARegularExpression : IRegularExpression
+    internal sealed class ARegularExpression : IRegularExpression
     {
         UnicodeString rawPattern;
         string rawFlags;
@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Regex
         // q flag qualify too); benign race: concurrent writers store the same value.
         private int singleCharToken = -2;
 
-        public virtual string Flags => rawFlags;
+        public string Flags => rawFlags;
         public ARegularExpression(UnicodeString pattern, string flags, string hostLanguage, IList<string> warnings, Configuration config)
         {
             rawFlags = flags;
@@ -78,7 +78,7 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        public virtual bool Matches(UnicodeString input)
+        public bool Matches(UnicodeString input)
         {
             if (input.IsEmpty() && regex.IsNullable())
             {
@@ -107,7 +107,7 @@ namespace OutSmart.DAXon.Regex
             return e.Describe("Stack overflow (excessive recursion) during regular expression evaluation", DAXonErrorCode.SXRE0001, Loc.NONE);
         }
 
-        public virtual bool ContainsMatch(UnicodeString input)
+        public bool ContainsMatch(UnicodeString input)
         {
             REMatcher matcher = new REMatcher(regex);
             try
@@ -120,7 +120,7 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        public virtual IAtomicIterator Tokenize(UnicodeString input)
+        public IAtomicIterator Tokenize(UnicodeString input)
         {
             int cp = SingleCharLiteral();
             if (cp >= 0)
@@ -156,12 +156,12 @@ namespace OutSmart.DAXon.Regex
             return result;
         }
 
-        public virtual IRegexIterator Analyze(UnicodeString input)
+        public IRegexIterator Analyze(UnicodeString input)
         {
             return new ARegexIterator(input.Tidy(), rawPattern, new REMatcher(regex));
         }
 
-        public virtual UnicodeString Replace(UnicodeString input, UnicodeString replacement)
+        public UnicodeString Replace(UnicodeString input, UnicodeString replacement)
         {
             REMatcher matcher = new REMatcher(regex);
             try
@@ -178,7 +178,7 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        public virtual UnicodeString ReplaceWith(UnicodeString input, Func<UnicodeString, UnicodeString[], UnicodeString> replacer)
+        public UnicodeString ReplaceWith(UnicodeString input, Func<UnicodeString, UnicodeString[], UnicodeString> replacer)
         {
             REMatcher matcher = new REMatcher(regex);
             try
@@ -195,7 +195,7 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        public virtual bool IsPlatformNative()
+        public bool IsPlatformNative()
         {
             return false;
         }

@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Accumulators
 {
-    internal class VirtualAccumulatorData : IIAccumulatorData
+    internal sealed class VirtualAccumulatorData : IIAccumulatorData
     {
         private readonly IIAccumulatorData realData;
         public VirtualAccumulatorData(IIAccumulatorData realData)
@@ -25,12 +25,12 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             this.realData = realData;
         }
 
-        public virtual Accumulator GetAccumulator()
+        public Accumulator GetAccumulator()
         {
             return realData.GetAccumulator();
         }
 
-        public virtual ISequence GetValue(NodeInfo node, bool postDescent)
+        public ISequence GetValue(NodeInfo node, bool postDescent)
         {
             NodeInfo original = ((VirtualCopy)node).OriginalNode;
             return realData.GetValue(original, postDescent);

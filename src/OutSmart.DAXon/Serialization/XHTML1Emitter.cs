@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Serialization
     // XHTML 1.x serializer: like the XML emitter, but a recognised XHTML empty element is closed with " />"
     // (space before the slash) while other empty elements get an explicit end tag. Was a hollow stub extending
     // the bare Emitter with an empty Append, so method=xhtml output hit SequenceReceiver.StartDocument stubs.
-    internal class XHTML1Emitter : XMLEmitter
+    internal sealed class XHTML1Emitter : XMLEmitter
     {
         internal static readonly HashSet<string> emptyTags1 = new HashSet<string>
         {

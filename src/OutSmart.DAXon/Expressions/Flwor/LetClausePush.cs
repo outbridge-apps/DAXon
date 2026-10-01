@@ -14,7 +14,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
 namespace OutSmart.DAXon.Expressions.Flwor
 {
-    internal class LetClausePush : TuplePush
+    internal sealed class LetClausePush : TuplePush
     {
         private readonly TuplePush destination;
         private readonly LetClause letClause;

@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Regex
     /// <summary>
     /// End of Line ($) in a regular expression
     /// </summary>
-    internal class OpEOL : Operation
+    internal sealed class OpEOL : Operation
     {
         public override int MatchLength => 0;
 

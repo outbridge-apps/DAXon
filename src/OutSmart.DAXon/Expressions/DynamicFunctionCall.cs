@@ -29,7 +29,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class DynamicFunctionCall : Expression
+    internal sealed class DynamicFunctionCall : Expression
     {
         private readonly Operand targetFunction;
         private readonly OperandArray suppliedArguments;
@@ -89,7 +89,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        public virtual int GetArity()
+        public int GetArity()
         {
             return suppliedArguments.NumberOfOperands;
         }
@@ -235,7 +235,7 @@ namespace OutSmart.DAXon.Expressions
             return sb.ToString();
         }
 
-        private class DynamicFunctionCallElaborator : PullElaborator
+        private sealed class DynamicFunctionCallElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

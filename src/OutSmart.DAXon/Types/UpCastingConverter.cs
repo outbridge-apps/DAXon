@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Types
     /// A Converter that handles conversion from a subtype to a supertype of the same primitive type (an
     /// "upcast", e.g. xs:integer -> xs:decimal): the value is unchanged, only its type annotation is widened.
     /// </summary>
-    internal class UpCastingConverter : Converter
+    internal sealed class UpCastingConverter : Converter
     {
         private readonly IAtomicType newTypeAnnotation;
 

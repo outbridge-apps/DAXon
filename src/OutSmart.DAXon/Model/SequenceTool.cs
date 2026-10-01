@@ -24,7 +24,7 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Model
 {
-    internal class SequenceTool
+    internal sealed class SequenceTool
     {
         /// <summary>
         /// Constant returned by compareTo() method to indicate an indeterminate ordering between two values

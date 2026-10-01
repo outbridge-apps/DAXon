@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
     /// <summary>
     /// This class implements the function function-arity(), which is a standard function in XPath 3.0
     /// </summary>
-    internal class FunctionArity : SystemFunction
+    internal sealed class FunctionArity : SystemFunction
     {
         public override IntegerValue[] IntegerBounds => new IntegerValue[]
             {

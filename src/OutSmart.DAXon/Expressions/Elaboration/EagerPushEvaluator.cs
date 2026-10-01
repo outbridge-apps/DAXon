@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
     /// <summary>
     /// A ISequenceEvaluator that evaluates an expression eagerly, in push mode.
     /// </summary>
-    internal class EagerPushEvaluator : ISequenceEvaluator
+    internal sealed class EagerPushEvaluator : ISequenceEvaluator
     {
         readonly IPushEvaluator pusher;
         public EagerPushEvaluator(IPushEvaluator select)
@@ -31,7 +31,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             this.pusher = select;
         }
 
-        public virtual ISequence Evaluate(IXPathContext context)
+        public ISequence Evaluate(IXPathContext context)
         {
             try
             {

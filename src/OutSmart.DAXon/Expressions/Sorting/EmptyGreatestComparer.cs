@@ -14,18 +14,18 @@ namespace OutSmart.DAXon.Expressions.Sorting
     // value. Was a hollow one-line stub that did not implement IAtomicComparer, so
     // SortKeyDefinition.MakeComparator cast it to IAtomicComparer -> InvalidCastException for any
     // `empty greatest` order-by.
-    internal class EmptyGreatestComparer : IAtomicComparer
+    internal sealed class EmptyGreatestComparer : IAtomicComparer
     {
         private readonly IAtomicComparer baseComparer;
 
-        public virtual IStringCollator Collator => baseComparer.Collator;
+        public IStringCollator Collator => baseComparer.Collator;
 
         public EmptyGreatestComparer(IAtomicComparer baseComparer)
         {
             this.baseComparer = baseComparer;
         }
 
-        public virtual IAtomicComparer ProvideContext(IXPathContext context)
+        public IAtomicComparer ProvideContext(IXPathContext context)
         {
             IAtomicComparer newBase = baseComparer.ProvideContext(context);
             if (newBase != baseComparer)
@@ -36,7 +36,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return this;
         }
 
-        public virtual int CompareAtomicValues(AtomicValue a, AtomicValue b)
+        public int CompareAtomicValues(AtomicValue a, AtomicValue b)
         {
             if (a == null)
             {
@@ -59,12 +59,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return baseComparer.CompareAtomicValues(a, b);
         }
 
-        public virtual bool ComparesEqual(AtomicValue a, AtomicValue b)
+        public bool ComparesEqual(AtomicValue a, AtomicValue b)
         {
             return (a == null && b == null) || baseComparer.ComparesEqual(a, b);
         }
 
-        public virtual string Save()
+        public string Save()
         {
             return "EG|" + baseComparer.Save();
         }

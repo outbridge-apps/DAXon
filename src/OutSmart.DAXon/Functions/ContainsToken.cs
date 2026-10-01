@@ -19,7 +19,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
-    internal class ContainsToken : CollatingFunctionFixed
+    internal sealed class ContainsToken : CollatingFunctionFixed
     {
         public override bool IsSubstringMatchingFunction()
         {

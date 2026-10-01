@@ -25,11 +25,11 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement the XPath translate() function
     /// </summary>
-    internal class Translate : SystemFunction, ICallable, IStatefulSystemFunction
+    internal sealed class Translate : SystemFunction, ICallable, IStatefulSystemFunction
     {
         private IIntToIntMap staticMap = null;
 
-        public virtual IIntToIntMap StaticMap => staticMap;
+        public IIntToIntMap StaticMap => staticMap;
         public override Expression FixArguments(params Expression[] arguments)
         {
             if (arguments[1] is StringLiteral && arguments[2] is StringLiteral)
@@ -224,7 +224,7 @@ namespace OutSmart.DAXon.Functions
         // SystemFunctionCall.Copy when the optimizer rebound a tree containing fn:translate).
         SystemFunction IStatefulSystemFunction.Copy() => Copy();
 
-        internal class TranslateFnElaborator : ItemElaborator
+        internal sealed class TranslateFnElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

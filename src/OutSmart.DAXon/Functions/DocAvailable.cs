@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement the fn:doc-available() function
     /// </summary>
-    internal class DocAvailable : SystemFunction
+    internal sealed class DocAvailable : SystemFunction
     {
         private bool IsDocAvailable(AtomicValue hrefVal, IXPathContext context)
         {
@@ -39,7 +39,7 @@ namespace OutSmart.DAXon.Functions
             return BooleanValue.Get(IsDocAvailable((AtomicValue)arguments[0].Head(), context));
         }
 
-        public virtual bool DocAvailableFn(string href, IXPathContext context)
+        public bool DocAvailableFn(string href, IXPathContext context)
         {
             try
             {

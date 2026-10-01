@@ -16,13 +16,13 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class ValueTailIterator : ISequenceIterator, IGroundedIterator, ILookaheadIterator
+    internal sealed class ValueTailIterator : ISequenceIterator, IGroundedIterator, ILookaheadIterator
     {
         private readonly IGroundedValue baseValue;
         private readonly int start; // zero-based
         private int pos = 0;
 
-        public virtual bool HasNext => baseValue.ItemAt(start + pos) != null;
+        public bool HasNext => baseValue.ItemAt(start + pos) != null;
         public ValueTailIterator(IGroundedValue @base, int start)
         {
             baseValue = @base;
@@ -30,22 +30,22 @@ namespace OutSmart.DAXon.Expressions
             pos = 0;
         }
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             return baseValue.ItemAt(start + pos++);
         }
 
-        public virtual bool SupportsHasNext()
+        public bool SupportsHasNext()
         {
             return true;
         }
 
-        public virtual bool IsActuallyGrounded()
+        public bool IsActuallyGrounded()
         {
             return true;
         }
 
-        public virtual IGroundedValue Materialize()
+        public IGroundedValue Materialize()
         {
             if (start == 0)
             {
@@ -57,7 +57,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        public virtual IGroundedValue GetResidue()
+        public IGroundedValue GetResidue()
         {
             if (start == 0 && pos == 0)
             {
@@ -68,6 +68,6 @@ namespace OutSmart.DAXon.Expressions
                 return baseValue.Subsequence(start + pos, int.MaxValue);
             }
         }
-        public virtual void Dispose() { }
+        public void Dispose() { }
     }
 }

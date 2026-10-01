@@ -35,7 +35,7 @@ namespace OutSmart.DAXon.Patterns
     /// <summary>
     /// Class for handling patterns with simple non-positional boolean predicates
     /// </summary>
-    internal class BasePatternWithPredicate : Pattern, IPatternWithPredicate
+    internal sealed class BasePatternWithPredicate : Pattern, IPatternWithPredicate
     {
         Operand basePatternOp;
         Operand predicateOp;
@@ -43,7 +43,7 @@ namespace OutSmart.DAXon.Patterns
 
         public Expression Predicate => predicateOp.GetChildExpression();
 
-        public virtual Pattern BasePattern => (Pattern)basePatternOp.GetChildExpression();
+        public Pattern BasePattern => (Pattern)basePatternOp.GetChildExpression();
 
         //try {
         public override int Fingerprint => BasePattern.Fingerprint;

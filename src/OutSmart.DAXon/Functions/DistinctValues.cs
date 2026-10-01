@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// The XPath 2.0 distinct-values() function, with the collation argument already known
     /// </summary>
-    internal class DistinctValues : CollatingFunctionFixed
+    internal sealed class DistinctValues : CollatingFunctionFixed
     {
         public static readonly IAtomicMatchKey NaN_MATCH_KEY = new QNameValue("", NamespaceUri.SAXON, "+NaN+");
         public override string StreamerName => "DistinctValues";
@@ -46,7 +46,7 @@ namespace OutSmart.DAXon.Functions
         // the K-codepoint prefix dedups through a span hash table - no field node objects, no
         // per-row iterators, a value allocated only per DISTINCT prefix. Any other shape, or an
         // off-path start at runtime, runs the generic pipeline unchanged.
-        internal class DistinctValuesFnElaborator : Expressions.Elaboration.PullElaborator
+        internal sealed class DistinctValuesFnElaborator : Expressions.Elaboration.PullElaborator
         {
             private static Expression Unwrap(Expression e)
             {
@@ -333,7 +333,7 @@ namespace OutSmart.DAXon.Functions
         /// <summary>
         /// IIterator class to return the distinct values in a sequence
         /// </summary>
-        internal class DistinctIterator : ISequenceIterator
+        internal sealed class DistinctIterator : ISequenceIterator
         {
             private readonly ISequenceIterator @base;
             private readonly IStringCollator collator;
@@ -347,7 +347,7 @@ namespace OutSmart.DAXon.Functions
                 this.context = context;
             }
 
-            public virtual AtomicValue Next()
+            public AtomicValue Next()
             {
                 int implicitTimezone = context.GetImplicitTimezone();
                 while (true)
@@ -397,7 +397,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            public virtual void Dispose()
+            public void Dispose()
             {
                 @base.Dispose();
             }

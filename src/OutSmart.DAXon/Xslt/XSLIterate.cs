@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:iterate elements in stylesheet. <br>
     /// </summary>
-    internal class XSLIterate : StyleElement
+    internal sealed class XSLIterate : StyleElement
     {
         Expression select = null;
         public override bool IsInstruction()

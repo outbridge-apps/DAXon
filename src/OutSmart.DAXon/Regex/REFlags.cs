@@ -14,7 +14,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Regex
 {
-    internal class REFlags
+    internal sealed class REFlags
     {
         private bool caseIndependent;
         private bool multiLine;
@@ -97,47 +97,47 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        public virtual bool IsCaseIndependent()
+        public bool IsCaseIndependent()
         {
             return caseIndependent;
         }
 
-        public virtual bool IsMultiLine()
+        public bool IsMultiLine()
         {
             return multiLine;
         }
 
-        public virtual bool IsSingleLine()
+        public bool IsSingleLine()
         {
             return singleLine;
         }
 
-        public virtual bool IsAllowWhitespace()
+        public bool IsAllowWhitespace()
         {
             return allowWhitespace;
         }
 
-        public virtual bool IsLiteral()
+        public bool IsLiteral()
         {
             return literal;
         }
 
-        public virtual bool IsAllowsXPath20Extensions()
+        public bool IsAllowsXPath20Extensions()
         {
             return xpath20;
         }
 
-        public virtual bool IsAllowsXPath30Extensions()
+        public bool IsAllowsXPath30Extensions()
         {
             return xpath30;
         }
 
-        public virtual bool IsAllowsXSD11Syntax()
+        public bool IsAllowsXSD11Syntax()
         {
             return xsd11;
         }
 
-        public virtual bool IsAllowUnknownBlockNames()
+        public bool IsAllowUnknownBlockNames()
         {
             return allowUnknownBlockNames;
         }

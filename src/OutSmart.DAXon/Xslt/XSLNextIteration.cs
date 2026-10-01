@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:next-iteration element in the stylesheet
     /// </summary>
-    internal class XSLNextIteration : XSLBreakOrContinue
+    internal sealed class XSLNextIteration : XSLBreakOrContinue
     {
         public override void Validate(ComponentDeclaration decl)
         {
@@ -94,7 +94,7 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        public virtual SequenceType GetDeclaredParamType(StructuredQName name)
+        public SequenceType GetDeclaredParamType(StructuredQName name)
         {
             foreach (NodeInfo param in xslIterate.Children(NodeSelector.Of(new TypeIsInstancePredicate(typeof(XSLLocalParam)))))
             {

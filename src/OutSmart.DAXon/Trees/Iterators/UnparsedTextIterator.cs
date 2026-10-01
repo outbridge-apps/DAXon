@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Trees.Iterators
     /// Line endings #xA, #xD, #xD#xA separate lines (TextReader.ReadLine matches the upstream
     /// LineNumberReader definition); a trailing line-ending produces no final empty line.
     /// </summary>
-    internal class UnparsedTextIterator : ISequenceIterator
+    internal sealed class UnparsedTextIterator : ISequenceIterator
     {
         private TextReader reader;
         private readonly IIntPredicateProxy checker;

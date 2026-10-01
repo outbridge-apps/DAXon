@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Serialization
     /// rules — empty elements such as &lt;br /&gt; and explicit end tags for non-void elements (&lt;p&gt;&lt;/p&gt;).
     /// (Was a hollow stub extending the bare Emitter, so method=xhtml + html-version=5 hit StartDocument stubs.)
     /// </summary>
-    internal class XHTML5Emitter : XMLEmitter
+    internal sealed class XHTML5Emitter : XMLEmitter
     {
         private static readonly HashSet<string> html5Elements = new HashSet<string>
         {

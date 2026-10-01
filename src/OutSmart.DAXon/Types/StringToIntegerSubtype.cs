@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Types
     /// <summary>
     /// Converts a string to a built-in subtype of integer.
     /// </summary>
-    internal class StringToIntegerSubtype : StringConverter
+    internal sealed class StringToIntegerSubtype : StringConverter
     {
         private readonly BuiltInAtomicType targetType;
 

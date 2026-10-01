@@ -323,7 +323,7 @@ namespace OutSmart.DAXon.Patterns
             return new PatternElaborator();
         }
 
-        private class PatternElaborator : BooleanElaborator
+        private sealed class PatternElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

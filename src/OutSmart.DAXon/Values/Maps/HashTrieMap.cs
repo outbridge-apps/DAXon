@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Values.Maps
     /// <summary>
     /// An immutable map. This implementation, which uses a hash trie, was introduced in Saxon 9.6
     /// </summary>
-    internal class HashTrieMap : MapItem
+    internal sealed class HashTrieMap : MapItem
     {
         private object root;   // MapTrie node, null = empty
         // type.
@@ -337,7 +337,7 @@ namespace OutSmart.DAXon.Values.Maps
         }
 
         // type.
-        public virtual bool InitialPut(AtomicValue key, IGroundedValue value)
+        public bool InitialPut(AtomicValue key, IGroundedValue value)
         {
 
             bool empty = IsEmpty();

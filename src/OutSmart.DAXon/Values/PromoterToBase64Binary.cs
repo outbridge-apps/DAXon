@@ -15,7 +15,7 @@ using OutSmart.DAXon.Types;
 // since TypeChecker has `using OutSmart.DAXon.Values`.
 namespace OutSmart.DAXon.Values
 {
-    internal class PromoterToBase64Binary : Converter
+    internal sealed class PromoterToBase64Binary : Converter
     {
         public PromoterToBase64Binary() { }
     }

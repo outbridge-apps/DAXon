@@ -71,17 +71,17 @@ namespace OutSmart.DAXon.Types
             return new Int64Value((long)d);
         }
         // Java semantics: cast to xs:integer truncates toward zero = NumericValue.longValue().
-        internal class FloatToInteger : Converter
+        internal sealed class FloatToInteger : Converter
         {
             public static readonly FloatToInteger INSTANCE = new FloatToInteger();
             public override IConversionResult Convert(object value) { double d = ((NumericValue)value).GetDoubleValue(); if (double.IsNaN(d)) return new ValidationFailure("Cannot convert float NaN to an integer", "FOCA0002"); if (double.IsInfinity(d)) return new ValidationFailure("Cannot convert float infinity to an integer", "FOCA0002"); return (IConversionResult)DoubleToIntegerValue(d); }
         }
-        internal class BooleanToInteger : Converter
+        internal sealed class BooleanToInteger : Converter
         {
             public static readonly BooleanToInteger INSTANCE = new BooleanToInteger();
             public override IConversionResult Convert(object value) => (IConversionResult)new Int64Value(((BooleanValue)value).GetBooleanValue() ? 1L : 0L);
         }
-        internal class DoubleToInteger : Converter
+        internal sealed class DoubleToInteger : Converter
         {
             public static readonly DoubleToInteger INSTANCE = new DoubleToInteger();
             public override IConversionResult Convert(object value) { double d = ((NumericValue)value).GetDoubleValue(); if (double.IsNaN(d)) return new ValidationFailure("Cannot convert double NaN to an integer", "FOCA0002"); if (double.IsInfinity(d)) return new ValidationFailure("Cannot convert double infinity to an integer", "FOCA0002"); return (IConversionResult)DoubleToIntegerValue(d); }
@@ -90,7 +90,7 @@ namespace OutSmart.DAXon.Types
         // (which goes via double) loses precision above 2^53, e.g. xs:integer(12345678901234567.3) gave
         // ...568 not ...567. BigDecimal.ToBigInteger() drops the fraction exactly; MakeIntegerValue then
         // picks Int64Value or BigIntegerValue by magnitude (matches Saxon's BigIntegerValue(...toBigInteger)).
-        internal class DecimalToInteger : Converter
+        internal sealed class DecimalToInteger : Converter
         {
             public static readonly DecimalToInteger INSTANCE = new DecimalToInteger();
             public override IConversionResult Convert(object value) => (IConversionResult)OutSmart.DAXon.Values.IntegerValue.MakeIntegerValue(((NumericValue)value).GetDecimalValue().ToBigInteger());
@@ -98,7 +98,7 @@ namespace OutSmart.DAXon.Types
 
         // ConversionRules dispatches date->gYear/gYearMonth/gMonth/gDay/gMonthDay as two-phase DATE->DATE_TIME->gXxx,
         // plus subtype-via-primitive casts. Faithful Java: run phaseOne, then phaseTwo on the intermediate result.
-        internal class TwoPhaseConverter : Converter
+        internal sealed class TwoPhaseConverter : Converter
         {
             private readonly Converter phaseOne;
             private readonly Converter phaseTwo;
@@ -150,7 +150,7 @@ namespace OutSmart.DAXon.Types
             }
         }
         // Java IdentityConverter.convert returns the input unchanged.
-        internal class IdentityConverter : Converter
+        internal sealed class IdentityConverter : Converter
         {
             public static readonly IdentityConverter INSTANCE = new IdentityConverter();
             public override IConversionResult Convert(object value) => (IConversionResult)value;
@@ -162,80 +162,80 @@ namespace OutSmart.DAXon.Types
         // "same key": (D cast as xs:decimal) rounded away from D's exact value, so the decimal lookup key no
         // longer compared equal to the stored float/double key (same-key-008). BigDecimalValue(double) uses
         // new BigDecimal(d) — the full-precision constructor.
-        internal class FloatToDecimal : Converter
+        internal sealed class FloatToDecimal : Converter
         {
             public static readonly FloatToDecimal INSTANCE = new FloatToDecimal();
             public override IConversionResult Convert(object value) { double d = ((NumericValue)value).GetDoubleValue(); if (double.IsNaN(d)) return new ValidationFailure("Cannot convert float NaN to a decimal", "FOCA0002"); if (double.IsInfinity(d)) return new ValidationFailure("Cannot convert float infinity to a decimal", "FOCA0002"); return new BigDecimalValue(d); }
         }
-        internal class DoubleToDecimal : Converter
+        internal sealed class DoubleToDecimal : Converter
         {
             public static readonly DoubleToDecimal INSTANCE = new DoubleToDecimal();
             public override IConversionResult Convert(object value) { double d = ((NumericValue)value).GetDoubleValue(); if (double.IsNaN(d)) return new ValidationFailure("Cannot convert double NaN to a decimal", "FOCA0002"); if (double.IsInfinity(d)) return new ValidationFailure("Cannot convert double infinity to a decimal", "FOCA0002"); return new BigDecimalValue(d); }
         }
-        internal class IntegerToDecimal : Converter
+        internal sealed class IntegerToDecimal : Converter
         {
             public static readonly IntegerToDecimal INSTANCE = new IntegerToDecimal();
             public override IConversionResult Convert(object value) => new BigDecimalValue(((NumericValue)value).GetDecimalValue());
         }
-        internal class NumericToDecimal : Converter
+        internal sealed class NumericToDecimal : Converter
         {
             public static readonly NumericToDecimal INSTANCE = new NumericToDecimal();
             public override IConversionResult Convert(object value) => new BigDecimalValue(((NumericValue)value).GetDecimalValue());
         }
-        internal class BooleanToDecimal : Converter
+        internal sealed class BooleanToDecimal : Converter
         {
             public static readonly BooleanToDecimal INSTANCE = new BooleanToDecimal();
             public override IConversionResult Convert(object value) => new BigDecimalValue(((BooleanValue)value).GetBooleanValue() ? 1.0 : 0.0);
         }
-        internal class BooleanToFloat : Converter
+        internal sealed class BooleanToFloat : Converter
         {
             public static readonly BooleanToFloat INSTANCE = new BooleanToFloat();
             public override IConversionResult Convert(object value) => (IConversionResult)new FloatValue(((BooleanValue)value).GetBooleanValue() ? 1.0f : 0.0f);
         } // was a hollow stub (no Convert override) -> base `=> null` -> NRE on `xs:boolean cast as xs:float`
-        internal class BooleanToDouble : Converter
+        internal sealed class BooleanToDouble : Converter
         {
             public static readonly BooleanToDouble INSTANCE = new BooleanToDouble();
             public override IConversionResult Convert(object value) => (IConversionResult)new DoubleValue(((BooleanValue)value).GetBooleanValue() ? 1.0 : 0.0);
         }
         // Faithful Java (net.sf.saxon.type.Converter): the value is rebuilt in the target temporal type
         // from the source components (constructed directly via the engine value ctors).
-        internal class DateToDateTime : Converter
+        internal sealed class DateToDateTime : Converter
         {
             public static readonly DateToDateTime INSTANCE = new DateToDateTime();
             public override IConversionResult Convert(object value) => (IConversionResult)((DateValue)value).ToDateTime();
         }
-        internal class DateTimeToTime : Converter
+        internal sealed class DateTimeToTime : Converter
         {
             public static readonly DateTimeToTime INSTANCE = new DateTimeToTime();
             public override IConversionResult Convert(object value) { var dt = (DateTimeValue)value; byte hour = dt.Hour, minute = dt.Minute, second = dt.Second; int nano = dt.Nanosecond, tz = dt.TimezoneInMinutes; return (IConversionResult)new TimeValue(hour, minute, second, nano, tz, BuiltInAtomicType.TIME); }
         }
-        internal class DateTimeToDate : Converter
+        internal sealed class DateTimeToDate : Converter
         {
             public static readonly DateTimeToDate INSTANCE = new DateTimeToDate();
             public override IConversionResult Convert(object value) { var dt = (DateTimeValue)value; int year = dt.Year; byte month = dt.Month, day = dt.Day; int tz = dt.TimezoneInMinutes; bool xsd10 = dt.IsXsd10Rules(); return (IConversionResult)new DateValue(year, month, day, tz, xsd10); }
         }
-        internal class DateTimeToGYearMonth : Converter
+        internal sealed class DateTimeToGYearMonth : Converter
         {
             public static readonly DateTimeToGYearMonth INSTANCE = new DateTimeToGYearMonth();
             public override IConversionResult Convert(object value) { var dt = (DateTimeValue)value; int year = dt.Year; byte month = dt.Month; int tz = dt.TimezoneInMinutes; bool xsd10 = dt.IsXsd10Rules(); return (IConversionResult)new GYearMonthValue(year, month, tz, xsd10); }
         }
-        internal class DateTimeToGYear : Converter
+        internal sealed class DateTimeToGYear : Converter
         {
             public static readonly DateTimeToGYear INSTANCE = new DateTimeToGYear();
             public override IConversionResult Convert(object value) { var dt = (DateTimeValue)value; int year = dt.Year; int tz = dt.TimezoneInMinutes; bool xsd10 = dt.IsXsd10Rules(); return (IConversionResult)new GYearValue(year, tz, xsd10); }
         }
         // Faithful Java Converter.DateTimeToGMonthDay: new GMonthDayValue(month,day,tz).
-        internal class DateTimeToGMonthDay : Converter
+        internal sealed class DateTimeToGMonthDay : Converter
         {
             public static readonly DateTimeToGMonthDay INSTANCE = new DateTimeToGMonthDay();
             public override IConversionResult Convert(object value) { var dt = (DateTimeValue)value; byte month = dt.Month; byte day = dt.Day; int tz = dt.TimezoneInMinutes; return (IConversionResult)new GMonthDayValue(month, day, tz); }
         }
-        internal class DateTimeToGMonth : Converter
+        internal sealed class DateTimeToGMonth : Converter
         {
             public static readonly DateTimeToGMonth INSTANCE = new DateTimeToGMonth();
             public override IConversionResult Convert(object value) { var dt = (DateTimeValue)value; byte month = dt.Month; int tz = dt.TimezoneInMinutes; return (IConversionResult)new GMonthValue(month, tz); }
         }
-        internal class DateTimeToGDay : Converter
+        internal sealed class DateTimeToGDay : Converter
         {
             public static readonly DateTimeToGDay INSTANCE = new DateTimeToGDay();
             public override IConversionResult Convert(object value) { var dt = (DateTimeValue)value; byte day = dt.Day; int tz = dt.TimezoneInMinutes; return (IConversionResult)new GDayValue(day, tz); }
@@ -245,24 +245,24 @@ namespace OutSmart.DAXon.Types
         // instantiated by ConversionRules.GetConverter (verified: zero refs outside this file). Implementing DateToDateTime
         // + the DateTimeToGXxx family above makes the real xs:gYear(xs:date(..)) etc. casts work through the two-phase path.
         // Faithful Java: new HexBinaryValue(base64.getBinaryValue()) / new Base64BinaryValue(hex.getBinaryValue()).
-        internal class Base64BinaryToHexBinary : Converter
+        internal sealed class Base64BinaryToHexBinary : Converter
         {
             public static readonly Base64BinaryToHexBinary INSTANCE = new Base64BinaryToHexBinary();
             public override IConversionResult Convert(object value) { byte[] b = ((Base64BinaryValue)value).BinaryValue; return (IConversionResult)new HexBinaryValue(b); }
         }
-        internal class HexBinaryToBase64Binary : Converter
+        internal sealed class HexBinaryToBase64Binary : Converter
         {
             public static readonly HexBinaryToBase64Binary INSTANCE = new HexBinaryToBase64Binary();
             public override IConversionResult Convert(object value) { byte[] b = ((HexBinaryValue)value).BinaryValue; return (IConversionResult)new Base64BinaryValue(b); }
         }
         // Faithful Java: new QNameValue(notation.getStructuredQName(), QNAME).
-        internal class NotationToQName : Converter
+        internal sealed class NotationToQName : Converter
         {
             public static readonly NotationToQName INSTANCE = new NotationToQName();
             public override IConversionResult Convert(object value) { var sqn = ((QualifiedNameValue)value).GetStructuredQName(); return (IConversionResult)new QNameValue((StructuredQName)sqn, BuiltInAtomicType.QNAME); }
         }
         // Faithful Java: BooleanValue.get(input.effectiveBooleanValue()).
-        internal class NumericToBoolean : Converter
+        internal sealed class NumericToBoolean : Converter
         {
             public static readonly NumericToBoolean INSTANCE = new NumericToBoolean();
             public override IConversionResult Convert(object value) => (IConversionResult)BooleanValue.Get(((AtomicValue)value).EffectiveBooleanValue());
@@ -276,19 +276,19 @@ namespace OutSmart.DAXon.Types
         // IConversionResult, AsAtomic OK -- verified) value, NRE-ing at MapItem result.AsAtomic(). The PhaseBConverters fix that
         // routes around this NRE was never wired into MapItem line 500. Fix belongs engine-side (route MapItem through
         // PhaseBConverters.Convert, like the other sites) -- a separate Fix-PhaseB patch, out of scope for the compat un-stub.
-        internal class ToUntypedAtomicConverter : Converter
+        internal sealed class ToUntypedAtomicConverter : Converter
         {
             public static readonly ToUntypedAtomicConverter INSTANCE = new ToUntypedAtomicConverter();
             public override IConversionResult Convert(object value) { var us = ((AtomicValue)value).UnicodeStringValue; return (IConversionResult)new StringValue((UnicodeString)us, BuiltInAtomicType.UNTYPED_ATOMIC); }
         }
-        internal class ToStringConverter : Converter
+        internal sealed class ToStringConverter : Converter
         {
             public static readonly ToStringConverter INSTANCE = new ToStringConverter();
             public override IConversionResult Convert(object value) { var us = ((AtomicValue)value).UnicodeStringValue.Tidy(); return (IConversionResult)new StringValue((UnicodeString)us); }
         }
         // Faithful Java (Converter.DurationToDayTimeDuration / DurationToYearMonthDuration): rebuild the duration
         // value in the narrower type from the parsed components (constructed directly via the engine value ctors).
-        internal class DurationToDayTimeDuration : Converter
+        internal sealed class DurationToDayTimeDuration : Converter
         {
             public static readonly DurationToDayTimeDuration INSTANCE = new DurationToDayTimeDuration();
             public override IConversionResult Convert(object value)
@@ -302,31 +302,31 @@ namespace OutSmart.DAXon.Types
                 return (IConversionResult)new DayTimeDurationValue(days, hours, minutes, (long)seconds, nanos);
             }
         }
-        internal class DurationToYearMonthDuration : Converter
+        internal sealed class DurationToYearMonthDuration : Converter
         {
             public static readonly DurationToYearMonthDuration INSTANCE = new DurationToYearMonthDuration();
             public override IConversionResult Convert(object value) { int months = ((DurationValue)value).TotalMonths; return (IConversionResult)YearMonthDurationValue.FromMonths(months); }
         }
         // Faithful Java: new NotationValue(qname.getStructuredQName(), NOTATION).
-        internal class QNameToNotation : Converter
+        internal sealed class QNameToNotation : Converter
         {
             public static readonly QNameToNotation INSTANCE = new QNameToNotation();
             public override IConversionResult Convert(object value) { var sqn = ((QualifiedNameValue)value).GetStructuredQName(); return (IConversionResult)new NotationValue((StructuredQName)sqn, BuiltInAtomicType.NOTATION); }
         }
         // Truncate toward zero.
-        internal class NumericToInteger : Converter
+        internal sealed class NumericToInteger : Converter
         {
             public static readonly NumericToInteger INSTANCE = new NumericToInteger();
             public override IConversionResult Convert(object value) => (IConversionResult)new Int64Value((long)((NumericValue)value).LongValue());
         }
         // Faithful Java: new FloatValue(((NumericValue)input).getFloatValue()). Integer->float uses IntegerToFloat.
-        internal class NumericToFloat : Converter
+        internal sealed class NumericToFloat : Converter
         {
             public static readonly NumericToFloat INSTANCE = new NumericToFloat();
             public override IConversionResult Convert(object value) => (IConversionResult)new FloatValue(((NumericValue)value).GetFloatValue());
         }
         // Faithful Java NumericToDouble.convert: DoubleValue passes through; otherwise new DoubleValue(getDoubleValue()).
-        internal class NumericToDouble : Converter
+        internal sealed class NumericToDouble : Converter
         {
             public static readonly NumericToDouble INSTANCE = new NumericToDouble();
             public override IConversionResult Convert(object value)

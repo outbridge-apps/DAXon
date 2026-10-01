@@ -21,7 +21,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Patterns
 {
-    internal class NodeKindTest : NodeTest
+    internal sealed class NodeKindTest : NodeTest
     {
         public static readonly NodeKindTest DOCUMENT = new NodeKindTest(Types.Type.DOCUMENT);
         public static readonly NodeKindTest ELEMENT = new NodeKindTest(Types.Type.ELEMENT);
@@ -68,7 +68,7 @@ namespace OutSmart.DAXon.Patterns
             uType = UType.FromTypeCode(nodeKind);
         }
 
-        public virtual int GetNodeKind()
+        public int GetNodeKind()
         {
             return kind;
         }

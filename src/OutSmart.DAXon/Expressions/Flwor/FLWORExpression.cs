@@ -801,13 +801,13 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return new FLWORElaborator();
         }
 
-        private class WhereClauseStruct
+        private sealed class WhereClauseStruct
         {
             public int whereIndex = 0;
             public WhereClause whereClause;
         }
 
-        private class FLWORElaborator : PullElaborator
+        private sealed class FLWORElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

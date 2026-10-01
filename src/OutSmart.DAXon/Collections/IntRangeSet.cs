@@ -16,7 +16,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Collections
 {
-    internal class IntRangeSet : IntSet
+    internal sealed class IntRangeSet : IntSet
     {
         private int[] startPoints;
         private int[] endPoints;
@@ -24,11 +24,11 @@ namespace OutSmart.DAXon.Collections
         private int _hashCode = -1;
         private int count = 0;
 
-        public virtual int[] StartPoints => startPoints;
+        public int[] StartPoints => startPoints;
 
-        public virtual int[] EndPoints => endPoints;
+        public int[] EndPoints => endPoints;
 
-        public virtual int NumberOfRanges => used;
+        public int NumberOfRanges => used;
         public IntRangeSet()
         {
             startPoints = new int[4];
@@ -349,7 +349,7 @@ namespace OutSmart.DAXon.Collections
             return _hashCode;
         }
 
-        public virtual void AddRange(int low, int high)
+        public void AddRange(int low, int high)
         {
             if (low == high)
             {
@@ -415,7 +415,7 @@ namespace OutSmart.DAXon.Collections
         /// <summary>
         /// IIterator class
         /// </summary>
-        private class IntRangeSetIterator : AbstractIntIterator
+        private sealed class IntRangeSetIterator : AbstractIntIterator
         {
             private IntRangeSet intRangeSet;
             private int i = 0;

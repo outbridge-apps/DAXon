@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class implements the function fn:has-children(), which is a standard function in XPath 3.0
     /// </summary>
-    internal class Innermost : SystemFunction
+    internal sealed class Innermost : SystemFunction
     {
         bool presorted = false;
         public override int GetSpecialProperties(Expression[] arguments)
@@ -51,7 +51,7 @@ namespace OutSmart.DAXon.Functions
             return SequenceTool.ToLazySequence(InnermostFn(arguments[0].Iterate()));
         }
 
-        public virtual ISequenceIterator InnermostFn(ISequenceIterator @in)
+        public ISequenceIterator InnermostFn(ISequenceIterator @in)
         {
             if (!presorted)
             {
@@ -80,7 +80,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        private class InnermostIterator : ISequenceIterator
+        private sealed class InnermostIterator : ISequenceIterator
         {
             ISequenceIterator @in;
             NodeInfo pending = null;
@@ -91,7 +91,7 @@ namespace OutSmart.DAXon.Functions
                 pending = (NodeInfo)@in.Next();
             }
 
-            public virtual NodeInfo Next()
+            public NodeInfo Next()
             {
                 if (pending == null)
                 {
@@ -132,7 +132,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            public virtual void Dispose()
+            public void Dispose()
             {
                 @in.Dispose();
             }

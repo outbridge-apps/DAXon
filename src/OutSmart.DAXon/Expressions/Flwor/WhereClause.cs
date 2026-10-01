@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
     /// <summary>
     /// A "where" clause in a FLWOR expression
     /// </summary>
-    internal class WhereClause : Clause
+    internal sealed class WhereClause : Clause
     {
         private readonly Operand predicateOp;
         // volatile, not a lock (round 11): this is published once and then read on a hot path, the
@@ -38,7 +38,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override ClauseName ClauseKey => WHERE;
 
-        public virtual Expression Predicate
+        public Expression Predicate
         {
             get => predicateOp.GetChildExpression(); set
             {

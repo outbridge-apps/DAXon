@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Events
         {
         }
 
-        internal class StartDocument : OutputterEvent
+        internal sealed class StartDocument : OutputterEvent
         {
             internal readonly int properties;
             public StartDocument(int properties)
@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        internal class EndDocument : OutputterEvent
+        internal sealed class EndDocument : OutputterEvent
         {
             public override void Replay(Outputter @out)
             {
@@ -42,7 +42,7 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        internal class StartElement : OutputterEvent
+        internal sealed class StartElement : OutputterEvent
         {
             internal readonly INodeName name;
             internal readonly ISchemaType type;
@@ -63,7 +63,7 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        internal class Attribute : OutputterEvent
+        internal sealed class Attribute : OutputterEvent
         {
             internal readonly INodeName name;
             internal readonly ISimpleType type;
@@ -86,7 +86,7 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        internal class Namespace : OutputterEvent
+        internal sealed class Namespace : OutputterEvent
         {
             internal readonly string prefix;
             internal readonly NamespaceUri uri;
@@ -105,7 +105,7 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        internal class StartContent : OutputterEvent
+        internal sealed class StartContent : OutputterEvent
         {
             public override void Replay(Outputter @out)
             {
@@ -113,7 +113,7 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        internal class EndElement : OutputterEvent
+        internal sealed class EndElement : OutputterEvent
         {
             public override void Replay(Outputter @out)
             {
@@ -121,7 +121,7 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        internal class Text : OutputterEvent
+        internal sealed class Text : OutputterEvent
         {
             internal readonly UnicodeString content;
             internal readonly ILocation location;
@@ -140,7 +140,7 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        internal class Comment : OutputterEvent
+        internal sealed class Comment : OutputterEvent
         {
             internal readonly UnicodeString content;
             internal readonly ILocation location;
@@ -159,7 +159,7 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        internal class ProcessingInstruction : OutputterEvent
+        internal sealed class ProcessingInstruction : OutputterEvent
         {
             internal readonly string target;
             internal readonly UnicodeString content;
@@ -184,7 +184,7 @@ namespace OutSmart.DAXon.Events
         /// An arbitrary item sent to the event stream in composed form (an atomic value,
         /// or an entire element or document).
         /// </summary>
-        internal class Append : OutputterEvent
+        internal sealed class Append : OutputterEvent
         {
             internal readonly IItem item;
             internal readonly ILocation location;

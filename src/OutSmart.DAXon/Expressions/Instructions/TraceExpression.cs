@@ -27,12 +27,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// A wrapper expression used to trace expressions in XSLT and XQuery.
     /// </summary>
-    internal class TraceExpression : Instruction
+    internal sealed class TraceExpression : Instruction
     {
         private readonly Operand baseOp;
         private Dictionary<string, object> properties = new Dictionary<string, object>(10);
 
-        public virtual Expression Child => baseOp.GetChildExpression();
+        public Expression Child => baseOp.GetChildExpression();
 
         public override string ExpressionName => "trace";
 
@@ -65,7 +65,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             child.GatherProperties((k, v) => properties.PutAndGetPrevious(k, v));
         }
 
-        public virtual Expression GetBody()
+        public Expression GetBody()
         {
             return baseOp.GetChildExpression();
         }
@@ -75,7 +75,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return baseOp;
         }
 
-        public virtual void SetProperty(string name, object value)
+        public void SetProperty(string name, object value)
         {
             properties[name] = value;
         }
@@ -183,7 +183,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new TraceExpressionElaborator();
         }
 
-        private class TraceExpressionElaborator : FallbackElaborator
+        private sealed class TraceExpressionElaborator : FallbackElaborator
         {
             public override IStringEvaluator ElaborateForString(bool zeroLengthWhenAbsent)
             {

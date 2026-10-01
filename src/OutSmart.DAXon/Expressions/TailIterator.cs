@@ -19,12 +19,12 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class TailIterator : ISequenceIterator, ILastPositionFinder, ILookaheadIterator
+    internal sealed class TailIterator : ISequenceIterator, ILastPositionFinder, ILookaheadIterator
     {
         private readonly ISequenceIterator @base;
         private readonly int start;
 
-        public virtual bool HasNext => ((ILookaheadIterator)@base).HasNext;
+        public bool HasNext => ((ILookaheadIterator)@base).HasNext;
         private TailIterator(ISequenceIterator @base, int start)
         {
             this.@base = @base;
@@ -77,28 +77,28 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             return @base.Next();
         }
 
-        public virtual bool SupportsHasNext()
+        public bool SupportsHasNext()
         {
             return @base is ILookaheadIterator && ((ILookaheadIterator)@base).SupportsHasNext();
         }
 
-        public virtual bool SupportsGetLength()
+        public bool SupportsGetLength()
         {
             return SequenceTool.SupportsGetLength(@base);
         }
 
-        public virtual int GetLength()
+        public int GetLength()
         {
             int bl = SequenceTool.GetLength(@base) - start + 1;
             return Math.Max(bl, 0);
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             @base.Dispose();
         }

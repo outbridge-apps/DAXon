@@ -14,7 +14,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class LFUCache<K, V>
+    internal sealed class LFUCache<K, V>
     {
         private int targetSize;
         private int retentionThreshold = 1;
@@ -53,7 +53,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             map = new Dictionary<K, LFUCacheEntryWithCounter<V>>(cacheSize);
         }
 
-        public virtual void Put(K key, V value)
+        public void Put(K key, V value)
         {
             map[key] = new LFUCacheEntryWithCounter<V>(value);
 

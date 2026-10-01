@@ -21,13 +21,13 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Values.Arrays
 {
-    internal class ArrayItemType : AnyFunctionType
+    internal sealed class ArrayItemType : AnyFunctionType
     {
         public static readonly ArrayItemType ANY_ARRAY_TYPE = new ArrayItemType(SequenceType.ANY_SEQUENCE);
         public static readonly SequenceType SINGLE_ARRAY = SequenceType.MakeSequenceType(ArrayItemType.ANY_ARRAY_TYPE, StaticProperty.EXACTLY_ONE);
         private readonly SequenceType memberType;
 
-        public virtual SequenceType MemberType => memberType;
+        public SequenceType MemberType => memberType;
 
         public override string BasicAlphaCode => "FA";
 

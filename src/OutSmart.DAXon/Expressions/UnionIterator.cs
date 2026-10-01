@@ -13,7 +13,7 @@ using OutSmart.DAXon.Trees.Iterators;
 
 namespace OutSmart.DAXon.Expressions
 {
-    internal class UnionIterator : ISequenceIterator, ILookaheadIterator
+    internal sealed class UnionIterator : ISequenceIterator, ILookaheadIterator
     {
 
         private readonly SortedSet<Intake> intakes;

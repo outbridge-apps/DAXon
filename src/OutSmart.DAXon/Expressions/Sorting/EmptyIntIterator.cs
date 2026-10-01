@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
     /// <summary>
     /// An iterator over a zero-length sequence of integers
     /// </summary>
-    internal class EmptyIntIterator : AbstractIntIterator
+    internal sealed class EmptyIntIterator : AbstractIntIterator
     {
         private static readonly EmptyIntIterator THE_INSTANCE = new EmptyIntIterator();
 

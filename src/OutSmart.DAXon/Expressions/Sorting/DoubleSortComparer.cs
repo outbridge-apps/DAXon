@@ -17,11 +17,11 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class DoubleSortComparer : IAtomicComparer
+    internal sealed class DoubleSortComparer : IAtomicComparer
     {
         private static readonly DoubleSortComparer THE_INSTANCE = new DoubleSortComparer();
 
-        public virtual IStringCollator Collator => null;
+        public IStringCollator Collator => null;
 
         private DoubleSortComparer()
         {
@@ -31,12 +31,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return THE_INSTANCE;
         }
 
-        public virtual IAtomicComparer ProvideContext(IXPathContext context)
+        public IAtomicComparer ProvideContext(IXPathContext context)
         {
             return this;
         }
 
-        public virtual int CompareAtomicValues(AtomicValue a, AtomicValue b)
+        public int CompareAtomicValues(AtomicValue a, AtomicValue b)
         {
             if (a == null)
             {
@@ -71,7 +71,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         /// <summary>
         /// Test whether two values compare equal. Note that for this comparer, NaN is considered equal to itself
         /// </summary>
-        public virtual bool ComparesEqual(AtomicValue a, AtomicValue b)
+        public bool ComparesEqual(AtomicValue a, AtomicValue b)
         {
             return CompareAtomicValues(a, b) == 0;
         }
@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         /// <summary>
         /// Test whether two values compare equal. Note that for this comparer, NaN is considered equal to itself
         /// </summary>
-        public virtual string Save()
+        public string Save()
         {
             return "DblSC";
         }

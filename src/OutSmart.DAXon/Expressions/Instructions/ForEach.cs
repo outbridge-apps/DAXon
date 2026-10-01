@@ -27,7 +27,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class ForEach : Instruction, IContextSwitchingExpression
+    internal sealed class ForEach : Instruction, IContextSwitchingExpression
     {
         protected bool containsTailCall;
         protected Operand selectOp;
@@ -36,7 +36,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         protected Operand threadsOp;
         protected bool _isInstruction;
 
-        public virtual Expression SeparatorExpression
+        public Expression SeparatorExpression
         {
             get => separatorOp == null ? null : separatorOp.GetChildExpression(); set
             {
@@ -44,7 +44,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual Expression Select
+        public Expression Select
         {
             get => selectOp.GetChildExpression(); set
             {
@@ -52,7 +52,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual Expression Threads
+        public Expression Threads
         {
             get => threadsOp == null ? null : threadsOp.GetChildExpression(); set
             {
@@ -93,7 +93,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             this.containsTailCall = containsTailCall;
         }
 
-        public virtual void SetInstruction(bool inst)
+        public void SetInstruction(bool inst)
         {
             _isInstruction = inst;
         }
@@ -103,12 +103,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return _isInstruction;
         }
 
-        public virtual Expression GetAction()
+        public Expression GetAction()
         {
             return actionOp.GetChildExpression();
         }
 
-        public virtual void SetAction(Expression action)
+        public void SetAction(Expression action)
         {
             actionOp.SetChildExpression(action);
         }
@@ -319,7 +319,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         //
         //
         //    }
-        protected virtual NodeInfo MakeSeparator(IXPathContext context)
+        protected NodeInfo MakeSeparator(IXPathContext context)
         {
             NodeInfo separator;
             UnicodeString sepValue = separatorOp.GetChildExpression().EvaluateAsString(context);
@@ -376,7 +376,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             @out.EndElement();
         }
 
-        protected virtual void ExplainThreads(ExpressionPresenter @out)
+        protected void ExplainThreads(ExpressionPresenter @out)
         {
         }
 
@@ -399,7 +399,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new ForEachElaborator();
         }
 
-        internal class ForEachElaborator : PullElaborator
+        internal sealed class ForEachElaborator : PullElaborator
         {
             private NodeInfo MakeSeparator(IUnicodeStringEvaluator evaluator, IXPathContext context)
             {

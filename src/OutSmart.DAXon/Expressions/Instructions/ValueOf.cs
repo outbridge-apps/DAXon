@@ -309,7 +309,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         }
 
         //
-        private class ValueOfElaborator : SimpleNodePushElaborator
+        private sealed class ValueOfElaborator : SimpleNodePushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {
@@ -405,7 +405,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         }
 
         //
-        private class TextNodeOutputStreamer : ProxyOutputter
+        private sealed class TextNodeOutputStreamer : ProxyOutputter
         {
             private readonly ILocation instructionLoc;
             private readonly int options;

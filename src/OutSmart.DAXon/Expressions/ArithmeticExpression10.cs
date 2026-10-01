@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Expressions.Compatibility
     /// Arithmetic Expression evaluated in XPath 1.0 backwards-compatibility mode: see
     /// <see cref="ArithmeticExpression"/> for the non-backwards-compatible case.
     /// </summary>
-    internal class ArithmeticExpression10 : ArithmeticExpression, ICallable
+    internal sealed class ArithmeticExpression10 : ArithmeticExpression, ICallable
     {
         public ArithmeticExpression10(Expression p0, int @operator, Expression p1) : base(p0, @operator, p1)
         {

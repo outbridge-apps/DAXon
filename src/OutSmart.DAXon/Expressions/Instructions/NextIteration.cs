@@ -25,11 +25,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// Implements a xsl:next-iteration instruction within the body of xsl:iterate
     /// </summary>
-    internal class NextIteration : Instruction, TailCallLoop.ITailCallInfo
+    internal sealed class NextIteration : Instruction, TailCallLoop.ITailCallInfo
     {
         private WithParam[] actualParams = null;
 
-        public virtual WithParam[] Parameters
+        public WithParam[] Parameters
         {
             get => actualParams; set
             {
@@ -92,7 +92,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new NextIterationElaborator();
         }
 
-        internal class NextIterationElaborator : PushElaborator
+        internal sealed class NextIterationElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

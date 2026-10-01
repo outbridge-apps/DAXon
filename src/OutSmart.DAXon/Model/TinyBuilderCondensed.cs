@@ -12,7 +12,7 @@ namespace OutSmart.DAXon.Model
     // Upstream condenses duplicate text/attribute values to save memory; this port builds a regular
     // tiny tree (functionally identical, no condensation). It USED to be a bare stub whose implicit
     // conversion to Builder THREW - selecting the TINY_TREE_CONDENSED tree model crashed every build.
-    internal class TinyBuilderCondensed : TinyBuilder
+    internal sealed class TinyBuilderCondensed : TinyBuilder
     {
         public TinyBuilderCondensed(PipelineConfiguration pipe) : base(pipe)
         {

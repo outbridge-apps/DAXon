@@ -21,7 +21,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Functions.Registry
 {
-    internal class ConstructorFunctionLibrary : IFunctionLibrary
+    internal sealed class ConstructorFunctionLibrary : IFunctionLibrary
     {
         private readonly Configuration config;
         public ConstructorFunctionLibrary(Configuration config)
@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Functions.Registry
             this.config = config;
         }
 
-        public virtual IFunctionItem GetFunctionItem(SymbolicName.F functionName, IStaticContext staticContext)
+        public IFunctionItem GetFunctionItem(SymbolicName.F functionName, IStaticContext staticContext)
         {
             if (functionName.GetArity() != 1)
             {
@@ -75,7 +75,7 @@ namespace OutSmart.DAXon.Functions.Registry
             }
         }
 
-        public virtual bool IsAvailable(SymbolicName.F functionName, int languageLevel)
+        public bool IsAvailable(SymbolicName.F functionName, int languageLevel)
         {
             if (functionName.GetArity() != 1)
             {
@@ -96,7 +96,7 @@ namespace OutSmart.DAXon.Functions.Registry
             return type != AnySimpleType.INSTANCE;
         }
 
-        public virtual Expression Bind(SymbolicName.F functionName, Expression[] arguments, Dictionary<StructuredQName, int> keywords, IStaticContext env, IList<string> reasons)
+        public Expression Bind(SymbolicName.F functionName, Expression[] arguments, Dictionary<StructuredQName, int> keywords, IStaticContext env, IList<string> reasons)
         {
             NamespaceUri uri = functionName.ComponentName.GetNamespaceUri();
             string localName = functionName.ComponentName.GetLocalPart();
@@ -227,7 +227,7 @@ namespace OutSmart.DAXon.Functions.Registry
             return null;
         }
 
-        public virtual IFunctionLibrary Copy()
+        public IFunctionLibrary Copy()
         {
             return this;
         }

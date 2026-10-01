@@ -24,12 +24,12 @@ namespace OutSmart.DAXon.Expressions.Flwor
     /// <summary>
     /// A "count" clause in a FLWOR expression
     /// </summary>
-    internal class CountClause : Clause
+    internal sealed class CountClause : Clause
     {
         private LocalVariableBinding rangeVariable;
         public override ClauseName ClauseKey => COUNT;
 
-        public virtual LocalVariableBinding RangeVariable
+        public LocalVariableBinding RangeVariable
         {
             get => rangeVariable; set
             {

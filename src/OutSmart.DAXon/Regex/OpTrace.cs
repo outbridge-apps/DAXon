@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Regex
     /// <summary>
     /// Operation that wraps a base operation and traces its execution
     /// </summary>
-    internal class OpTrace : Operation
+    internal sealed class OpTrace : Operation
     {
         private static int counter = 0;
         private Operation @base;

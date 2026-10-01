@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Collections
     /// <summary>
     /// An iterator over a single integer
     /// </summary>
-    internal class IntSingletonIterator : AbstractIntIterator
+    internal sealed class IntSingletonIterator : AbstractIntIterator
     {
         private readonly int value;
         bool gone = false;

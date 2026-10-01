@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
-    internal class Adjust_1 : SystemFunction
+    internal sealed class Adjust_1 : SystemFunction
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

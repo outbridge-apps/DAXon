@@ -16,7 +16,7 @@ using OutSmart.DAXon.Internal.Collections;
 using OutSmart.DAXon.Core;
 namespace OutSmart.DAXon.Expressions.Parsing
 {
-    internal class Loc : ILocation
+    internal sealed class Loc : ILocation
     {
         public static Loc NONE = new Loc(null, -1, -1);
         private readonly string systemId;
@@ -36,27 +36,27 @@ namespace OutSmart.DAXon.Expressions.Parsing
             this.columnNumber = columnNumber;
         }
 
-        public virtual string GetSystemId()
+        public string GetSystemId()
         {
             return systemId;
         }
 
-        public virtual string GetPublicId()
+        public string GetPublicId()
         {
             return null;
         }
 
-        public virtual int GetLineNumber()
+        public int GetLineNumber()
         {
             return lineNumber;
         }
 
-        public virtual int GetColumnNumber()
+        public int GetColumnNumber()
         {
             return columnNumber;
         }
 
-        public virtual ILocation SaveLocation()
+        public ILocation SaveLocation()
         {
             return this;
         }

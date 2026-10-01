@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:text elements in stylesheet. <BR>
     /// </summary>
-    internal class XSLText : XSLLeafNodeConstructor
+    internal sealed class XSLText : XSLLeafNodeConstructor
     {
         private bool disable = false;
         private StringValue value;

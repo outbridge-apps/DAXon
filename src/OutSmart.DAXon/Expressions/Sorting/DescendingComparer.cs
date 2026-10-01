@@ -18,19 +18,19 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class DescendingComparer : IAtomicComparer
+    internal sealed class DescendingComparer : IAtomicComparer
     {
         private readonly IAtomicComparer baseComparer;
 
-        public virtual IAtomicComparer BaseComparer => baseComparer;
+        public IAtomicComparer BaseComparer => baseComparer;
 
-        public virtual IStringCollator Collator => baseComparer.Collator;
+        public IStringCollator Collator => baseComparer.Collator;
         public DescendingComparer(IAtomicComparer @base)
         {
             baseComparer = @base;
         }
 
-        public virtual IAtomicComparer ProvideContext(IXPathContext context)
+        public IAtomicComparer ProvideContext(IXPathContext context)
         {
             IAtomicComparer newBase = baseComparer.ProvideContext(context);
             if (newBase != baseComparer)
@@ -43,17 +43,17 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual int CompareAtomicValues(AtomicValue a, AtomicValue b)
+        public int CompareAtomicValues(AtomicValue a, AtomicValue b)
         {
             return 0 - baseComparer.CompareAtomicValues(a, b);
         }
 
-        public virtual bool ComparesEqual(AtomicValue a, AtomicValue b)
+        public bool ComparesEqual(AtomicValue a, AtomicValue b)
         {
             return baseComparer.ComparesEqual(a, b);
         }
 
-        public virtual string Save()
+        public string Save()
         {
             return "DESC|" + baseComparer.Save();
         }

@@ -22,12 +22,12 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class ErrorExpression : Expression
+    internal sealed class ErrorExpression : Expression
     {
         private readonly IXmlProcessingError exception;
         private Expression original;
 
-        public virtual string ErrorCodeLocalPart => exception.GetErrorCode().LocalName;
+        public string ErrorCodeLocalPart => exception.GetErrorCode().LocalName;
 
         public override int ImplementationMethod => EVALUATE_METHOD | ITERATE_METHOD;
 
@@ -46,22 +46,22 @@ namespace OutSmart.DAXon.Expressions
             this.exception = exception;
         }
 
-        public virtual IXmlProcessingError GetException()
+        public IXmlProcessingError GetException()
         {
             return exception;
         }
 
-        public virtual bool IsTypeError()
+        public bool IsTypeError()
         {
             return exception.IsTypeError();
         }
 
-        public virtual string GetMessage()
+        public string GetMessage()
         {
             return exception.GetMessage();
         }
 
-        public virtual void SetOriginalExpression(Expression original)
+        public void SetOriginalExpression(Expression original)
         {
             this.original = original;
         }
@@ -175,7 +175,7 @@ namespace OutSmart.DAXon.Expressions
             return false;
         }
 
-        private class ErrorExpressionElaborator : PullElaborator
+        private sealed class ErrorExpressionElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

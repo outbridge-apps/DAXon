@@ -18,7 +18,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Events
 {
-    internal class Valve : ProxyReceiver
+    internal sealed class Valve : ProxyReceiver
     {
         private bool started = false;
         private readonly NamespaceUri testNamespace;
@@ -54,7 +54,7 @@ namespace OutSmart.DAXon.Events
         }
 
         // ignore the failure
-        public virtual bool WasDiverted()
+        public bool WasDiverted()
         {
             return NextReceiver == alternativeReceiver;
         }

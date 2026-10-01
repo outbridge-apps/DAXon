@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// An XSLT 3.0 sequence constructor containing xsl:on-empty and/or xsl:on-non-empty instructions
     /// </summary>
-    internal class ConditionalBlock : Instruction
+    internal sealed class ConditionalBlock : Instruction
     {
         private readonly Operand[] operanda;
         private bool allNodesUntyped;
@@ -54,12 +54,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
         {
         }
 
-        public virtual Expression GetChildExpression(int n)
+        public Expression GetChildExpression(int n)
         {
             return operanda[n].GetChildExpression();
         }
 
-        public virtual int Size()
+        public int Size()
         {
             return operanda.Length;
         }
@@ -351,7 +351,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new ConditionalBlockElaborator();
         }
 
-        private class ConditionalBlockElaborator : PushElaborator
+        private sealed class ConditionalBlockElaborator : PushElaborator
         {
             private const int ON_EMPTY = 0;
             private const int ON_NON_EMPTY = 1;

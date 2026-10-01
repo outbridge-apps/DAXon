@@ -22,7 +22,7 @@ using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Patterns
 {
-    internal class CombinedNodeTest : NodeTest
+    internal sealed class CombinedNodeTest : NodeTest
     {
         private readonly NodeTest nodetest1;
         private readonly NodeTest nodetest2;
@@ -185,13 +185,13 @@ namespace OutSmart.DAXon.Patterns
             }
         }
 
-        public virtual NodeTest[] ComponentNodeTests => new NodeTest[]
+        public NodeTest[] ComponentNodeTests => new NodeTest[]
             {
                 nodetest1,
                 nodetest2
             };
 
-        public virtual int Operator => @operator;
+        public int Operator => @operator;
         public CombinedNodeTest(NodeTest nt1, int @operator, NodeTest nt2)
         {
             nodetest1 = nt1 ?? AnyNodeTest.GetInstance();

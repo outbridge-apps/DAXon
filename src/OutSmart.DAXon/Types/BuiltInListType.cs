@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Types
     // constructor functions (which need IListType.GetItemType + ValidateContent + GetTypedValue) raised
     // XPST0017, and casting these to ISimpleType (DTD attribute typing) InvalidCast'd. The three built-in list
     // types register themselves in BuiltInType via MakeListType (called from the static field initialisers).
-    internal class BuiltInListType : IListType
+    internal sealed class BuiltInListType : IListType
     {
         public static readonly BuiltInListType ENTITIES = MakeListType(NamespaceUri.SCHEMA, "ENTITIES");
         public static readonly BuiltInListType IDREFS = MakeListType(NamespaceUri.SCHEMA, "IDREFS");
@@ -28,21 +28,21 @@ namespace OutSmart.DAXon.Types
 
         private readonly int fingerprint;
         private readonly BuiltInAtomicType itemType;
-        public virtual int RedefinitionLevel => 0;
-        public virtual SchemaValidationStatus ValidationStatus => SchemaValidationStatus.VALIDATED;
-        public virtual ISchemaType BaseType => AnySimpleType.GetInstance();
-        public virtual ISchemaType KnownBaseType => AnySimpleType.GetInstance();
-        public virtual ISchemaType BuiltInBaseType => this;
-        public virtual string Name => StandardNames.GetLocalName(fingerprint);
-        public virtual string LocalName => StandardNames.GetLocalName(fingerprint);
-        public virtual NamespaceUri TargetNamespace => NamespaceUri.SCHEMA;
-        public virtual string EQName => "Q{" + NamespaceConstant.SCHEMA + "}" + Name;
-        public virtual int Fingerprint => fingerprint;
-        public virtual string DisplayName => StandardNames.GetDisplayName(fingerprint);
-        public virtual int DerivationMethod => Derivation.DERIVATION_LIST;
-        public virtual int FinalProhibitions => 0;
-        public virtual int WhitespaceAction => Whitespace.COLLAPSE;
-        public virtual string Description => DisplayName;
+        public int RedefinitionLevel => 0;
+        public SchemaValidationStatus ValidationStatus => SchemaValidationStatus.VALIDATED;
+        public ISchemaType BaseType => AnySimpleType.GetInstance();
+        public ISchemaType KnownBaseType => AnySimpleType.GetInstance();
+        public ISchemaType BuiltInBaseType => this;
+        public string Name => StandardNames.GetLocalName(fingerprint);
+        public string LocalName => StandardNames.GetLocalName(fingerprint);
+        public NamespaceUri TargetNamespace => NamespaceUri.SCHEMA;
+        public string EQName => "Q{" + NamespaceConstant.SCHEMA + "}" + Name;
+        public int Fingerprint => fingerprint;
+        public string DisplayName => StandardNames.GetDisplayName(fingerprint);
+        public int DerivationMethod => Derivation.DERIVATION_LIST;
+        public int FinalProhibitions => 0;
+        public int WhitespaceAction => Whitespace.COLLAPSE;
+        public string Description => DisplayName;
 
         public BuiltInListType(int fingerprint)
         {
@@ -73,29 +73,29 @@ namespace OutSmart.DAXon.Types
             return t;
         }
 
-        public virtual ISimpleType GetItemType() => itemType;
+        public ISimpleType GetItemType() => itemType;
 
-        public virtual bool IsBuiltInType() => true;
-        public virtual string GetSystemId() => null;
-        public virtual bool IsAtomicType() => false;
-        public virtual bool IsIdType() => false;
-        public virtual bool IsIdRefType() => fingerprint == StandardNames.XS_IDREFS;
-        public virtual bool IsListType() => true;
-        public virtual bool IsUnionType() => false;
-        public virtual bool IsAnonymousType() => false;
-        public virtual bool IsNamespaceSensitive() => false;
-        public virtual bool IsComplexType() => false;
-        public virtual bool IsSimpleType() => true;
-        public virtual StructuredQName GetStructuredQName() => new StructuredQName("xs", NamespaceUri.SCHEMA, LocalName);
-        public virtual int GetBlock() => 0;
-        public virtual bool AllowsDerivation(int derivation) => true;
-        public virtual bool IsSameType(ISchemaType other) => other.Fingerprint == Fingerprint;
-        public virtual void CheckTypeDerivationIsOK(ISchemaType type, int block) { }
-        public virtual void AnalyzeContentExpression(Expression expression, int kind) => BuiltInAtomicType.AnalyzeContentExpression(this, expression, kind);
-        public virtual UnicodeString Preprocess(UnicodeString input) => input;
-        public virtual UnicodeString Postprocess(UnicodeString input) => input;
+        public bool IsBuiltInType() => true;
+        public string GetSystemId() => null;
+        public bool IsAtomicType() => false;
+        public bool IsIdType() => false;
+        public bool IsIdRefType() => fingerprint == StandardNames.XS_IDREFS;
+        public bool IsListType() => true;
+        public bool IsUnionType() => false;
+        public bool IsAnonymousType() => false;
+        public bool IsNamespaceSensitive() => false;
+        public bool IsComplexType() => false;
+        public bool IsSimpleType() => true;
+        public StructuredQName GetStructuredQName() => new StructuredQName("xs", NamespaceUri.SCHEMA, LocalName);
+        public int GetBlock() => 0;
+        public bool AllowsDerivation(int derivation) => true;
+        public bool IsSameType(ISchemaType other) => other.Fingerprint == Fingerprint;
+        public void CheckTypeDerivationIsOK(ISchemaType type, int block) { }
+        public void AnalyzeContentExpression(Expression expression, int kind) => BuiltInAtomicType.AnalyzeContentExpression(this, expression, kind);
+        public UnicodeString Preprocess(UnicodeString input) => input;
+        public UnicodeString Postprocess(UnicodeString input) => input;
 
-        public virtual IAtomicSequence Atomize(NodeInfo node)
+        public IAtomicSequence Atomize(NodeInfo node)
         {
             try
             {
@@ -107,7 +107,7 @@ namespace OutSmart.DAXon.Types
             }
         }
 
-        public virtual ValidationFailure ValidateContent(UnicodeString value, INamespaceResolver nsResolver, ConversionRules rules)
+        public ValidationFailure ValidateContent(UnicodeString value, INamespaceResolver nsResolver, ConversionRules rules)
         {
             ISimpleType @base = GetItemType();
             Whitespace.Tokenizer iter = new Whitespace.Tokenizer(value);
@@ -131,7 +131,7 @@ namespace OutSmart.DAXon.Types
             return null;
         }
 
-        public virtual IAtomicSequence GetTypedValue(UnicodeString value, INamespaceResolver resolver, ConversionRules rules)
+        public IAtomicSequence GetTypedValue(UnicodeString value, INamespaceResolver resolver, ConversionRules rules)
         {
             Whitespace.Tokenizer iter = new Whitespace.Tokenizer(value);
             ISimpleType atomicType = GetItemType();

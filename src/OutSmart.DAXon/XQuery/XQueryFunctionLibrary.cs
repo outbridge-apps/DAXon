@@ -346,7 +346,7 @@ namespace OutSmart.DAXon.XQuery
             return qfl;
         }
 
-        internal class UnresolvedCallable : IUserFunctionResolvable, ICallable
+        internal sealed class UnresolvedCallable : IUserFunctionResolvable, ICallable
         {
             SymbolicName.F symbolicName;
             UserFunction function;
@@ -355,18 +355,18 @@ namespace OutSmart.DAXon.XQuery
                 this.symbolicName = symbolicName;
             }
 
-            public virtual StructuredQName GetFunctionName()
+            public StructuredQName GetFunctionName()
             {
                 return symbolicName.ComponentName;
             }
 
-            public virtual int GetArity()
+            public int GetArity()
             {
                 return symbolicName.GetArity();
             }
 
             //}
-            public virtual ISequence Call(IXPathContext context, ISequence[] arguments)
+            public ISequence Call(IXPathContext context, ISequence[] arguments)
             {
                 if (function == null)
                 {
@@ -383,18 +383,18 @@ namespace OutSmart.DAXon.XQuery
             }
 
             //}
-            public virtual void SetFunction(UserFunction function)
+            public void SetFunction(UserFunction function)
             {
                 this.function = function;
             }
 
-            public virtual UserFunction GetFunction()
+            public UserFunction GetFunction()
             {
                 return function;
             }
         }
 
-        private class ReducedArityCallable : ICallable
+        private sealed class ReducedArityCallable : ICallable
         {
             private readonly XQueryFunction declaredFunction;
             private readonly UserFunction userFunction;
@@ -404,7 +404,7 @@ namespace OutSmart.DAXon.XQuery
                 this.userFunction = fn;
             }
 
-            public virtual ISequence Call(IXPathContext context, ISequence[] arguments)
+            public ISequence Call(IXPathContext context, ISequence[] arguments)
             {
                 ISequence[] extendedArguments = ArrayTools.CopyOf(arguments, userFunction.GetArity());
                 for (int i = arguments.Length; i < userFunction.GetArity(); i++)

@@ -190,7 +190,7 @@ namespace OutSmart.DAXon.Trees.Iterators
             }
         }
 
-        internal class OfNodes<N> : Of<N>, IAxisIterator where N : class, NodeInfo
+        internal sealed class OfNodes<N> : Of<N>, IAxisIterator where N : class, NodeInfo
         {
             public OfNodes(N[] nodes) : base(nodes)
             {

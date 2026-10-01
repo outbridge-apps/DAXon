@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Elaboration
 {
-    internal class IndexedVariableEvaluator : ISequenceEvaluator
+    internal sealed class IndexedVariableEvaluator : ISequenceEvaluator
     {
         readonly IPullEvaluator puller;
         public IndexedVariableEvaluator(IPullEvaluator select)
@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             this.puller = select;
         }
 
-        public virtual ISequence Evaluate(IXPathContext context)
+        public ISequence Evaluate(IXPathContext context)
         {
             try
             {

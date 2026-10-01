@@ -20,7 +20,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Core;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class StylesheetFunctionLibrary : IFunctionLibrary
+    internal sealed class StylesheetFunctionLibrary : IFunctionLibrary
     {
         private readonly StylesheetPackage pack;
         private readonly bool overrideExtensionFunction;
@@ -31,17 +31,17 @@ namespace OutSmart.DAXon.Xslt
             this.overrideExtensionFunction = overrideExtensionFunction;
         }
 
-        public virtual bool IsOverrideExtensionFunction()
+        public bool IsOverrideExtensionFunction()
         {
             return overrideExtensionFunction;
         }
 
-        public virtual StylesheetPackage GetStylesheetPackage()
+        public StylesheetPackage GetStylesheetPackage()
         {
             return pack;
         }
 
-        public virtual Expression Bind(SymbolicName.F functionName, Expression[] staticArgs, Dictionary<StructuredQName, int> keywords, IStaticContext env, IList<string> reasons)
+        public Expression Bind(SymbolicName.F functionName, Expression[] staticArgs, Dictionary<StructuredQName, int> keywords, IStaticContext env, IList<string> reasons)
         {
             Component c = GetFunction(functionName.ComponentName, staticArgs.Length);
             if (c == null)
@@ -153,17 +153,17 @@ namespace OutSmart.DAXon.Xslt
             return null;
         }
 
-        public virtual IFunctionItem GetFunctionItem(SymbolicName.F functionName, IStaticContext staticContext)
+        public IFunctionItem GetFunctionItem(SymbolicName.F functionName, IStaticContext staticContext)
         {
             return pack.GetFunction(functionName);
         }
 
-        public virtual bool IsAvailable(SymbolicName.F functionName, int languageLevel)
+        public bool IsAvailable(SymbolicName.F functionName, int languageLevel)
         {
             return pack.GetFunction(functionName) != null;
         }
 
-        public virtual IFunctionLibrary Copy()
+        public IFunctionLibrary Copy()
         {
             return this;
         }

@@ -22,12 +22,12 @@ namespace OutSmart.DAXon.Regex
     /// <summary>
     /// A match against a fixed string of any length, within a regular expression
     /// </summary>
-    internal class OpAtom : Operation
+    internal sealed class OpAtom : Operation
     {
         private readonly UnicodeString atom;
         private readonly int len;
 
-        public virtual UnicodeString Atom => atom;
+        public UnicodeString Atom => atom;
 
         public override int MatchLength => len;
         public OpAtom(UnicodeString atom)

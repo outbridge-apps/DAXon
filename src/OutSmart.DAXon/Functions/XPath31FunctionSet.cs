@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
     // reference to a context-dependent function (fn:string#0 etc.) into function-lookup#2 — that entry arrives
     // via the XPath30 import. NOT registered (implementing classes not ported): copy-of, snapshot, transform,
     // load-xquery-module — they keep raising XPST0017 exactly as before.
-    internal class XPath31FunctionSet : BuiltInFunctionSet
+    internal sealed class XPath31FunctionSet : BuiltInFunctionSet
     {
         private static readonly XPath31FunctionSet _i = new XPath31FunctionSet();
         public XPath31FunctionSet()

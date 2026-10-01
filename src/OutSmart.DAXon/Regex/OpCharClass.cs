@@ -24,11 +24,11 @@ namespace OutSmart.DAXon.Regex
     /// <summary>
     /// A match of a single character in the input against a set of permitted characters
     /// </summary>
-    internal class OpCharClass : Operation
+    internal sealed class OpCharClass : Operation
     {
         private readonly IIntPredicateProxy predicate;
 
-        public virtual IIntPredicateProxy Predicate => predicate;
+        public IIntPredicateProxy Predicate => predicate;
 
         public override int MatchLength => 1;
         public OpCharClass(IIntPredicateProxy predicate)

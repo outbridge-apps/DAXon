@@ -93,7 +93,7 @@ namespace OutSmart.DAXon.Trees.Iterators
         /// <summary>
         /// An empty iterator for use where a sequence of nodes is required
         /// </summary>
-        private class OfNodesIter : EmptyIterator, IAxisIterator
+        private sealed class OfNodesIter : EmptyIterator, IAxisIterator
         {
             public static readonly OfNodesIter THE_INSTANCE = new OfNodesIter();
             public override IItem Next()
@@ -106,7 +106,7 @@ namespace OutSmart.DAXon.Trees.Iterators
         /// <summary>
         /// An empty iterator for use where a sequence of atomic values is required
         /// </summary>
-        private class OfAtomicIter : EmptyIterator, IAtomicIterator
+        private sealed class OfAtomicIter : EmptyIterator, IAtomicIterator
         {
             public static readonly OfAtomicIter THE_INSTANCE = new OfAtomicIter();
             public override IItem Next()

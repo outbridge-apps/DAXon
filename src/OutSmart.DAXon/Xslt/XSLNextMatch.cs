@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:next-match element in the stylesheet
     /// </summary>
-    internal class XSLNextMatch : StyleElement
+    internal sealed class XSLNextMatch : StyleElement
     {
         private bool useTailRecursion = false;
         public override bool IsInstruction()

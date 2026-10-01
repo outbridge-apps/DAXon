@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Collections
     /// <summary>
     /// An iterator over a sequence of integers with regular steps, e.g. 2, 4, 6, 8...
     /// </summary>
-    internal class IntStepIterator : AbstractIntIterator
+    internal sealed class IntStepIterator : AbstractIntIterator
     {
         private int current;
         private readonly int step;

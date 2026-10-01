@@ -13,7 +13,7 @@ using OutSmart.DAXon.Text;
 
 namespace OutSmart.DAXon.Types
 {
-    internal class StringToAnyURI : StringConverter
+    internal sealed class StringToAnyURI : StringConverter
     {
         private readonly StringConverter inner;
         public StringToAnyURI(object x) : base(x as ConversionRules) { inner = new StringConverter.StringToAnyURI(x as ConversionRules); }

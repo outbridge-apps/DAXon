@@ -22,14 +22,14 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:accumulator-rule elements in a stylesheet (XSLT 3.0).
     /// </summary>
-    internal class XSLAccumulatorRule : StyleElement
+    internal sealed class XSLAccumulatorRule : StyleElement
     {
         private Patterns.Pattern match;
         private bool postDescent;
         private Expression select;
         private bool capture;
 
-        public virtual Patterns.Pattern Match
+        public Patterns.Pattern Match
         {
             get => match; set
             {
@@ -121,7 +121,7 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        public virtual Expression GetNewValueExpression(Compilation compilation, ComponentDeclaration decl)
+        public Expression GetNewValueExpression(Compilation compilation, ComponentDeclaration decl)
         {
             if (select == null)
             {
@@ -131,12 +131,12 @@ namespace OutSmart.DAXon.Xslt
             return select;
         }
 
-        public virtual bool IsPostDescent()
+        public bool IsPostDescent()
         {
             return postDescent;
         }
 
-        public virtual bool IsCapture()
+        public bool IsCapture()
         {
             return capture;
         }

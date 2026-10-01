@@ -21,7 +21,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Patterns
 {
-    internal class SameNameTest : NodeTest, IQNameTest
+    internal sealed class SameNameTest : NodeTest, IQNameTest
     {
         private readonly NodeInfo origin;
 
@@ -50,7 +50,7 @@ namespace OutSmart.DAXon.Patterns
 
         public override IntSet RequiredNodeNames => (new IntSingletonSet(Fingerprint));
 
-        public virtual NameTest EquivalentNameTest => new NameTest(origin.GetNodeKind(), origin.GetNamespaceUri(), origin.GetLocalPart(), origin.GetConfiguration().GetNamePool());
+        public NameTest EquivalentNameTest => new NameTest(origin.GetNodeKind(), origin.GetNamespaceUri(), origin.GetLocalPart(), origin.GetConfiguration().GetNamePool());
         public SameNameTest(NodeInfo origin)
         {
             this.origin = origin;

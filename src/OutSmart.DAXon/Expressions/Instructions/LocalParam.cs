@@ -363,7 +363,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         /// <summary>
         /// The Elaborator for this kind of expression
         /// </summary>
-        internal class LocalParamElaborator : PushElaborator
+        internal sealed class LocalParamElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

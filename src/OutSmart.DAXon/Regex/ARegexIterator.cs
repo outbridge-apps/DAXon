@@ -22,7 +22,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Regex
 {
-    internal class ARegexIterator : IRegexIterator, ILastPositionFinder
+    internal sealed class ARegexIterator : IRegexIterator, ILastPositionFinder
     {
         private readonly UnicodeString theString; // the input string being matched
         private readonly UnicodeString _regex;
@@ -33,7 +33,7 @@ namespace OutSmart.DAXon.Regex
         private IntToIntHashMap nestingTable = null;
         private bool skip = false; // indicates the last match was zero length
 
-        public virtual int NumberOfGroups => _matcher.ParenCount;
+        public int NumberOfGroups => _matcher.ParenCount;
         public ARegexIterator(UnicodeString str, UnicodeString regex, REMatcher matcher)
         {
             if (str == null)
@@ -48,12 +48,12 @@ namespace OutSmart.DAXon.Regex
             nextSubstring = null;
         }
 
-        public virtual bool SupportsGetLength()
+        public bool SupportsGetLength()
         {
             return true;
         }
 
-        public virtual int GetLength()
+        public int GetLength()
         {
             ARegexIterator another = new ARegexIterator(theString, _regex, new REMatcher(_matcher.Program));
             int n = 0;
@@ -65,7 +65,7 @@ namespace OutSmart.DAXon.Regex
             return n;
         }
 
-        public virtual StringValue Next()
+        public StringValue Next()
         {
             try
             {
@@ -170,12 +170,12 @@ namespace OutSmart.DAXon.Regex
             return new StringValue(current);
         }
 
-        public virtual bool IsMatching()
+        public bool IsMatching()
         {
             return nextSubstring == null && prevEnd >= 0;
         }
 
-        public virtual UnicodeString GetRegexGroup(int number)
+        public UnicodeString GetRegexGroup(int number)
         {
             if (!IsMatching())
             {
@@ -191,7 +191,7 @@ namespace OutSmart.DAXon.Regex
             return (us == null ? EmptyUnicodeString.GetInstance() : us);
         }
 
-        public virtual void ProcessMatchingSubstring(IRegexMatchHandler action)
+        public void ProcessMatchingSubstring(IRegexMatchHandler action)
         {
             int c = _matcher.ParenCount - 1;
             if (c == 0)
@@ -364,6 +364,6 @@ namespace OutSmart.DAXon.Regex
             return nestingTable;
         }
         IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
-        public virtual void Dispose() { }
+        public void Dispose() { }
     }
 }

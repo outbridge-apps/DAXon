@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implements the fn:ends-with() function, with the collation already fixed
     /// </summary>
-    internal class EndsWith : CollatingFunctionFixed
+    internal sealed class EndsWith : CollatingFunctionFixed
     {
         public override bool IsSubstringMatchingFunction()
         {

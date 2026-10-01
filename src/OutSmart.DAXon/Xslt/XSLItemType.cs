@@ -21,7 +21,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class XSLItemType : StyleElement
+    internal sealed class XSLItemType : StyleElement
     {
         private StructuredQName itemTypeName;
         private bool resolved = false;
@@ -94,7 +94,7 @@ namespace OutSmart.DAXon.Xslt
             GetConfiguration().CheckLicensedFeature(Configuration.LicenseFeature.PROFESSIONAL_EDITION, "saxon:item-type", GetPackageData().LocalLicenseId);
         }
 
-        public virtual ItemType TryToResolve()
+        public ItemType TryToResolve()
         {
             IStaticContext env = new TypeAliasContext(this);
             resolved = true;
@@ -143,7 +143,7 @@ namespace OutSmart.DAXon.Xslt
             return null;
         }
 
-        private class TypeAliasContext : ExpressionContext
+        private sealed class TypeAliasContext : ExpressionContext
         {
             public TypeAliasContext(XSLItemType declaration) : base(declaration, NamespaceUri.NULL.QName("as"))
             {

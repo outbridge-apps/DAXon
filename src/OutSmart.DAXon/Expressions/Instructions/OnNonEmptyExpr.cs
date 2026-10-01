@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// A compiled xsl:on-non-empty instruction.
     /// </summary>
-    internal class OnNonEmptyExpr : UnaryExpression
+    internal sealed class OnNonEmptyExpr : UnaryExpression
     {
 
         public override int IntrinsicDependencies => StaticProperty.HAS_SIDE_EFFECTS;

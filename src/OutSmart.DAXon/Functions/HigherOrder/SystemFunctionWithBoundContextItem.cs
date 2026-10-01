@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
     /// A function item that wraps a system function together with a saved context item, so that when the
     /// function is later called (e.g. after being returned by function-lookup) it sees the bound context item.
     /// </summary>
-    internal class SystemFunctionWithBoundContextItem : AbstractFunction
+    internal sealed class SystemFunctionWithBoundContextItem : AbstractFunction
     {
         private readonly SystemFunction target;
         private readonly IItem contextItem;

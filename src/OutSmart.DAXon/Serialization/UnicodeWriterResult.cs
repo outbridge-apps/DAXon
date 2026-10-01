@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Serialization
     // (SerializerFactory.cs:145/147) does `result is UnicodeWriterResult` -> GetUnicodeWriter() to obtain the
     // output sink. Implements IResultTarget (GetSystemId/SetSystemId only). Mirrors the excluded
     // real UnicodeWriterResult.cs (kept excluded to avoid the dual-type CS0101 with this stub).
-    internal class UnicodeWriterResult : IResultTarget
+    internal sealed class UnicodeWriterResult : IResultTarget
     {
         private readonly IUnicodeWriter _writer;
         private string _systemId;

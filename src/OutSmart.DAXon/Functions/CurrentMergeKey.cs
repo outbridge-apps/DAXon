@@ -23,11 +23,11 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implements the XSLT function current-grouping-key()
     /// </summary>
-    internal class CurrentMergeKey : SystemFunction, ICallable
+    internal sealed class CurrentMergeKey : SystemFunction, ICallable
     {
         private MergeInstr controllingInstruction = null; // may be unknown, when current group has dynamic scope
 
-        public virtual MergeInstr ControllingInstruction
+        public MergeInstr ControllingInstruction
         {
             get => controllingInstruction; set
             {
@@ -45,7 +45,7 @@ namespace OutSmart.DAXon.Functions
         /// <summary>
         /// Evaluate the expression
         /// </summary>
-        public virtual ISequenceIterator Iterate(IXPathContext c)
+        public ISequenceIterator Iterate(IXPathContext c)
         {
             IGroupIterator gi = c.GetCurrentMergeGroupIterator();
             if (gi == null)

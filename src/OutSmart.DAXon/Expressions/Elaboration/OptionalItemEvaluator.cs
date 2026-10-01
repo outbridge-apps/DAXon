@@ -18,7 +18,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Elaboration
 {
-    internal class OptionalItemEvaluator : ISequenceEvaluator
+    internal sealed class OptionalItemEvaluator : ISequenceEvaluator
     {
         readonly IItemEvaluator evaluator;
         public OptionalItemEvaluator(IItemEvaluator eval)
@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             this.evaluator = eval;
         }
 
-        public virtual ISequence Evaluate(IXPathContext context)
+        public ISequence Evaluate(IXPathContext context)
         {
             try
             {

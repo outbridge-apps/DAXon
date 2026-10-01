@@ -188,7 +188,7 @@ namespace OutSmart.DAXon.Expressions
             return new CastableExpressionElaborator();
         }
 
-        private class CastableExpressionElaborator : BooleanElaborator
+        private sealed class CastableExpressionElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

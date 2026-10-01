@@ -188,7 +188,7 @@ namespace OutSmart.DAXon.Expressions
         }
 
         /// <summary>Elaborator for an identity comparison (operators is, &lt;&lt;, &gt;&gt;).</summary>
-        internal class IdentityComparisonElaborator : ItemElaborator
+        internal sealed class IdentityComparisonElaborator : ItemElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

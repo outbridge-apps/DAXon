@@ -23,7 +23,7 @@ using OutSmart.DAXon.Internal;
 using System.IO;
 namespace OutSmart.DAXon.Lib
 {
-    internal class StandardErrorReporter : StandardDiagnostics, IErrorReporter
+    internal sealed class StandardErrorReporter : StandardDiagnostics, IErrorReporter
     {
         private int warningCount = 0;
         private int maximumNumberOfWarnings = 25;
@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Lib
         private bool outputErrorCodes = true;
         private HashSet<StructuredQName> suppressedWarnings;
 
-        public virtual Logger Logger
+        public Logger Logger
         {
             get => logger; set
             {
@@ -45,12 +45,12 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        public virtual int NumberOfErrors => errorCount;
+        public int NumberOfErrors => errorCount;
         public StandardErrorReporter()
         {
         }
 
-        public virtual bool IsSuppressedWarning(StructuredQName errorCode)
+        public bool IsSuppressedWarning(StructuredQName errorCode)
         {
             return suppressedWarnings != null && suppressedWarnings.Contains(errorCode);
         }
@@ -116,7 +116,7 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        protected virtual void Warning(IXmlProcessingError error)
+        protected void Warning(IXmlProcessingError error)
         {
             if (logger == null)
             {
@@ -163,7 +163,7 @@ namespace OutSmart.DAXon.Lib
             else if (display) { logger.Warning(message); }
         }
 
-        protected virtual void Error(IXmlProcessingError err)
+        protected void Error(IXmlProcessingError err)
         {
             int reported;
             lock (counterLock)
@@ -197,7 +197,7 @@ namespace OutSmart.DAXon.Lib
         // The full two-line diagnostic the logger emits. Public because a failed compile must
         // be able to attach the same text to the exception it throws (round C1) - the logger's
         // own channel is Console.Error by default, which an embedded host cannot read.
-        public virtual string DescribeError(IXmlProcessingError err)
+        public string DescribeError(IXmlProcessingError err)
         {
             HostLanguage lang = err.GetHostLanguage();
             string langText = "";
@@ -235,12 +235,12 @@ namespace OutSmart.DAXon.Lib
             return ConstructMessage(err, langText, kind);
         }
 
-        public virtual string ConstructMessage(IXmlProcessingError exception, string langText, string kind)
+        public string ConstructMessage(IXmlProcessingError exception, string langText, string kind)
         {
             return ConstructFirstLine(exception, langText, kind) + "\n  " + ConstructSecondLine(exception);
         }
 
-        public virtual string ConstructFirstLine(IXmlProcessingError error, string langText, string kind)
+        public string ConstructFirstLine(IXmlProcessingError error, string langText, string kind)
         {
             ILocation locator = error.GetLocation();
             if (locator is AttributeLocation)
@@ -288,7 +288,7 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        public virtual string FormatExtraContext(Expression failingExpression, string nearBy)
+        public string FormatExtraContext(Expression failingExpression, string nearBy)
         {
             if (failingExpression != null)
             {
@@ -311,25 +311,25 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        public virtual string ConstructSecondLine(IXmlProcessingError err)
+        public string ConstructSecondLine(IXmlProcessingError err)
         {
             return ExpandSpecialCharacters(WordWrap(GetExpandedMessage(err)));
         }
 
-        protected virtual string GetLocationMessage(IXmlProcessingError err)
+        protected string GetLocationMessage(IXmlProcessingError err)
         {
             ILocation loc = err.GetLocation();
             return GetLocationMessageText(loc);
         }
 
-        public virtual string GetExpandedMessage(IXmlProcessingError err)
+        public string GetExpandedMessage(IXmlProcessingError err)
         {
             string message = FormatErrorCode(err) + " " + err.GetMessage();
             message = FormatNestedMessages(err, message);
             return message;
         }
 
-        public virtual string FormatNestedMessages(IXmlProcessingError err, string message)
+        public string FormatNestedMessages(IXmlProcessingError err, string message)
         {
             if (err.GetCause() == null)
             {
@@ -371,7 +371,7 @@ namespace OutSmart.DAXon.Lib
         }
 
 
-        public virtual string FormatErrorCode(IXmlProcessingError err)
+        public string FormatErrorCode(IXmlProcessingError err)
         {
             if (outputErrorCodes)
             {
@@ -392,7 +392,7 @@ namespace OutSmart.DAXon.Lib
             return "";
         }
 
-        public virtual string ExpandSpecialCharacters(string @in)
+        public string ExpandSpecialCharacters(string @in)
         {
             if (logger.IsUnicodeAware())
             {
@@ -404,7 +404,7 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        protected virtual void OutputStackTrace(Logger @out, IXPathContext context)
+        protected void OutputStackTrace(Logger @out, IXPathContext context)
         {
             LogStackTrace(context, @out, stackTraceDetail);
         }

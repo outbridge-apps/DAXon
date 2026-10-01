@@ -24,12 +24,12 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class SuppliedParameterReference : Expression
+    internal sealed class SuppliedParameterReference : Expression
     {
         private readonly int slotNumber;
         private SequenceType type;
 
-        public virtual int SlotNumber => slotNumber;
+        public int SlotNumber => slotNumber;
 
         public override int IntrinsicDependencies => StaticProperty.DEPENDS_ON_LOCAL_VARIABLES;
 
@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Expressions
             slotNumber = slot;
         }
 
-        public virtual void SetSuppliedType(SequenceType type)
+        public void SetSuppliedType(SequenceType type)
         {
             this.type = type;
         }
@@ -92,7 +92,7 @@ namespace OutSmart.DAXon.Expressions
             return exp;
         }
 
-        public virtual ISequence EvaluateVariable(IXPathContext c)
+        public ISequence EvaluateVariable(IXPathContext c)
         {
             if (slotNumber == -1)
             {
@@ -142,7 +142,7 @@ namespace OutSmart.DAXon.Expressions
             return new SuppliedParameterReferenceElaborator();
         }
 
-        internal class SuppliedParameterReferenceElaborator : PullElaborator
+        internal sealed class SuppliedParameterReferenceElaborator : PullElaborator
         {
             public override ISequenceEvaluator Eagerly()
             {

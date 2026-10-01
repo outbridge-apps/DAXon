@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implements the fn:analyze-string function defined in XPath 3.0.
     /// </summary>
-    internal class AnalyzeStringFn : RegexFunction
+    internal sealed class AnalyzeStringFn : RegexFunction
     {
         private readonly object syncLock = new object();
 
@@ -94,7 +94,7 @@ namespace OutSmart.DAXon.Functions
             @out.Close();
             return builder.CurrentRoot;
         }
-        private class ResultNamesAndTypes
+        private sealed class ResultNamesAndTypes
         {
             public INodeName resultName;
             public INodeName nonMatchName;
@@ -108,7 +108,7 @@ namespace OutSmart.DAXon.Functions
             public ISimpleType groupNrType = BuiltInAtomicType.UNTYPED_ATOMIC;
         }
 
-        private class LocalRegexMatchHandler : IRegexMatchHandler
+        private sealed class LocalRegexMatchHandler : IRegexMatchHandler
         {
             private readonly ComplexContentOutputter @out;
             private readonly ResultNamesAndTypes vocab;
@@ -118,19 +118,19 @@ namespace OutSmart.DAXon.Functions
                 this.vocab = vocab;
             }
 
-            public virtual void Characters(UnicodeString s)
+            public void Characters(UnicodeString s)
             {
                 @out.Characters(s, Loc.NONE, ReceiverOption.NONE);
             }
 
-            public virtual void OnGroupStart(int groupNumber)
+            public void OnGroupStart(int groupNumber)
             {
                 @out.StartElement(vocab.groupName, vocab.groupType, Loc.NONE, ReceiverOption.NONE);
                 @out.Attribute(vocab.groupNrName, vocab.groupNrType, "" + groupNumber, Loc.NONE, ReceiverOption.NONE);
                 @out.StartContent();
             }
 
-            public virtual void OnGroupEnd(int groupNumber)
+            public void OnGroupEnd(int groupNumber)
             {
                 @out.EndElement();
             }

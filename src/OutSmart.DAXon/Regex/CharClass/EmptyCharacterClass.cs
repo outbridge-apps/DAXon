@@ -15,7 +15,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Regex.CharClass
 {
-    internal class EmptyCharacterClass : ICharacterClass
+    internal sealed class EmptyCharacterClass : ICharacterClass
     {
         private static readonly EmptyCharacterClass THE_INSTANCE = new EmptyCharacterClass();
         private static readonly InverseCharacterClass COMPLEMENT = new InverseCharacterClass(THE_INSTANCE);
@@ -30,12 +30,12 @@ namespace OutSmart.DAXon.Regex.CharClass
             return THE_INSTANCE;
         }
 
-        public virtual bool Test(int value)
+        public bool Test(int value)
         {
             return false;
         }
 
-        public virtual bool IsDisjoint(ICharacterClass other)
+        public bool IsDisjoint(ICharacterClass other)
         {
 
             // the empty set is disjoint with every other set including itself, in the sense that the
@@ -43,12 +43,12 @@ namespace OutSmart.DAXon.Regex.CharClass
             return true;
         }
 
-        public virtual IntSet GetIntSet()
+        public IntSet GetIntSet()
         {
             return IntEmptySet.GetInstance();
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual IIntPredicateProxy Union(IIntPredicateProxy other) => OutSmart.DAXon.Collections.IntUnionPredicate.MakeUnion(this, other); // upstream IntPredicateProxy default
+        public IIntPredicateProxy Union(IIntPredicateProxy other) => OutSmart.DAXon.Collections.IntUnionPredicate.MakeUnion(this, other); // upstream IntPredicateProxy default
     }
 }

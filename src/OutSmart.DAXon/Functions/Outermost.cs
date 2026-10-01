@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class implements the function fn:outermost(), which is a standard function in XPath 3.0
     /// </summary>
-    internal class Outermost : SystemFunction
+    internal sealed class Outermost : SystemFunction
     {
         bool presorted = false;
 
@@ -75,7 +75,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        private class OutermostIterator : ISequenceIterator
+        private sealed class OutermostIterator : ISequenceIterator
         {
             ISequenceIterator @in;
             NodeInfo current = null;
@@ -85,7 +85,7 @@ namespace OutSmart.DAXon.Functions
                 this.@in = @in;
             }
 
-            public virtual NodeInfo Next()
+            public NodeInfo Next()
             {
                 while (true)
                 {
@@ -106,7 +106,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            public virtual void Dispose()
+            public void Dispose()
             {
                 @in.Dispose();
             }

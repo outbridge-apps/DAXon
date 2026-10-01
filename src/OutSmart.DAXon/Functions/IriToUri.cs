@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the functions encode-for-uri() and iri-to-uri()
     /// </summary>
-    internal class IriToUri : ScalarSystemFunction
+    internal sealed class IriToUri : ScalarSystemFunction
     {
         public static bool[] allowedASCII = new bool[128];
         static IriToUri()

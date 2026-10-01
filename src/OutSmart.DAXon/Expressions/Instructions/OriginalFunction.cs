@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// This class represents a function invoked using xsl:original from within an xs:override element.
     /// </summary>
-    internal class OriginalFunction : AbstractFunction, IFunctionItem, IContextOriginator
+    internal sealed class OriginalFunction : AbstractFunction, IFunctionItem, IContextOriginator
     {
         private readonly UserFunction userFunction;
         private readonly Component component;
@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return userFunction.GetArity();
         }
 
-        public virtual Component GetComponent()
+        public Component GetComponent()
         {
             return component;
         }

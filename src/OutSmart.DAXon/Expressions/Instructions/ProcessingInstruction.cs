@@ -27,13 +27,13 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class ProcessingInstruction : SimpleNodeConstructor
+    internal sealed class ProcessingInstruction : SimpleNodeConstructor
     {
 
         private static readonly UnicodeString PI_TERMINATOR = new Twine8(StringConstants.PI_END);
         private readonly Operand nameOp;
 
-        public virtual Expression NameExp
+        public Expression NameExp
         {
             get => nameOp.GetChildExpression(); set
             {
@@ -173,7 +173,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual string CheckName(AtomicValue name, IXPathContext context)
+        public string CheckName(AtomicValue name, IXPathContext context)
         {
             if (name is StringValue && !(name is AnyURIValue))
             {
@@ -219,7 +219,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new ProcessingInstructionElaborator();
         }
 
-        private class ProcessingInstructionElaborator : SimpleNodePushElaborator
+        private sealed class ProcessingInstructionElaborator : SimpleNodePushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

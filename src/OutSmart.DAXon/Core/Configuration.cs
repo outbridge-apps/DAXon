@@ -3087,7 +3087,7 @@ namespace OutSmart.DAXon.Core
             }
         }
 
-        internal class LicenseFeature
+        internal sealed class LicenseFeature
         {
             public const int SCHEMA_VALIDATION = 1;
             public const int ENTERPRISE_XSLT = 2;

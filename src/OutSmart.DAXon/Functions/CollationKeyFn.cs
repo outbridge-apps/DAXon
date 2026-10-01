@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implements the collation-key function defined in the XSLT 3.0 and XPath 3.1 specifications.
     /// </summary>
-    internal class CollationKeyFn : CollatingFunctionFixed
+    internal sealed class CollationKeyFn : CollatingFunctionFixed
     {
         public static Base64BinaryValue GetCollationKey(UnicodeString s, IStringCollator collator)
         {

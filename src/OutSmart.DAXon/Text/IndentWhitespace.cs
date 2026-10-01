@@ -16,7 +16,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Text
 {
-    internal class IndentWhitespace : WhitespaceString
+    internal sealed class IndentWhitespace : WhitespaceString
     {
         private readonly int newlines;
         private readonly int spaces;

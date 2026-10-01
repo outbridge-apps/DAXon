@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Trees.Tiny
     // element, build TinyAttributeImpl, filter by the NodeTest. Depends only on already-public TinyTree members
     // (alpha/numberOfAttributes/attParent are public) + the public TinyAttributeImpl(tree,nr) ctor, so it avoids
     // the CS0122 cascade that re-including the real file would hit (TinyTree.GetAttributeNode is private).
-    internal class AttributeIterator : IAxisIterator
+    internal sealed class AttributeIterator : IAxisIterator
     {
         private readonly TinyTree _tree;
         private readonly int _element;

@@ -22,7 +22,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class OnEmptyExpr : UnaryExpression
+    internal sealed class OnEmptyExpr : UnaryExpression
     {
 
         public override int IntrinsicDependencies => StaticProperty.HAS_SIDE_EFFECTS;

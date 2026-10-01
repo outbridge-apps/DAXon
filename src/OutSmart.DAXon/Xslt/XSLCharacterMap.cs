@@ -22,14 +22,14 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:character-map declaration in the stylesheet. <br>
     /// </summary>
-    internal class XSLCharacterMap : StyleElement
+    internal sealed class XSLCharacterMap : StyleElement
     {
         string use;
         IList<XSLCharacterMap> characterMapElements = null;
         bool validated = false;
         bool redundant = false;
 
-        public virtual StructuredQName CharacterMapName
+        public StructuredQName CharacterMapName
         {
             get
             {
@@ -193,7 +193,7 @@ namespace OutSmart.DAXon.Xslt
         }
 
         /* error path: see character-map-027 */
-        public virtual void Assemble(IntHashMap<string> map)
+        public void Assemble(IntHashMap<string> map)
         {
             if (characterMapElements != null)
             {

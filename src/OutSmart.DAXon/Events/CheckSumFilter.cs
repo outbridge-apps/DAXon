@@ -24,7 +24,7 @@ using System.IO;
 
 namespace OutSmart.DAXon.Events
 {
-    internal class CheckSumFilter : ProxyReceiver
+    internal sealed class CheckSumFilter : ProxyReceiver
     {
         public const string SIGMA = "Σ";
         public const string SIGMA2 = "Σ2";
@@ -43,17 +43,17 @@ namespace OutSmart.DAXon.Events
         private string target = "unknown";
 
         //
-        public virtual int Checksum => checksum;
+        public int Checksum => checksum;
 
         //
-        public virtual string Digest => digest.Digest;
+        public string Digest => digest.Digest;
         public CheckSumFilter(IReceiver nextReceiver) : base(nextReceiver)
         {
             rootElement = true;
             digest = new DigestMaker();
         }
 
-        public virtual void SetCheckExistingChecksum(bool check)
+        public void SetCheckExistingChecksum(bool check)
         {
             this.checkExistingChecksum = check;
         }
@@ -254,7 +254,7 @@ namespace OutSmart.DAXon.Events
         }
 
         //
-        public virtual bool IsChecksumCorrect()
+        public bool IsChecksumCorrect()
         {
             if (requireDigest && !digestCorrect)
             {

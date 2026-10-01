@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implementation of the fn:avg function
     /// </summary>
-    internal class Average : FoldingFunction
+    internal sealed class Average : FoldingFunction
     {
         public override int GetCardinality(Expression[] arguments)
         {
@@ -42,7 +42,7 @@ namespace OutSmart.DAXon.Functions
             return new AverageFold(context);
         }
 
-        private class AverageFold : IFold
+        private sealed class AverageFold : IFold
         {
             private readonly IXPathContext context;
             private AtomicValue data;
@@ -57,7 +57,7 @@ namespace OutSmart.DAXon.Functions
                 this.toDouble = BuiltInAtomicType.DOUBLE.GetStringConverter(rules);
             }
 
-            public virtual void ProcessItem(IItem item)
+            public void ProcessItem(IItem item)
             {
                 AtomicValue next = (AtomicValue)item;
                 if (next.IsUntypedAtomic())
@@ -116,12 +116,12 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            public virtual bool IsFinished()
+            public bool IsFinished()
             {
                 return data is DoubleValue && data.IsNaN();
             }
 
-            public virtual ISequence Result()
+            public ISequence Result()
             {
                 if (atStart)
                 {

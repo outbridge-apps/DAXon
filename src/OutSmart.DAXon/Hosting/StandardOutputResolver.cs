@@ -20,7 +20,7 @@ using System.IO;
 using OutSmart.DAXon.Serialization;
 namespace OutSmart.DAXon.Lib
 {
-    internal class StandardOutputResolver : IOutputURIResolver
+    internal sealed class StandardOutputResolver : IOutputURIResolver
     {
         private static readonly StandardOutputResolver theInstance = new StandardOutputResolver();
         public static StandardOutputResolver GetInstance()
@@ -28,12 +28,12 @@ namespace OutSmart.DAXon.Lib
             return theInstance;
         }
 
-        public virtual StandardOutputResolver NewInstance()
+        public StandardOutputResolver NewInstance()
         {
             return this;
         }
 
-        public virtual IResultTarget Resolve(string href, string @base)
+        public IResultTarget Resolve(string href, string @base)
         {
 
             string which = "base";
@@ -89,7 +89,7 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        protected virtual IResultTarget CreateResult(URI absoluteURI)
+        protected IResultTarget CreateResult(URI absoluteURI)
         {
             if ("file".Equals(absoluteURI.Scheme))
             {
@@ -106,7 +106,7 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        public virtual void Dispose(IResultTarget result)
+        public void Dispose(IResultTarget result)
         {
             if (result is StreamResult)
             {

@@ -26,11 +26,11 @@ namespace OutSmart.DAXon.Transformation.Rules
     /// <summary>
     /// The built-in rule set introduced in XSLT 3.0, which performs a deep copy of any unmatched node.
     /// </summary>
-    internal class DeepCopyRuleSet : IBuiltInRuleSet
+    internal sealed class DeepCopyRuleSet : IBuiltInRuleSet
     {
         private static readonly DeepCopyRuleSet THE_INSTANCE = new DeepCopyRuleSet();
 
-        public virtual string Name => "deep-copy";
+        public string Name => "deep-copy";
 
         private DeepCopyRuleSet()
         {
@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             return THE_INSTANCE;
         }
 
-        public virtual void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter @out, IXPathContext context, ILocation locationId)
+        public void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter @out, IXPathContext context, ILocation locationId)
         {
             if (item is NodeInfo)
             {
@@ -86,7 +86,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             }
         }
 
-        public virtual BuiltInRules[] GetActionForParentNodes(int nodeKind)
+        public BuiltInRules[] GetActionForParentNodes(int nodeKind)
         {
             return new BuiltInRules[]
             {

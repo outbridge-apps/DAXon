@@ -23,13 +23,13 @@ namespace OutSmart.DAXon.Values
     /// <summary>
     /// A value of type xs:hexBinary
     /// </summary>
-    internal class HexBinaryValue : AtomicValue, IAtomicMatchKey, IXPathComparable, IContextFreeAtomicValue
+    internal sealed class HexBinaryValue : AtomicValue, IAtomicMatchKey, IXPathComparable, IContextFreeAtomicValue
     {
         private readonly byte[] binaryValue;
 
         public override BuiltInAtomicType PrimitiveType => BuiltInAtomicType.HEX_BINARY;
 
-        public virtual byte[] BinaryValue => binaryValue;
+        public byte[] BinaryValue => binaryValue;
 
         public override UnicodeString PrimitiveStringValue
         {

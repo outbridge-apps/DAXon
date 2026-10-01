@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Internal
     /// is. The API boundary converts to the XPathException.StackOverflow the host expects.
     /// </para>
     /// </summary>
-    internal class RecursionDepthError : global::System.Exception
+    internal sealed class RecursionDepthError : global::System.Exception
     {
         private string description;
         private string errorCode;

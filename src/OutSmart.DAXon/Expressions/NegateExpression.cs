@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Expressions
     /// Negate Expression: implements the unary minus operator. Created during type-checking of an
     /// ArithmeticExpression, so operand conversion has already been arranged there.
     /// </summary>
-    internal class NegateExpression : UnaryExpression
+    internal sealed class NegateExpression : UnaryExpression
     {
         private bool backwardsCompatible;
 
@@ -34,12 +34,12 @@ namespace OutSmart.DAXon.Expressions
         {
         }
 
-        public virtual void SetBackwardsCompatible(bool compatible)
+        public void SetBackwardsCompatible(bool compatible)
         {
             backwardsCompatible = compatible;
         }
 
-        public virtual bool IsBackwardsCompatible()
+        public bool IsBackwardsCompatible()
         {
             return backwardsCompatible;
         }
@@ -117,7 +117,7 @@ namespace OutSmart.DAXon.Expressions
         }
 
         /// <summary>Elaborator for a negate expression (unary minus).</summary>
-        internal class NegateElaborator : ItemElaborator
+        internal sealed class NegateElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

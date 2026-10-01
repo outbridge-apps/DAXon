@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Regex
     /// <summary>
     /// Match empty string within a regular expression
     /// </summary>
-    internal class OpNothing : Operation
+    internal sealed class OpNothing : Operation
     {
 
         public override int MatchLength => 0;

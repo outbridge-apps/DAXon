@@ -12,7 +12,7 @@ using OutSmart.DAXon.Model;
 
 namespace OutSmart.DAXon.Collections
 {
-    internal class IntEmptySet : IntSet
+    internal sealed class IntEmptySet : IntSet
     {
         private static readonly IntEmptySet _instance = new IntEmptySet();
         public static IntEmptySet GetInstance() => _instance;

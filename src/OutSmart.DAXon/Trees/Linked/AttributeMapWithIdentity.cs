@@ -18,7 +18,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Trees.Linked
 {
-    internal class AttributeMapWithIdentity : IAttributeMap
+    internal sealed class AttributeMapWithIdentity : IAttributeMap
     {
         private readonly IList<AttributeInfo> attributes;
         public AttributeMapWithIdentity(IList<AttributeInfo> attributes)
@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Trees.Linked
             this.attributes = attributes;
         }
 
-        public virtual int Size()
+        public int Size()
         {
             int count = 0;
             foreach (AttributeInfo att in attributes)
@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Trees.Linked
             return count;
         }
 
-        public virtual IAxisIterator IterateAttributes(ElementImpl owner)
+        public IAxisIterator IterateAttributes(ElementImpl owner)
         {
             IList<NodeInfo> list = new List<NodeInfo>(attributes.Count);
             for (int i = 0; i < attributes.Count; i++)
@@ -55,7 +55,7 @@ namespace OutSmart.DAXon.Trees.Linked
             return new NodeListIterator(list);
         }
 
-        public virtual AttributeInfo Get(INodeName name)
+        public AttributeInfo Get(INodeName name)
         {
             foreach (AttributeInfo info in attributes)
             {
@@ -68,7 +68,7 @@ namespace OutSmart.DAXon.Trees.Linked
             return null;
         }
 
-        public virtual AttributeInfo Get(NamespaceUri uri, string local)
+        public AttributeInfo Get(NamespaceUri uri, string local)
         {
             foreach (AttributeInfo info in attributes)
             {
@@ -82,7 +82,7 @@ namespace OutSmart.DAXon.Trees.Linked
             return null;
         }
 
-        public virtual AttributeMapWithIdentity Set(int index, AttributeInfo info)
+        public AttributeMapWithIdentity Set(int index, AttributeInfo info)
         {
             IList<AttributeInfo> newList = new List<AttributeInfo>(attributes);
             if (index >= 0 && index < attributes.Count)
@@ -97,14 +97,14 @@ namespace OutSmart.DAXon.Trees.Linked
             return new AttributeMapWithIdentity(newList);
         }
 
-        public virtual AttributeMapWithIdentity Add(AttributeInfo info)
+        public AttributeMapWithIdentity Add(AttributeInfo info)
         {
             IList<AttributeInfo> newList = new List<AttributeInfo>(attributes);
             newList.Add(info);
             return new AttributeMapWithIdentity(newList);
         }
 
-        public virtual AttributeMapWithIdentity Remove(int index)
+        public AttributeMapWithIdentity Remove(int index)
         {
             IList<AttributeInfo> newList = new List<AttributeInfo>(attributes);
             if (index >= 0 && index < attributes.Count)
@@ -116,7 +116,7 @@ namespace OutSmart.DAXon.Trees.Linked
             return new AttributeMapWithIdentity(newList);
         }
 
-        public virtual AttributeInfo GetByFingerprint(int fingerprint, NamePool namePool)
+        public AttributeInfo GetByFingerprint(int fingerprint, NamePool namePool)
         {
             foreach (AttributeInfo info in attributes)
             {
@@ -130,13 +130,13 @@ namespace OutSmart.DAXon.Trees.Linked
             return null;
         }
 
-        public virtual List<AttributeInfo> AsList()
+        public List<AttributeInfo> AsList()
         {
             IList<AttributeInfo> list = attributes.Where((info) => !(info is AttributeInfo.Deleted)).ToList();
             return list is List<object> ? (List<AttributeInfo>)list : new List<AttributeInfo>(list);
         }
 
-        public virtual AttributeInfo ItemAt(int index)
+        public AttributeInfo ItemAt(int index)
         {
             return attributes[index];
         }
@@ -146,9 +146,9 @@ namespace OutSmart.DAXon.Trees.Linked
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
         // Formerly NIE stubs; every one is expressible via the existing Get/Add/Set helpers.
-        public virtual string GetValue(NamespaceUri uri, string local) { AttributeInfo a = Get(uri, local); return a == null ? null : a.Value; }
-        public virtual string GetValue(string local) => GetValue(NamespaceUri.NULL, local);
-        public virtual IAttributeMap Put(AttributeInfo att)
+        public string GetValue(NamespaceUri uri, string local) { AttributeInfo a = Get(uri, local); return a == null ? null : a.Value; }
+        public string GetValue(string local) => GetValue(NamespaceUri.NULL, local);
+        public IAttributeMap Put(AttributeInfo att)
         {
             for (int i = 0; i < attributes.Count; i++)
             {
@@ -160,7 +160,7 @@ namespace OutSmart.DAXon.Trees.Linked
 
             return Add(att);
         }
-        public virtual IAttributeMap Remove(INodeName name)
+        public IAttributeMap Remove(INodeName name)
         {
             for (int i = 0; i < attributes.Count; i++)
             {
@@ -172,8 +172,8 @@ namespace OutSmart.DAXon.Trees.Linked
 
             return this;
         }
-        public virtual void Verify() { } // no invariant to check on a plain list-backed map
-        public virtual IAttributeMap Apply(Func<AttributeInfo, AttributeInfo> mapper)
+        public void Verify() { } // no invariant to check on a plain list-backed map
+        public IAttributeMap Apply(Func<AttributeInfo, AttributeInfo> mapper)
         {
             IList<AttributeInfo> mapped = new List<AttributeInfo>(attributes.Count);
             foreach (AttributeInfo info in attributes)

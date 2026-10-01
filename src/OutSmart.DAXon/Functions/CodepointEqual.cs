@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
-    internal class CodepointEqual : SystemFunction, ICallable
+    internal sealed class CodepointEqual : SystemFunction, ICallable
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the XPath functions boolean(), not(), true(), and false()
     /// </summary>
-    internal class NotFn : SystemFunction
+    internal sealed class NotFn : SystemFunction
     {
 
         public override string StreamerName => "NotFn";
@@ -90,7 +90,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class NotFnElaborator : BooleanElaborator
+        internal sealed class NotFnElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

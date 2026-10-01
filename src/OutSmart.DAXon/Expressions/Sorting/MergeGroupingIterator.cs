@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
     // with an InvalidCast the moment grouping started.
     // Groups the result of merging several xsl:merge input streams, identifying groups of adjacent items
     // having the same merge key value.
-    internal class MergeGroupingIterator : IGroupIterator, ILookaheadIterator, ILastPositionFinder
+    internal sealed class MergeGroupingIterator : IGroupIterator, ILookaheadIterator, ILastPositionFinder
     {
         private readonly ISequenceIterator baseItr;
         private ObjectValue<ItemWithMergeKeys> currenti = null;
@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         internal IList<AtomicValue> compositeMergeKey;
         private readonly ILastPositionFinder lastPositionFinder;
 
-        public virtual bool HasNext => nextItem != null;
+        public bool HasNext => nextItem != null;
 
         public MergeGroupingIterator(ISequenceIterator p1, IComparer<ObjectValue<ItemWithMergeKeys>> comp, ILastPositionFinder lpf)
         {
@@ -113,9 +113,9 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual bool SupportsHasNext() => true;
+        public bool SupportsHasNext() => true;
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             try
             {
@@ -143,21 +143,21 @@ namespace OutSmart.DAXon.Expressions.Sorting
             baseItr.Dispose();
         }
 
-        public virtual bool SupportsGetLength() => true;
+        public bool SupportsGetLength() => true;
 
-        public virtual int GetLength() => lastPositionFinder.GetLength();
+        public int GetLength() => lastPositionFinder.GetLength();
 
-        public virtual IAtomicSequence GetCurrentGroupingKey()
+        public IAtomicSequence GetCurrentGroupingKey()
         {
             return new AtomicArray(compositeMergeKey);
         }
 
-        public virtual IGroundedValue CurrentGroup()
+        public IGroundedValue CurrentGroup()
         {
             return SequenceExtent.MakeSequenceExtent(currentMembers);
         }
 
-        public virtual ISequenceIterator IterateCurrentGroup(string source)
+        public ISequenceIterator IterateCurrentGroup(string source)
         {
             List<IItem> sourceMembers;
             if (!currentSourceMembers.TryGetValue(source, out sourceMembers) || sourceMembers == null)

@@ -188,7 +188,7 @@ namespace OutSmart.DAXon.Expressions
                 => new ValidationFailure("Implicit conversion of untypedAtomic to a union type is not supported in this port build", "XPTY0117");
         }
 
-        internal class UntypedConverter : Converter
+        internal sealed class UntypedConverter : Converter
         {
             Converter untypedConverter = null;
             public UntypedConverter(ConversionRules rules, Converter converter) : base(rules)
@@ -231,7 +231,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for an UntypedSequenceConverter
         /// </summary>
-        internal class UntypedSequenceConverterElaborator : PullElaborator
+        internal sealed class UntypedSequenceConverterElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

@@ -90,7 +90,7 @@ namespace OutSmart.DAXon.Values
         }
         // A SequenceExtent is an in-memory grounded value - already repeatable (upstream default).
         public virtual ISequence MakeRepeatable() => this;
-        internal class Of<T> : SequenceExtent, IEnumerable<T> where T : IItem
+        internal sealed class Of<T> : SequenceExtent, IEnumerable<T> where T : IItem
         {
             private IList<T> items;
 

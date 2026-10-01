@@ -29,7 +29,7 @@ using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Trees.Tiny
 {
-    internal class TinyTextualElement : TinyElementImpl
+    internal sealed class TinyTextualElement : TinyElementImpl
     {
         private TinyTextualElementText textNode = null;
 
@@ -51,7 +51,7 @@ namespace OutSmart.DAXon.Trees.Tiny
 
         public override UnicodeString UnicodeStringValue => TinyTextImpl.GetStringValue(tree, nodeNr);
 
-        public virtual TinyTextualElementText TextNode
+        public TinyTextualElementText TextNode
         {
             get
             {
@@ -188,42 +188,42 @@ namespace OutSmart.DAXon.Trees.Tiny
         /// <summary>
         /// Inner class representing the text node; this is created on demand
         /// </summary>
-        internal class TinyTextualElementText : NodeInfo
+        internal sealed class TinyTextualElementText : NodeInfo
         {
             private readonly TinyTextualElement element;
 
             // In-place whiteness for whitespace stripping (no virtual-value materialization).
             internal bool IsWhitespaceOnly => TinyTextImpl.IsWhitespaceOnly(element.tree, element.nodeNr);
 
-            public virtual UnicodeString UnicodeStringValue => element.UnicodeStringValue;
+            public UnicodeString UnicodeStringValue => element.UnicodeStringValue;
 
-            public virtual int Fingerprint => -1;
+            public int Fingerprint => -1;
 
-            public virtual string DisplayName => "";
+            public string DisplayName => "";
 
-            public virtual NamespaceMap AllNamespaces => null;
+            public NamespaceMap AllNamespaces => null;
 
-            public virtual NodeInfo Root => element.Root;
+            public NodeInfo Root => element.Root;
             public TinyTextualElementText(TinyTextualElement element)
             {
                 this.element = element;
             }
 
-            public virtual bool HasFingerprint()
+            public bool HasFingerprint()
             {
                 return true;
             }
 
-            public virtual ITreeInfo GetTreeInfo()
+            public ITreeInfo GetTreeInfo()
             {
                 return element.GetTreeInfo();
             }
 
-            public virtual void SetSystemId(string systemId)
+            public void SetSystemId(string systemId)
             {
             }
 
-            public virtual int GetNodeKind()
+            public int GetNodeKind()
             {
                 return Types.Type.TEXT;
             }
@@ -241,23 +241,23 @@ namespace OutSmart.DAXon.Trees.Tiny
             /// <summary>
             /// Get a character string that uniquely identifies this node
             /// </summary>
-            public virtual void GenerateId(StringBuilder buffer)
+            public void GenerateId(StringBuilder buffer)
             {
                 element.GenerateId(buffer);
                 buffer.Append('T');
             }
 
-            public virtual string GetSystemId()
+            public string GetSystemId()
             {
                 return element.GetSystemId();
             }
 
-            public virtual string GetBaseURI()
+            public string GetBaseURI()
             {
                 return element.GetBaseURI();
             }
 
-            public virtual int CompareOrder(NodeInfo other)
+            public int CompareOrder(NodeInfo other)
             {
                 if (other.Equals(this))
                 {
@@ -273,62 +273,62 @@ namespace OutSmart.DAXon.Trees.Tiny
                 }
             }
 
-            public virtual string GetPrefix()
+            public string GetPrefix()
             {
                 return "";
             }
 
-            public virtual NamespaceUri GetNamespaceUri()
+            public NamespaceUri GetNamespaceUri()
             {
                 return NamespaceUri.NULL;
             }
 
-            public virtual string GetLocalPart()
+            public string GetLocalPart()
             {
                 return "";
             }
 
-            public virtual bool HasChildNodes()
+            public bool HasChildNodes()
             {
                 return false;
             }
 
-            public virtual string GetAttributeValue(NamespaceUri uri, string local)
+            public string GetAttributeValue(NamespaceUri uri, string local)
             {
                 return null;
             }
 
-            public virtual int GetLineNumber()
+            public int GetLineNumber()
             {
                 return GetParent().GetLineNumber();
             }
 
-            public virtual int GetColumnNumber()
+            public int GetColumnNumber()
             {
                 return GetParent().GetColumnNumber();
             }
 
-            public virtual ILocation SaveLocation()
+            public ILocation SaveLocation()
             {
                 return this;
             }
 
-            public virtual ISchemaType GetSchemaType()
+            public ISchemaType GetSchemaType()
             {
                 return null;
             }
 
-            public virtual NamespaceBinding[] GetDeclaredNamespaces(NamespaceBinding[] buffer)
+            public NamespaceBinding[] GetDeclaredNamespaces(NamespaceBinding[] buffer)
             {
                 return null;
             }
 
-            public virtual IAtomicSequence Atomize()
+            public IAtomicSequence Atomize()
             {
                 return StringValue.MakeUntypedAtomic(UnicodeStringValue);
             }
 
-            public virtual IAxisIterator IterateAxis(int axisNumber)
+            public IAxisIterator IterateAxis(int axisNumber)
             {
                 switch (axisNumber)
                 {
@@ -359,7 +359,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                 }
             }
 
-            public virtual IAxisIterator IterateAxis(int axisNumber, INodePredicate predicate)
+            public IAxisIterator IterateAxis(int axisNumber, INodePredicate predicate)
             {
                 NodeTest nodeTest = Navigator.NodeTestFromPredicate(predicate);
                 switch (axisNumber)
@@ -391,7 +391,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                 }
             }
 
-            public virtual NodeInfo GetParent()
+            public NodeInfo GetParent()
             {
                 return element;
             }
@@ -399,7 +399,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             /// <summary>
             /// Copy the node to a given Outputter
             /// </summary>
-            public virtual void Copy(IReceiver @out, int copyOptions, ILocation locationId)
+            public void Copy(IReceiver @out, int copyOptions, ILocation locationId)
             {
                 @out.Characters(UnicodeStringValue, locationId, ReceiverOption.NONE);
             }
@@ -411,27 +411,27 @@ namespace OutSmart.DAXon.Trees.Tiny
             // the equivalent TinyNodeImpl overrides, specialized for a text node (delegating to the parent
             // element where the upstream default does). Lib/Expr.Parser types fully qualified (the file's
             // usings do not import them).
-            public virtual Configuration GetConfiguration()
+            public Configuration GetConfiguration()
             {
                 return GetTreeInfo().GetConfiguration();
             }
 
-            public virtual bool IsSameNodeInfo(NodeInfo other)
+            public bool IsSameNodeInfo(NodeInfo other)
             {
                 return Equals(other);
             }
 
-            public virtual string GetPublicId()
+            public string GetPublicId()
             {
                 return null;
             }
 
-            public virtual string GetURI()
+            public string GetURI()
             {
                 return GetNamespaceUri().ToString();
             }
 
-            public virtual IEnumerable<NodeInfo> Children()
+            public IEnumerable<NodeInfo> Children()
             {
                 var __it = IterateAxis(AxisInfo.CHILD);
                 for (var __n = __it.Next(); __n != null; __n = __it.Next())
@@ -440,7 +440,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                 }
             }
 
-            public virtual IEnumerable<NodeInfo> Children(INodePredicate filter)
+            public IEnumerable<NodeInfo> Children(INodePredicate filter)
             {
                 var __it = IterateAxis(AxisInfo.CHILD, filter);
                 for (var __n = __it.Next(); __n != null; __n = __it.Next())
@@ -449,62 +449,62 @@ namespace OutSmart.DAXon.Trees.Tiny
                 }
             }
 
-            public virtual IAttributeMap Attributes()
+            public IAttributeMap Attributes()
             {
                 return EmptyAttributeMap.GetInstance(); // a text node has no attributes
             }
 
-            public virtual void Deliver(IReceiver receiver, ParseOptions options)
+            public void Deliver(IReceiver receiver, ParseOptions options)
             {
                 Events.Sender.SendDocumentInfo(this, receiver, new Expressions.Parsing.Loc(GetSystemId(), -1, -1));
             }
 
-            public virtual IActiveSource AsActiveSource()
+            public IActiveSource AsActiveSource()
             {
                 return new NodeSource(this);
             }
 
-            public virtual bool IsId()
+            public bool IsId()
             {
                 return false;
             }
 
-            public virtual bool IsIdref()
+            public bool IsIdref()
             {
                 return false;
             }
 
-            public virtual bool IsNilled()
+            public bool IsNilled()
             {
                 return false;
             }
 
-            public virtual bool IsStreamed()
+            public bool IsStreamed()
             {
                 return false;
             }
 
-            public virtual string ToShortString()
+            public string ToShortString()
             {
                 return "text(\"" + UnicodeStringValue + "\")";
             }
 
-            public virtual Genre GetGenre()
+            public Genre GetGenre()
             {
                 return Genre.NODE;
             }
 
-            public virtual IItem Head()
+            public IItem Head()
             {
                 return this;
             }
 
-            public virtual string GetStringValue()
+            public string GetStringValue()
             {
                 return UnicodeStringValue.ToString();
             }
 
-            public virtual ISequenceIterator Iterate()
+            public ISequenceIterator Iterate()
             {
                 return SingletonIterator.MakeIterator(this);
             }
@@ -514,39 +514,39 @@ namespace OutSmart.DAXon.Trees.Tiny
                 return (SingletonIterator)SingletonIterator.MakeIterator(this);
             }
 
-            public virtual IItem ItemAt(int n)
+            public IItem ItemAt(int n)
             {
                 return n == 0 ? (IItem)this : null;
             }
 
-            public virtual IGroundedValue Subsequence(int start, int length)
+            public IGroundedValue Subsequence(int start, int length)
             {
                 return (start <= 0 && (long)start + length > 0) ? (IGroundedValue)this : OutSmart.DAXon.Values.EmptySequence.GetInstance();
             }
 
-            public virtual int GetLength()
+            public int GetLength()
             {
                 return 1;
             }
 
-            public virtual bool EffectiveBooleanValue()
+            public bool EffectiveBooleanValue()
             {
                 return ExpressionTool.EffectiveBooleanValue(Iterate());
             }
 
-            public virtual IGroundedValue Reduce()
+            public IGroundedValue Reduce()
             {
                 return this;
             }
 
-            public virtual IGroundedValue Materialize()
+            public IGroundedValue Materialize()
             {
                 return this;
             }
 
-            public virtual bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
+            public bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
 
-            public virtual IGroundedValue Concatenate(params IGroundedValue[] others)
+            public IGroundedValue Concatenate(params IGroundedValue[] others)
             {
                 // upstream GroundedValue default: chain this value's items with the others
                 var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
@@ -555,7 +555,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                 return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
             }
 
-            public virtual ISequence MakeRepeatable()
+            public ISequence MakeRepeatable()
             {
                 return this;
             }

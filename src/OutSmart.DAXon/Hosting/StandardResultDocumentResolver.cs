@@ -22,7 +22,7 @@ using OutSmart.DAXon.Core;
 using System.IO;
 namespace OutSmart.DAXon.Lib
 {
-    internal class StandardResultDocumentResolver : IResultDocumentResolver
+    internal sealed class StandardResultDocumentResolver : IResultDocumentResolver
     {
         private static readonly StandardResultDocumentResolver theInstance = new StandardResultDocumentResolver();
         public static StandardResultDocumentResolver GetInstance()
@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Lib
             return theInstance;
         }
 
-        public virtual IReceiver Resolve(IXPathContext context, string href, string baseUri, SerializationProperties properties)
+        public IReceiver Resolve(IXPathContext context, string href, string baseUri, SerializationProperties properties)
         {
             // Outside Resolve(href, base): its catch-all would re-wrap the denial without its code.
             string denied = OutSmart.DAXon.Internal.ResourceGate.CheckOutput(context.GetConfiguration(), href, baseUri);
@@ -45,7 +45,7 @@ namespace OutSmart.DAXon.Lib
             return factory.GetReceiver(result, properties, pipe);
         }
 
-        public virtual StreamResult Resolve(string href, string @base)
+        public StreamResult Resolve(string href, string @base)
         {
 
             string which = "base";
@@ -105,7 +105,7 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        protected virtual StreamResult CreateResult(URI absoluteURI)
+        protected StreamResult CreateResult(URI absoluteURI)
         {
             if ("file".Equals(absoluteURI.Scheme))
             {

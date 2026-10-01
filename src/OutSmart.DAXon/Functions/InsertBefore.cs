@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// The XPath 2.0 insert-before() function
     /// </summary>
-    internal class InsertBefore : SystemFunction
+    internal sealed class InsertBefore : SystemFunction
     {
 
         public override string StreamerName => "InsertBefore";
@@ -51,7 +51,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class InsertIterator : ISequenceIterator
+        internal sealed class InsertIterator : ISequenceIterator
         {
             private readonly ISequenceIterator @base;
             private readonly ISequenceIterator insert;
@@ -66,7 +66,7 @@ namespace OutSmart.DAXon.Functions
                 this.inserting = insertPosition == 1;
             }
 
-            public virtual IItem Next()
+            public IItem Next()
             {
                 IItem nextItem;
                 if (inserting)
@@ -115,7 +115,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            public virtual void Dispose()
+            public void Dispose()
             {
                 @base.Dispose();
                 insert.Dispose();

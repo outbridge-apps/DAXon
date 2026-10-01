@@ -31,7 +31,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class MergeInstr : Instruction
+    internal sealed class MergeInstr : Instruction
     {
 
         private static readonly OperandRole ROW_SELECT = new OperandRole(OperandRole.USES_NEW_FOCUS | OperandRole.HIGHER_ORDER, OperandUsage.INSPECTION, Values.SequenceType.ANY_SEQUENCE);
@@ -39,7 +39,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private Operand actionOp;
         protected IAtomicComparer[] comparators;
 
-        public virtual MergeSource[] MergeSources => mergeSources;
+        public MergeSource[] MergeSources => mergeSources;
 
         public override int InstructionNameCode => StandardNames.XSL_MERGE;
 
@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         {
         }
 
-        public virtual MergeInstr Init(MergeSource[] mSources, Expression action)
+        public MergeInstr Init(MergeSource[] mSources, Expression action)
         {
             actionOp = new Operand(this, action, OperandRole.FOCUS_CONTROLLED_ACTION);
             this.mergeSources = mSources;
@@ -65,12 +65,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return this;
         }
 
-        public virtual void SetAction(Expression action)
+        public void SetAction(Expression action)
         {
             actionOp.SetChildExpression(action);
         }
 
-        public virtual Expression GetAction()
+        public Expression GetAction()
         {
             return actionOp.GetChildExpression();
         }
@@ -175,7 +175,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return this;
         }
 
-        public virtual void FixupGroupReferences()
+        public void FixupGroupReferences()
         {
             FixupGroupReferences(this, this, false);
         }
@@ -492,7 +492,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return list;
         }
 
-        public virtual IComparer<ObjectValue<ItemWithMergeKeys>> GetComparer(SortKeyDefinitionList sKeys, IAtomicComparer[] comps)
+        public IComparer<ObjectValue<ItemWithMergeKeys>> GetComparer(SortKeyDefinitionList sKeys, IAtomicComparer[] comps)
         {
 
             return new AnonymousComparator(this, sKeys, comps);
@@ -584,7 +584,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         {
             return new MergeInstrElaborator();
         }
-        internal class MergeSource
+        internal sealed class MergeSource
         {
             private readonly MergeInstr instruction;
             public ILocation location;
@@ -599,11 +599,11 @@ namespace OutSmart.DAXon.Expressions.Sorting
             public bool streamable;
             public HashSet<Accumulator> accumulators;
 
-            public virtual Expression ForEachItem => forEachItemOp == null ? null : forEachItemOp.GetChildExpression();
+            public Expression ForEachItem => forEachItemOp == null ? null : forEachItemOp.GetChildExpression();
 
-            public virtual Expression ForEachSource => forEachStreamOp == null ? null : forEachStreamOp.GetChildExpression();
+            public Expression ForEachSource => forEachStreamOp == null ? null : forEachStreamOp.GetChildExpression();
 
-            public virtual Expression RowSelect
+            public Expression RowSelect
             {
                 get => rowSelectOp.GetChildExpression(); set
                 {
@@ -611,7 +611,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 }
             }
 
-            public virtual SortKeyDefinitionList MergeKeyDefinitionSet
+            public SortKeyDefinitionList MergeKeyDefinitionSet
             {
                 get => mergeKeyDefinitions; set
                 {
@@ -646,22 +646,22 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 this.baseURI = baseURI;
             }
 
-            public virtual void InitForEachItem(MergeInstr instruction, Expression forEachItem)
+            public void InitForEachItem(MergeInstr instruction, Expression forEachItem)
             {
                 forEachItemOp = new Operand(instruction, forEachItem, OperandRole.INSPECT);
             }
 
-            public virtual void InitForEachStream(MergeInstr instruction, Expression forEachStream)
+            public void InitForEachStream(MergeInstr instruction, Expression forEachStream)
             {
                 forEachStreamOp = new Operand(instruction, forEachStream, OperandRole.INSPECT);
             }
 
-            public virtual void InitRowSelect(MergeInstr instruction, Expression rowSelect)
+            public void InitRowSelect(MergeInstr instruction, Expression rowSelect)
             {
                 rowSelectOp = new Operand(instruction, rowSelect, ROW_SELECT);
             }
 
-            public virtual void SetStreamable(bool streamable)
+            public void SetStreamable(bool streamable)
             {
                 this.streamable = streamable;
                 if (streamable && instruction.GetConfiguration().GetBooleanProperty(Feature<bool>.STREAMING_FALLBACK))
@@ -672,7 +672,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 }
             }
 
-            public virtual MergeSource CopyMergeSource(MergeInstr newInstr, RebindingMap rebindings)
+            public MergeSource CopyMergeSource(MergeInstr newInstr, RebindingMap rebindings)
             {
                 SortKeyDefinition[] newKeyDef = new SortKeyDefinition[mergeKeyDefinitions.Count];
                 for (int i = 0; i < mergeKeyDefinitions.Count; i++)
@@ -693,7 +693,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 return exp == null ? null : exp.Copy(rebindings);
             }
 
-            public virtual void SetForEachStream(Expression forEachStream)
+            public void SetForEachStream(Expression forEachStream)
             {
                 if (forEachStream != null)
                 {
@@ -701,7 +701,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 }
             }
 
-            public virtual void PrepareForStreaming()
+            public void PrepareForStreaming()
             {
             }
         }
@@ -789,7 +789,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        internal class MergeKeyMappingFunction
+        internal sealed class MergeKeyMappingFunction
         {
             private readonly MergeSource ms;
             private readonly IXPathContext keyContext;
@@ -806,7 +806,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 keyContext.SetCurrentIterator(manualIterator);
             }
 
-            public virtual ISequenceIterator IMap(IXPathContext context = null)
+            public ISequenceIterator IMap(IXPathContext context = null)
             {
                 IItem currentItem = context.GetContextItem();
                 manualIterator.SetContextItem(currentItem);
@@ -815,7 +815,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        private class MergeInstrElaborator : PullElaborator
+        private sealed class MergeInstrElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

@@ -24,13 +24,13 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions.HigherOrder
 {
-    internal class CoercedFunction : AbstractFunction
+    internal sealed class CoercedFunction : AbstractFunction
     {
         private IFunctionItem targetFunction;
         private readonly SpecificFunctionType requiredType;
         private readonly bool allowReducedArity;
 
-        public virtual IFunctionItem TargetFunction => targetFunction;
+        public IFunctionItem TargetFunction => targetFunction;
 
         public override IFunctionItemType FunctionItemType => requiredType;
 

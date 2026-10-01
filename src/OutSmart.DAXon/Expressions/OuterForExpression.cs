@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Expressions
     /// Ported from upstream Saxon (was a hollow excluded stub whose implicit ForExpression conversion threw,
     /// so FLWORExpression.RewriteForOrLet crashed as soon as it rewrote an `allowing empty` for-clause).
     /// </summary>
-    internal class OuterForExpression : ForExpression
+    internal sealed class OuterForExpression : ForExpression
     {
         // The range variable may be bound to an empty sequence.
         protected override int RangeVariableCardinality => StaticProperty.ALLOWS_ZERO_OR_ONE;
@@ -51,7 +51,7 @@ namespace OutSmart.DAXon.Expressions
             return new OuterForExprElaborator();
         }
 
-        internal class OuterForExprElaborator : PullElaborator
+        internal sealed class OuterForExprElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

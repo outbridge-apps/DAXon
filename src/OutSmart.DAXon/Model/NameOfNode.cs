@@ -17,13 +17,13 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Model
 {
-    internal class NameOfNode : INodeName
+    internal sealed class NameOfNode : INodeName
     {
         private readonly NodeInfo node;
 
-        public virtual string DisplayName => node.DisplayName;
+        public string DisplayName => node.DisplayName;
 
-        public virtual int Fingerprint
+        public int Fingerprint
         {
             get
             {
@@ -58,27 +58,27 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        public virtual string GetPrefix()
+        public string GetPrefix()
         {
             return node.GetPrefix();
         }
 
-        public virtual NamespaceUri GetNamespaceUri()
+        public NamespaceUri GetNamespaceUri()
         {
             return node.GetNamespaceUri();
         }
 
-        public virtual string GetLocalPart()
+        public string GetLocalPart()
         {
             return node.GetLocalPart();
         }
 
-        public virtual StructuredQName GetStructuredQName()
+        public StructuredQName GetStructuredQName()
         {
             return new StructuredQName(GetPrefix(), GetNamespaceUri(), GetLocalPart());
         }
 
-        public virtual bool HasURI(NamespaceUri ns)
+        public bool HasURI(NamespaceUri ns)
         {
             if (node is TinyNodeImpl)
             {
@@ -90,17 +90,17 @@ namespace OutSmart.DAXon.Model
             return node.GetNamespaceUri().Equals(ns);
         }
 
-        public virtual NamespaceBinding GetNamespaceBinding()
+        public NamespaceBinding GetNamespaceBinding()
         {
             return new NamespaceBinding(GetPrefix(), GetNamespaceUri());
         }
 
-        public virtual bool HasFingerprint()
+        public bool HasFingerprint()
         {
             return node.HasFingerprint();
         }
 
-        public virtual int ObtainFingerprint(NamePool namePool)
+        public int ObtainFingerprint(NamePool namePool)
         {
             if (node.HasFingerprint())
             {
@@ -140,17 +140,17 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        public virtual bool IsIdentical(IIdentityComparable other)
+        public bool IsIdentical(IIdentityComparable other)
         {
             return other is INodeName && this.Equals(other) && this.GetPrefix().Equals(((INodeName)other).GetPrefix());
         }
 
-        public virtual int IdentityHashCode()
+        public int IdentityHashCode()
         {
             return GetHashCode() ^ GetPrefix().GetHashCode();
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual string GetURI() => GetNamespaceUri().ToString(); // NodeImpl/Orphan.GetURI() route through this
+        public string GetURI() => GetNamespaceUri().ToString(); // NodeImpl/Orphan.GetURI() route through this
     }
 }

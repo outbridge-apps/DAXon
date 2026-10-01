@@ -543,7 +543,7 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        private class Triple
+        private sealed class Triple
         {
             public string prefix;
             public NamespaceUri uri;
@@ -551,7 +551,7 @@ namespace OutSmart.DAXon.Events
             public string value;
         }
 
-        private class StartTag
+        private sealed class StartTag
         {
             public Triple elementName;
             public IList<Triple> attributes;

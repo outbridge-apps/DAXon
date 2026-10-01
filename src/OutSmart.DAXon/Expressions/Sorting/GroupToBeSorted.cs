@@ -15,7 +15,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class GroupToBeSorted : ObjectToBeSorted
+    internal sealed class GroupToBeSorted : ObjectToBeSorted
     {
         public IAtomicSequence currentGroupingKey;
         public IGroundedValue currentGroup;

@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Serialization
 {
     // For xhtml/html5 output: elements in the XHTML/SVG/MathML namespaces are serialized with that namespace
     // as the DEFAULT namespace (no prefix). Was a hollow stub.
-    internal class XHTMLPrefixRemover : ProxyReceiver
+    internal sealed class XHTMLPrefixRemover : ProxyReceiver
     {
         public XHTMLPrefixRemover(IReceiver next) : base(next)
         {

@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Expressions
     // CallableDelegate is a class implementing ICallable so that
     //   `ICallable callable = new CallableDelegate((ctx, args) => ...);`
     // compiles. Wraps a lambda that returns ISequence.
-    internal class CallableDelegate : ICallable
+    internal sealed class CallableDelegate : ICallable
     {
         private readonly Func<IXPathContext, ISequence[], ISequence> _impl;
         public CallableDelegate(Func<IXPathContext, ISequence[], ISequence> impl) { _impl = impl; }

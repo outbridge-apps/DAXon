@@ -246,7 +246,7 @@ namespace OutSmart.DAXon.Values
             sb.Append((char)(value % 10 + '0'));
         }
 
-        private class CalendarValueMapKey : IAtomicMatchKey
+        private sealed class CalendarValueMapKey : IAtomicMatchKey
         {
             private readonly CalendarValue value;
             public CalendarValueMapKey(CalendarValue value)
@@ -254,7 +254,7 @@ namespace OutSmart.DAXon.Values
                 this.value = value;
             }
 
-            public virtual AtomicValue AsAtomic()
+            public AtomicValue AsAtomic()
             {
                 return value;
             }

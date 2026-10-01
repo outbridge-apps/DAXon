@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:on-completion element in the stylesheet (XSLT 3.0). <br>
     /// </summary>
-    internal class XSLOnCompletion : StyleElement
+    internal sealed class XSLOnCompletion : StyleElement
     {
         private Expression select;
         public override bool IsInstruction()

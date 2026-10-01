@@ -166,7 +166,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new CommentElaborator();
         }
 
-        private class CommentElaborator : SimpleNodePushElaborator
+        private sealed class CommentElaborator : SimpleNodePushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Functions
 {
 
     // fn:generate-id#1: Call-only impl — the full GenerateId_1 port would drag the StringElaborator cluster.
-    internal class GenerateIdFn1 : ScalarSystemFunction
+    internal sealed class GenerateIdFn1 : ScalarSystemFunction
     {
         public GenerateIdFn1() { }
         public static Func<GenerateIdFn1> New() => () => new GenerateIdFn1();

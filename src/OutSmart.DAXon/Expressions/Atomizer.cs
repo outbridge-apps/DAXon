@@ -603,7 +603,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for an Atomizer
         /// </summary>
-        internal class AtomizerElaborator : PullElaborator
+        internal sealed class AtomizerElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

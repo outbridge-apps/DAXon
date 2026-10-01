@@ -22,7 +22,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class SequenceInstr : UnaryExpression
+    internal sealed class SequenceInstr : UnaryExpression
     {
 
         public override int ImplementationMethod => BaseExpression.ImplementationMethod;
@@ -83,7 +83,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new SequenceInstrElaborator();
         }
 
-        internal class SequenceInstrElaborator : PushElaborator
+        internal sealed class SequenceInstrElaborator : PushElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

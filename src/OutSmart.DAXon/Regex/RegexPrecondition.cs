@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Regex
     /// <summary>
     /// A precondition that must be true if a regular expression is to match
     /// </summary>
-    internal class RegexPrecondition
+    internal sealed class RegexPrecondition
     {
         public Operation operation;
         public int fixedPosition;

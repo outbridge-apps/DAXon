@@ -22,14 +22,14 @@ using OutSmart.DAXon.Internal;
 using System.Numerics;
 namespace OutSmart.DAXon.Expressions.Numbering
 {
-    internal class NumberFormatter
+    internal sealed class NumberFormatter
     {
 
         private static readonly IIntPredicateProxy alphanumeric = IntUnionPredicate.MakeUnion(Categories.GetCategory("N"), (Categories.GetCategory("L")));
         private List<UnicodeString> formatTokens;
         private List<UnicodeString> punctuationTokens;
         private bool startsWithPunctuation;
-        public virtual void Prepare(string format)
+        public void Prepare(string format)
         {
 
             // Tokenize the format string into alternating alphanumeric and non-alphanumeric tokens
@@ -113,7 +113,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                 return alphanumeric.Test(c);
             }
         }
-        public virtual UnicodeString Format(IList<object> numbers, int groupSize, string groupSeparator, string letterValue, string ordinal, INumberer numberer)
+        public UnicodeString Format(IList<object> numbers, int groupSize, string groupSeparator, string letterValue, string ordinal, INumberer numberer)
         {
             UnicodeBuilder sb = new UnicodeBuilder(32);
             int num = 0;

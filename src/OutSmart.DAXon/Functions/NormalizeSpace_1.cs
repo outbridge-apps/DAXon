@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Functions
     // the real file's GetElaborator() (NormalizeSpaceFnElaborator : StringElaborator) is intentionally
     // omitted to avoid the StringElaborator compile cluster that explodes the pipeline. Correctness from
     // Evaluate; the elaborator (optimization) is deferred.
-    internal class NormalizeSpace_1 : ScalarSystemFunction
+    internal sealed class NormalizeSpace_1 : ScalarSystemFunction
     {
         public NormalizeSpace_1() { }
         public static Func<NormalizeSpace_1> New() => () => new NormalizeSpace_1();

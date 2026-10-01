@@ -1109,7 +1109,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for a filter expression
         /// </summary>
-        internal class FilterExprElaborator : PullElaborator
+        internal sealed class FilterExprElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {
@@ -1158,7 +1158,7 @@ namespace OutSmart.DAXon.Expressions
                 return generic;
             }
 
-            internal class PositionalFilteredIterator : ISequenceIterator
+            internal sealed class PositionalFilteredIterator : ISequenceIterator
             {
                 private readonly IXPathContext outerContext;
                 private readonly IFocusIterator @base;
@@ -1172,7 +1172,7 @@ namespace OutSmart.DAXon.Expressions
                     this.controller = outerContext.GetController();
                 }
 
-                public virtual IItem Next()
+                public IItem Next()
                 {
                     try
                     {
@@ -1196,10 +1196,10 @@ namespace OutSmart.DAXon.Expressions
                         throw new UncheckedXPathException(e);
                     }
                 }
-                public virtual void Dispose() { }
+                public void Dispose() { }
             }
 
-            internal class SimpleFilteredIterator : ISequenceIterator
+            internal sealed class SimpleFilteredIterator : ISequenceIterator
             {
                 private readonly IXPathContext outerContext;
                 private readonly IFocusIterator @base;
@@ -1213,7 +1213,7 @@ namespace OutSmart.DAXon.Expressions
                     this.controller = outerContext.GetController();
                 }
 
-                public virtual IItem Next()
+                public IItem Next()
                 {
                     try
                     {
@@ -1237,7 +1237,7 @@ namespace OutSmart.DAXon.Expressions
                         throw new UncheckedXPathException(e);
                     }
                 }
-                public virtual void Dispose() { }
+                public void Dispose() { }
             }
         }
     }

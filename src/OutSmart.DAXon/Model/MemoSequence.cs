@@ -22,7 +22,7 @@ using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Model
 {
-    internal class MemoSequence : ISequence
+    internal sealed class MemoSequence : ISequence
     {
         private readonly ISequenceIterator inputIterator;
         private IItem[] reservoir = null;
@@ -41,18 +41,18 @@ namespace OutSmart.DAXon.Model
             this.inputIterator = iterator;
         }
 
-        public virtual void SetLearningEvaluator(LearningEvaluator caller, int serialNumber)
+        public void SetLearningEvaluator(LearningEvaluator caller, int serialNumber)
         {
             this.learningEvaluator = caller;
             this.serialNumber = serialNumber;
         }
 
-        public virtual IItem Head()
+        public IItem Head()
         {
             return Iterate().Next();
         }
 
-        public virtual ISequenceIterator Iterate()
+        public ISequenceIterator Iterate()
         {
             lock (this)
             {
@@ -106,7 +106,7 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        public virtual IItem ItemAt(int n)
+        public IItem ItemAt(int n)
         {
             lock (this)
             {
@@ -316,8 +316,8 @@ namespace OutSmart.DAXon.Model
         }
 
         // upstream Sequence.materialize() default: ground the iterated items
-        public virtual IGroundedValue Materialize() => SequenceTool.ToGroundedValue(Iterate());
-        public virtual ISequence MakeRepeatable() => this; // upstream Sequence.makeRepeatable default
+        public IGroundedValue Materialize() => SequenceTool.ToGroundedValue(Iterate());
+        public ISequence MakeRepeatable() => this; // upstream Sequence.makeRepeatable default
         private enum State
         {
             // State in which no items have yet been read

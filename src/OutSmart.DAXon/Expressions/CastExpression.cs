@@ -25,7 +25,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class CastExpression : CastingExpression, ICallable
+    internal sealed class CastExpression : CastingExpression, ICallable
     {
 
         public override IntegerValue[] IntegerBounds
@@ -227,7 +227,7 @@ namespace OutSmart.DAXon.Expressions
             return this;
         }
 
-        protected virtual Expression PreEvaluate()
+        protected Expression PreEvaluate()
         {
             IGroundedValue literalOperand = ((Literal)BaseExpression).GroundedValue;
             if (literalOperand is AtomicValue && converter != null)
@@ -312,7 +312,7 @@ namespace OutSmart.DAXon.Expressions
             return SequenceTool.ItemOrEmpty(result);
         }
 
-        public virtual AtomicValue DoCast(AtomicValue value, IXPathContext context)
+        public AtomicValue DoCast(AtomicValue value, IXPathContext context)
         {
             if (value == null)
             {
@@ -393,7 +393,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for {@code cast as} expression, or the equivalent constructor function call
         /// </summary>
-        internal class CastExprElaborator : ItemElaborator
+        internal sealed class CastExprElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

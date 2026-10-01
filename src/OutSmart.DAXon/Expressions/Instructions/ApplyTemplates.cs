@@ -31,7 +31,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// An instruction representing an xsl:apply-templates element in the stylesheet
     /// </summary>
-    internal class ApplyTemplates : Instruction, IITemplateCall, IComponentInvocation
+    internal sealed class ApplyTemplates : Instruction, IITemplateCall, IComponentInvocation
     {
         private Operand selectOp;
         private Operand separatorOp;
@@ -45,7 +45,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         protected RuleManager ruleManager;
         private int bindingSlot = -1; // for binding the mode
 
-        public virtual Expression SeparatorExpression
+        public Expression SeparatorExpression
         {
             get => separatorOp == null ? null : separatorOp.GetChildExpression(); set
             {
@@ -61,7 +61,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public Component FixedTarget => mode.GetDeclaringComponent();
 
-        public virtual Expression Select
+        public Expression Select
         {
             get => selectOp.GetChildExpression(); set
             {
@@ -88,7 +88,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             this.ruleManager = ruleManager;
         }
 
-        protected virtual void Init(Expression select, bool useCurrentMode, bool useTailRecursion, Mode mode)
+        protected void Init(Expression select, bool useCurrentMode, bool useTailRecursion, Mode mode)
         {
             this.Select = select;
             this.useCurrentMode = useCurrentMode;
@@ -107,12 +107,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return tunnelParams;
         }
 
-        public virtual void SetActualParams(WithParam[] @params)
+        public void SetActualParams(WithParam[] @params)
         {
             actualParams = @params;
         }
 
-        public virtual void SetTunnelParams(WithParam[] @params)
+        public void SetTunnelParams(WithParam[] @params)
         {
             tunnelParams = @params;
         }
@@ -207,7 +207,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return true;
         }
 
-        public virtual Component.M GetTargetMode(IXPathContext context)
+        public Component.M GetTargetMode(IXPathContext context)
         {
             Component.M targetMode;
             if (useCurrentMode)
@@ -242,7 +242,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return targetMode;
         }
 
-        public virtual bool UseTailRecursion()
+        public bool UseTailRecursion()
         {
             return _useTailRecursion;
         }
@@ -317,7 +317,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new ApplyTemplatesElaborator();
         }
 
-        protected class ApplyTemplatesPackage : ITailCall
+        protected sealed class ApplyTemplatesPackage : ITailCall
         {
             private readonly ISequence selectedItems;
             private readonly Component.M targetMode;
@@ -339,7 +339,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 this.locationId = locationId;
             }
 
-            public virtual ITailCall ProcessLeavingTail()
+            public ITailCall ProcessLeavingTail()
             {
                 evaluationContext.TrackFocus(selectedItems.Iterate());
                 evaluationContext.SetCurrentMode(targetMode);
@@ -348,7 +348,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        internal class ApplyTemplatesElaborator : PushElaborator
+        internal sealed class ApplyTemplatesElaborator : PushElaborator
         {
             private NodeInfo MakeSeparator(IUnicodeStringEvaluator sep, IXPathContext context)
             {

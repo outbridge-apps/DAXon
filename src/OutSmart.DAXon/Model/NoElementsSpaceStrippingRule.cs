@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Model
     /// <summary>
     /// A whitespace stripping rule that retains all whitespace text nodes
     /// </summary>
-    internal class NoElementsSpaceStrippingRule : ISpaceStrippingRule
+    internal sealed class NoElementsSpaceStrippingRule : ISpaceStrippingRule
     {
         private static readonly NoElementsSpaceStrippingRule THE_INSTANCE = new NoElementsSpaceStrippingRule();
         public static NoElementsSpaceStrippingRule GetInstance()
@@ -28,17 +28,17 @@ namespace OutSmart.DAXon.Model
             return THE_INSTANCE;
         }
 
-        public virtual int IsSpacePreserving(INodeName fingerprint, ISchemaType schemaType)
+        public int IsSpacePreserving(INodeName fingerprint, ISchemaType schemaType)
         {
             return Stripper.ALWAYS_PRESERVE;
         }
 
-        public virtual ProxyReceiver MakeStripper(IReceiver next)
+        public ProxyReceiver MakeStripper(IReceiver next)
         {
             return null;
         }
 
-        public virtual void Export(ExpressionPresenter presenter)
+        public void Export(ExpressionPresenter presenter)
         {
             presenter.StartElement("strip.none");
             presenter.EndElement();

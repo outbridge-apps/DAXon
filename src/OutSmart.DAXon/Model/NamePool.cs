@@ -233,7 +233,7 @@ namespace OutSmart.DAXon.Model
         /// <summary>
         /// Unchecked Exception raised when some limit in the design of the name pool is exceeded
         /// </summary>
-        internal class NamePoolLimitException : Exception
+        internal sealed class NamePoolLimitException : Exception
         {
             public NamePoolLimitException(string message) : base(message)
             {

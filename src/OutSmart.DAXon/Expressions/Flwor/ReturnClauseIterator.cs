@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
     /// Applies the return expression of a FLWOR expression to each of the tuples in a supplied tuple
     /// stream, returning the result as an iterator.
     /// </summary>
-    internal class ReturnClauseIterator : ISequenceIterator
+    internal sealed class ReturnClauseIterator : ISequenceIterator
     {
         private readonly TuplePull @base;
         private readonly IPullEvaluator action;

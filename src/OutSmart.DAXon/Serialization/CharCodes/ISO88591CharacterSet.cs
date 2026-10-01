@@ -17,11 +17,11 @@ namespace OutSmart.DAXon.Serialization.CharCodes
     /// <summary>
     /// This class defines properties of the ISO-8859-1 character set
     /// </summary>
-    internal class ISO88591CharacterSet : ICharacterSet
+    internal sealed class ISO88591CharacterSet : ICharacterSet
     {
         private static readonly ISO88591CharacterSet theInstance = new ISO88591CharacterSet();
 
-        public virtual string CanonicalName => "ISO-8859-1";
+        public string CanonicalName => "ISO-8859-1";
         private ISO88591CharacterSet()
         {
         }

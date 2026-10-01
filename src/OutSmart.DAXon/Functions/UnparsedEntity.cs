@@ -67,12 +67,12 @@ namespace OutSmart.DAXon.Functions
             return operation == URI ? (ISequence)new AnyURIValue(result) : new StringValue(result);
         }
 
-        internal class UnparsedEntityUri : UnparsedEntity
+        internal sealed class UnparsedEntityUri : UnparsedEntity
         {
             public override int Op => URI;
         }
 
-        internal class UnparsedEntityPublicId : UnparsedEntity
+        internal sealed class UnparsedEntityPublicId : UnparsedEntity
         {
             public override int Op => PUBLIC_ID;
         }

@@ -23,7 +23,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class XSLResultDocument : StyleElement
+    internal sealed class XSLResultDocument : StyleElement
     {
         public static readonly HashSet<string> fans = new HashSet<string>(); // formatting attribute names
 

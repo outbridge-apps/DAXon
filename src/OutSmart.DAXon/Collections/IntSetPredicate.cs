@@ -14,7 +14,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Collections
 {
-    internal class IntSetPredicate : IIntPredicateProxy
+    internal sealed class IntSetPredicate : IIntPredicateProxy
     {
 
         /// <summary>
@@ -32,12 +32,12 @@ namespace OutSmart.DAXon.Collections
             this.set = set;
         }
 
-        public virtual bool Test(int value)
+        public bool Test(int value)
         {
             return set.Contains(value);
         }
 
-        public virtual IntSet GetIntSet()
+        public IntSet GetIntSet()
         {
             return set;
         }
@@ -51,6 +51,6 @@ namespace OutSmart.DAXon.Collections
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual IIntPredicateProxy Union(IIntPredicateProxy other) => IntUnionPredicate.MakeUnion(this, other);
+        public IIntPredicateProxy Union(IIntPredicateProxy other) => IntUnionPredicate.MakeUnion(this, other);
     }
 }

@@ -19,7 +19,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Streams;
 namespace OutSmart.DAXon.Lib
 {
-    internal class StandardModuleURIResolver : IModuleURIResolver
+    internal sealed class StandardModuleURIResolver : IModuleURIResolver
     {
         Configuration config = null;
 
@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Lib
             this.config = config;
         }
 
-        public virtual void SetConfiguration(Configuration config)
+        public void SetConfiguration(Configuration config)
         {
             if (this.config == null)
             {
@@ -36,7 +36,7 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        public virtual ResolvedResource[] Resolve(string moduleURI, string baseURI, string[] locations)
+        public ResolvedResource[] Resolve(string moduleURI, string baseURI, string[] locations)
         {
             if (config == null)
             {
@@ -73,7 +73,7 @@ namespace OutSmart.DAXon.Lib
         }
 
         // Resolve the module namespace URI itself through the configured resource resolver.
-        protected virtual ResolvedResource ResolveModuleURI(string moduleURI, string baseURI)
+        protected ResolvedResource ResolveModuleURI(string moduleURI, string baseURI)
         {
             try
             {
@@ -95,7 +95,7 @@ namespace OutSmart.DAXon.Lib
         }
 
         // Resolve a single location hint through the configured resource resolver.
-        protected virtual ResolvedResource ResolveLocationHint(string baseURI, string locationHint)
+        protected ResolvedResource ResolveLocationHint(string baseURI, string locationHint)
         {
             ResourceRequest rr = new ResourceRequest();
             rr.baseUri = baseURI;

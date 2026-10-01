@@ -11,5 +11,5 @@ using OutSmart.DAXon.Model;
 
 namespace OutSmart.DAXon.Transformation
 {
-    internal class IInitializer { public virtual void Initialize(object config) { } }
+    internal sealed class IInitializer { public void Initialize(object config) { } }
 }

@@ -28,7 +28,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Functions.HigherOrder
 {
-    internal class UserFunctionReference : Expression, IComponentInvocation, IUserFunctionResolvable, ICallable
+    internal sealed class UserFunctionReference : Expression, IComponentInvocation, IUserFunctionResolvable, ICallable
     {
         private readonly SymbolicName.F functionName;
         private UserFunction nominalTarget;
@@ -46,7 +46,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
 
         public Component FixedTarget => nominalTarget.DeclaringComponent;
 
-        public virtual UserFunction NominalTarget => nominalTarget;
+        public UserFunction NominalTarget => nominalTarget;
 
         public override int ImplementationMethod => EVALUATE_METHOD;
 
@@ -144,12 +144,12 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             return functionName;
         }
 
-        public virtual StructuredQName GetFunctionName()
+        public StructuredQName GetFunctionName()
         {
             return nominalTarget.GetFunctionName();
         }
 
-        public virtual int GetArity()
+        public int GetArity()
         {
             return functionName.GetArity();
         }
@@ -238,7 +238,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
         }
         ISequence ICallable.Call(IXPathContext arg0, ISequence[] arg1) => Call(arg0, arg1);
 
-        private class UserFunctionReferenceElaborator : ItemElaborator
+        private sealed class UserFunctionReferenceElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {
@@ -258,7 +258,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             }
         }
 
-        internal class BoundUserFunction : AbstractFunction, IContextOriginator
+        internal sealed class BoundUserFunction : AbstractFunction, IContextOriginator
         {
             private readonly IExportAgent agent;
             private readonly IFunctionItem function;
@@ -266,7 +266,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             private readonly Component component;
             private readonly Controller controller; // retained in case a function is returned from a query or stylesheet
 
-            public virtual IFunctionItem TargetFunction => function;
+            public IFunctionItem TargetFunction => function;
 
             internal Component BoundComponent => component;
 

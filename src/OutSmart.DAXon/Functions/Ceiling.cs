@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Functions
             return new CeilingElaborator();
         }
 
-        internal class CeilingElaborator : ItemElaborator
+        internal sealed class CeilingElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

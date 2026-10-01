@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Regex
     /// <summary>
     /// A class that holds compiled regular expressions.
     /// </summary>
-    internal class REProgram
+    internal sealed class REProgram
     {
         public const int OPT_HASBACKREFS = 1;
         public const int OPT_HASBOL = 2;
@@ -219,7 +219,7 @@ namespace OutSmart.DAXon.Regex
             return result;
         }
 
-        public virtual int BacktrackingLimit
+        public int BacktrackingLimit
         {
             get => backtrackingLimit; set
             {
@@ -325,7 +325,7 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        public virtual bool IsNullable()
+        public bool IsNullable()
         {
             int m = operation.MatchesEmptyString();
             return (m & Operation.MATCHES_ZLS_ANYWHERE) != 0;

@@ -21,32 +21,32 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Transformation.Rules
 {
-    internal class RuleSetWithWarnings : IBuiltInRuleSet
+    internal sealed class RuleSetWithWarnings : IBuiltInRuleSet
     {
         private readonly IBuiltInRuleSet baseRuleSet;
 
-        public virtual IBuiltInRuleSet BaseRuleSet => baseRuleSet;
+        public IBuiltInRuleSet BaseRuleSet => baseRuleSet;
 
-        public virtual string Name => baseRuleSet + " with warnings";
+        public string Name => baseRuleSet + " with warnings";
         public RuleSetWithWarnings(IBuiltInRuleSet baseRuleSet)
         {
             this.baseRuleSet = baseRuleSet;
         }
 
-        public virtual void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter output, IXPathContext context, ILocation locationId)
+        public void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter output, IXPathContext context, ILocation locationId)
         {
             OutputWarning(item, context);
             baseRuleSet.Process(item, parameters, tunnelParams, output, context, locationId);
         }
 
-        public virtual void OutputWarning(IItem item, IXPathContext context)
+        public void OutputWarning(IItem item, IXPathContext context)
         {
             string id = item is NodeInfo ? "the node " + Navigator.GetPath((NodeInfo)item) : "the atomic value " + item.UnicodeStringValue;
             XmlProcessingIncident warning = new XmlProcessingIncident("No user-defined template rule matches " + id, "XTDE0555").AsWarning();
             context.GetController().ErrorReporter.Report(warning);
         }
 
-        public virtual BuiltInRules[] GetActionForParentNodes(int nodeKind)
+        public BuiltInRules[] GetActionForParentNodes(int nodeKind)
         {
             return baseRuleSet.GetActionForParentNodes(nodeKind);
         }

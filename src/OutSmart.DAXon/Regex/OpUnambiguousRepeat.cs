@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Regex
 {
-    internal class OpUnambiguousRepeat : OpRepeat
+    internal sealed class OpUnambiguousRepeat : OpRepeat
     {
 
         public override int MatchLength

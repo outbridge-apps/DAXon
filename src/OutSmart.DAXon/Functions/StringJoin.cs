@@ -29,10 +29,10 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// fn:string-join(string* $sequence, string $separator)
     /// </summary>
-    internal class StringJoin : FoldingFunction, IPushableFunction
+    internal sealed class StringJoin : FoldingFunction, IPushableFunction
     {
         private bool returnEmptyIfEmpty;
-        public virtual void SetReturnEmptyIfEmpty(bool option)
+        public void SetReturnEmptyIfEmpty(bool option)
         {
             returnEmptyIfEmpty = option;
         }
@@ -102,7 +102,7 @@ namespace OutSmart.DAXon.Functions
         // context item: the operand fingerprints resolve once, each row walks its child array
         // straight into the collector - no per-operand axis/atomizing iterators, no fold ceremony.
         // Any other shape (or an off-path context item at runtime) uses the generic evaluator.
-        internal class StringJoinFnElaborator : Expressions.Elaboration.ItemElaborator
+        internal sealed class StringJoinFnElaborator : Expressions.Elaboration.ItemElaborator
         {
             private static bool MatchChildBlock(Expression arg, out int[] fps, out NodeTest[] tests)
             {
@@ -342,7 +342,7 @@ namespace OutSmart.DAXon.Functions
             output.Close();
         }
 
-        private class StringJoinFold : IFold
+        private sealed class StringJoinFold : IFold
         {
             private int position = 0;
             private readonly UnicodeString separator;
@@ -359,7 +359,7 @@ namespace OutSmart.DAXon.Functions
                 this.returnEmptyIfEmpty = returnEmptyIfEmpty;
             }
 
-            public virtual void ProcessItem(IItem item)
+            public void ProcessItem(IItem item)
             {
                 if (position == 0)
                 {
@@ -372,12 +372,12 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            public virtual bool IsFinished()
+            public bool IsFinished()
             {
                 return false;
             }
 
-            public virtual ISequence Result()
+            public ISequence Result()
             {
                 if (position == 0 && returnEmptyIfEmpty)
                 {

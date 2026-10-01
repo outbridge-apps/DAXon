@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Patterns
     /// <summary>
     /// A NodeTestPattern is a pattern that consists simply of a NodeTest
     /// </summary>
-    internal class NodeTestPattern : Pattern
+    internal sealed class NodeTestPattern : Pattern
     {
         private readonly NodeTest nodeTest;
 
@@ -117,7 +117,7 @@ namespace OutSmart.DAXon.Patterns
             return n;
         }
 
-        public virtual NodeTest GetNodeTest()
+        public NodeTest GetNodeTest()
         {
             return nodeTest;
         }

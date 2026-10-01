@@ -33,14 +33,14 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// An xsl:message or xsl:assert element in the stylesheet.
     /// </summary>
-    internal class MessageInstr : Instruction
+    internal sealed class MessageInstr : Instruction
     {
         private readonly Operand selectOp;
         private readonly Operand terminateOp;
         private readonly Operand errorCodeOp;
         private bool isAssert;
 
-        public virtual Expression Select
+        public Expression Select
         {
             get => selectOp.GetChildExpression(); set
             {
@@ -48,7 +48,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual Expression Terminate
+        public Expression Terminate
         {
             get => terminateOp.GetChildExpression(); set
             {
@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual Expression ErrorCode
+        public Expression ErrorCode
         {
             get => errorCodeOp.GetChildExpression(); set
             {
@@ -82,7 +82,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return OperandList(selectOp, terminateOp, errorCodeOp);
         }
 
-        public virtual void SetIsAssert(bool isAssert)
+        public void SetIsAssert(bool isAssert)
         {
             this.isAssert = isAssert;
         }
@@ -141,7 +141,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new MessageInstrElaborator();
         }
 
-        private class MessageAdapter : ProxyOutputter
+        private sealed class MessageAdapter : ProxyOutputter
         {
             public MessageAdapter(Outputter next) : base(next)
             {
@@ -193,7 +193,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        private class MessageInstrElaborator : PushElaborator
+        private sealed class MessageInstrElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

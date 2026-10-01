@@ -21,14 +21,14 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:output-character element in the stylesheet. <br>
     /// </summary>
-    internal class XSLOutputCharacter : StyleElement
+    internal sealed class XSLOutputCharacter : StyleElement
     {
         private int codepoint = -1;
         private string replacementString = null;
 
-        public virtual int CodePoint => codepoint;
+        public int CodePoint => codepoint;
 
-        public virtual string ReplacementString => replacementString;
+        public string ReplacementString => replacementString;
         public override void PrepareAttributes()
         {
             foreach (AttributeInfo att in Attributes())

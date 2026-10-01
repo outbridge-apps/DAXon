@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Regex
     /// <summary>
     /// End of program in a regular expression
     /// </summary>
-    internal class OpEndProgram : Operation
+    internal sealed class OpEndProgram : Operation
     {
         public override int MatchLength => 0;
 

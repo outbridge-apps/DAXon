@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Json
     /// <summary>
     /// Parser for JSON, which notifies parsing events to a JsonHandler
     /// </summary>
-    internal class JsonParser
+    internal sealed class JsonParser
     {
         public const int ESCAPE = 1;
         public const int ALLOW_ANY_TOP_LEVEL = 2;
@@ -52,7 +52,7 @@ namespace OutSmart.DAXon.Json
         {
         }
 
-        public virtual void Parse(string input, int flags, JsonHandler handler, IXPathContext context)
+        public void Parse(string input, int flags, JsonHandler handler, IXPathContext context)
         {
             if ((input.Length == 0))
             {
@@ -518,7 +518,7 @@ namespace OutSmart.DAXon.Json
             }
         }
 
-        public virtual void SetNumberParser(Dictionary<string, IGroundedValue> options, IXPathContext context)
+        public void SetNumberParser(Dictionary<string, IGroundedValue> options, IXPathContext context)
         {
             ISequence val = options.ContainsKey("number-parser") ? options.GetOrDefault("number-parser") : null;
             if (val != null)
@@ -565,7 +565,7 @@ namespace OutSmart.DAXon.Json
         /// <summary>
         /// Inner class to do the tokenization
         /// </summary>
-        private class JsonTokenizer
+        private sealed class JsonTokenizer
         {
             public readonly string input;
             public int position;
@@ -592,7 +592,7 @@ namespace OutSmart.DAXon.Json
                 }
             }
 
-            public virtual JsonToken Next()
+            public JsonToken Next()
             {
                 currentToken = ReadToken();
                 return currentToken;

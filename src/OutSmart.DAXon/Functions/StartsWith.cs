@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implements the fn:starts-with() function, with the collation already known
     /// </summary>
-    internal class StartsWith : CollatingFunctionFixed
+    internal sealed class StartsWith : CollatingFunctionFixed
     {
         public override bool IsSubstringMatchingFunction()
         {

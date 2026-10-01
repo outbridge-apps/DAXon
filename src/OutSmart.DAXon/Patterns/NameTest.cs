@@ -20,7 +20,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Patterns
 {
-    internal class NameTest : NodeTest, IQNameTest
+    internal sealed class NameTest : NodeTest, IQNameTest
     {
         private readonly int nodeKind;
         private readonly int fingerprint;
@@ -76,12 +76,12 @@ namespace OutSmart.DAXon.Patterns
             this.uType = UType.FromTypeCode(nodeKind);
         }
 
-        public virtual NamePool GetNamePool()
+        public NamePool GetNamePool()
         {
             return namePool;
         }
 
-        public virtual int GetNodeKind()
+        public int GetNodeKind()
         {
             return nodeKind;
         }
@@ -160,7 +160,7 @@ namespace OutSmart.DAXon.Patterns
             return fp == fingerprint;
         }
 
-        public virtual NamespaceUri GetNamespaceURI()
+        public NamespaceUri GetNamespaceURI()
         {
             ComputeUriAndLocal();
             return uri;

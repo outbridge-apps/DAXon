@@ -126,7 +126,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for an "isLast" expression, equivalent to {@code position() = last()} or {@code position() != last()}
         /// </summary>
-        internal class IsLastElaborator : BooleanElaborator
+        internal sealed class IsLastElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

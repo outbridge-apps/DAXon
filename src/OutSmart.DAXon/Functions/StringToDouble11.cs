@@ -12,7 +12,7 @@ using OutSmart.DAXon.Types;
 
 namespace OutSmart.DAXon.Functions
 {
-    internal class StringToDouble11 : StringToDouble
+    internal sealed class StringToDouble11 : StringToDouble
     {
         private static readonly StringToDouble11 _instance = new StringToDouble11();
         public StringToDouble11() { }

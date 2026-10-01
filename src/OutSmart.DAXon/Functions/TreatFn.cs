@@ -37,21 +37,21 @@ namespace OutSmart.DAXon.Functions
             return new RoleDiagnostic(RoleDiagnostic.FUNCTION, GetFunctionName().DisplayName, 0, ErrorCodeForTypeErrors);
         }
 
-        internal class ExactlyOne : TreatFn
+        internal sealed class ExactlyOne : TreatFn
         {
             public override int RequiredCardinality => StaticProperty.EXACTLY_ONE;
 
             public override string ErrorCodeForTypeErrors => "FORG0005";
         }
 
-        internal class OneOrMore : TreatFn
+        internal sealed class OneOrMore : TreatFn
         {
             public override int RequiredCardinality => StaticProperty.ALLOWS_ONE_OR_MORE;
 
             public override string ErrorCodeForTypeErrors => "FORG0004";
         }
 
-        internal class ZeroOrOne : TreatFn
+        internal sealed class ZeroOrOne : TreatFn
         {
             public override int RequiredCardinality => StaticProperty.ALLOWS_ZERO_OR_ONE;
 

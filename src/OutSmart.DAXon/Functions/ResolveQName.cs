@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the resolve-QName function in XPath 2.0
     /// </summary>
-    internal class ResolveQName : SystemFunction
+    internal sealed class ResolveQName : SystemFunction
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

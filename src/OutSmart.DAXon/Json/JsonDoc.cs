@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Json
     /// <summary>
     /// Implements the json-to-xml function defined in XSLT 3.0.
     /// </summary>
-    internal class JsonDoc : SystemFunction
+    internal sealed class JsonDoc : SystemFunction
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

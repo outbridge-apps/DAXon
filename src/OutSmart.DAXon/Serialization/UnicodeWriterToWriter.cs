@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Serialization
     // Phase-7/transpile re-include cascade). Was a hollow stub NOT implementing IUnicodeWriter -> serialize callers
     // (ExpandedStreamResult.ObtainUnicodeWriter et al., which `using OutSmart.DAXon.Text` but resolve this same-namespace
     // class) cast it to IUnicodeWriter -> InvalidCast. Now it really implements IUnicodeWriter, wrapping the Writer.
-    internal class UnicodeWriterToWriter : IUnicodeWriter
+    internal sealed class UnicodeWriterToWriter : IUnicodeWriter
     {
         // IO-removal W2: compat Writer base eliminated -> wraps a BCL System.IO.TextWriter directly.
         private readonly TextWriter _w;

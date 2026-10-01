@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Functions
     // Tokenize_1 (fn:tokenize#1, XPath 3.1) — REAL impl ported from the excluded Tokenize_1.cs.
     // Whitespace-tokenizes the single argument (no regex, no elaborator). Used by KeyManager's idref
     // key: tokenize(string(.)). Tokenizer = OutSmart.DAXon.Values.Whitespace.Tokenizer(UnicodeString).
-    internal class Tokenize_1 : SystemFunction
+    internal sealed class Tokenize_1 : SystemFunction
     {
         public Tokenize_1() { }
         public static Func<Tokenize_1> New() => () => new Tokenize_1();

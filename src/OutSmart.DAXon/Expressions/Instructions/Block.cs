@@ -27,7 +27,7 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class Block : Instruction
+    internal sealed class Block : Instruction
     {
         private readonly Operand[] operanda;
         private bool allNodesUntyped;
@@ -69,7 +69,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         {
             operanda[n].SetChildExpression(child);
         }
-        public virtual int Size()
+        public int Size()
         {
             return operanda.Length;
         }
@@ -167,7 +167,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual Operand[] GetOperanda()
+        public Operand[] GetOperanda()
         {
             return operanda;
         }
@@ -306,7 +306,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return true;
         }
 
-        public virtual Expression MergeAdjacentTextInstructions()
+        public Expression MergeAdjacentTextInstructions()
         {
             bool[] isLiteralText = new bool[Size()];
             bool hasAdjacentTextNodes = false;
@@ -621,7 +621,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         }
 
         // no-op
-        public virtual bool IsCandidateForSharedAppend()
+        public bool IsCandidateForSharedAppend()
         {
             foreach (Operand o in Operands())
             {
@@ -763,7 +763,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         }
 
         // no-op
-        internal class BlockElaborator : PullElaborator
+        internal sealed class BlockElaborator : PullElaborator
         {
             public override ISequenceEvaluator Lazily(bool repeatable, bool lazyEvaluationRequired)
             {
@@ -890,7 +890,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 };
             }
 
-            private class BlockIterator : AbstractBlockIterator
+            private sealed class BlockIterator : AbstractBlockIterator
             {
                 private readonly IPullEvaluator[] pullers;
                 public BlockIterator(IPullEvaluator[] pullers, IXPathContext context)

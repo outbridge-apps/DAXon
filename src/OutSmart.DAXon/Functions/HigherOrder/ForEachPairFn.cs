@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
     /// <summary>
     /// This class implements the function fn:for-each-pair() (formerly fn:map-pairs()), which is a standard function in XQuery 3.0
     /// </summary>
-    internal class ForEachPairFn : SystemFunction
+    internal sealed class ForEachPairFn : SystemFunction
     {
         public override ItemType GetResultItemType(Expression[] args)
         {
@@ -133,7 +133,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             }
         }
 
-        private class PairedSequenceIterator : ISequenceIterator
+        private sealed class PairedSequenceIterator : ISequenceIterator
         {
             private readonly ISequenceIterator seq0;
             private readonly ISequenceIterator seq1;
@@ -144,7 +144,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 this.seq1 = seq1;
             }
 
-            public virtual ObjectValue<ISequence[]> Next()
+            public ObjectValue<ISequence[]> Next()
             {
                 IItem i0 = seq0.Next();
                 if (i0 == null)
@@ -165,7 +165,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 return new ObjectValue<ISequence[]>(args);
             }
 
-            public virtual void Dispose()
+            public void Dispose()
             {
                 seq0.Dispose();
                 seq1.Dispose();

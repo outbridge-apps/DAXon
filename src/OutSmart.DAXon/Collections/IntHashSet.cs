@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Collections
     // kept as three copies because the empty-slot encoding differs per class — here the values
     // array doubles as the key array and emptiness is the configurable ndv sentinel. The probe
     // loops sit on hot paths and must stay monomorphic, without a shared dispatching core.
-    internal class IntHashSet : IntSet
+    internal sealed class IntHashSet : IntSet
     {
         private const int NBIT = 30; // MAX_SIZE = 2^NBIT
         private const int MAX_SIZE = 1 << NBIT; // maximum number of values held
@@ -33,7 +33,7 @@ namespace OutSmart.DAXon.Collections
         private int _mask; // _mask = _nmax - 1
         private int[] _values; // array[_nmax] of values
 
-        public virtual int[] Values
+        public int[] Values
         {
             get
             {
@@ -343,7 +343,7 @@ namespace OutSmart.DAXon.Collections
             return @is;
         }
 
-        private class IntHashSetIterator : AbstractIntIterator
+        private sealed class IntHashSetIterator : AbstractIntIterator
         {
             private readonly IntHashSet container;
             private int i;

@@ -36,7 +36,7 @@ namespace OutSmart.DAXon.Functions
         public static VendorFunctionSetHE_Inner GetInstance() => _instance;
 
         // Implements IFunctionLibrary via BuiltInFunctionSet for AddFunctionLibrary call sites.
-        internal class VendorFunctionSetHE_Inner : BuiltInFunctionSet
+        internal sealed class VendorFunctionSetHE_Inner : BuiltInFunctionSet
         {
             public VendorFunctionSetHE_Inner()
             {
@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Functions
 
         // Ported verbatim from the (excluded) real VendorFunctionSetHE.DynamicErrorInfoFn.
         // Evaluates an xsl:catch error variable such as $err:code from the current caught exception.
-        internal class DynamicErrorInfoFn : SystemFunction
+        internal sealed class DynamicErrorInfoFn : SystemFunction
         {
             public static Func<DynamicErrorInfoFn> New() => () => new DynamicErrorInfoFn();
 

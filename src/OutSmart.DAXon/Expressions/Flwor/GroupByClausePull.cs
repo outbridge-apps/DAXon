@@ -14,7 +14,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
 namespace OutSmart.DAXon.Expressions.Flwor
 {
-    internal class GroupByClausePull : TuplePull
+    internal sealed class GroupByClausePull : TuplePull
     {
         private readonly TuplePull @base;
         private readonly GroupByClause groupByClause;

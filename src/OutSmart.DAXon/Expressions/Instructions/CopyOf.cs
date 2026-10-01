@@ -35,7 +35,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// An xsl:copy-of element in the stylesheet.
     /// </summary>
-    internal class CopyOf : Instruction, IValidatingInstruction
+    internal sealed class CopyOf : Instruction, IValidatingInstruction
     {
         private readonly Operand selectOp;
         private readonly bool copyNamespaces;
@@ -51,7 +51,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private double invocations = 1;
         private double numberOfItems = 20;
 
-        public virtual Expression Select
+        public Expression Select
         {
             get => selectOp.GetChildExpression(); set
             {
@@ -92,12 +92,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return schemaType;
         }
 
-        public virtual void SetSchemaAware(bool schemaAware)
+        public void SetSchemaAware(bool schemaAware)
         {
             this.isSchemaAware = schemaAware;
         }
 
-        public virtual void SetCopyLineNumbers(bool copy)
+        public void SetCopyLineNumbers(bool copy)
         {
             copyLineNumbers = copy;
         }
@@ -107,22 +107,22 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return !Select.GetItemType().IsPlainType();
         }
 
-        public virtual void SetRequireDocumentOrElement(bool requireDocumentOrElement)
+        public void SetRequireDocumentOrElement(bool requireDocumentOrElement)
         {
             this.requireDocumentOrElement = requireDocumentOrElement;
         }
 
-        public virtual bool IsDocumentOrElementRequired()
+        public bool IsDocumentOrElementRequired()
         {
             return requireDocumentOrElement;
         }
 
-        public virtual void SetCopyForUpdate(bool forUpdate)
+        public void SetCopyForUpdate(bool forUpdate)
         {
             copyForUpdate = forUpdate;
         }
 
-        public virtual void SetCopyAccumulators(bool copy)
+        public void SetCopyAccumulators(bool copy)
         {
             copyAccumulators = copy;
         }
@@ -855,7 +855,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         /* && visitor.isOptimizeForStreaming() */
         /*!copyNamespaces ||*/
-        private class CopyOfElaborator : PushElaborator
+        private sealed class CopyOfElaborator : PushElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

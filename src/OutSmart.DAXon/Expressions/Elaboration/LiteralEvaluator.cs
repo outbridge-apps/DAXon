@@ -9,7 +9,7 @@ using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Expressions.Elaboration
 {
     // Faithful to upstream LiteralEvaluator: store the grounded ctor value; Evaluate => value.
-    internal class LiteralEvaluator : ISequenceEvaluator
+    internal sealed class LiteralEvaluator : ISequenceEvaluator
     {
         private readonly IGroundedValue value;
         public LiteralEvaluator(object value) { this.value = value as IGroundedValue; }

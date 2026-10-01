@@ -16,7 +16,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Patterns
 {
-    internal class NodeSelector : NodeTest
+    internal sealed class NodeSelector : NodeTest
     {
         private readonly Func<NodeInfo, bool> predicate;
 

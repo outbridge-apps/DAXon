@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:fork elements in XSLT 3.0 stylesheet.
     /// </summary>
-    internal class XSLFork : StyleElement
+    internal sealed class XSLFork : StyleElement
     {
         public override bool IsInstruction()
         {

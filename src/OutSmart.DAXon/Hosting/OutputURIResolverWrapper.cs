@@ -21,7 +21,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Core;
 namespace OutSmart.DAXon.Lib
 {
-    internal class OutputURIResolverWrapper : IResultDocumentResolver
+    internal sealed class OutputURIResolverWrapper : IResultDocumentResolver
     {
         private readonly IOutputURIResolver outputURIResolver;
         public OutputURIResolverWrapper(IOutputURIResolver resolver)
@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Lib
             this.outputURIResolver = resolver;
         }
 
-        public virtual IReceiver Resolve(IXPathContext context, string href, string baseUri, SerializationProperties properties)
+        public IReceiver Resolve(IXPathContext context, string href, string baseUri, SerializationProperties properties)
         {
             // Only the built-in resolver is gated; a host-installed one is the host's own policy.
             if (outputURIResolver is StandardOutputResolver)
@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        public virtual IOutputURIResolver GetOutputURIResolver()
+        public IOutputURIResolver GetOutputURIResolver()
         {
             return outputURIResolver;
         }

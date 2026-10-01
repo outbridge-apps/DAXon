@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the fn:QName() function
     /// </summary>
-    internal class QNameFn : SystemFunction
+    internal sealed class QNameFn : SystemFunction
     {
         public static QNameValue ExpandedQName(StringValue @namespace, StringValue lexical)
         {
@@ -69,7 +69,7 @@ namespace OutSmart.DAXon.Functions
             return new QNameFnElaborator();
         }
 
-        internal class QNameFnElaborator : ItemElaborator
+        internal sealed class QNameFnElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

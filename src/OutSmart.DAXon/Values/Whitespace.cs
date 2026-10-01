@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Values
     /// <summary>
     /// This class provides helper methods and constants for handling whitespace
     /// </summary>
-    internal class Whitespace
+    internal sealed class Whitespace
     {
 
         public const int PRESERVE = 0;
@@ -520,7 +520,7 @@ namespace OutSmart.DAXon.Values
         /// <summary>
         /// An iterator that splits a string on whitespace boundaries, corresponding to the XPath 3.1 function tokenize#1
         /// </summary>
-        internal class Tokenizer : IAtomicIterator
+        internal sealed class Tokenizer : IAtomicIterator
         {
             private readonly UnicodeString input;
             private long position;
@@ -531,7 +531,7 @@ namespace OutSmart.DAXon.Values
                 this.position = 0;
             }
 
-            public virtual StringValue Next()
+            public StringValue Next()
             {
                 long start = position;
                 long eol = input.Length();
@@ -556,7 +556,7 @@ namespace OutSmart.DAXon.Values
             }
             AtomicValue IAtomicIterator.Next() => Next();
             IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
-            public virtual void Dispose() { }
+            public void Dispose() { }
         }
     }
 }

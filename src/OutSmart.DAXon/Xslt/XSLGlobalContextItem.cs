@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:global-context-item declaration in the stylesheet
     /// </summary>
-    internal class XSLGlobalContextItem : XSLContextItem
+    internal sealed class XSLGlobalContextItem : XSLContextItem
     {
         public override bool IsDeclaration()
         {

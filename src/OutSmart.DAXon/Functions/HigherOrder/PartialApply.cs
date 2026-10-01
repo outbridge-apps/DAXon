@@ -25,12 +25,12 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Functions.HigherOrder
 {
-    internal class PartialApply : Expression
+    internal sealed class PartialApply : Expression
     {
         private readonly Operand baseOp;
         private readonly Operand[] boundArgumentsOp; // contains null where the question marks appear
 
-        public virtual Expression BaseExpression
+        public Expression BaseExpression
         {
             get => baseOp.GetChildExpression(); set
             {
@@ -38,7 +38,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             }
         }
 
-        public virtual int NumberOfPlaceHolders
+        public int NumberOfPlaceHolders
         {
             get
             {
@@ -317,7 +317,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
         }
 
         //
-        private class PartialApplyElaborator : ItemElaborator
+        private sealed class PartialApplyElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

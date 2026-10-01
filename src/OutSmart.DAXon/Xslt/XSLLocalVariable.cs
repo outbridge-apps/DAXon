@@ -17,7 +17,7 @@ using System.Text;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class XSLLocalVariable : XSLGeneralVariable
+    internal sealed class XSLLocalVariable : XSLGeneralVariable
     {
         private static readonly HashSet<SourceBinding.BindingProperty> permittedAttributes = new HashSet<SourceBinding.BindingProperty> { SourceBinding.BindingProperty.SELECT, SourceBinding.BindingProperty.AS };
         public override SourceBinding GetBindingInformation(StructuredQName name)
@@ -42,7 +42,7 @@ namespace OutSmart.DAXon.Xslt
             sourceBinding.PrepareAttributes(permittedAttributes);
         }
 
-        public virtual SequenceType GetRequiredType()
+        public SequenceType GetRequiredType()
         {
             return sourceBinding.GetInferredType(true);
         }
@@ -53,7 +53,7 @@ namespace OutSmart.DAXon.Xslt
             base.FixupReferences();
         }
 
-        public virtual void CompileLocalVariable(Compilation exec, ComponentDeclaration decl)
+        public void CompileLocalVariable(Compilation exec, ComponentDeclaration decl)
         {
 
             sourceBinding.HandleSequenceConstructor(exec, decl); //}

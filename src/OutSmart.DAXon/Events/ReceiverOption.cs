@@ -15,7 +15,7 @@ using OutSmart.DAXon.Internal.Collections;
 
 namespace OutSmart.DAXon.Events
 {
-    internal class ReceiverOption
+    internal sealed class ReceiverOption
     {
         public const int NONE = 0;
         /// <summary>

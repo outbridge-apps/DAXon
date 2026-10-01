@@ -88,11 +88,11 @@ namespace OutSmart.DAXon.Functions
             return SequenceTool.ToLazySequence(result);
         }
 
-        private class IdMappingFunction : IMappingFunction
+        private sealed class IdMappingFunction : IMappingFunction
         {
             public ITreeInfo document;
             public int operation;
-            public virtual ISequenceIterator IMap(IItem item)
+            public ISequenceIterator IMap(IItem item)
             {
                 UnicodeString idrefs = Whitespace.Trim(item.UnicodeStringValue);
 
@@ -113,12 +113,12 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class Id : SuperId
+        internal sealed class Id : SuperId
         {
             public override int Op => ID;
         }
 
-        internal class ElementWithId : SuperId
+        internal sealed class ElementWithId : SuperId
         {
             public override int Op => ELEMENT_WITH_ID;
         }

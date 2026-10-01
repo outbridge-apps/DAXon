@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement the fn:path function with one argument
     /// </summary>
-    internal class Path_1 : ScalarSystemFunction
+    internal sealed class Path_1 : ScalarSystemFunction
     {
         public override AtomicValue Evaluate(IItem arg, IXPathContext context)
         {

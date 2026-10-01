@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement XPath function fn:data() with a single argument
     /// </summary>
-    internal class Data_1 : SystemFunction
+    internal sealed class Data_1 : SystemFunction
     {
         public override Expression MakeFunctionCall(params Expression[] arguments)
         {

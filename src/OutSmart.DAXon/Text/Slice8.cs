@@ -28,7 +28,7 @@ using OutSmart.DAXon.Internal.Collections;
 using System.IO;
 namespace OutSmart.DAXon.Text
 {
-    internal class Slice8 : UnicodeString
+    internal sealed class Slice8 : UnicodeString
     {
         private readonly byte[] bytes;
         private readonly int start;
@@ -37,11 +37,11 @@ namespace OutSmart.DAXon.Text
 
         public override int Width => 8;
 
-        public virtual byte[] ByteArray => bytes;
+        public byte[] ByteArray => bytes;
 
-        public virtual int Start => start;
+        public int Start => start;
 
-        public virtual int End => end;
+        public int End => end;
         public Slice8(byte[] bytes, int start, int end)
         {
             this.bytes = bytes;

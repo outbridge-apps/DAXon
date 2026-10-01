@@ -15,7 +15,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Collections.Zeno
 {
-    internal class ZenoChain<T> : IEnumerable<T>
+    internal sealed class ZenoChain<T> : IEnumerable<T>
     {
         private readonly List<List<T>> masterList;
 
@@ -31,7 +31,7 @@ namespace OutSmart.DAXon.Collections.Zeno
             this.masterList = masterList;
         }
 
-        public virtual ZenoChain<T> Add(T item)
+        public ZenoChain<T> Add(T item)
         {
             List<List<T>> masterList2 = new List<List<T>>(masterList);
 
@@ -114,7 +114,7 @@ namespace OutSmart.DAXon.Collections.Zeno
             }
         }
 
-        public virtual ZenoChain<T> Prepend(T item)
+        public ZenoChain<T> Prepend(T item)
         {
             List<List<T>> masterList2 = new List<List<T>>(masterList);
 
@@ -184,7 +184,7 @@ namespace OutSmart.DAXon.Collections.Zeno
             }
         }
 
-        public virtual ZenoChain<T> AddAll(IEnumerable<T> items)
+        public ZenoChain<T> AddAll(IEnumerable<T> items)
         {
             ZenoChain<T> result = this;
             foreach (T item in items)
@@ -195,7 +195,7 @@ namespace OutSmart.DAXon.Collections.Zeno
             return result;
         }
 
-        public virtual ZenoChain<T> Concat(ZenoChain<T> other)
+        public ZenoChain<T> Concat(ZenoChain<T> other)
         {
             List<List<T>> newMaster = new List<List<T>>(masterList.Count + other.masterList.Count);
             newMaster.AddRange(masterList);
@@ -203,7 +203,7 @@ namespace OutSmart.DAXon.Collections.Zeno
             return new ZenoChain<T>(newMaster).Reorganize();
         }
 
-        public virtual ZenoChain<T> Replace(int n, T value)
+        public ZenoChain<T> Replace(int n, T value)
         {
             if (n < 0)
             {
@@ -240,7 +240,7 @@ namespace OutSmart.DAXon.Collections.Zeno
             return new ZenoChain<T>(masterList2);
         }
 
-        public virtual ZenoChain<T> Remove(int n)
+        public ZenoChain<T> Remove(int n)
         {
             if (n < 0)
             {
@@ -280,7 +280,7 @@ namespace OutSmart.DAXon.Collections.Zeno
             return new ZenoChain<T>(masterList2);
         }
 
-        public virtual ZenoChain<T> Insert(int n, T value)
+        public ZenoChain<T> Insert(int n, T value)
         {
             if (n < 0)
             {
@@ -359,7 +359,7 @@ namespace OutSmart.DAXon.Collections.Zeno
             return new ZenoChain<T>(masterList);
         }
 
-        public virtual T Get(int n)
+        public T Get(int n)
         {
             if (n < 0)
             {
@@ -380,7 +380,7 @@ namespace OutSmart.DAXon.Collections.Zeno
             throw new IndexOutOfRangeException("Index " + n + " is too large");
         }
 
-        public virtual ZenoChain<T> SubList(int start, int end)
+        public ZenoChain<T> SubList(int start, int end)
         {
 
             // The implementation approach is as follows. We always create a new master list.
@@ -472,7 +472,7 @@ namespace OutSmart.DAXon.Collections.Zeno
         }
 
         // copy.
-        public virtual int Size()
+        public int Size()
         {
             int total = 0;
             foreach (List<T> segment in masterList)
@@ -484,13 +484,13 @@ namespace OutSmart.DAXon.Collections.Zeno
         }
 
         // copy.
-        public virtual bool IsEmpty()
+        public bool IsEmpty()
         {
             return masterList.Count == 0 || (masterList.Count == 1 && masterList[0].Count == 0);
         }
 
         // copy.
-        public virtual IEnumerator<T> IIterator()
+        public IEnumerator<T> IIterator()
         {
             return new ZenoChainIterator<T>(masterList);
         }

@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class implements the function parse-ietf-date(), which is a standard function in XPath 3.1
     /// </summary>
-    internal class ParseIetfDate : SystemFunction, ICallable
+    internal sealed class ParseIetfDate : SystemFunction, ICallable
     {
 
         /* what should this return? */
@@ -265,7 +265,7 @@ namespace OutSmart.DAXon.Functions
         }
 
         /* what should this return? */
-        public virtual DateTimeValue Parse(string input, IXPathContext context)
+        public DateTimeValue Parse(string input, IXPathContext context)
         {
             IList<string> tokens = Tokenize(input);
             int year = 0;
@@ -421,7 +421,7 @@ namespace OutSmart.DAXon.Functions
         /* Now expect either day number or month name */
         /* Now expect time string */
         /* Now expect time string ("after..." may differ) */
-        public virtual int ParseTime(IList<string> tokens, int currentPosition, IList<TimeValue> result, string input)
+        public int ParseTime(IList<string> tokens, int currentPosition, IList<TimeValue> result, string input)
         {
             byte hour;
             byte minute;

@@ -17,7 +17,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Numbering
 {
-    internal class IrregularGroupFormatter : NumericGroupFormatter
+    internal sealed class IrregularGroupFormatter : NumericGroupFormatter
     {
         private readonly IntSet groupingPositions;
         private readonly IList<int> separators;

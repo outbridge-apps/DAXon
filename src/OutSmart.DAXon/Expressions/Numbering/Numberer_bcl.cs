@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
     /// beyond Saxon-HE's built-in English. Number words, ordinal suffixes, half-day and era names
     /// stay English (inherited) — full localization of those ships only in Saxon-PE/EE.
     /// </summary>
-    internal class Numberer_bcl : Numberer_en
+    internal sealed class Numberer_bcl : Numberer_en
     {
         private readonly DateTimeFormatInfo names;
 

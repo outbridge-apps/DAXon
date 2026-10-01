@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class implements the fn:base-uri() function in XPath 2.0
     /// </summary>
-    internal class BaseUri_1 : SystemFunction, ICallable
+    internal sealed class BaseUri_1 : SystemFunction, ICallable
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
@@ -46,7 +46,7 @@ namespace OutSmart.DAXon.Functions
             return new BaseUriFnElaborator();
         }
 
-        internal class BaseUriFnElaborator : ItemElaborator
+        internal sealed class BaseUriFnElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

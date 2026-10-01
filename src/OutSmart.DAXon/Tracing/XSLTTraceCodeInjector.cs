@@ -20,7 +20,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Tracing
 {
-    internal class XSLTTraceCodeInjector : TraceCodeInjector
+    internal sealed class XSLTTraceCodeInjector : TraceCodeInjector
     {
         protected override bool IsApplicable(Expression exp)
         {

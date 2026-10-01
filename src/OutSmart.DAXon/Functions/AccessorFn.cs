@@ -129,122 +129,122 @@ namespace OutSmart.DAXon.Functions
             , AMPM_OF_DAY
         }
 
-        internal class YearFromDateTime : AccessorFn
+        internal sealed class YearFromDateTime : AccessorFn
         {
             public override Component ComponentId => Component.YEAR;
         }
 
-        internal class MonthFromDateTime : AccessorFn
+        internal sealed class MonthFromDateTime : AccessorFn
         {
             public override Component ComponentId => Component.MONTH;
         }
 
-        internal class DayFromDateTime : AccessorFn
+        internal sealed class DayFromDateTime : AccessorFn
         {
             public override Component ComponentId => Component.DAY;
         }
 
-        internal class HoursFromDateTime : AccessorFn
+        internal sealed class HoursFromDateTime : AccessorFn
         {
             public override Component ComponentId => Component.HOURS;
         }
 
-        internal class MinutesFromDateTime : AccessorFn
+        internal sealed class MinutesFromDateTime : AccessorFn
         {
             public override Component ComponentId => Component.MINUTES;
         }
 
-        internal class SecondsFromDateTime : AccessorFn
+        internal sealed class SecondsFromDateTime : AccessorFn
         {
             public override Component ComponentId => Component.SECONDS;
         }
 
-        internal class TimezoneFromDateTime : AccessorFn
+        internal sealed class TimezoneFromDateTime : AccessorFn
         {
             public override Component ComponentId => Component.TIMEZONE;
         }
 
-        internal class YearFromDate : AccessorFn
+        internal sealed class YearFromDate : AccessorFn
         {
             public override Component ComponentId => Component.YEAR;
         }
 
-        internal class MonthFromDate : AccessorFn
+        internal sealed class MonthFromDate : AccessorFn
         {
             public override Component ComponentId => Component.MONTH;
         }
 
-        internal class DayFromDate : AccessorFn
+        internal sealed class DayFromDate : AccessorFn
         {
             public override Component ComponentId => Component.DAY;
         }
 
-        internal class TimezoneFromDate : AccessorFn
+        internal sealed class TimezoneFromDate : AccessorFn
         {
             public override Component ComponentId => Component.TIMEZONE;
         }
 
-        internal class HoursFromTime : AccessorFn
+        internal sealed class HoursFromTime : AccessorFn
         {
             public override Component ComponentId => Component.HOURS;
         }
 
-        internal class MinutesFromTime : AccessorFn
+        internal sealed class MinutesFromTime : AccessorFn
         {
             public override Component ComponentId => Component.MINUTES;
         }
 
-        internal class SecondsFromTime : AccessorFn
+        internal sealed class SecondsFromTime : AccessorFn
         {
             public override Component ComponentId => Component.SECONDS;
         }
 
-        internal class TimezoneFromTime : AccessorFn
+        internal sealed class TimezoneFromTime : AccessorFn
         {
             public override Component ComponentId => Component.TIMEZONE;
         }
 
-        internal class YearsFromDuration : AccessorFn
+        internal sealed class YearsFromDuration : AccessorFn
         {
             public override Component ComponentId => Component.YEAR;
         }
 
-        internal class MonthsFromDuration : AccessorFn
+        internal sealed class MonthsFromDuration : AccessorFn
         {
             public override Component ComponentId => Component.MONTH;
         }
 
-        internal class DaysFromDuration : AccessorFn
+        internal sealed class DaysFromDuration : AccessorFn
         {
             public override Component ComponentId => Component.DAY;
         }
 
-        internal class HoursFromDuration : AccessorFn
+        internal sealed class HoursFromDuration : AccessorFn
         {
             public override Component ComponentId => Component.HOURS;
         }
 
-        internal class MinutesFromDuration : AccessorFn
+        internal sealed class MinutesFromDuration : AccessorFn
         {
             public override Component ComponentId => Component.MINUTES;
         }
 
-        internal class SecondsFromDuration : AccessorFn
+        internal sealed class SecondsFromDuration : AccessorFn
         {
             public override Component ComponentId => Component.SECONDS;
         }
 
-        internal class LocalNameFromQName : AccessorFn
+        internal sealed class LocalNameFromQName : AccessorFn
         {
             public override Component ComponentId => Component.LOCALNAME;
         }
 
-        internal class PrefixFromQName : AccessorFn
+        internal sealed class PrefixFromQName : AccessorFn
         {
             public override Component ComponentId => Component.PREFIX;
         }
 
-        internal class NamespaceUriFromQName : AccessorFn
+        internal sealed class NamespaceUriFromQName : AccessorFn
         {
             public override Component ComponentId => Component.NAMESPACE;
         }
@@ -252,7 +252,7 @@ namespace OutSmart.DAXon.Functions
         /// <summary>
         /// Elaborator for accessor functions such as hours-from-date-Time, minutes-from-duration
         /// </summary>
-        internal class AccessorFnElaborator : ItemElaborator
+        internal sealed class AccessorFnElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

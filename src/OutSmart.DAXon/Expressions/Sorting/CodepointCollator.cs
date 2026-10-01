@@ -19,32 +19,32 @@ namespace OutSmart.DAXon.Expressions.Sorting
     /// <summary>
     /// A collating sequence that uses Unicode codepoint ordering
     /// </summary>
-    internal class CodepointCollator : IStringCollator, ISubstringMatcher
+    internal sealed class CodepointCollator : IStringCollator, ISubstringMatcher
     {
         private static readonly CodepointCollator theInstance = new CodepointCollator();
 
-        public virtual string CollationURI => NamespaceConstant.CODEPOINT_COLLATION_URI;
+        public string CollationURI => NamespaceConstant.CODEPOINT_COLLATION_URI;
         public static CodepointCollator GetInstance()
         {
             return theInstance;
         }
 
-        public virtual int CompareStrings(UnicodeString a, UnicodeString b)
+        public int CompareStrings(UnicodeString a, UnicodeString b)
         {
             return a.CompareTo(b);
         }
 
-        public virtual bool ComparesEqual(UnicodeString s1, UnicodeString s2)
+        public bool ComparesEqual(UnicodeString s1, UnicodeString s2)
         {
             return s1.Equals(s2);
         }
 
-        public virtual bool Contains(UnicodeString s1, UnicodeString s2)
+        public bool Contains(UnicodeString s1, UnicodeString s2)
         {
             return s1.IndexOf(s2, 0) >= 0;
         }
 
-        public virtual bool EndsWith(UnicodeString s1, UnicodeString s2)
+        public bool EndsWith(UnicodeString s1, UnicodeString s2)
         {
             if (s2.Length() > s1.Length())
             {
@@ -54,12 +54,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return s1.HasSubstring(s2, s1.Length() - s2.Length());
         }
 
-        public virtual bool StartsWith(UnicodeString s1, UnicodeString s2)
+        public bool StartsWith(UnicodeString s1, UnicodeString s2)
         {
             return s1.HasSubstring(s2, 0);
         }
 
-        public virtual UnicodeString SubstringAfter(UnicodeString s1, UnicodeString s2)
+        public UnicodeString SubstringAfter(UnicodeString s1, UnicodeString s2)
         {
             long i = s1.IndexOf(s2, 0);
             if (i < 0)
@@ -70,7 +70,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return s1.Substring(i + s2.Length());
         }
 
-        public virtual UnicodeString SubstringBefore(UnicodeString s1, UnicodeString s2)
+        public UnicodeString SubstringBefore(UnicodeString s1, UnicodeString s2)
         {
             long j = s1.IndexOf(s2, 0);
             if (j < 0)
@@ -81,12 +81,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return s1.Prefix(j);
         }
 
-        public virtual IAtomicMatchKey GetCollationKey(UnicodeString s)
+        public IAtomicMatchKey GetCollationKey(UnicodeString s)
         {
             return s;
         }
 
-        public virtual bool IsEqualToEmpty(UnicodeString s1)
+        public bool IsEqualToEmpty(UnicodeString s1)
         {
             return s1.IsEmpty();
         }

@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
     /// A Callable that wraps another Callable and a dynamic context, in effect acting as a closure that
     /// executes the original callable with a saved context.
     /// </summary>
-    internal class CallableWithBoundFocus : ICallable
+    internal sealed class CallableWithBoundFocus : ICallable
     {
         private readonly ICallable target;
         private readonly IXPathContext boundContext;

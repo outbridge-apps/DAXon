@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Elaboration
 {
-    internal class LocalVariableEvaluator : ISequenceEvaluator
+    internal sealed class LocalVariableEvaluator : ISequenceEvaluator
     {
         readonly int slot;
         public LocalVariableEvaluator(int slot)
@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             this.slot = slot;
         }
 
-        public virtual ISequence Evaluate(IXPathContext context)
+        public ISequence Evaluate(IXPathContext context)
         {
             return context.EvaluateLocalVariable(slot).Materialize();
         }

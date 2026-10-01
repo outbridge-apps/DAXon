@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Events
     /// <para>This class is used only if an ItemSeparator is specified. In the absence of an ItemSeparator,
     /// the insertion of a single space performed by the ComplexContentOutputter serves the purpose.</para>
     /// </summary>
-    internal class SequenceNormalizerWithItemSeparator : SequenceNormalizer
+    internal sealed class SequenceNormalizerWithItemSeparator : SequenceNormalizer
     {
         private readonly UnicodeString separator;
         private bool first = true;

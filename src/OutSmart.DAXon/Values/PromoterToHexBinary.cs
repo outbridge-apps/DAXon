@@ -15,7 +15,7 @@ using OutSmart.DAXon.Types;
 // since TypeChecker has `using OutSmart.DAXon.Values`.
 namespace OutSmart.DAXon.Values
 {
-    internal class PromoterToHexBinary : Converter
+    internal sealed class PromoterToHexBinary : Converter
     {
         public PromoterToHexBinary() { }
     }

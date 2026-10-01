@@ -11,7 +11,7 @@ namespace OutSmart.DAXon.Resources
 {
     // Upstream: XmlResource.FACTORY lambda. Was a throwing stub — DirectoryCollection could never
     // deliver XML documents.
-    internal class XmlResourceFactory : IResourceFactory
+    internal sealed class XmlResourceFactory : IResourceFactory
     {
         public IResource MakeResource(IXPathContext context, AbstractResourceCollection.InputDetails details)
         {

@@ -303,7 +303,7 @@ namespace OutSmart.DAXon.Expressions
             return new ItemCheckerElaborator();
         }
 
-        internal class ItemCheckerElaborator : PullElaborator
+        internal sealed class ItemCheckerElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

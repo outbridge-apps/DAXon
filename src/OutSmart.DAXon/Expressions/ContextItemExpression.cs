@@ -236,7 +236,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for the context item expression, "dot".
         /// </summary>
-        internal class ContextItemElaborator : ItemElaborator
+        internal sealed class ContextItemElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

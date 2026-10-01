@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Serialization
     /// CDATAFilter: This ProxyReceiver converts character data to CDATA sections,
     /// if the character data belongs to one of a set of element types to be handled this way.
     /// </summary>
-    internal class CDATAFilter : ProxyReceiver
+    internal sealed class CDATAFilter : ProxyReceiver
     {
         private UnicodeBuilder buffer = new UnicodeBuilder();
         private readonly Stack<INodeName> stack = new Stack<INodeName>();
@@ -240,7 +240,7 @@ namespace OutSmart.DAXon.Serialization
         /// </summary>
         /// <param name="elementName">identifies the name of element we are interested in</param>
         /// <returns>true if this element is included in cdata-section-elements</returns>
-        protected virtual bool IsCDATA(INodeName elementName)
+        protected bool IsCDATA(INodeName elementName)
         {
             return nameList.Contains(elementName);
         }

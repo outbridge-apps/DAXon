@@ -23,7 +23,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class GroupAdjacentIterator : IGroupIterator, ILastPositionFinder, ILookaheadIterator
+    internal sealed class GroupAdjacentIterator : IGroupIterator, ILastPositionFinder, ILookaheadIterator
     {
         private readonly IPullEvaluator select;
         private readonly IFocusIterator population;
@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private int position = 0;
         private bool composite = false;
 
-        public virtual bool HasNext => nextItem != null;
+        public bool HasNext => nextItem != null;
         public GroupAdjacentIterator(IPullEvaluator select, Expression keyExpression, IXPathContext baseContext, IStringCollator collator, bool composite)
         {
             this.select = select;
@@ -79,12 +79,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual bool SupportsGetLength()
+        public bool SupportsGetLength()
         {
             return true;
         }
 
-        public virtual int GetLength()
+        public int GetLength()
         {
             try
             {
@@ -248,22 +248,22 @@ namespace OutSmart.DAXon.Expressions.Sorting
             nextMatchKey = null;
         }
 
-        public virtual IAtomicSequence GetCurrentGroupingKey()
+        public IAtomicSequence GetCurrentGroupingKey()
         {
             return currentKey;
         }
 
-        public virtual IGroundedValue CurrentGroup()
+        public IGroundedValue CurrentGroup()
         {
             return SequenceExtent.MakeSequenceExtent(currentMembers);
         }
 
-        public virtual bool SupportsHasNext()
+        public bool SupportsHasNext()
         {
             return true;
         }
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             try
             {
@@ -304,7 +304,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             population.Dispose();
         }

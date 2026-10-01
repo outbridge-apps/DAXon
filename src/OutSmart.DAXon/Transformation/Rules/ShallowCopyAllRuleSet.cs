@@ -24,7 +24,7 @@ using OutSmart.DAXon.Values.Maps;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Transformation.Rules
 {
-    internal class ShallowCopyAllRuleSet : ShallowCopyRuleSet
+    internal sealed class ShallowCopyAllRuleSet : ShallowCopyRuleSet
     {
         private static readonly ShallowCopyAllRuleSet THE_INSTANCE = new ShallowCopyAllRuleSet();
 
@@ -144,7 +144,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             }
         }
 
-        private class ShallowCopyProxyOutputterForMaps : ProxyOutputter
+        private sealed class ShallowCopyProxyOutputterForMaps : ProxyOutputter
         {
             private readonly ILocation locationId;
             public ShallowCopyProxyOutputterForMaps(ComplexContentOutputter cco, ILocation locationId) : base(cco)
@@ -182,7 +182,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             }
         }
 
-        private class ShallowCopyProxyOutputterForArrays : ProxyOutputter
+        private sealed class ShallowCopyProxyOutputterForArrays : ProxyOutputter
         {
             private readonly ILocation locationId;
             public ShallowCopyProxyOutputterForArrays(ComplexContentOutputter cco, ILocation locationId) : base(cco)

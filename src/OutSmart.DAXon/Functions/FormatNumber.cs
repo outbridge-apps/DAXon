@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implementation of format-number() function. Note this has no dependency on number formatting in the JDK.
     /// </summary>
-    internal class FormatNumber : SystemFunction, ICallable, IStatefulSystemFunction
+    internal sealed class FormatNumber : SystemFunction, ICallable, IStatefulSystemFunction
     {
         private StructuredQName decimalFormatName; // null for the default format
         private string picture;
@@ -459,7 +459,7 @@ namespace OutSmart.DAXon.Functions
         /* 4.7.4 Rule 8 */
         /* 4.7.4 Rule 9 */
         /* 4.7.4 Rule 10 */
-        protected virtual DecimalSymbols GetNamedDecimalFormat(DecimalFormatManager dfm, string lexicalName)
+        protected DecimalSymbols GetNamedDecimalFormat(DecimalFormatManager dfm, string lexicalName)
         {
             DecimalSymbols dfs;
             StructuredQName qName;
@@ -525,7 +525,7 @@ namespace OutSmart.DAXon.Functions
         ISequence ICallable.Call(IXPathContext arg0, ISequence[] arg1) => Call(arg0, arg1);
         SystemFunction IStatefulSystemFunction.Copy() => Copy();
 
-        internal class SubPicture
+        internal sealed class SubPicture
         {
             protected int minWholePartSize = 0;
             protected int maxWholePartSize = 0;
@@ -919,7 +919,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            public virtual string Format(NumericValue value, DecimalSymbols dfs, string minusSign)
+            public string Format(NumericValue value, DecimalSymbols dfs, string minusSign)
             {
 
                 if (value.IsNaN())

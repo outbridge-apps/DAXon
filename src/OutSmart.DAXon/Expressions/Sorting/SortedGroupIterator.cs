@@ -21,7 +21,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class SortedGroupIterator : SortedIterator, IGroupIterator
+    internal sealed class SortedGroupIterator : SortedIterator, IGroupIterator
     {
         public SortedGroupIterator(IXPathContext context, IGroupIterator @base, ISortKeyEvaluator sortKeyEvaluator, IAtomicComparer[] comparators) : base(context, @base, sortKeyEvaluator, comparators, true)
         {

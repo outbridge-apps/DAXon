@@ -618,7 +618,7 @@ namespace OutSmart.DAXon.Expressions
             return new LetExprElaborator();
         }
 
-        internal class LetExprElaborator : PullElaborator
+        internal sealed class LetExprElaborator : PullElaborator
         {
             private ISequenceEvaluator MakeSequenceEvaluator(LetExpression let)
             {
@@ -812,7 +812,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        private class EagerLocalVariableEvaluator : ISequenceEvaluator
+        private sealed class EagerLocalVariableEvaluator : ISequenceEvaluator
         {
             private readonly int slot;
             private readonly ISequenceEvaluator selectEval;
@@ -824,7 +824,7 @@ namespace OutSmart.DAXon.Expressions
                 this.actionEval = actionEval;
             }
 
-            public virtual ISequence Evaluate(IXPathContext context)
+            public ISequence Evaluate(IXPathContext context)
             {
                 int savedOutputState = context.TemporaryOutputState;
                 context.TemporaryOutputState = StandardNames.XSL_VARIABLE;

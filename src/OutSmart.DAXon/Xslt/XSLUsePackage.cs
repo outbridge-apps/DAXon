@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:use-package elements in stylesheet.
     /// </summary>
-    internal class XSLUsePackage : StyleElement
+    internal sealed class XSLUsePackage : StyleElement
     {
         private string nameAtt = null;
         private PackageVersionRanges versionRanges = null;
@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        public virtual IList<XSLAccept> Acceptors
+        public IList<XSLAccept> Acceptors
         {
             get
             {
@@ -103,7 +103,7 @@ namespace OutSmart.DAXon.Xslt
                 return overrides;
             }
         }
-        public virtual void FindUsedPackage(CompilerInfo info)
+        public void FindUsedPackage(CompilerInfo info)
         {
             if (usedPackage == null)
             {
@@ -238,7 +238,7 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        public virtual void GatherNamedOverrides(PrincipalStylesheetModule module, IList<ComponentDeclaration> topLevel, HashSet<SymbolicName> overrides)
+        public void GatherNamedOverrides(PrincipalStylesheetModule module, IList<ComponentDeclaration> topLevel, HashSet<SymbolicName> overrides)
         {
             if (usedPackage == null)
             {
@@ -268,7 +268,7 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        public virtual void GatherRuleOverrides(PrincipalStylesheetModule module, HashSet<SymbolicName> overrides)
+        public void GatherRuleOverrides(PrincipalStylesheetModule module, HashSet<SymbolicName> overrides)
         {
             StylesheetPackage thisPackage = module.GetStylesheetPackage();
             RuleManager ruleManager = module.GetRuleManager();

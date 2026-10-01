@@ -81,7 +81,7 @@ namespace OutSmart.DAXon.Functions
             return EvaluateItem(context);
         }
 
-        internal class Position : PositionAndLast
+        internal sealed class Position : PositionAndLast
         {
             public override Int64Value EvaluateItem(IXPathContext c)
             {
@@ -99,7 +99,7 @@ namespace OutSmart.DAXon.Functions
                 return new PositionFnElaborator();
             }
 
-            internal class PositionFnElaborator : ItemElaborator
+            internal sealed class PositionFnElaborator : ItemElaborator
             {
                 public override IItemEvaluator ElaborateForItem()
                 {
@@ -126,7 +126,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class Last : PositionAndLast
+        internal sealed class Last : PositionAndLast
         {
 
             public override string StreamerName => "Last";
@@ -147,7 +147,7 @@ namespace OutSmart.DAXon.Functions
                 return new LastFnElaborator();
             }
 
-            internal class LastFnElaborator : ItemElaborator
+            internal sealed class LastFnElaborator : ItemElaborator
             {
                 public override IItemEvaluator ElaborateForItem()
                 {

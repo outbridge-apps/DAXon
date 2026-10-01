@@ -32,14 +32,14 @@ using OutSmart.DAXon.Internal;
 using System.IO;
 namespace OutSmart.DAXon.Text
 {
-    internal class Twine8 : UnicodeString
+    internal sealed class Twine8 : UnicodeString
     {
 
         private static readonly bool CHECKING = Configuration.IsAssertionsEnabled();
         protected byte[] bytes;
         protected int cachedHash = 0;
 
-        public virtual byte[] ByteArray => bytes;
+        public byte[] ByteArray => bytes;
 
         public override int Width => 8;
         public Twine8(byte[] bytes)

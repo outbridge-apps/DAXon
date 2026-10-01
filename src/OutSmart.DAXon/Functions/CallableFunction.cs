@@ -24,14 +24,14 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// A function item that wraps a ICallable
     /// </summary>
-    internal class CallableFunction : AbstractFunction
+    internal sealed class CallableFunction : AbstractFunction
     {
         private ICallable callable;
         private readonly SymbolicName.F name;
         private IFunctionItemType type;
         private AnnotationList annotations;
 
-        public virtual ICallable Callable
+        public ICallable Callable
         {
             get => callable; set
             {

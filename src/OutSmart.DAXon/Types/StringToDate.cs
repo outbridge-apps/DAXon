@@ -13,7 +13,7 @@ using OutSmart.DAXon.Text;
 
 namespace OutSmart.DAXon.Types
 {
-    internal class StringToDate : StringConverter
+    internal sealed class StringToDate : StringConverter
     {
         private readonly StringConverter inner;
         public StringToDate(object x) : base(x as ConversionRules) { inner = new StringConverter.StringToDate(x as ConversionRules); }

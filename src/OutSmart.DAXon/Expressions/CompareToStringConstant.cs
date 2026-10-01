@@ -24,11 +24,11 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class CompareToStringConstant : CompareToConstant
+    internal sealed class CompareToStringConstant : CompareToConstant
     {
         private readonly UnicodeString comparand;
 
-        public virtual UnicodeString Comparand => comparand;
+        public UnicodeString Comparand => comparand;
 
         public override string ExpressionName => "compareToString";
 
@@ -106,7 +106,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for a "compare to string constant" expression
         /// </summary>
-        internal class CompareToStringConstantElaborator : BooleanElaborator
+        internal sealed class CompareToStringConstantElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

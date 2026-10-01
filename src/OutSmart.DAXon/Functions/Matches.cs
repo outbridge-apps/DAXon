@@ -24,14 +24,14 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class implements the 3-argument matches() function for regular expression matching
     /// </summary>
-    internal class Matches : RegexFunction
+    internal sealed class Matches : RegexFunction
     {
         protected override bool AllowRegexMatchingEmptyString()
         {
             return true;
         }
 
-        public virtual bool EvalMatches(UnicodeString input, UnicodeString regex, UnicodeString flags, IXPathContext context)
+        public bool EvalMatches(UnicodeString input, UnicodeString regex, UnicodeString flags, IXPathContext context)
         {
             IRegularExpression re;
             if (regex == null)
@@ -73,7 +73,7 @@ namespace OutSmart.DAXon.Functions
             return new MatchesFnElaborator();
         }
 
-        internal class MatchesFnElaborator : BooleanElaborator
+        internal sealed class MatchesFnElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

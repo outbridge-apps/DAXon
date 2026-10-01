@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
     /// (QName) and arity, and returns a function item representing that function if found, or an empty
     /// sequence if not found.
     /// </summary>
-    internal class FunctionLookup : ContextAccessorFunction
+    internal sealed class FunctionLookup : ContextAccessorFunction
     {
         private IXPathContext boundContext = null;
 
@@ -163,7 +163,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             return new UserFunctionReference.BoundUserFunction(fi, (int)arity.LongValue(), target, agent, c.GetController());
         }
 
-        internal class FunctionLookupExportAgent : IExportAgent
+        internal sealed class FunctionLookupExportAgent : IExportAgent
         {
             private readonly QNameValue qName;
             private readonly IntegerValue arity;

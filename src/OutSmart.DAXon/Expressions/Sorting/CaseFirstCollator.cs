@@ -16,13 +16,13 @@ namespace OutSmart.DAXon.Expressions.Sorting
     /// <para>Case is irrelevant, unless the strings are equal ignoring
     /// case, in which case lowercase comes first.</para>
     /// </summary>
-    internal class CaseFirstCollator : IStringCollator
+    internal sealed class CaseFirstCollator : IStringCollator
     {
         private readonly IStringCollator baseCollator;
         private readonly bool upperFirst;
         private readonly string uri;
 
-        public virtual string CollationURI => uri;
+        public string CollationURI => uri;
 
         public CaseFirstCollator(IStringCollator @base, bool upperFirst, string collationURI)
         {
@@ -48,7 +48,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return stringCollator;
         }
 
-        public virtual int CompareStrings(UnicodeString a, UnicodeString b)
+        public int CompareStrings(UnicodeString a, UnicodeString b)
         {
             a = a.Tidy();
             b = b.Tidy();
@@ -112,17 +112,17 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual bool ComparesEqual(UnicodeString s1, UnicodeString s2)
+        public bool ComparesEqual(UnicodeString s1, UnicodeString s2)
         {
             return CompareStrings(s1, s2) == 0;
         }
 
-        public virtual bool IsEqualToEmpty(UnicodeString s1)
+        public bool IsEqualToEmpty(UnicodeString s1)
         {
             return baseCollator.IsEqualToEmpty(s1);
         }
 
-        public virtual IAtomicMatchKey GetCollationKey(UnicodeString s)
+        public IAtomicMatchKey GetCollationKey(UnicodeString s)
         {
             IAtomicMatchKey baseKey = baseCollator.GetCollationKey(s);
 

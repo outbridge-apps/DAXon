@@ -345,7 +345,7 @@ namespace OutSmart.DAXon.Expressions
             return new ValueComparisonElaborator();
         }
 
-        internal class ValueComparisonElaborator : ItemElaborator
+        internal sealed class ValueComparisonElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

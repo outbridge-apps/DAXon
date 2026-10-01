@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement the XPath 3.0 fn:environment-variable() function
     /// </summary>
-    internal class EnvironmentVariable : SystemFunction
+    internal sealed class EnvironmentVariable : SystemFunction
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

@@ -18,7 +18,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Text
 {
-    internal class StringTool
+    internal sealed class StringTool
     {
         public static int GetStringLength(string s)
         {

@@ -11,7 +11,7 @@ namespace OutSmart.DAXon.Trees.Iterators
     /// <summary>
     /// An iterator that prepends a given item to the items returned by another iterator.
     /// </summary>
-    internal class PrependSequenceIterator : ISequenceIterator
+    internal sealed class PrependSequenceIterator : ISequenceIterator
     {
         internal IItem start;
         internal readonly ISequenceIterator @base;

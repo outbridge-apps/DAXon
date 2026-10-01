@@ -50,7 +50,7 @@ namespace OutSmart.DAXon.Lib
             return new IExtensionFunction(this, arity);
         }
 
-        private class IExtensionFunction : AbstractFunction
+        private sealed class IExtensionFunction : AbstractFunction
         {
             private readonly ExtensionFunctionDefinition definition;
             private readonly int arity;

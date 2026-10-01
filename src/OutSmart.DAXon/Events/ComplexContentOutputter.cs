@@ -818,7 +818,7 @@ namespace OutSmart.DAXon.Events
 
         /**/
         /**/
-        private class UnicodeStringReceiver : IUniStringConsumer
+        private sealed class UnicodeStringReceiver : IUniStringConsumer
         {
             private readonly ComplexContentOutputter cco;
             private bool previousAtomic;
@@ -838,7 +838,7 @@ namespace OutSmart.DAXon.Events
                 this.inUse = true;
             }
 
-            public virtual void Open()
+            public void Open()
             {
                 if (previousAtomic && !asTextNode)
                 {
@@ -846,7 +846,7 @@ namespace OutSmart.DAXon.Events
                 }
             }
 
-            public virtual IUniStringConsumer Accept(UnicodeString chars)
+            public IUniStringConsumer Accept(UnicodeString chars)
             {
                 cco.Characters(chars, location, ReceiverOption.NONE);
                 return this;
@@ -854,11 +854,11 @@ namespace OutSmart.DAXon.Events
 
             // Abort-path release: the pooled slot is reclaimed by Close on the success path only;
             // an aborted run just abandons it (safe -- the pool re-arms on next acquire).
-            public virtual void Dispose()
+            public void Dispose()
             {
             }
 
-            public virtual void Close()
+            public void Close()
             {
                 // Idempotent: a second Close from a misbehaving caller must not release the
                 // cached instance while a subsequent caller is using it

@@ -58,7 +58,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class ImplicitTimezone : DynamicContextAccessor
+        internal sealed class ImplicitTimezone : DynamicContextAccessor
         {
             public override AtomicValue Evaluate(IXPathContext context)
             {
@@ -67,7 +67,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class CurrentDateTime : DynamicContextAccessor
+        internal sealed class CurrentDateTime : DynamicContextAccessor
         {
             public override AtomicValue Evaluate(IXPathContext context)
             {
@@ -75,7 +75,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class CurrentDate : DynamicContextAccessor
+        internal sealed class CurrentDate : DynamicContextAccessor
         {
             public override AtomicValue Evaluate(IXPathContext context)
             {
@@ -84,7 +84,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class CurrentTime : DynamicContextAccessor
+        internal sealed class CurrentTime : DynamicContextAccessor
         {
             public override AtomicValue Evaluate(IXPathContext context)
             {
@@ -93,7 +93,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class DefaultLanguage : DynamicContextAccessor
+        internal sealed class DefaultLanguage : DynamicContextAccessor
         {
             public override AtomicValue Evaluate(IXPathContext context)
             {

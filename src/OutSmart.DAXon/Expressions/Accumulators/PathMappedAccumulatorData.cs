@@ -11,7 +11,7 @@ using OutSmart.DAXon.Model;
 
 namespace OutSmart.DAXon.Expressions.Accumulators
 {
-    internal class PathMappedAccumulatorData : IIAccumulatorData
+    internal sealed class PathMappedAccumulatorData : IIAccumulatorData
     {
         public PathMappedAccumulatorData(object a, object b) { }
         public Accumulator GetAccumulator() => throw new NotImplementedException("STUB: PathMappedAccumulatorData.GetAccumulator not ported (excluded stub)");

@@ -14,7 +14,7 @@ using System.Text;
 namespace OutSmart.DAXon.Serialization.CharCodes
 {
     // UTF8CharacterSet stub must implement ICharacterSet (10 callers assign to ICharacterSet).
-    internal class UTF8CharacterSet : ICharacterSet
+    internal sealed class UTF8CharacterSet : ICharacterSet
     {
         private static readonly UTF8CharacterSet _instance = new UTF8CharacterSet();
         public string CanonicalName => "UTF-8";

@@ -20,7 +20,7 @@ using System.Text;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class XSLWithParam : XSLGeneralVariable
+    internal sealed class XSLWithParam : XSLGeneralVariable
     {
         private readonly HashSet<SourceBinding.BindingProperty> allowedAttributes = new HashSet<SourceBinding.BindingProperty> { SourceBinding.BindingProperty.SELECT, SourceBinding.BindingProperty.AS, SourceBinding.BindingProperty.TUNNEL };
         public override void PrepareAttributes()
@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Xslt
             sourceBinding.PrepareAttributes(allowedAttributes);
         }
 
-        public virtual bool IsTunnelParam()
+        public bool IsTunnelParam()
         {
             return sourceBinding.HasProperty(SourceBinding.BindingProperty.TUNNEL);
         }
@@ -52,12 +52,12 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        public virtual void CheckAgainstRequiredType(SequenceType required)
+        public void CheckAgainstRequiredType(SequenceType required)
         {
             sourceBinding.CheckAgainstRequiredType(required);
         }
 
-        public virtual WithParam CompileWithParam(Expression parent, Compilation exec, ComponentDeclaration decl)
+        public WithParam CompileWithParam(Expression parent, Compilation exec, ComponentDeclaration decl)
         {
             sourceBinding.HandleSequenceConstructor(exec, decl);
             WithParam inst = new WithParam();

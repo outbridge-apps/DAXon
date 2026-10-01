@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class XSLMatchingSubstring : StyleElement
+    internal sealed class XSLMatchingSubstring : StyleElement
     {
         private Expression select = null;
         public override void PrepareAttributes()
@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        public virtual Expression GetSelectExpression()
+        public Expression GetSelectExpression()
         {
             return select;
         }

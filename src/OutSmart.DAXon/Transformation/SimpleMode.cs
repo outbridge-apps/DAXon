@@ -1374,7 +1374,7 @@ namespace OutSmart.DAXon.Transformation
             this.stackFrameSlotsNeeded = slots;
         }
 
-        private class RuleGroupExplainAction : IRuleGroupAction
+        private sealed class RuleGroupExplainAction : IRuleGroupAction
         {
             private string type;
             private readonly ExpressionPresenter presenter;
@@ -1383,47 +1383,47 @@ namespace OutSmart.DAXon.Transformation
                 this.presenter = presenter;
             }
 
-            public virtual void Start()
+            public void Start()
             {
                 presenter.StartElement("ruleSet");
                 presenter.EmitAttribute("type", type);
             }
 
-            public virtual void SetLabel(string type)
+            public void SetLabel(string type)
             {
                 this.type = type;
             }
 
-            public virtual void Start(int i)
+            public void Start(int i)
             {
                 presenter.StartElement("ruleChain");
                 presenter.EmitAttribute("key", presenter.GetNamePool().GetClarkName(i));
             }
 
-            public virtual void End()
+            public void End()
             {
                 presenter.EndElement();
             }
         }
 
-        private class RuleSorter
+        private sealed class RuleSorter
         {
             public List<Rule> rules = new List<Rule>(100);
             private readonly int start;
 
-            public virtual int NumberOfRules => rules.Count;
+            public int NumberOfRules => rules.Count;
             public RuleSorter(int start)
             {
                 this.start = start;
             }
 
-            public virtual void AddRule(Rule rule)
+            public void AddRule(Rule rule)
             {
                 rules.Add(rule);
             }
 
             //
-            public virtual void AllocateRanks()
+            public void AllocateRanks()
             {
 
                 rules.Sort((x, y) => x.CompareComputedRank(y));

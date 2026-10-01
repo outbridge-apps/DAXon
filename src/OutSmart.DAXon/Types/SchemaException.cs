@@ -16,7 +16,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Types
 {
-    internal class SchemaException : XPathException
+    internal sealed class SchemaException : XPathException
     {
 
         public SchemaException(string message) : base(message)

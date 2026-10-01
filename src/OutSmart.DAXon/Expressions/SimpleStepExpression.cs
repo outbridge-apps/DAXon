@@ -120,7 +120,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for a simple step expression, that is X/axis.Y where X evaluates to a singleton
         /// </summary>
-        internal class SimpleStepExprElaborator : PullElaborator
+        internal sealed class SimpleStepExprElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

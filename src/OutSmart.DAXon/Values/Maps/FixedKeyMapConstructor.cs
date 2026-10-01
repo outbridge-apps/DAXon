@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Values.Maps
     /// insertion-order-determined), so serialization stays byte-for-byte identical.
     /// Restricted to distinct string-literal keys so duplicate/typed-key semantics stay on the old path.
     /// </summary>
-    internal class FixedKeyMapConstructor : Expression
+    internal sealed class FixedKeyMapConstructor : Expression
     {
         private readonly string[] keys;
         private readonly StringValue[] keyValues;   // pre-built, shared across evaluations
@@ -174,7 +174,7 @@ namespace OutSmart.DAXon.Values.Maps
             return new FixedKeyMapElaborator();
         }
 
-        private class FixedKeyMapElaborator : ItemElaborator
+        private sealed class FixedKeyMapElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

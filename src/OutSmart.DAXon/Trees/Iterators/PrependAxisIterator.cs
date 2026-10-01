@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Trees.Iterators
     // Expressions.Instructions (used by ForEach) and GeneralComparison10 imports both namespaces — sharing the
     // name would be CS0104, so this type stays separate. Explicit ISequenceIterator.Next() redirects to the
     // axis-slot `new NodeInfo Next()` (covariant-redirect idiom, mirrors DocumentOrderIterator).
-    internal class PrependAxisIterator : IAxisIterator
+    internal sealed class PrependAxisIterator : IAxisIterator
     {
         private IItem start;
         private readonly ISequenceIterator @base;

@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// The XPath 2.0 remove() function
     /// </summary>
-    internal class Remove : SystemFunction
+    internal sealed class Remove : SystemFunction
     {
 
         //
@@ -96,7 +96,7 @@ namespace OutSmart.DAXon.Functions
         }
 
         //
-        internal class RemoveIterator : ISequenceIterator, ILastPositionFinder
+        internal sealed class RemoveIterator : ISequenceIterator, ILastPositionFinder
         {
             ISequenceIterator @base;
             IntSet removePositions;
@@ -108,7 +108,7 @@ namespace OutSmart.DAXon.Functions
                 this.removePositions = removePosition;
             }
 
-            public virtual IItem Next()
+            public IItem Next()
             {
                 current = @base.Next();
                 basePosition++;
@@ -121,17 +121,17 @@ namespace OutSmart.DAXon.Functions
                 return current;
             }
 
-            public virtual void Dispose()
+            public void Dispose()
             {
                 @base.Dispose();
             }
 
-            public virtual bool SupportsGetLength()
+            public bool SupportsGetLength()
             {
                 return SequenceTool.SupportsGetLength(@base);
             }
 
-            public virtual int GetLength()
+            public int GetLength()
             {
                 int x = SequenceTool.GetLength(@base);
                 int result = x;

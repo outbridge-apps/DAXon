@@ -28,7 +28,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Caching;
 namespace OutSmart.DAXon.Functions
 {
-    internal class FormatInteger : SystemFunction, IStatefulSystemFunction
+    internal sealed class FormatInteger : SystemFunction, IStatefulSystemFunction
     {
         public const string preface = "In the picture string for format-integer, ";
         // The grouping-separator analysis is a pure function of (picture, radix) and the resulting

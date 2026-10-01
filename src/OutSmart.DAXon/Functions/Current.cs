@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement the XSLT current() function
     /// </summary>
-    internal class Current : SystemFunction
+    internal sealed class Current : SystemFunction
     {
         public static readonly StructuredQName FN_CURRENT = NamespaceUri.FN.QName("current");
 

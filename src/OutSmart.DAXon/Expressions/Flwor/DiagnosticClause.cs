@@ -27,13 +27,13 @@ namespace OutSmart.DAXon.Expressions.Flwor
     /// <summary>
     /// A "let" clause in a FLWOR expression
     /// </summary>
-    internal class DiagnosticClause : Clause
+    internal sealed class DiagnosticClause : Clause
     {
         private Operand sequenceOp;
         public override ClauseName ClauseKey => DIAG;
 
         //    }
-        public virtual Expression Sequence => sequenceOp.GetChildExpression();
+        public Expression Sequence => sequenceOp.GetChildExpression();
 
         public override LocalVariableBinding[] RangeVariables => new LocalVariableBinding[]
             {
@@ -48,7 +48,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return diag2;
         }
 
-        public virtual void InitSequence(FLWORExpression flwor, Expression sequence)
+        public void InitSequence(FLWORExpression flwor, Expression sequence)
         {
             sequenceOp = new Operand(flwor, sequence, IsRepeated() ? OperandRole.REPEAT_NAVIGATE : OperandRole.NAVIGATE);
         }

@@ -17,7 +17,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Values.Arrays
 {
-    internal class ImmutableArrayItem : AbstractArrayItem
+    internal sealed class ImmutableArrayItem : AbstractArrayItem
     {
         private readonly ZenoChain<IGroundedValue> vector;
         public ImmutableArrayItem(SimpleArrayItem other)

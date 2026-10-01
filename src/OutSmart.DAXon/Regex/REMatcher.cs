@@ -40,7 +40,7 @@ using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Regex
 {
-    internal class REMatcher
+    internal sealed class REMatcher
     {
         // Limits
         static readonly int MAX_PAREN = 16; // Number of paren pairs
@@ -64,7 +64,7 @@ namespace OutSmart.DAXon.Regex
         int backtrackSteps;
         int backtrackLimit = -1; // cached per attempt: Program.BacktrackingLimit is virtual
 
-        public virtual REProgram Program
+        public REProgram Program
         {
             get => program; set
             {
@@ -81,13 +81,13 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        public virtual int ParenCount => _captureState.parenCount;
+        public int ParenCount => _captureState.parenCount;
         public REMatcher(REProgram program)
         {
             Program = program;
         }
 
-        public virtual UnicodeString GetParen(int which)
+        public UnicodeString GetParen(int which)
         {
             int start;
             if (which < _captureState.parenCount && (start = GetParenStart(which)) >= 0)
@@ -144,7 +144,7 @@ namespace OutSmart.DAXon.Regex
             _captureState.endn[which] = i;
         }
 
-        public virtual void ClearCapturedGroupsBeyond(int pos)
+        public void ClearCapturedGroupsBeyond(int pos)
         {
             for (int i = 0; i < _captureState.startn.Length; i++)
             {
@@ -184,7 +184,7 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        protected virtual bool MatchAt(int i, bool anchored)
+        protected bool MatchAt(int i, bool anchored)
         {
             // Cooperative deadline: every regex driver (matches/replace/tokenize/analyze-string,
             // via Match's position scans) funnels each candidate attempt through here, so a
@@ -227,7 +227,7 @@ namespace OutSmart.DAXon.Regex
             return false;
         }
 
-        public virtual bool IsAnchoredMatch(UnicodeString search)
+        public bool IsAnchoredMatch(UnicodeString search)
         {
             this.search = search;
             return MatchAt(0, true);
@@ -537,7 +537,7 @@ namespace OutSmart.DAXon.Regex
             return false;
         }
 
-        public virtual bool Match(UnicodeString search, int i)
+        public bool Match(UnicodeString search, int i)
         {
 
             if (search == null)
@@ -869,7 +869,7 @@ namespace OutSmart.DAXon.Regex
             return true;
         }
 
-        public virtual UnicodeString Replace(UnicodeString @in, UnicodeString replacement)
+        public UnicodeString Replace(UnicodeString @in, UnicodeString replacement)
         {
 
             // Accumulate into one builder rather than a chain of Concat allocations (each Concat
@@ -1024,7 +1024,7 @@ namespace OutSmart.DAXon.Regex
             return result.ToUnicodeString();
         }
 
-        public virtual UnicodeString ReplaceWith(UnicodeString @in, Func<UnicodeString, UnicodeString[], UnicodeString> replacer)
+        public UnicodeString ReplaceWith(UnicodeString @in, Func<UnicodeString, UnicodeString[], UnicodeString> replacer)
         {
 
             // String to return
@@ -1090,12 +1090,12 @@ namespace OutSmart.DAXon.Regex
             return sb.ToUnicodeString();
         }
 
-        public virtual bool IsNewline(int i)
+        public bool IsNewline(int i)
         {
             return search.CodePointAt(i) == '\n';
         }
 
-        public virtual bool EqualCaseBlind(int c1, int c2)
+        public bool EqualCaseBlind(int c1, int c2)
         {
             if (c1 == c2)
             {
@@ -1113,17 +1113,17 @@ namespace OutSmart.DAXon.Regex
             return false;
         }
 
-        public virtual State CaptureState()
+        public State CaptureState()
         {
             return new State(_captureState);
         }
 
-        public virtual void ResetState(State state)
+        public void ResetState(State state)
         {
             _captureState = new State(state);
         }
 
-        internal class State
+        internal sealed class State
         {
             public int parenCount; // Number of subexpressions matched (num open parens + 1)
             public int[] startn; // Lazily-allocated array of sub-expression starts

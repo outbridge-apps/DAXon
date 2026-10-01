@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// This class implements an xsl:fork expression.
     /// </summary>
-    internal class Fork : Instruction
+    internal sealed class Fork : Instruction
     {
         internal Operand[] operanda;
 
@@ -107,7 +107,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new ForkElaborator();
         }
 
-        private class ForkElaborator : PushElaborator
+        private sealed class ForkElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

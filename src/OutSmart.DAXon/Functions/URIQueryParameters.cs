@@ -269,7 +269,7 @@ namespace OutSmart.DAXon.Functions
         /// <summary>
         /// A FilenameFilter that tests file names against a regular expression
         /// </summary>
-        internal class RegexFilter
+        internal sealed class RegexFilter
         {
             private readonly IRegularExpression pattern;
             public RegexFilter(IRegularExpression regex)
@@ -277,7 +277,7 @@ namespace OutSmart.DAXon.Functions
                 this.pattern = regex;
             }
 
-            public virtual bool Accept(string dir, string name)
+            public bool Accept(string dir, string name)
             {
                 return Directory.Exists(Path.Combine(dir, name)) || pattern.Matches(StringView.Of(name).Tidy());
             }

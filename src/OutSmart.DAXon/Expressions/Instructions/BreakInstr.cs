@@ -23,7 +23,7 @@ using OutSmart.DAXon.Collections.Trie;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class BreakInstr : Instruction, TailCallLoop.ITailCallInfo
+    internal sealed class BreakInstr : Instruction, TailCallLoop.ITailCallInfo
     {
 
         public override int InstructionNameCode => StandardNames.XSL_BREAK;
@@ -58,7 +58,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return false;
         }
 
-        public virtual void MarkContext(IXPathContext context)
+        public void MarkContext(IXPathContext context)
         {
             context.MajorContext.RequestTailCall(this, null);
         }
@@ -74,7 +74,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new BreakElaborator();
         }
 
-        internal class BreakElaborator : PushElaborator
+        internal sealed class BreakElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

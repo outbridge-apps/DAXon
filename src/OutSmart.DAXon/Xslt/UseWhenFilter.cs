@@ -33,7 +33,7 @@ using OutSmart.DAXon.Internal.Streams;
 using System.IO;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class UseWhenFilter : ProxyReceiver
+    internal sealed class UseWhenFilter : ProxyReceiver
     {
         private int depthOfHole = 0;
         private bool emptyStylesheetElement = false;
@@ -801,7 +801,7 @@ namespace OutSmart.DAXon.Xslt
             return dynamicContext;
         }
 
-        public virtual ISequence EvaluateStatic(string expression, ILocation locationId, UseWhenStaticContext staticContext)
+        public ISequence EvaluateStatic(string expression, ILocation locationId, UseWhenStaticContext staticContext)
         {
             try
             {
@@ -820,7 +820,7 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        private class ParsedAttributes
+        private sealed class ParsedAttributes
         {
             public NamespaceUri xpathDefaultNamespaceAtt = null;
             public string versionAtt = null;

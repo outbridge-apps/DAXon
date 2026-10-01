@@ -24,7 +24,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
-    internal class RegexGroup : ContextAccessorFunction
+    internal sealed class RegexGroup : ContextAccessorFunction
     {
         public override IFunctionItem BindContext(IXPathContext context)
         {
@@ -67,9 +67,9 @@ namespace OutSmart.DAXon.Functions
             return StringValue.MakeUStringValue(s);
         }
 
-        private class AlwaysEmpty : ICallable
+        private sealed class AlwaysEmpty : ICallable
         {
-            public virtual ISequence Call(IXPathContext context, ISequence[] arguments)
+            public ISequence Call(IXPathContext context, ISequence[] arguments)
             {
                 return StringValue.EMPTY_STRING;
             }

@@ -24,7 +24,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class XSLMergeSource : StyleElement
+    internal sealed class XSLMergeSource : StyleElement
     {
         private Expression forEachItem;
         private Expression forEachSource;
@@ -37,9 +37,9 @@ namespace OutSmart.DAXon.Xslt
         private bool streamable = false;
         private HashSet<Accumulator> accumulators = new HashSet<Accumulator>();
 
-        public virtual Expression Select => select;
+        public Expression Select => select;
 
-        public virtual string SourceName => sourceName;
+        public string SourceName => sourceName;
         public override bool IsInstruction()
         {
             return false;
@@ -50,12 +50,12 @@ namespace OutSmart.DAXon.Xslt
             return false;
         }
 
-        public virtual bool IsSortBeforeMerge()
+        public bool IsSortBeforeMerge()
         {
             return sortBeforeMerge;
         }
 
-        public virtual MergeInstr.MergeSource MakeMergeSource(MergeInstr mi, Expression select)
+        public MergeInstr.MergeSource MakeMergeSource(MergeInstr mi, Expression select)
         {
             MergeInstr.MergeSource ms = new MergeInstr.MergeSource(mi);
             if (forEachItem != null)

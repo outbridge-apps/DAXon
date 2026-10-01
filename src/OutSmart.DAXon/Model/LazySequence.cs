@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Model
     /// <summary>
     /// A sequence that wraps an iterator, without being materialized. It can only be used once.
     /// </summary>
-    internal class LazySequence : ISequence
+    internal sealed class LazySequence : ISequence
     {
         ISequenceIterator iterator;
         bool used = false;
@@ -28,12 +28,12 @@ namespace OutSmart.DAXon.Model
             this.iterator = iterator;
         }
 
-        public virtual IItem Head()
+        public IItem Head()
         {
             return Iterate().Next();
         }
 
-        public virtual ISequenceIterator Iterate()
+        public ISequenceIterator Iterate()
         {
             lock (this)
             {
@@ -49,12 +49,12 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        public virtual ISequence MakeRepeatable()
+        public ISequence MakeRepeatable()
         {
             return Materialize();
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual IGroundedValue Materialize() { var __it = Iterate(); var __l = new List<IItem>(); for (IItem __x; (__x = __it.Next()) != null;) { __l.Add(__x); } return SequenceExtent.MakeSequenceExtent(__l); }
+        public IGroundedValue Materialize() { var __it = Iterate(); var __l = new List<IItem>(); for (IItem __x; (__x = __it.Next()) != null;) { __l.Add(__x); } return SequenceExtent.MakeSequenceExtent(__l); }
     }
 }

@@ -464,7 +464,7 @@ namespace OutSmart.DAXon.Api
             return manager;
         }
 
-        private class ExtensionFunctionDefinitionWrapper : ExtensionFunctionDefinition
+        private sealed class ExtensionFunctionDefinitionWrapper : ExtensionFunctionDefinition
         {
             private readonly IExtensionFunction function;
 

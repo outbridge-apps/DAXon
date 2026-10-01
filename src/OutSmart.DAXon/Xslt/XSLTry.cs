@@ -18,7 +18,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class XSLTry : StyleElement
+    internal sealed class XSLTry : StyleElement
     {
         private Expression select;
         private bool rollbackOutput = true;
@@ -120,7 +120,7 @@ namespace OutSmart.DAXon.Xslt
             return expr;
         }
 
-        public virtual void AddCatchClause(IQNameTest nameTest, Expression catchExpr)
+        public void AddCatchClause(IQNameTest nameTest, Expression catchExpr)
         {
             catchTests.Add(nameTest);
             catchExprs.Add(catchExpr);

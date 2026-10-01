@@ -721,7 +721,7 @@ namespace OutSmart.DAXon.Expressions
             return new VennElaborator();
         }
 
-        internal class VennElaborator : PullElaborator
+        internal sealed class VennElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

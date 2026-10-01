@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Transformation
     /// <summary>
     /// Exception thrown when there are problems with the license file
     /// </summary>
-    internal class LicenseException : Exception
+    internal sealed class LicenseException : Exception
     {
         public const int NOT_FOUND = 3;
         public const int WRONG_CONFIGURATION = 6;

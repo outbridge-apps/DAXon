@@ -21,7 +21,7 @@ using OutSmart.DAXon.Internal.Streams;
 using System.IO;
 namespace OutSmart.DAXon.Resources
 {
-    internal class ResourceLoader
+    internal sealed class ResourceLoader
     {
         public static int MAX_REDIRECTS = 20;
         public static URLConnection UrlConnection(Uri url)

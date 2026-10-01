@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Transformation
     // xsl:use-package/xsl:override crashed with NotImplementedException.
     // A mode representing the templates within an xsl:override element of a using package
     // together with the rules in the corresponding mode of the base (used) package.
-    internal class CompoundMode : Mode
+    internal sealed class CompoundMode : Mode
     {
         private readonly Mode @base;
         private readonly SimpleMode overrides;

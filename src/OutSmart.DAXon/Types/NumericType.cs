@@ -23,7 +23,7 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Types
 {
-    internal class NumericType : LocalUnionType, ISimpleType, IPlainType
+    internal sealed class NumericType : LocalUnionType, ISimpleType, IPlainType
     {
         //    }
         private static NumericType THE_INSTANCE;

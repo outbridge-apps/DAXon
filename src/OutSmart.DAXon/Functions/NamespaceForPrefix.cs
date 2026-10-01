@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the function namespace-uri-for-prefix()
     /// </summary>
-    internal class NamespaceForPrefix : SystemFunction, ICallable
+    internal sealed class NamespaceForPrefix : SystemFunction, ICallable
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

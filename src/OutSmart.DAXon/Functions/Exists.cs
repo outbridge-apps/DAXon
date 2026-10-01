@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implementation of the fn:exists function
     /// </summary>
-    internal class Exists : Aggregate
+    internal sealed class Exists : Aggregate
     {
 
         public override string StreamerName => "Exists";
@@ -94,7 +94,7 @@ namespace OutSmart.DAXon.Functions
             return new ExistsFnElaborator();
         }
 
-        private class ExistsFnElaborator : BooleanElaborator
+        private sealed class ExistsFnElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

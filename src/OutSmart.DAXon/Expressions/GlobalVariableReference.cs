@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Expressions
     /// <summary>
     /// A reference to a global variable
     /// </summary>
-    internal class GlobalVariableReference : VariableReference, IComponentInvocation
+    internal sealed class GlobalVariableReference : VariableReference, IComponentInvocation
     {
         int bindingSlot = -1;
 
@@ -87,7 +87,7 @@ namespace OutSmart.DAXon.Expressions
             return new SymbolicName(StandardNames.XSL_VARIABLE, VariableName);
         }
 
-        public virtual Component GetTarget()
+        public Component GetTarget()
         {
             return ((GlobalVariable)binding).DeclaringComponent;
         }
@@ -137,7 +137,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for a global variable reference, for example {@code $globalVar}.
         /// </summary>
-        internal class GlobalVariableReferenceElaborator : PullElaborator, ISequenceEvaluator
+        internal sealed class GlobalVariableReferenceElaborator : PullElaborator, ISequenceEvaluator
         {
             public ISequence Evaluate(IXPathContext context)
             {

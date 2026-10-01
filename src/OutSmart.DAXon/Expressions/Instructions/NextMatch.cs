@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// An xsl:next-match element in the stylesheet
     /// </summary>
-    internal class NextMatch : ApplyNextMatchingTemplate
+    internal sealed class NextMatch : ApplyNextMatchingTemplate
     {
         bool useTailRecursion;
 
@@ -76,7 +76,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new NextMatchElaborator();
         }
 
-        private class NextMatchPackage : ITailCall
+        private sealed class NextMatchPackage : ITailCall
         {
             private readonly NextMatch instruction;
             private readonly Rule rule;
@@ -94,7 +94,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 this.evaluationContext = evaluationContext;
             }
 
-            public virtual ITailCall ProcessLeavingTail()
+            public ITailCall ProcessLeavingTail()
             {
                 TemplateRule nh = (TemplateRule)rule.GetAction();
                 nh.Initialize();
@@ -124,7 +124,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        private class NextMatchElaborator : PushElaborator
+        private sealed class NextMatchElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

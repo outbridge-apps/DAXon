@@ -742,7 +742,7 @@ namespace OutSmart.DAXon.Xslt
         {
             this.fallbackToNonStreaming = fallbackToNonStreaming;
         }
-        private class ValueAndPrecedence
+        private sealed class ValueAndPrecedence
         {
 
             public IGroundedValue value;

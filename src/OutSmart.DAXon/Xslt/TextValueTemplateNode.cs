@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// A text node in an XSLT 3.0 stylesheet that may or may not contain a text value template
     /// </summary>
-    internal class TextValueTemplateNode : TextImpl
+    internal sealed class TextValueTemplateNode : TextImpl
     {
         private Expression contentExp;
         private TextValueTemplateContext staticContext;
@@ -32,12 +32,12 @@ namespace OutSmart.DAXon.Xslt
         {
         }
 
-        public virtual Expression GetContentExpression()
+        public Expression GetContentExpression()
         {
             return contentExp;
         }
 
-        public virtual TextValueTemplateContext GetStaticContext()
+        public TextValueTemplateContext GetStaticContext()
         {
             if (staticContext == null)
             {
@@ -47,7 +47,7 @@ namespace OutSmart.DAXon.Xslt
             return staticContext;
         }
 
-        public virtual void Parse()
+        public void Parse()
         {
             bool disable = false;
             NodeInfo parent = GetParent();
@@ -70,7 +70,7 @@ namespace OutSmart.DAXon.Xslt
             contentExp.SetRetainedStaticContext(((StyleElement)GetParent()).MakeRetainedStaticContext());
         }
 
-        public virtual void Validate()
+        public void Validate()
         {
             contentExp = ((StyleElement)GetParent()).TypeCheck("tvt", contentExp);
         }

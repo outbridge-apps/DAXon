@@ -571,7 +571,7 @@ namespace OutSmart.DAXon.XQuery
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual void GatherProperties(Action<string, object> consumer) { } // upstream Traceable default: no properties
 
-        private class ErrorReportingIterator : ISequenceIterator
+        private sealed class ErrorReportingIterator : ISequenceIterator
         {
             private readonly ISequenceIterator @base;
             private readonly IErrorReporter reporter;
@@ -583,7 +583,7 @@ namespace OutSmart.DAXon.XQuery
                 this.location = location;
             }
 
-            public virtual IItem Next()
+            public IItem Next()
             {
                 try
                 {
@@ -599,7 +599,7 @@ namespace OutSmart.DAXon.XQuery
                 }
             }
 
-            public virtual void Dispose()
+            public void Dispose()
             {
                 @base.Dispose();
             }

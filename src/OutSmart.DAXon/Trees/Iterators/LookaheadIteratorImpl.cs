@@ -16,12 +16,12 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Trees.Iterators
 {
-    internal class LookaheadIteratorImpl : ILookaheadIterator
+    internal sealed class LookaheadIteratorImpl : ILookaheadIterator
     {
         private readonly ISequenceIterator @base;
         private IItem _next;
 
-        public virtual bool HasNext => _next != null;
+        public bool HasNext => _next != null;
         private LookaheadIteratorImpl(ISequenceIterator @base)
         {
             this.@base = @base;
@@ -40,12 +40,12 @@ namespace OutSmart.DAXon.Trees.Iterators
             }
         }
 
-        public virtual bool SupportsHasNext()
+        public bool SupportsHasNext()
         {
             return true;
         }
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             IItem current = _next;
             if (_next != null)
@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Trees.Iterators
             return current;
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             @base.Dispose();
         }

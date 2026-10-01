@@ -15,7 +15,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Collections
 {
-    internal class IntBlockSet : IntSet
+    internal sealed class IntBlockSet : IntSet
     {
         private readonly int startPoint;
         private readonly int endPoint;

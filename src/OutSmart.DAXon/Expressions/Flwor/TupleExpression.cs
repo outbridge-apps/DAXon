@@ -25,11 +25,11 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Flwor
 {
-    internal class TupleExpression : Expression
+    internal sealed class TupleExpression : Expression
     {
         private OperandArray operanda;
 
-        protected virtual OperandArray Operanda
+        protected OperandArray Operanda
         {
             get => operanda; set
             {
@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public virtual int Size => Operanda.NumberOfOperands;
+        public int Size => Operanda.NumberOfOperands;
 
         public override int ImplementationMethod => EVALUATE_METHOD;
 
@@ -53,7 +53,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return operanda;
         }
 
-        public virtual void SetVariables(IList<LocalVariableReference> refs)
+        public void SetVariables(IList<LocalVariableReference> refs)
         {
             Expression[] e = new Expression[refs.Count];
             for (int i = 0; i < refs.Count; i++)
@@ -64,12 +64,12 @@ namespace OutSmart.DAXon.Expressions.Flwor
             Operanda = new OperandArray(this, e, OperandRole.SAME_FOCUS_ACTION);
         }
 
-        public virtual LocalVariableReference GetSlot(int i)
+        public LocalVariableReference GetSlot(int i)
         {
             return (LocalVariableReference)Operanda.GetOperandExpression(i);
         }
 
-        public virtual bool IncludesBinding(IBinding binding)
+        public bool IncludesBinding(IBinding binding)
         {
             foreach (Operand o in Operands())
             {
@@ -178,7 +178,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return new Tuple(tuple);
         }
 
-        public virtual void SetCurrentTuple(IXPathContext context, Tuple tuple)
+        public void SetCurrentTuple(IXPathContext context, Tuple tuple)
         {
             ISequence[] members = tuple.GetMembers();
             int n = Size;

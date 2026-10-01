@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:for-each elements in stylesheet. <br>
     /// </summary>
-    internal class XSLForEach : StyleElement
+    internal sealed class XSLForEach : StyleElement
     {
         private Expression select = null;
         private bool containsTailCall = false;

@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Lib
     // Backs fn:environment-variable / fn:available-environment-variables when Feature.ALLOW_EXTERNAL_FUNCTIONS is on.
     // Snapshot frozen at first use per resolver (= per Configuration): upstream parity — Java's
     // System.getenv() snapshots once per JVM — and O(1) lookups instead of a native block copy per call.
-    internal class StandardEnvironmentVariableResolver : IEnvironmentVariableResolver
+    internal sealed class StandardEnvironmentVariableResolver : IEnvironmentVariableResolver
     {
         private Dictionary<string, string> snapshot;
 

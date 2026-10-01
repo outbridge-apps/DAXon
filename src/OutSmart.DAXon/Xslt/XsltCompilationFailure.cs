@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Xslt
     /// reported during the compile: the reporter's own channel is Console.Error by default,
     /// so without this the caller learned only that the compile failed.
     /// </summary>
-    internal class XsltCompilationFailure : XPathException
+    internal sealed class XsltCompilationFailure : XPathException
     {
         private readonly IList<IXmlProcessingError> errors;
 

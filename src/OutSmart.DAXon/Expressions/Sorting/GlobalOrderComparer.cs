@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
     // Faithful port of net.sf.saxon.expr.sort.GlobalOrderComparer (the real file is <Compile Remove>'d at
     // csproj:545 because it calls OutSmart.DAXon.Internal.Long.Signum, which OutSmart.DAXon.Internal lacks): orders by document number
     // first, then intra-document order. `d1 < d2 ? -1 : 1` == Long.signum(d1-d2) here (d1!=d2) and is overflow-safe.
-    internal class GlobalOrderComparer : IComparer<NodeInfo>
+    internal sealed class GlobalOrderComparer : IComparer<NodeInfo>
     {
         private static readonly GlobalOrderComparer _instance = new GlobalOrderComparer();
         public static GlobalOrderComparer GetInstance() => _instance;

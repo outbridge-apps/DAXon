@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implementation of the fn:empty function
     /// </summary>
-    internal class Empty : Aggregate
+    internal sealed class Empty : Aggregate
     {
 
         // Rewrite
@@ -99,7 +99,7 @@ namespace OutSmart.DAXon.Functions
             return new EmptyFnElaborator();
         }
 
-        private class EmptyFnElaborator : BooleanElaborator
+        private sealed class EmptyFnElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

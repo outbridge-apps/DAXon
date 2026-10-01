@@ -20,7 +20,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Values
 {
-    internal class SingletonClosure : Closure, ISequence
+    internal sealed class SingletonClosure : Closure, ISequence
     {
         private bool built = false;
         private IItem value = null;
@@ -80,7 +80,7 @@ namespace OutSmart.DAXon.Values
         // is not a blanket win, so it is applied only where it pays.
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveOptimization)]
 #endif
-        public virtual IItem AsItem()
+        public IItem AsItem()
         {
             lock (this)
             {
@@ -120,7 +120,7 @@ namespace OutSmart.DAXon.Values
             return this;
         }
 
-        public virtual bool IsBuilt()
+        public bool IsBuilt()
         {
             return built;
         }

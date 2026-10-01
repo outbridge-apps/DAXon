@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
     /// <summary>
     /// A ISequenceEvaluator that evaluates an expression eagerly, in pull mode.
     /// </summary>
-    internal class EagerPullEvaluator : ISequenceEvaluator
+    internal sealed class EagerPullEvaluator : ISequenceEvaluator
     {
         readonly IPullEvaluator puller;
         public EagerPullEvaluator(IPullEvaluator select)
@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             this.puller = select;
         }
 
-        public virtual ISequence Evaluate(IXPathContext context)
+        public ISequence Evaluate(IXPathContext context)
         {
             try
             {

@@ -140,7 +140,7 @@ namespace OutSmart.DAXon.Functions
 
             return new SequenceExtent.Of<IItem>(outputList);
         }
-        internal class ItemToBeSorted
+        internal sealed class ItemToBeSorted
         {
             public IItem value;
             public IGroundedValue sortKey;

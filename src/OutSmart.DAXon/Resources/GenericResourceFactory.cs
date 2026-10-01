@@ -14,7 +14,7 @@ using OutSmart.DAXon.Lib;
 namespace OutSmart.DAXon.Resources
 {
     // Shared no-op IResourceFactory impl for the various Resource subtypes.
-    internal class GenericResourceFactory : IResourceFactory
+    internal sealed class GenericResourceFactory : IResourceFactory
     {
         public IResource MakeResource(IXPathContext context, AbstractResourceCollection.InputDetails details) => throw new NotImplementedException("STUB: GenericResourceFactory.MakeResource not ported (excluded stub)");
     }

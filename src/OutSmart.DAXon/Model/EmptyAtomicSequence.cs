@@ -20,14 +20,14 @@ namespace OutSmart.DAXon.Model
     /// <summary>
     /// An implementation of IAtomicSequence that contains no items.
     /// </summary>
-    internal class EmptyAtomicSequence : IAtomicSequence
+    internal sealed class EmptyAtomicSequence : IAtomicSequence
     {
 
         private static readonly EmptyAtomicSequence INSTANCE = new EmptyAtomicSequence();
 
-        public virtual UnicodeString CanonicalLexicalRepresentation => EmptyUnicodeString.GetInstance();
+        public UnicodeString CanonicalLexicalRepresentation => EmptyUnicodeString.GetInstance();
 
-        public virtual UnicodeString UnicodeStringValue => EmptyUnicodeString.GetInstance();
+        public UnicodeString UnicodeStringValue => EmptyUnicodeString.GetInstance();
         private EmptyAtomicSequence()
         {
         }
@@ -36,42 +36,42 @@ namespace OutSmart.DAXon.Model
             return INSTANCE;
         }
 
-        public virtual AtomicValue Head()
+        public AtomicValue Head()
         {
             return null;
         }
 
-        public virtual IAtomicIterator Iterate()
+        public IAtomicIterator Iterate()
         {
             return EmptyIterator.OfAtomic();
         }
 
-        public virtual AtomicValue ItemAt(int n)
+        public AtomicValue ItemAt(int n)
         {
             return null;
         }
 
-        public virtual int GetLength()
+        public int GetLength()
         {
             return 0;
         }
 
-        public virtual string GetStringValue()
+        public string GetStringValue()
         {
             return "";
         }
 
-        public virtual EmptyAtomicSequence Subsequence(int start, int length)
+        public EmptyAtomicSequence Subsequence(int start, int length)
         {
             return this;
         }
 
-        public virtual bool EffectiveBooleanValue()
+        public bool EffectiveBooleanValue()
         {
             return false;
         }
 
-        public virtual EmptyAtomicSequence Reduce()
+        public EmptyAtomicSequence Reduce()
         {
             return this;
         }
@@ -86,11 +86,11 @@ namespace OutSmart.DAXon.Model
         IGroundedValue IGroundedValue.Reduce() => Reduce();
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual IGroundedValue Materialize() => this; // upstream GroundedValue default
-        public virtual string ToShortString() => OutSmart.DAXon.Transformation.Err.DepictSequence(this); // upstream GroundedValue default
-        public virtual IEnumerable<IItem> AsIterable() => new IItem[0]; // empty (upstream GroundedValue.asIterable default over an empty sequence)
-        public virtual bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
+        public IGroundedValue Materialize() => this; // upstream GroundedValue default
+        public string ToShortString() => OutSmart.DAXon.Transformation.Err.DepictSequence(this); // upstream GroundedValue default
+        public IEnumerable<IItem> AsIterable() => new IItem[0]; // empty (upstream GroundedValue.asIterable default over an empty sequence)
+        public bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
+        public IGroundedValue Concatenate(IGroundedValue[] others)
         {
             // upstream GroundedValue default: chain this value's items with the others
             var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
@@ -98,7 +98,7 @@ namespace OutSmart.DAXon.Model
                 __chain = __chain.AddAll(__v.AsIterable());
             return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
         }
-        public virtual ISequence MakeRepeatable() => this; // upstream Sequence.makeRepeatable default
+        public ISequence MakeRepeatable() => this; // upstream Sequence.makeRepeatable default
     }
 }
 

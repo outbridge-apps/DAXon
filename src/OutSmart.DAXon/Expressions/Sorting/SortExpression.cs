@@ -26,7 +26,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class SortExpression : Expression, ISortKeyEvaluator
+    internal sealed class SortExpression : Expression, ISortKeyEvaluator
     {
         private readonly Operand selectOp;
         private readonly Operand sortOp;
@@ -35,13 +35,13 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
         public override string ExpressionName => "sort";
 
-        public virtual Expression BaseExpression => Select;
+        public Expression BaseExpression => Select;
 
         public override int ImplementationMethod => ITERATE_METHOD;
 
         public override string StreamerName => "SortExpression";
 
-        public virtual Expression Select
+        public Expression Select
         {
             get => selectOp.GetChildExpression(); set
             {
@@ -318,7 +318,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return k is ContextItemExpression;
         }
 
-        public virtual ISequenceIterator IterateSorted(ISequenceIterator iter, IXPathContext context)
+        public ISequenceIterator IterateSorted(ISequenceIterator iter, IXPathContext context)
         {
             IAtomicComparer[] comps = comparators;
             if (comparators == null)
@@ -343,7 +343,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return iter;
         }
 
-        public virtual void MakeSortKeyEvaluators()
+        public void MakeSortKeyEvaluators()
         {
             lock (syncLock)
             {
@@ -378,12 +378,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             @out.EndElement();
         }
 
-        public virtual SortKeyDefinitionList GetSortKeyDefinitionList()
+        public SortKeyDefinitionList GetSortKeyDefinitionList()
         {
             return (SortKeyDefinitionList)sortOp.GetChildExpression();
         }
 
-        public virtual SortKeyDefinition GetSortKeyDefinition(int i)
+        public SortKeyDefinition GetSortKeyDefinition(int i)
         {
             return GetSortKeyDefinitionList().GetSortKeyDefinition(i);
         }
@@ -396,7 +396,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         /// <summary>
         /// Elaborator for a sort expression - sorts nodes into order based on a user-supplied sort key
         /// </summary>
-        internal class SortExprElaborator : PullElaborator
+        internal sealed class SortExprElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

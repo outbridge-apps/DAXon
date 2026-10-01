@@ -261,7 +261,7 @@ namespace OutSmart.DAXon.Collections
             return new IntHashMapKeySet<T>(this);
         }
 
-        private class IntHashMapKeyIterator<V> : AbstractIntIterator where V : class
+        private sealed class IntHashMapKeyIterator<V> : AbstractIntIterator where V : class
         {
             private int i = 0;
             private readonly IntHashMap<V> map;
@@ -294,7 +294,7 @@ namespace OutSmart.DAXon.Collections
             }
         }
 
-        private class IntHashMapValueIterator<W> : IEnumerator<W> where W : class
+        private sealed class IntHashMapValueIterator<W> : IEnumerator<W> where W : class
         {
             private int i = 0;
             private readonly IntHashMap<W> map;
@@ -314,7 +314,7 @@ namespace OutSmart.DAXon.Collections
                 i = 0;
             }
 
-            public virtual bool HasNext()
+            public bool HasNext()
             {
                 while (i < map._key.Length)
                 {
@@ -331,7 +331,7 @@ namespace OutSmart.DAXon.Collections
                 return false;
             }
 
-            public virtual W Next()
+            public W Next()
             {
                 W temp = map._value[i++];
                 if (map.IsNull(temp))
@@ -342,7 +342,7 @@ namespace OutSmart.DAXon.Collections
                 return temp;
             }
 
-            public virtual void Remove()
+            public void Remove()
 
             {
 
@@ -370,7 +370,7 @@ namespace OutSmart.DAXon.Collections
 
         }
 
-        private class IntHashMapKeySet<U> : IntSet where U : class
+        private sealed class IntHashMapKeySet<U> : IntSet where U : class
         {
             private readonly IntHashMap<U> map;
             public IntHashMapKeySet(IntHashMap<U> map)

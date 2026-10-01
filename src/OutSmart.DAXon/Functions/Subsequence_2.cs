@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implements the XPath 2.0 subsequence() function with two arguments
     /// </summary>
-    internal class Subsequence_2 : SystemFunction, ICallable
+    internal sealed class Subsequence_2 : SystemFunction, ICallable
     {
 
         // fall through  (for example, in 1.0 mode start can be a StringValue ...)

@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
     // Faithful port of net.sf.saxon.tree.wrapper.SnapshotNode (Saxon 12.9). New with the VirtualCopy port —
     // fn:snapshot() was previously unregistered. A node in the tree produced by snapshot(): a virtual copy
     // including all ancestors of the pivot node and all descendants (plus attributes/namespaces).
-    internal class SnapshotNode : VirtualCopy
+    internal sealed class SnapshotNode : VirtualCopy
     {
         protected internal NodeInfo pivot; // a node in the source tree
 

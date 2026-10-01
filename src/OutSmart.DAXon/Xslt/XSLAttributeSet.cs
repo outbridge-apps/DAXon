@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:attribute-set element in the stylesheet. <br>
     /// </summary>
-    internal class XSLAttributeSet : StyleElement, IStylesheetComponent
+    internal sealed class XSLAttributeSet : StyleElement, IStylesheetComponent
     {
         private string nameAtt;
         private string useAtt;
@@ -38,9 +38,9 @@ namespace OutSmart.DAXon.Xslt
         private Visibility visibility;
         private bool streamable = false;
 
-        public virtual StructuredQName AttributeSetName => GetObjectName();
+        public StructuredQName AttributeSetName => GetObjectName();
 
-        public virtual IList<Expression> ContainedInstructions => containedInstructions;
+        public IList<Expression> ContainedInstructions => containedInstructions;
         public AttributeSet GetActor()
         {
             return (AttributeSet)GetPrincipalStylesheetModule().GetStylesheetPackage().GetComponent(new SymbolicName(StandardNames.XSL_ATTRIBUTE_SET, GetObjectName())).GetActor();
@@ -64,7 +64,7 @@ namespace OutSmart.DAXon.Xslt
             return true;
         }
 
-        public virtual bool IsDeclaredStreamable()
+        public bool IsDeclaredStreamable()
         {
             return streamable;
         }
@@ -178,7 +178,7 @@ namespace OutSmart.DAXon.Xslt
             top.IndexAttributeSet(decl);
         }
 
-        public virtual void CheckCircularity(XSLAttributeSet origin)
+        public void CheckCircularity(XSLAttributeSet origin)
         {
             if (this == origin)
             {

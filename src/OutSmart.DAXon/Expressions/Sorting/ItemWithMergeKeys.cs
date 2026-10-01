@@ -18,7 +18,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class ItemWithMergeKeys
+    internal sealed class ItemWithMergeKeys
     {
         internal IItem baseItem;
         public IList<AtomicValue> sortKeyValues;

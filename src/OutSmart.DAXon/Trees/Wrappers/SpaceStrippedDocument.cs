@@ -19,14 +19,14 @@ namespace OutSmart.DAXon.Trees.Wrappers
     // Faithful port of net.sf.saxon.tree.wrapper.SpaceStrippedDocument (Saxon 12.9). Was a hollow stub whose
     // Wrap threw, so ANY stylesheet with xsl:strip-space crashed in Controller.PrepareInputTree.
     // A view of a real document in which selected whitespace text nodes are treated as stripped.
-    internal class SpaceStrippedDocument : GenericTreeInfo
+    internal sealed class SpaceStrippedDocument : GenericTreeInfo
     {
         private readonly ISpaceStrippingRule strippingRule;
         private readonly bool preservesSpace;
         private readonly bool _containsAssertions;
         private readonly ITreeInfo underlyingTree;
 
-        public virtual ISpaceStrippingRule StrippingRule => strippingRule;
+        public ISpaceStrippingRule StrippingRule => strippingRule;
 
         public override IEnumerator<string> UnparsedEntityNames => underlyingTree.UnparsedEntityNames;
 
@@ -39,7 +39,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
             _containsAssertions = FindAssertions(doc);
         }
 
-        public virtual SpaceStrippedNode Wrap(NodeInfo node)
+        public SpaceStrippedNode Wrap(NodeInfo node)
         {
             return SpaceStrippedNode.MakeWrapper(node, this, null);
         }
@@ -115,9 +115,9 @@ namespace OutSmart.DAXon.Trees.Wrappers
             }
         }
 
-        public virtual bool ContainsPreserveSpace() => preservesSpace;
+        public bool ContainsPreserveSpace() => preservesSpace;
 
-        public virtual bool ContainsAssertions() => _containsAssertions;
+        public bool ContainsAssertions() => _containsAssertions;
 
         // Memo of the strip/preserve rule verdict by parent-element fingerprint: the rule lookup
         // allocates a NameOfNode per whitespace text and the verdict is name-deterministic. Same

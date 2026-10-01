@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Values
     // (decimal -> float for a declared xs:float) silently produced no conversion — a function declared
     // `as xs:float { 1 div 3 }` returned the raw 18-digit xs:decimal (K2-FunctionProlog-7). Mirrors
     // upstream Converter.PromoterToFloat (Converter.java:771): double -> float is NOT promotable.
-    internal class PromoterToFloat : Converter
+    internal sealed class PromoterToFloat : Converter
     {
         public PromoterToFloat(object rules) { }
         public override IConversionResult Convert(object value)

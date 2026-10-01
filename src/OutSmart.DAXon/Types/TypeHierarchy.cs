@@ -1117,7 +1117,7 @@ namespace OutSmart.DAXon.Types
             }
         }
 
-        private class ItemTypePair
+        private sealed class ItemTypePair
         {
             ItemType s;
             ItemType t;

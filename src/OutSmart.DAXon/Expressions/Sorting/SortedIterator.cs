@@ -1098,7 +1098,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
         public virtual void Dispose() { }
 
-        private class SortComparer : IComparer<ObjectToBeSorted>
+        private sealed class SortComparer : IComparer<ObjectToBeSorted>
         {
             private IAtomicComparer[] comparators;
             public SortComparer(IAtomicComparer[] comparators)
@@ -1106,7 +1106,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 this.comparators = comparators;
             }
 
-            public virtual int Compare(ObjectToBeSorted a, ObjectToBeSorted b)
+            public int Compare(ObjectToBeSorted a, ObjectToBeSorted b)
             {
                 try
                 {

@@ -18,7 +18,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Model
 {
-    internal class One<T> : ZeroOrOne<T>
+    internal sealed class One<T> : ZeroOrOne<T>
     {
         public One(T item) : base(item)
         {

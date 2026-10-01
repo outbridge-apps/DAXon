@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Functions
     /// Implements the fn:idref function. Returns the nodes in a document that have an IDREF/IDREFS
     /// attribute (or element) referencing one of the supplied id values.
     /// </summary>
-    internal class Idref : SystemFunction
+    internal sealed class Idref : SystemFunction
     {
         public override int GetSpecialProperties(Expression[] arguments)
         {
@@ -53,14 +53,14 @@ namespace OutSmart.DAXon.Functions
             return SequenceTool.ToLazySequence(result);
         }
 
-        private class IdrefMappingFunction : IMappingFunction
+        private sealed class IdrefMappingFunction : IMappingFunction
         {
             public ITreeInfo document;
             public IXPathContext keyContext;
             public KeyManager keyManager;
             public KeyDefinitionSet keySet;
 
-            public virtual ISequenceIterator IMap(IItem item)
+            public ISequenceIterator IMap(IItem item)
             {
                 return keyManager.SelectByKey(keySet, document, (StringValue)item, keyContext);
             }

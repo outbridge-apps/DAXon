@@ -29,7 +29,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class DocumentInstr : ParentNodeConstructor
+    internal sealed class DocumentInstr : ParentNodeConstructor
     {
         private readonly bool textOnly;
         private readonly UnicodeString constantText;
@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override int ImplementationMethod => Expression.EVALUATE_METHOD;
 
-        public virtual Expression StringValueExpression
+        public Expression StringValueExpression
         {
             get
             {
@@ -80,7 +80,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return contentOp;
         }
 
-        public virtual bool IsTextOnly()
+        public bool IsTextOnly()
         {
             return textOnly;
         }
@@ -242,7 +242,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new DocumentInstrElaborator();
         }
 
-        internal class DocumentInstrElaborator : PushElaborator
+        internal sealed class DocumentInstrElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

@@ -24,7 +24,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Transformation.Rules
 {
-    internal class TextOnlyCopyRuleSet : IBuiltInRuleSet
+    internal sealed class TextOnlyCopyRuleSet : IBuiltInRuleSet
     {
         private static readonly TextOnlyCopyRuleSet THE_INSTANCE = new TextOnlyCopyRuleSet();
 
@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Transformation.Rules
         // performance was worse
         // no action
         // no action (e.g. for function items
-        public virtual string Name => "text-only";
+        public string Name => "text-only";
 
         private TextOnlyCopyRuleSet()
         {
@@ -42,7 +42,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             return THE_INSTANCE;
         }
 
-        public virtual void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter output, IXPathContext context, ILocation locationId)
+        public void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter output, IXPathContext context, ILocation locationId)
         {
             if (item is NodeInfo)
             {
@@ -95,7 +95,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             }
         }
 
-        public virtual BuiltInRules[] GetActionForParentNodes(int nodeKind)
+        public BuiltInRules[] GetActionForParentNodes(int nodeKind)
         {
             return new BuiltInRules[]
             {

@@ -603,16 +603,16 @@ namespace OutSmart.DAXon.Expressions.Parsing
             Expression Parse(Tokenizer t, IStaticContext env, string expression, int start, int terminator);
         }
 
-        internal class NestedLocation : ILocation
+        internal sealed class NestedLocation : ILocation
         {
             private readonly ILocation containingLocation;
             private readonly int localLineNumber;
             private readonly int localColumnNumber;
             private readonly string nearbyText;
 
-            public virtual int LocalLineNumber => localLineNumber;
+            public int LocalLineNumber => localLineNumber;
 
-            public virtual string NearbyText => nearbyText;
+            public string NearbyText => nearbyText;
             public NestedLocation(ILocation containingLocation, int localLineNumber, int localColumnNumber, string nearbyText)
             {
                 this.containingLocation = containingLocation.SaveLocation();
@@ -621,32 +621,32 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 this.nearbyText = nearbyText;
             }
 
-            public virtual ILocation GetContainingLocation()
+            public ILocation GetContainingLocation()
             {
                 return containingLocation;
             }
 
-            public virtual int GetColumnNumber()
+            public int GetColumnNumber()
             {
                 return localColumnNumber;
             }
 
-            public virtual string GetSystemId()
+            public string GetSystemId()
             {
                 return containingLocation.GetSystemId();
             }
 
-            public virtual string GetPublicId()
+            public string GetPublicId()
             {
                 return containingLocation.GetPublicId();
             }
 
-            public virtual int GetLineNumber()
+            public int GetLineNumber()
             {
                 return containingLocation.GetLineNumber() + localLineNumber;
             }
 
-            public virtual ILocation SaveLocation()
+            public ILocation SaveLocation()
             {
                 return this;
             }

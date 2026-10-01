@@ -24,7 +24,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Trees.Linked
 {
-    internal class LinkedTreeBuilder : Builder
+    internal sealed class LinkedTreeBuilder : Builder
     {
         private ParentNodeImpl currentNode;
         private INodeFactory nodeFactory;
@@ -51,7 +51,7 @@ namespace OutSmart.DAXon.Trees.Linked
             }
         }
 
-        public virtual ParentNodeImpl CurrentParentNode => currentNode;
+        public ParentNodeImpl CurrentParentNode => currentNode;
 
         public LinkedTreeBuilder(PipelineConfiguration pipe, Durability durability) : base(pipe)
         {
@@ -77,12 +77,12 @@ namespace OutSmart.DAXon.Trees.Linked
             nextNodeNumber = 1;
         }
 
-        public virtual void SetAllocateSequenceNumbers(bool allocate)
+        public void SetAllocateSequenceNumbers(bool allocate)
         {
             allocateSequenceNumbers = allocate;
         }
 
-        public virtual void SetNodeFactory(INodeFactory factory)
+        public void SetNodeFactory(INodeFactory factory)
         {
             nodeFactory = factory;
         }
@@ -279,7 +279,7 @@ namespace OutSmart.DAXon.Trees.Linked
             comment.SetLocation(locationId.GetSystemId(), locationId.GetLineNumber(), locationId.GetColumnNumber());
         }
 
-        public virtual void GraftElement(ElementImpl element)
+        public void GraftElement(ElementImpl element)
         {
             currentNode.AddChild(element, size[depth]++);
         }
@@ -301,10 +301,10 @@ namespace OutSmart.DAXon.Trees.Linked
 
         // Inner class DefaultNodeFactory. This creates the nodes in the tree.
         // It can be overridden, e.g. when building the stylesheet tree
-        private class DefaultNodeFactory : INodeFactory
+        private sealed class DefaultNodeFactory : INodeFactory
         {
             public static DefaultNodeFactory THE_INSTANCE = new DefaultNodeFactory();
-            public virtual ElementImpl MakeElementNode(NodeInfo parent, INodeName nodeName, ISchemaType elementType, bool isNilled, IAttributeMap attlist, NamespaceMap namespaces, PipelineConfiguration pipe, ILocation locationId, int sequenceNumber)
+            public ElementImpl MakeElementNode(NodeInfo parent, INodeName nodeName, ISchemaType elementType, bool isNilled, IAttributeMap attlist, NamespaceMap namespaces, PipelineConfiguration pipe, ILocation locationId, int sequenceNumber)
             {
                 ElementImpl e = new ElementImpl();
                 e.SetNamespaceMap(namespaces);
@@ -325,7 +325,7 @@ namespace OutSmart.DAXon.Trees.Linked
                 return e;
             }
 
-            public virtual TextImpl MakeTextNode(NodeInfo parent, UnicodeString content)
+            public TextImpl MakeTextNode(NodeInfo parent, UnicodeString content)
             {
                 return new TextImpl(content);
             }

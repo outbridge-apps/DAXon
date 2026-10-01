@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Json
     /// <summary>
     /// Handler to generate an XML representation of JSON from a series of events
     /// </summary>
-    internal class JsonHandlerXML : JsonHandler
+    internal sealed class JsonHandlerXML : JsonHandler
     {
         public const string PREFIX = "";
         private static readonly NamespaceUri JSON_NS = NamespaceUri.FN;
@@ -169,7 +169,7 @@ namespace OutSmart.DAXon.Json
         /* This may not need to be a stack as there should only be at most one pre-selected key
        * However, the stack neatly indicates its empty state
        * */
-        public virtual void SetType(string name, ISchemaType st)
+        public void SetType(string name, ISchemaType st)
         {
             types[name] = st;
         }

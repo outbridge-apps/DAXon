@@ -30,10 +30,10 @@ using System.IO;
 
 namespace OutSmart.DAXon.Core
 {
-    internal class DotNetPlatform : IPlatform
+    internal sealed class DotNetPlatform : IPlatform
     {
-        public virtual string PlatformSuffix => "N";
-        public virtual string DefaultCountry
+        public string PlatformSuffix => "N";
+        public string DefaultCountry
         {
             get
             {
@@ -41,21 +41,21 @@ namespace OutSmart.DAXon.Core
                 catch { return "US"; }
             }
         }
-        public virtual IIDynamicLoader DefaultDynamicLoader => null;
+        public IIDynamicLoader DefaultDynamicLoader => null;
         private static NotImplementedException NI(string m) => new NotImplementedException("DotNetPlatform." + m + " not yet wired (runtime un-stub target)");
 
         // ---- construction path: sane values / no-ops ----
-        public virtual void Initialize(Configuration config)
+        public void Initialize(Configuration config)
         {
             // Faithful to JavaPlatform.initialize: install the default collection finder used to
             // dereference fn:collection / fn:uri-collection URIs.
             config.CollectionFinder = new OutSmart.DAXon.Resources.StandardCollectionFinder();
         }
-        public virtual bool IsDotNet() => true;
-        public virtual string GetDefaultLanguage() => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+        public bool IsDotNet() => true;
+        public string GetDefaultLanguage() => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
         // Backed by embedded resources (upstream data/*.xml via the csproj): casevariants/categories/
         // unicodeBlocks — regex case-blind matching, \p{} categories and \p{Is...} blocks need them.
-        public virtual Stream LocateResource(string filename, IList<string> messages)
+        public Stream LocateResource(string filename, IList<string> messages)
         {
             var asm = typeof(DotNetPlatform).Assembly;
             foreach (var n in asm.GetManifestResourceNames())
@@ -72,17 +72,17 @@ namespace OutSmart.DAXon.Core
             messages?.Add("Resource not found in embedded manifest: " + filename);
             return null;
         }
-        public virtual IModuleURIResolver MakeStandardModuleURIResolver(Configuration config) => new OutSmart.DAXon.Lib.StandardModuleURIResolver(config);
+        public IModuleURIResolver MakeStandardModuleURIResolver(Configuration config) => new OutSmart.DAXon.Lib.StandardModuleURIResolver(config);
         // A collation can supply xsl:key/collation keys iff equal-under-collation implies equal keys. The
         // CompareInfo locale collations qualify, and so do the algorithmic collators whose GetCollationKey is a
         // real value (codepoint = the string itself; html5-ascii-case-blind = case-normalized form). Only the
         // rule-based substring matcher returns null keys and must be excluded.
-        public virtual bool CanReturnCollationKeys(IStringCollator collation)
+        public bool CanReturnCollationKeys(IStringCollator collation)
             => (collation is SimpleCollation sc && sc.Comparator is CompareInfoComparer)
                || collation is CodepointCollator
                || collation is HTML5CaseBlindCollator
                || collation is AlphanumericCollator;
-        public virtual bool JAXPStaticContextCheck(RetainedStaticContext retainedStaticContext, IStaticContext sc) => false;
+        public bool JAXPStaticContextCheck(RetainedStaticContext retainedStaticContext, IStaticContext sc) => false;
 
         // ---- collation factory (ported from net.sf.saxon.java.JavaCollationFactory.makeCollation) ----
         // .NET uses System.Globalization.CompareInfo for locale (UCA-by-lang) collation instead of
@@ -92,7 +92,7 @@ namespace OutSmart.DAXon.Core
         // alphanumeric) ARE byte-identical because they are pure algorithms with no locale dependency.
         // Routes for parameters that have no native .NET twin (class=, rules=, case-order/caseFirst)
         // throw a clearly-labelled XPathException rather than silently mis-collating.
-        public virtual IStringCollator MakeCollation(Configuration config, Properties props, string uri)
+        public IStringCollator MakeCollation(Configuration config, Properties props, string uri)
         {
             CompareInfoComparer comparer = null;
 
@@ -259,7 +259,7 @@ namespace OutSmart.DAXon.Core
 
         // .NET CAN return real collation keys (CompareInfo.GetSortKey) for SimpleCollation instances
         // whose comparator is a CompareInfoComparer.
-        public virtual IAtomicMatchKey GetCollationKey(SimpleCollation namedCollation, string value)
+        public IAtomicMatchKey GetCollationKey(SimpleCollation namedCollation, string value)
         {
             if (namedCollation.Comparator is CompareInfoComparer cic)
             {
@@ -280,11 +280,11 @@ namespace OutSmart.DAXon.Core
         // StandardCollationURIResolver translates UCA query params (strength/numeric/caseFirst) into the
         // Properties consumed by MakeCollation, so we let that path build it. Returning null here makes
         // the resolver fall through to its param-translation + MakeCollation branch (the desired behaviour).
-        public virtual IStringCollator MakeUcaCollator(string uri, Configuration config) => null;
+        public IStringCollator MakeUcaCollator(string uri, Configuration config) => null;
         // Always the Saxon-native regex engine (ARegularExpression). Java's "!"-flag selects java.util.regex
         // instead; that engine has no twin here, so the flag is stripped (XPath regex semantics ARE the
         // Saxon engine's native dialect, so this stays spec-conformant).
-        public virtual IRegularExpression CompileRegularExpression(Configuration config, UnicodeString regex, string flags, string hostLanguage, IList<string> warnings)
+        public IRegularExpression CompileRegularExpression(Configuration config, UnicodeString regex, string flags, string hostLanguage, IList<string> warnings)
         {
             string f = flags == null ? "" : flags.Replace("!", "");
             int semi = f.IndexOf(';');
@@ -294,7 +294,7 @@ namespace OutSmart.DAXon.Core
             }
             return new ARegularExpression(regex, f, hostLanguage, warnings, config);
         }
-        public virtual ExternalObjectType GetExternalObjectType(Configuration config, NamespaceUri uri, string localName) => throw NI("GetExternalObjectType");
+        public ExternalObjectType GetExternalObjectType(Configuration config, NamespaceUri uri, string localName) => throw NI("GetExternalObjectType");
 
         // IComparer<string> backed by a .NET CompareInfo + CompareOptions. This is the .NET analogue of
         // java.text.Collator that SimpleCollation wraps. The CompareInfo/Options are exposed so the

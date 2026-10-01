@@ -14,7 +14,7 @@ using OutSmart.DAXon.Trees.Iterators;
 namespace OutSmart.DAXon.Functions
 {
     /// <summary>Implements fn:tail — all items of a sequence except the first.</summary>
-    internal class TailFn : SystemFunction
+    internal sealed class TailFn : SystemFunction
     {
         public override Expression MakeFunctionCall(params Expression[] arguments)
         {

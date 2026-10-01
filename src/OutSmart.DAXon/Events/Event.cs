@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Events
         /// <summary>
         /// Event representing start of document
         /// </summary>
-        internal class StartDocument : Event
+        internal sealed class StartDocument : Event
         {
             int properties;
             public StartDocument(int properties)
@@ -46,7 +46,7 @@ namespace OutSmart.DAXon.Events
         /// <summary>
         /// Event representing end of document
         /// </summary>
-        internal class EndDocument : Event
+        internal sealed class EndDocument : Event
         {
             public EndDocument()
             {
@@ -61,7 +61,7 @@ namespace OutSmart.DAXon.Events
         /// <summary>
         /// Event representing the start of an element (including attributes or namespaces)
         /// </summary>
-        internal class StartElement : Event
+        internal sealed class StartElement : Event
         {
             INodeName name;
             ISchemaType type;
@@ -88,7 +88,7 @@ namespace OutSmart.DAXon.Events
         /// <summary>
         /// Event representing the end of an element
         /// </summary>
-        internal class EndElement : Event
+        internal sealed class EndElement : Event
         {
             public EndElement()
             {
@@ -103,7 +103,7 @@ namespace OutSmart.DAXon.Events
         /// <summary>
         /// Event representing a text node
         /// </summary>
-        internal class Text : Event
+        internal sealed class Text : Event
         {
             UnicodeString content;
             ILocation location;
@@ -124,7 +124,7 @@ namespace OutSmart.DAXon.Events
         /// <summary>
         /// Event representing a comment node
         /// </summary>
-        internal class Comment : Event
+        internal sealed class Comment : Event
         {
             UnicodeString content;
             ILocation location;
@@ -145,7 +145,7 @@ namespace OutSmart.DAXon.Events
         /// <summary>
         /// Event representing a processing instruction node
         /// </summary>
-        internal class ProcessingInstruction : Event
+        internal sealed class ProcessingInstruction : Event
         {
             string target;
             UnicodeString content;
@@ -165,7 +165,7 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        internal class Append : Event
+        internal sealed class Append : Event
         {
             IItem item;
             ILocation location;

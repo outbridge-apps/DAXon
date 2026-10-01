@@ -27,7 +27,7 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Functions
 {
-    internal class DAXonDeepEqual : SystemFunction
+    internal sealed class DAXonDeepEqual : SystemFunction
     {
         public const int INCLUDE_NAMESPACES = 1;
         public const int INCLUDE_PREFIXES = 1 << 1;

@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
     /// xs:double in [0,1)), 'next' (a zero-arg function producing the next generator), and 'permute'
     /// (a function that randomly permutes its argument sequence). Deterministic for a given seed.
     /// </summary>
-    internal class RandomNumberGenerator : SystemFunction, ICallable
+    internal sealed class RandomNumberGenerator : SystemFunction, ICallable
     {
         public static readonly MapType RETURN_TYPE = new MapType(BuiltInAtomicType.STRING, SequenceType.SINGLE_ITEM);
 
@@ -66,7 +66,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             return Generator(seed, context);
         }
 
-        private class Permutation : ICallable
+        private sealed class Permutation : ICallable
         {
             private readonly long nextSeed;
             public Permutation(long nextSeed) { this.nextSeed = nextSeed; }
@@ -87,7 +87,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             }
         }
 
-        private class NextGenerator : ICallable
+        private sealed class NextGenerator : ICallable
         {
             private readonly long nextSeed;
             public NextGenerator(long nextSeed) { this.nextSeed = nextSeed; }

@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Functions
     // Faithful port of net.sf.saxon.functions.SnapshotFn (Saxon 12.9). The class was missing from the port,
     // so fn:snapshot() was unregistered (XPST0017).
     // XSLT 3.0 function snapshot(): a deep-copy that also includes a shallow copy of all ancestors.
-    internal class SnapshotFn : SystemFunction
+    internal sealed class SnapshotFn : SystemFunction
     {
 
         public override string StreamerName => "SnapshotFn";

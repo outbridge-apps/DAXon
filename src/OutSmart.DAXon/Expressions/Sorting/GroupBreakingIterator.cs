@@ -23,7 +23,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class GroupBreakingIterator : ILookaheadIterator, IGroupIterator
+    internal sealed class GroupBreakingIterator : ILookaheadIterator, IGroupIterator
     {
         private readonly IPullEvaluator select;
         private readonly IFocusIterator population;
@@ -35,7 +35,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private IItem current = null;
         private int position = 0;
 
-        public virtual bool HasNext => nextItem != null;
+        public bool HasNext => nextItem != null;
         public GroupBreakingIterator(IPullEvaluator select, IFunctionItem breakWhen, IXPathContext baseContext)
         {
             this.select = select;
@@ -80,22 +80,22 @@ namespace OutSmart.DAXon.Expressions.Sorting
             nextItem = null;
         }
 
-        public virtual IAtomicSequence GetCurrentGroupingKey()
+        public IAtomicSequence GetCurrentGroupingKey()
         {
             return null;
         }
 
-        public virtual IGroundedValue CurrentGroup()
+        public IGroundedValue CurrentGroup()
         {
             return SequenceExtent.MakeSequenceExtent(currentMembers);
         }
 
-        public virtual bool SupportsHasNext()
+        public bool SupportsHasNext()
         {
             return true;
         }
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             try
             {
@@ -117,7 +117,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             population.Dispose();
         }

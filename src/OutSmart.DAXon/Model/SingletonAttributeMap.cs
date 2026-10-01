@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Model
     /// <summary>
     /// An implementation of IAttributeMap for use when there is exactly one attribute
     /// </summary>
-    internal class SingletonAttributeMap : AttributeInfo, IAttributeMap
+    internal sealed class SingletonAttributeMap : AttributeInfo, IAttributeMap
     {
         internal SingletonAttributeMap(INodeName nodeName, ISimpleType type, string value, ILocation location, int properties) : base(nodeName, type, value, location, properties)
         {
@@ -129,8 +129,8 @@ namespace OutSmart.DAXon.Model
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual string GetValue(NamespaceUri uri, string local) { AttributeInfo att = Get(uri, local); return att == null ? null : att.Value; }
-        public virtual string GetValue(string local) { AttributeInfo att = Get(NamespaceUri.NULL, local); return att == null ? null : att.Value; }
-        public virtual void Verify() { }
+        public string GetValue(NamespaceUri uri, string local) { AttributeInfo att = Get(uri, local); return att == null ? null : att.Value; }
+        public string GetValue(string local) { AttributeInfo att = Get(NamespaceUri.NULL, local); return att == null ? null : att.Value; }
+        public void Verify() { }
     }
 }

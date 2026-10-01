@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Serialization.CharCodes
     /// <summary>
     /// A class to hold some static constants and methods associated with processing UTF16 and surrogate pairs
     /// </summary>
-    internal class UTF16CharacterSet : ICharacterSet
+    internal sealed class UTF16CharacterSet : ICharacterSet
     {
 
         public const int NONBMP_MIN = 0x10000;
@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Serialization.CharCodes
         public static readonly char SURROGATE2_MIN = (char)0xDC00;
         public static readonly char SURROGATE2_MAX = (char)0xDFFF;
 
-        public virtual string CanonicalName => "UTF-16";
+        public string CanonicalName => "UTF-16";
         private UTF16CharacterSet()
         {
         }
@@ -39,7 +39,7 @@ namespace OutSmart.DAXon.Serialization.CharCodes
             return theInstance;
         }
 
-        public virtual bool InCharset(int c)
+        public bool InCharset(int c)
         {
             return true;
         }

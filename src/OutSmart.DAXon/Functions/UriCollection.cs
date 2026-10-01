@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Functions
     /// calling the registered <see cref="ICollectionFinder"/>. For the effect of the default
     /// system-supplied CollectionFinder, see <see cref="OutSmart.DAXon.Resources.StandardCollectionFinder"/>.
     /// </summary>
-    internal class UriCollection : SystemFunction, ICallable
+    internal sealed class UriCollection : SystemFunction, ICallable
     {
 
         private ISequenceIterator GetUris(string absoluteURI, IXPathContext context)
@@ -70,7 +70,7 @@ namespace OutSmart.DAXon.Functions
             return new LazySequence(GetUris(abs, context));
         }
         // ISequenceIterator over the resource URIs of a collection, delivering each as an xs:anyURI.
-        private class UriIterator : ISequenceIterator
+        private sealed class UriIterator : ISequenceIterator
         {
             private readonly IEnumerator<string> sources;
             public UriIterator(IEnumerator<string> sources) { this.sources = sources; }

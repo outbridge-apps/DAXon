@@ -23,7 +23,7 @@ using OutSmart.DAXon.Internal.Collections;
 using System.IO;
 namespace OutSmart.DAXon.Text
 {
-    internal class Slice16 : UnicodeString
+    internal sealed class Slice16 : UnicodeString
     {
         private char[] chars;
         private int start;
@@ -32,11 +32,11 @@ namespace OutSmart.DAXon.Text
 
         public override int Width => 16;
 
-        public virtual char[] CharArray => chars;
+        public char[] CharArray => chars;
 
-        public virtual int Start => start;
+        public int Start => start;
 
-        public virtual int End => end;
+        public int End => end;
         public Slice16(char[] chars, int start, int end)
         {
             this.chars = chars;

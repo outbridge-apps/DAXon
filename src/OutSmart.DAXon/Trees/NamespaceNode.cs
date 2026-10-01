@@ -27,16 +27,16 @@ namespace OutSmart.DAXon.Trees
     // fn-outermost/innermost namespace cases, in-scope-prefixes, etc. all raised a code-less ERR). Implements the
     // full NodeInfo surface for a namespace node; a namespace node's string value is the namespace URI and its name
     // is the prefix (an NCName in no namespace).
-    internal class NamespaceNode : NodeInfo
+    internal sealed class NamespaceNode : NodeInfo
     {
         internal NodeInfo element;
         internal NamespaceBinding nsBinding;
         internal int position;
         private int fingerprint;
 
-        public virtual UnicodeString UnicodeStringValue => nsBinding.GetNamespaceUri().ToUnicodeString();
+        public UnicodeString UnicodeStringValue => nsBinding.GetNamespaceUri().ToUnicodeString();
 
-        public virtual int Fingerprint
+        public int Fingerprint
         {
             get
             {
@@ -55,9 +55,9 @@ namespace OutSmart.DAXon.Trees
                 return fingerprint;
             }
         }
-        public virtual string DisplayName => GetLocalPart();
-        public virtual NodeInfo Root => element.Root;
-        public virtual NamespaceMap AllNamespaces => null;
+        public string DisplayName => GetLocalPart();
+        public NodeInfo Root => element.Root;
+        public NamespaceMap AllNamespaces => null;
 
         public NamespaceNode(NodeInfo element, NamespaceBinding nscode, int position)
         {
@@ -67,9 +67,9 @@ namespace OutSmart.DAXon.Trees
             fingerprint = -1; // evaluated lazily to avoid NamePool access
         }
 
-        public virtual ITreeInfo GetTreeInfo() => element.GetTreeInfo();
-        public virtual Genre GetGenre() => Genre.NODE;
-        public virtual int GetNodeKind() => OutSmart.DAXon.Types.Type.NAMESPACE;
+        public ITreeInfo GetTreeInfo() => element.GetTreeInfo();
+        public Genre GetGenre() => Genre.NODE;
+        public int GetNodeKind() => OutSmart.DAXon.Types.Type.NAMESPACE;
 
         public override bool Equals(object other)
         {
@@ -80,16 +80,16 @@ namespace OutSmart.DAXon.Trees
 
         public override int GetHashCode() => element.GetHashCode() ^ (position << 13);
 
-        public virtual bool IsSameNodeInfo(NodeInfo other) => Equals(other);
+        public bool IsSameNodeInfo(NodeInfo other) => Equals(other);
 
-        public virtual string GetSystemId() => element.GetSystemId();
-        public virtual string GetPublicId() => element.GetPublicId();
-        public virtual string GetBaseURI() => null; // the base URI of a namespace node is the empty sequence
-        public virtual int GetLineNumber() => element.GetLineNumber();
-        public virtual int GetColumnNumber() => element.GetColumnNumber();
-        public virtual ILocation SaveLocation() => this;
+        public string GetSystemId() => element.GetSystemId();
+        public string GetPublicId() => element.GetPublicId();
+        public string GetBaseURI() => null; // the base URI of a namespace node is the empty sequence
+        public int GetLineNumber() => element.GetLineNumber();
+        public int GetColumnNumber() => element.GetColumnNumber();
+        public ILocation SaveLocation() => this;
 
-        public virtual int CompareOrder(NodeInfo other)
+        public int CompareOrder(NodeInfo other)
         {
             if (other is NamespaceNode && element.Equals(((NamespaceNode)other).element))
             {
@@ -105,21 +105,21 @@ namespace OutSmart.DAXon.Trees
                 return element.CompareOrder(other);
             }
         }
-        public virtual string GetStringValue() => nsBinding.GetNamespaceUri().ToString();
+        public string GetStringValue() => nsBinding.GetNamespaceUri().ToString();
 
-        public virtual bool HasFingerprint() => true;
+        public bool HasFingerprint() => true;
 
-        public virtual string GetLocalPart() => nsBinding.GetPrefix();
-        public virtual NamespaceUri GetNamespaceUri() => NamespaceUri.NULL;
-        public virtual string GetURI() => GetNamespaceUri().ToString();
-        public virtual string GetPrefix() => "";
-        public virtual Configuration GetConfiguration() => element.GetConfiguration();
-        public virtual ISchemaType GetSchemaType() => BuiltInAtomicType.STRING;
-        public virtual NodeInfo GetParent() => element;
+        public string GetLocalPart() => nsBinding.GetPrefix();
+        public NamespaceUri GetNamespaceUri() => NamespaceUri.NULL;
+        public string GetURI() => GetNamespaceUri().ToString();
+        public string GetPrefix() => "";
+        public Configuration GetConfiguration() => element.GetConfiguration();
+        public ISchemaType GetSchemaType() => BuiltInAtomicType.STRING;
+        public NodeInfo GetParent() => element;
 
-        public virtual IAxisIterator IterateAxis(int axisNumber) => IterateAxis(axisNumber, AnyNodeTest.GetInstance());
+        public IAxisIterator IterateAxis(int axisNumber) => IterateAxis(axisNumber, AnyNodeTest.GetInstance());
 
-        public virtual IAxisIterator IterateAxis(int axisNumber, INodePredicate predicate)
+        public IAxisIterator IterateAxis(int axisNumber, INodePredicate predicate)
         {
             NodeTest nodeTest = Navigator.NodeTestFromPredicate(predicate);
             switch (axisNumber)
@@ -172,61 +172,61 @@ namespace OutSmart.DAXon.Trees
             }
         }
 
-        public virtual string GetAttributeValue(NamespaceUri uri, string local) => null;
-        public virtual bool HasChildNodes() => false;
+        public string GetAttributeValue(NamespaceUri uri, string local) => null;
+        public bool HasChildNodes() => false;
 
-        public virtual IEnumerable<NodeInfo> Children()
+        public IEnumerable<NodeInfo> Children()
         {
             yield break;
         }
 
-        public virtual IEnumerable<NodeInfo> Children(INodePredicate filter)
+        public IEnumerable<NodeInfo> Children(INodePredicate filter)
         {
             yield break;
         }
 
-        public virtual IAttributeMap Attributes() => EmptyAttributeMap.GetInstance();
+        public IAttributeMap Attributes() => EmptyAttributeMap.GetInstance();
 
-        public virtual void GenerateId(StringBuilder buffer)
+        public void GenerateId(StringBuilder buffer)
         {
             element.GenerateId(buffer);
             buffer.Append('n');
             buffer.Append(position);
         }
 
-        public virtual void Copy(IReceiver @out, int copyOptions, ILocation locationId) => @out.Append(this);
+        public void Copy(IReceiver @out, int copyOptions, ILocation locationId) => @out.Append(this);
 
-        public virtual void Deliver(IReceiver receiver, ParseOptions options) => receiver.Append(this);
+        public void Deliver(IReceiver receiver, ParseOptions options) => receiver.Append(this);
 
-        public virtual IActiveSource AsActiveSource() => new NodeSource(this);
+        public IActiveSource AsActiveSource() => new NodeSource(this);
 
-        public virtual void SetSystemId(string systemId)
+        public void SetSystemId(string systemId)
         {
             // no action: namespace nodes have the same base URI as their parent
         }
 
-        public virtual NamespaceBinding[] GetDeclaredNamespaces(NamespaceBinding[] buffer) => null;
+        public NamespaceBinding[] GetDeclaredNamespaces(NamespaceBinding[] buffer) => null;
 
-        public virtual IAtomicSequence Atomize() => new StringValue(GetStringValue());
+        public IAtomicSequence Atomize() => new StringValue(GetStringValue());
 
-        public virtual bool IsId() => false;
-        public virtual bool IsIdref() => false;
-        public virtual bool IsNilled() => false;
-        public virtual bool IsStreamed() => element.IsStreamed();
-        public virtual string ToShortString() => "namespace node " + DisplayName;
+        public bool IsId() => false;
+        public bool IsIdref() => false;
+        public bool IsNilled() => false;
+        public bool IsStreamed() => element.IsStreamed();
+        public string ToShortString() => "namespace node " + DisplayName;
 
         // IItem / IGroundedValue singleton defaults
-        public virtual ISequenceIterator Iterate() => SingletonIterator.MakeIterator(this);
-        public virtual IItem ItemAt(int n) => n == 0 ? this : null;
-        public virtual int GetLength() => 1;
-        public virtual IGroundedValue Reduce() => this;
-        public virtual IGroundedValue Materialize() => this;
-        public virtual bool EffectiveBooleanValue() => true; // a single node is always true
-        public virtual IEnumerable<IItem> AsIterable() => new IItem[] { this };
-        public virtual bool ContainsNode(NodeInfo sought) => sought != null && IsSameNodeInfo(sought);
-        public virtual ISequence MakeRepeatable() => this;
-        public virtual IGroundedValue Subsequence(int start, int length) => (start <= 0 && (long)start + length > 0) ? (IGroundedValue)this : OutSmart.DAXon.Values.EmptySequence.GetInstance(); // singleton item (upstream GroundedValue default)
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
+        public ISequenceIterator Iterate() => SingletonIterator.MakeIterator(this);
+        public IItem ItemAt(int n) => n == 0 ? this : null;
+        public int GetLength() => 1;
+        public IGroundedValue Reduce() => this;
+        public IGroundedValue Materialize() => this;
+        public bool EffectiveBooleanValue() => true; // a single node is always true
+        public IEnumerable<IItem> AsIterable() => new IItem[] { this };
+        public bool ContainsNode(NodeInfo sought) => sought != null && IsSameNodeInfo(sought);
+        public ISequence MakeRepeatable() => this;
+        public IGroundedValue Subsequence(int start, int length) => (start <= 0 && (long)start + length > 0) ? (IGroundedValue)this : OutSmart.DAXon.Values.EmptySequence.GetInstance(); // singleton item (upstream GroundedValue default)
+        public IGroundedValue Concatenate(IGroundedValue[] others)
         {
             // upstream GroundedValue default: chain this value's items with the others
             var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());

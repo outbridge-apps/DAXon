@@ -92,7 +92,7 @@ namespace OutSmart.DAXon.Expressions
             return new FirstItemElaborator();
         }
 
-        internal class FirstItemElaborator : ItemElaborator
+        internal sealed class FirstItemElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

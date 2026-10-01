@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Internal.Resolver
         public string Name { get; }
         public ResolverFeature(string name) { Name = name; }
     }
-    internal class ResolverFeature<T> : ResolverFeature
+    internal sealed class ResolverFeature<T> : ResolverFeature
     {
         public ResolverFeature(string name) : base(name) { }
     }

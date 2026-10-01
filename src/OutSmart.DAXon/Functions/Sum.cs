@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implementation of the fn:sum function
     /// </summary>
-    internal class Sum : FoldingFunction
+    internal sealed class Sum : FoldingFunction
     {
         public override Expression MakeFunctionCall(params Expression[] arguments)
         {
@@ -128,7 +128,7 @@ namespace OutSmart.DAXon.Functions
             return new SumFnElaborator();
         }
 
-        internal class SumFold : IFold
+        internal sealed class SumFold : IFold
         {
             private readonly IXPathContext context;
             private readonly AtomicValue zeroValue; // null means empty sequence
@@ -159,7 +159,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            public virtual void ProcessItem(IItem item)
+            public void ProcessItem(IItem item)
             {
                 AtomicValue next = (AtomicValue)item;
                 if (atStart)
@@ -310,7 +310,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            public virtual bool IsFinished()
+            public bool IsFinished()
             {
                 if (onDoublePath)
                 {
@@ -320,7 +320,7 @@ namespace OutSmart.DAXon.Functions
                 return data is DoubleValue && data.IsNaN();
             }
 
-            public virtual ISequence Result()
+            public ISequence Result()
             {
                 if (atStart)
                 {
@@ -345,7 +345,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class SumFnElaborator : ItemElaborator
+        internal sealed class SumFnElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

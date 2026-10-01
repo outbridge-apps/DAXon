@@ -21,7 +21,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Trees.Linked
 {
-    internal class AttributeImpl : NodeImpl
+    internal sealed class AttributeImpl : NodeImpl
     {
 
         public override int Fingerprint

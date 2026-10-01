@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// Instruction representing an xsl:call-template element in the stylesheet.
     /// </summary>
-    internal class CallTemplate : Instruction, IITemplateCall, IComponentInvocation
+    internal sealed class CallTemplate : Instruction, IITemplateCall, IComponentInvocation
     {
         private NamedTemplate template; // Null only for saxon:call-template
         private readonly StructuredQName calledTemplateName; // the name of the called template
@@ -75,7 +75,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             this.isWithinDeclaredStreamableConstruct = inStreamable;
         }
 
-        public virtual void SetActualParameters(WithParam[] actualParams, WithParam[] tunnelParams)
+        public void SetActualParameters(WithParam[] actualParams, WithParam[] tunnelParams)
         {
             this.actualParams = actualParams;
             this.tunnelParams = tunnelParams;
@@ -90,7 +90,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual void SetTailRecursive(bool tailRecursive)
+        public void SetTailRecursive(bool tailRecursive)
         {
             this.useTailRecursion = tailRecursive;
         }
@@ -100,7 +100,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return calledTemplateName == null ? null : new SymbolicName(StandardNames.XSL_TEMPLATE, calledTemplateName);
         }
 
-        public virtual Component GetTarget()
+        public Component GetTarget()
         {
             return template.DeclaringComponent;
         }
@@ -115,7 +115,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return tunnelParams;
         }
 
-        public virtual bool UsesTailRecursion()
+        public bool UsesTailRecursion()
         {
             return useTailRecursion;
         }
@@ -335,7 +335,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new CallTemplateElaborator();
         }
 
-        internal class CallTemplatePackage : ITailCall
+        internal sealed class CallTemplatePackage : ITailCall
         {
             private readonly Component targetComponent;
             private readonly ParameterSet @params;
@@ -358,7 +358,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 this.evaluationContext = evaluationContext;
             }
 
-            public virtual ITailCall ProcessLeavingTail()
+            public ITailCall ProcessLeavingTail()
             {
 
                 // TODO: the idea of tail call optimization is to reuse the caller's stack frame rather than
@@ -389,7 +389,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        internal class CallTemplateElaborator : PushElaborator
+        internal sealed class CallTemplateElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

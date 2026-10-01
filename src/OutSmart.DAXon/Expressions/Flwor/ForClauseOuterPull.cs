@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 {
     // "for ... allowing empty" (outer-join semantics): an empty binding sequence still delivers one tuple
     // with the range variable bound to the empty sequence.
-    internal class ForClauseOuterPull : ForClausePull
+    internal sealed class ForClauseOuterPull : ForClausePull
     {
         public ForClauseOuterPull(TuplePull @base, ForClause forClause) : base(@base, forClause)
         {

@@ -20,9 +20,9 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
-    internal class CollatingFunctionFree : SystemFunction
+    internal sealed class CollatingFunctionFree : SystemFunction
     {
-        protected virtual int CollationArgument => GetArity() - 1;
+        protected int CollationArgument => GetArity() - 1;
 
         public override string StreamerName
         {
@@ -78,7 +78,7 @@ namespace OutSmart.DAXon.Functions
             return null;
         }
 
-        public virtual CollatingFunctionFixed BindCollation(string collationName)
+        public CollatingFunctionFixed BindCollation(string collationName)
         {
             Configuration config = GetRetainedStaticContext().GetConfiguration();
             int version = GetRetainedStaticContext().GetPackageData().HostLanguageVersion;

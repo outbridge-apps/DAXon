@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
     // Faithful port of net.sf.saxon.expr.sort.MergeIterator (Saxon 12.9). Was a hollow stub that didn't
     // even implement ISequenceIterator — every multi-source xsl:merge cast it and crashed (InvalidCast).
     // The sorted merge of two merge inputs, retaining all duplicates; no grouping of adjacent items.
-    internal class MergeIterator : ISequenceIterator, ILookaheadIterator
+    internal sealed class MergeIterator : ISequenceIterator, ILookaheadIterator
     {
         private readonly ISequenceIterator e1;
         private readonly ISequenceIterator e2;
@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private ObjectValue<ItemWithMergeKeys> nextItem2;
         private readonly IComparer<ObjectValue<ItemWithMergeKeys>> comparer;
 
-        public virtual bool HasNext => nextItem1 != null || nextItem2 != null;
+        public bool HasNext => nextItem1 != null || nextItem2 != null;
 
         /// <summary>
         /// Create the iterator. The two input iterators must return nodes in merge key order.
@@ -37,9 +37,9 @@ namespace OutSmart.DAXon.Expressions.Sorting
             nextItem2 = (ObjectValue<ItemWithMergeKeys>)e2.Next();
         }
 
-        public virtual bool SupportsHasNext() => true;
+        public bool SupportsHasNext() => true;
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             // main merge loop: take an item from whichever set has the lower value; ties go to the first.
             if (nextItem1 != null && nextItem2 != null)

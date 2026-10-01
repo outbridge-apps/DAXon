@@ -20,7 +20,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
-    internal class ElementAvailable : SystemFunction
+    internal sealed class ElementAvailable : SystemFunction
     {
         public static bool IsXslt30Element(int fp)
         {

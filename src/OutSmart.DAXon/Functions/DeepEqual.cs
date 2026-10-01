@@ -1104,30 +1104,30 @@ namespace OutSmart.DAXon.Functions
      * Determine whether two nodes are deep-equal
      * @return null if they are deep equal, or an explanation of the reason if not
      */
-        private class NormalizingComparer : IAtomicComparer
+        private sealed class NormalizingComparer : IAtomicComparer
         {
             private IAtomicComparer baseComparer;
             private DeepEqualOptions options;
 
-            public virtual IStringCollator Collator => baseComparer.Collator;
+            public IStringCollator Collator => baseComparer.Collator;
             public NormalizingComparer(IAtomicComparer baseComparer, DeepEqualOptions options)
             {
                 this.baseComparer = baseComparer;
                 this.options = options;
             }
 
-            public virtual IAtomicComparer ProvideContext(IXPathContext context)
+            public IAtomicComparer ProvideContext(IXPathContext context)
             {
                 baseComparer = baseComparer.ProvideContext(context);
                 return this; // TODO: thread safety?
             }
 
-            public virtual int CompareAtomicValues(AtomicValue v0, AtomicValue v1)
+            public int CompareAtomicValues(AtomicValue v0, AtomicValue v1)
             {
                 return baseComparer.CompareAtomicValues(v0, v1);
             }
 
-            public virtual bool ComparesEqual(AtomicValue v0, AtomicValue v1)
+            public bool ComparesEqual(AtomicValue v0, AtomicValue v1)
             {
                 if (v0 is StringValue && v1 is StringValue)
                 {
@@ -1168,7 +1168,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            public virtual string Save()
+            public string Save()
             {
                 return null;
             }

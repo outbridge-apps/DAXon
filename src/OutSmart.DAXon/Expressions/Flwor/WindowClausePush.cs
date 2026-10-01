@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
     /// window processing is activated once for each input tuple, and it generates one output tuple for each
     /// identified window.
     /// </summary>
-    internal class WindowClausePush : TuplePush
+    internal sealed class WindowClausePush : TuplePush
     {
         private readonly WindowClause windowClause;
         private readonly TuplePush destination;

@@ -17,7 +17,7 @@ using System.Text;
 
 namespace OutSmart.DAXon.Lib
 {
-    internal class StandardUnparsedTextResolver : IUnparsedTextURIResolver
+    internal sealed class StandardUnparsedTextResolver : IUnparsedTextURIResolver
     {
         public StandardUnparsedTextResolver() { }
         // Phase C 2026-06-09: real resolver (was => null, which made json-doc()/unparsed-text() fail with

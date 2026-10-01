@@ -329,7 +329,7 @@ namespace OutSmart.DAXon.Expressions
             return new CardinalityCheckerElaborator();
         }
 
-        internal class CardinalityCheckerElaborator : PullElaborator
+        internal sealed class CardinalityCheckerElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

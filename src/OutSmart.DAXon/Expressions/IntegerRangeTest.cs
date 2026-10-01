@@ -25,13 +25,13 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class IntegerRangeTest : Expression
+    internal sealed class IntegerRangeTest : Expression
     {
         private readonly Operand valueOp;
         private readonly Operand minOp;
         private readonly Operand maxOp;
 
-        public virtual Expression Value
+        public Expression Value
         {
             get => valueOp.GetChildExpression(); set
             {
@@ -54,12 +54,12 @@ namespace OutSmart.DAXon.Expressions
             return OperandList(valueOp, minOp, maxOp);
         }
 
-        public virtual Expression GetMin()
+        public Expression GetMin()
         {
             return minOp.GetChildExpression();
         }
 
-        public virtual Expression GetMax()
+        public Expression GetMax()
         {
             return maxOp.GetChildExpression();
         }
@@ -228,7 +228,7 @@ namespace OutSmart.DAXon.Expressions
             return new IntegerRangeTestElaborator();
         }
 
-        internal class IntegerRangeTestElaborator : BooleanElaborator
+        internal sealed class IntegerRangeTestElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

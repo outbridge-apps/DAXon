@@ -367,7 +367,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new EvaluateInstrElaborator();
         }
 
-        private class EvaluateInstrElaborator : PullElaborator
+        private sealed class EvaluateInstrElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

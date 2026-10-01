@@ -24,11 +24,11 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class SubscriptExpression : SingleItemFilter
+    internal sealed class SubscriptExpression : SingleItemFilter
     {
         private readonly Operand subscriptOp;
 
-        public virtual Expression Subscript
+        public Expression Subscript
         {
             get => subscriptOp.GetChildExpression(); set
             {
@@ -82,7 +82,7 @@ namespace OutSmart.DAXon.Expressions
             return OperandList(GetOperand(), subscriptOp);
         }
 
-        public virtual Expression GetSubscriptExpression()
+        public Expression GetSubscriptExpression()
         {
             return Subscript;
         }
@@ -159,7 +159,7 @@ namespace OutSmart.DAXon.Expressions
             return new SubscriptExprElaborator();
         }
 
-        internal class SubscriptExprElaborator : ItemElaborator
+        internal sealed class SubscriptExprElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

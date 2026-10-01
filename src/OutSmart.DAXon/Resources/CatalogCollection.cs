@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Resources
     // UnparsedTextResource) are excluded, so only this static method is needed -> a static-only stub
     // avoids an AbstractResourceCollection base cascade. Faithful re-impl (compat has no
     // ByteArrayOutputStream, so MemoryStream + Encoding): read the stream, decode with the charset.
-    internal class CatalogCollection
+    internal sealed class CatalogCollection
     {
         public static string MakeStringFromStream(Stream input, string encoding)
         {

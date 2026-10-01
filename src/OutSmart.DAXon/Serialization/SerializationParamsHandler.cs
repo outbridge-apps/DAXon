@@ -26,7 +26,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Serialization
 {
-    internal class SerializationParamsHandler
+    internal sealed class SerializationParamsHandler
     {
         public static readonly NamespaceUri NAMESPACE = NamespaceUri.OUTPUT;
         Properties properties;
@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Serialization
             this.properties = props;
         }
 
-        public virtual void SetSerializationParams(NodeInfo node)
+        public void SetSerializationParams(NodeInfo node)
         {
             if (properties == null)
             {
@@ -175,7 +175,7 @@ namespace OutSmart.DAXon.Serialization
             return value;
         }
 
-        public virtual SerializationProperties GetSerializationProperties()
+        public SerializationProperties GetSerializationProperties()
         {
             CharacterMapIndex index = new CharacterMapIndex();
             if (characterMap != null)
@@ -187,7 +187,7 @@ namespace OutSmart.DAXon.Serialization
             return new SerializationProperties(properties, index);
         }
 
-        public virtual CharacterMap GetCharacterMap()
+        public CharacterMap GetCharacterMap()
         {
             return characterMap;
         }

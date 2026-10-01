@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Trees.Iterators
     /// <summary>
     /// Class ListIterator, iterates over a sequence of items held in a Java List.
     /// </summary>
-    internal class NodeListIterator : ListIterator.Of<NodeInfo>, IAxisIterator
+    internal sealed class NodeListIterator : ListIterator.Of<NodeInfo>, IAxisIterator
     {
         public NodeListIterator(IList<NodeInfo> list) : base(list)
         {

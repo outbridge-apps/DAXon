@@ -15,10 +15,10 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Regex
 {
-    internal class History
+    internal sealed class History
     {
         private readonly Dictionary<Operation, IntSet> zeroLengthMatches = new Dictionary<Operation, IntSet>();
-        public virtual bool IsDuplicateZeroLengthMatch(Operation op, int position)
+        public bool IsDuplicateZeroLengthMatch(Operation op, int position)
         {
             IntSet positions = zeroLengthMatches.GetOrDefault(op);
             if (positions == null)

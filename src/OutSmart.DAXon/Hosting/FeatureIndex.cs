@@ -15,7 +15,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Lib
 {
-    internal class FeatureIndex
+    internal sealed class FeatureIndex
     {
         private static readonly Dictionary<string, FeatureData> byName = new Dictionary<string, FeatureData>();
         private static readonly IntHashMap<FeatureData> byCode = new IntHashMap<FeatureData>();

@@ -11,7 +11,7 @@ using OutSmart.DAXon.Model;
 
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class SimpleTypeComparison
+    internal sealed class SimpleTypeComparison
     {
         private static readonly SimpleTypeComparison _i = new SimpleTypeComparison();
         public static SimpleTypeComparison GetInstance() => _i;

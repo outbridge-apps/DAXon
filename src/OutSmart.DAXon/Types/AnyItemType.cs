@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Types
     /// <summary>
     /// An implementation of ItemType that matches any item (node or atomic value)
     /// </summary>
-    internal class AnyItemType : IItemTypeWithSequenceTypeCache
+    internal sealed class AnyItemType : IItemTypeWithSequenceTypeCache
     {
 
         private static readonly AnyItemType theInstance = new AnyItemType();
@@ -29,9 +29,9 @@ namespace OutSmart.DAXon.Types
         private SequenceType _zeroOrOne;
         private SequenceType _zeroOrMore;
 
-        public virtual string BasicAlphaCode => "";
+        public string BasicAlphaCode => "";
 
-        public virtual int PrimitiveType => Type.ITEM;
+        public int PrimitiveType => Type.ITEM;
         private AnyItemType()
         {
         }
@@ -40,32 +40,32 @@ namespace OutSmart.DAXon.Types
             return theInstance;
         }
 
-        public virtual Genre GetGenre()
+        public Genre GetGenre()
         {
             return Genre.ANY;
         }
 
-        public virtual UType GetUType()
+        public UType GetUType()
         {
             return UType.ANY;
         }
 
-        public virtual bool IsAtomicType()
+        public bool IsAtomicType()
         {
             return false;
         }
 
-        public virtual bool IsPlainType()
+        public bool IsPlainType()
         {
             return false;
         }
 
-        public virtual bool Matches(IItem item, TypeHierarchy th)
+        public bool Matches(IItem item, TypeHierarchy th)
         {
             return true;
         }
 
-        public virtual IAtomicType GetAtomizedItemType()
+        public IAtomicType GetAtomizedItemType()
         {
             return BuiltInAtomicType.ANY_ATOMIC;
         }
@@ -82,7 +82,7 @@ namespace OutSmart.DAXon.Types
             return "AnyItemType".GetHashCode();
         }
 
-        public virtual SequenceType One()
+        public SequenceType One()
         {
             if (_one == null)
             {
@@ -92,7 +92,7 @@ namespace OutSmart.DAXon.Types
             return _one;
         }
 
-        public virtual SequenceType ZeroOrOne()
+        public SequenceType ZeroOrOne()
         {
             if (_zeroOrOne == null)
             {
@@ -102,7 +102,7 @@ namespace OutSmart.DAXon.Types
             return _zeroOrOne;
         }
 
-        public virtual SequenceType OneOrMore()
+        public SequenceType OneOrMore()
         {
             if (_oneOrMore == null)
             {
@@ -112,7 +112,7 @@ namespace OutSmart.DAXon.Types
             return _oneOrMore;
         }
 
-        public virtual SequenceType ZeroOrMore()
+        public SequenceType ZeroOrMore()
         {
             if (_zeroOrMore == null)
             {

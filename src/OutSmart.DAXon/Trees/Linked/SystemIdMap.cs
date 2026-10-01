@@ -16,7 +16,7 @@ using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Trees.Linked
 {
-    internal class SystemIdMap
+    internal sealed class SystemIdMap
     {
         private int[] sequenceNumbers;
         private string[] uris;
@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Trees.Linked
             allocated = 0;
         }
 
-        public virtual void SetSystemId(int sequence, string uri)
+        public void SetSystemId(int sequence, string uri)
         {
             if (allocated > 0)
             {
@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Trees.Linked
             allocated++;
         }
 
-        public virtual string GetSystemId(int sequence)
+        public string GetSystemId(int sequence)
         {
             if (allocated == 0)
             {

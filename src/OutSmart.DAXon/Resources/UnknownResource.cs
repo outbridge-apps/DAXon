@@ -12,7 +12,7 @@ using OutSmart.DAXon.Lib;
 
 namespace OutSmart.DAXon.Resources
 {
-    internal class UnknownResource
+    internal sealed class UnknownResource
     {
         public static readonly IResourceFactory FACTORY = new GenericResourceFactory();
     }

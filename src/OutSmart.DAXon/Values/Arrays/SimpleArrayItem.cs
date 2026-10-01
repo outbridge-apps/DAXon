@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Values.Arrays
     /// <summary>
     /// A simple implementation of XDM array items, in which the array is backed by a Java List.
     /// </summary>
-    internal class SimpleArrayItem : AbstractArrayItem
+    internal sealed class SimpleArrayItem : AbstractArrayItem
     {
         public static readonly SimpleArrayItem EMPTY_ARRAY = new SimpleArrayItem(new List<IGroundedValue>());
         private readonly IList<IGroundedValue> _members;
@@ -99,12 +99,12 @@ namespace OutSmart.DAXon.Values.Arrays
             return all;
         }
 
-        public virtual void RequestNotification(IPingable informee)
+        public void RequestNotification(IPingable informee)
         {
             this.conversionPingable = informee;
         }
 
-        public virtual void NotifyConversion()
+        public void NotifyConversion()
         {
             if (conversionPingable != null)
             {
@@ -189,7 +189,7 @@ namespace OutSmart.DAXon.Values.Arrays
             return a2.Concat(other);
         }
 
-        public virtual IList<IGroundedValue> GetMembers()
+        public IList<IGroundedValue> GetMembers()
         {
             return _members;
         }

@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Trees.Iterators
     /// An iterator that returns the same items as its base iterator, checking to see that they are either
     /// all nodes, or all non-nodes; if they are all nodes, it delivers them in document order.
     /// </summary>
-    internal class HomogeneityCheckerIterator : ISequenceIterator
+    internal sealed class HomogeneityCheckerIterator : ISequenceIterator
     {
         private ISequenceIterator @base = null;
         private ILocation loc;
@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Trees.Iterators
             state = 0;
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             @base.Dispose();
         }
@@ -45,7 +45,7 @@ namespace OutSmart.DAXon.Trees.Iterators
                     .WithLocation(loc));
         }
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             IItem item = @base.Next();
             if (item == null)

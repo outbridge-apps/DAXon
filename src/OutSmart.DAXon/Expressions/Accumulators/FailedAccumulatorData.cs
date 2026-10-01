@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
     /// Represents the values of an accumulator whose evaluation has failed. The error is retained
     /// until referenced using accumulator-before() or accumulator-after().
     /// </summary>
-    internal class FailedAccumulatorData : IIAccumulatorData
+    internal sealed class FailedAccumulatorData : IIAccumulatorData
     {
         private readonly Accumulator acc;
         private readonly XPathException error;

@@ -257,7 +257,7 @@ namespace OutSmart.DAXon.Expressions
         // Java-parity elaborator (SingletonAtomizer$SingletonAtomizerElaborator). Composes the base pull
         // evaluator ONCE; the interpreted EvaluateItem calls BaseExpression.Iterate per evaluation, which
         // re-runs MakeElaborator (lock) + the whole ElaborateForPull closure rebuild on every HOF-lambda call.
-        internal class SingletonAtomizerElaborator : ItemElaborator
+        internal sealed class SingletonAtomizerElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

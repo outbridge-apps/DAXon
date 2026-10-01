@@ -20,19 +20,19 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Values
 {
-    internal class IntegerRange : IAtomicSequence
+    internal sealed class IntegerRange : IAtomicSequence
     {
         public long start;
         public long step;
         public long end; // the adjusted end, so it is actually the last number returned
 
-        public virtual long Start => start;
+        public long Start => start;
 
-        public virtual long End => end;
+        public long End => end;
 
-        public virtual UnicodeString CanonicalLexicalRepresentation => UnicodeStringValue;
+        public UnicodeString CanonicalLexicalRepresentation => UnicodeStringValue;
 
-        public virtual UnicodeString UnicodeStringValue
+        public UnicodeString UnicodeStringValue
         {
             get
             {
@@ -68,7 +68,7 @@ namespace OutSmart.DAXon.Values
             this.end = start + step * (end - start) / step;
         }
 
-        public virtual long GetStep()
+        public long GetStep()
         {
             return step;
         }
@@ -111,7 +111,7 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        public virtual IAtomicIterator Iterate()
+        public IAtomicIterator Iterate()
         {
 
             // Written this way for C# conversion
@@ -125,7 +125,7 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        public virtual IntegerValue ItemAt(int n)
+        public IntegerValue ItemAt(int n)
         {
             if (n < 0 || n >= GetLength())
             {
@@ -135,7 +135,7 @@ namespace OutSmart.DAXon.Values
             return Int64Value.MakeIntegerValue(start + (n * step));
         }
 
-        public virtual IGroundedValue Subsequence(int start, int length)
+        public IGroundedValue Subsequence(int start, int length)
         {
             if (length <= 0)
             {
@@ -159,17 +159,17 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        public virtual int GetLength()
+        public int GetLength()
         {
             return (int)((end - start) / step) + 1;
         }
 
-        public virtual IntegerValue Head()
+        public IntegerValue Head()
         {
             return new Int64Value(start);
         }
 
-        public virtual string GetStringValue()
+        public string GetStringValue()
         {
             try
             {
@@ -181,12 +181,12 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        public virtual bool EffectiveBooleanValue()
+        public bool EffectiveBooleanValue()
         {
             return ExpressionTool.EffectiveBooleanValue(Iterate());
         }
 
-        public virtual IGroundedValue Reduce()
+        public IGroundedValue Reduce()
         {
             if (start == end)
             {
@@ -230,13 +230,13 @@ namespace OutSmart.DAXon.Values
         // IntegerRange is already an in-memory grounded value, so materialize/makeRepeatable return itself,
         // and an integer range contains no nodes. (Materialize was a throwing stub, so `1 to 5` blew up wherever
         // it had to be grounded, e.g. map:entry("k", 1 to 5).)
-        public virtual IGroundedValue Materialize() => this;
-        public virtual string ToShortString() => "(" + Start + " to " + End + ")";
+        public IGroundedValue Materialize() => this;
+        public string ToShortString() => "(" + Start + " to " + End + ")";
         // Streaming, not a materialized list: a range can be huge (bounded only by the
         // int.MaxValue sequence cap), and eager buffering turned every whole-range consumer
         // (Literal type checks, foreach bridges) into an O(N)-memory walk — sum(1 to 1e9)
         // exhausted memory at compile time through Literal.IsInstance.
-        public virtual IEnumerable<IItem> AsIterable()
+        public IEnumerable<IItem> AsIterable()
         {
             var it = Iterate();
             for (IItem i = it.Next(); i != null; i = it.Next())
@@ -244,8 +244,8 @@ namespace OutSmart.DAXon.Values
                 yield return i;
             }
         }
-        public virtual bool ContainsNode(NodeInfo sought) => false;
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
+        public bool ContainsNode(NodeInfo sought) => false;
+        public IGroundedValue Concatenate(IGroundedValue[] others)
         {
             // upstream GroundedValue default: chain this value's items with the others
             var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
@@ -253,6 +253,6 @@ namespace OutSmart.DAXon.Values
                 __chain = __chain.AddAll(__v.AsIterable());
             return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
         }
-        public virtual ISequence MakeRepeatable() => this;
+        public ISequence MakeRepeatable() => this;
     }
 }

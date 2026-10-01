@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Patterns
     // conversion to Pattern returned NULL (not even a throw), so `A except B` match patterns silently
     // yielded a null Pattern -> NRE in PatternParser.ParsePattern.
     // A pattern formed as the difference of two other patterns.
-    internal class ExceptPattern : VennPattern
+    internal sealed class ExceptPattern : VennPattern
     {
 
         /// <summary>

@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Trees.Iterators
 {
     // Faithful port of net/sf/saxon/tree/iter/AdjacentTextNodeMergingIterator.java (Saxon 12.9).
     // Eliminates zero-length text nodes and merges adjacent text nodes from the underlying iterator.
-    internal class AdjacentTextNodeMergingIterator : ILookaheadIterator
+    internal sealed class AdjacentTextNodeMergingIterator : ILookaheadIterator
     {
         private readonly ISequenceIterator @base;
         private IItem _next;

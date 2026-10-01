@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the resolve-uri() function in XPath 2.0
     /// </summary>
-    internal class ResolveURI : SystemFunction
+    internal sealed class ResolveURI : SystemFunction
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

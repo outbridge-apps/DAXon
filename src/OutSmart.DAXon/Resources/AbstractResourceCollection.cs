@@ -325,14 +325,14 @@ namespace OutSmart.DAXon.Resources
         public abstract IEnumerator<string> GetResourceURIs(IXPathContext arg0);
         public abstract IEnumerator<IResource> GetResources(IXPathContext arg0);
 
-        private class ErrorSuppressor : IErrorReporter
+        private sealed class ErrorSuppressor : IErrorReporter
         {
-            public virtual void Report(IXmlProcessingError error)
+            public void Report(IXmlProcessingError error)
             {
             }
         }
 
-        private class ErrorAsWarningReporter : IErrorReporter
+        private sealed class ErrorAsWarningReporter : IErrorReporter
         {
             private readonly IErrorReporter originalErrorReporter;
             public ErrorAsWarningReporter(IErrorReporter originalErrorReporter)
@@ -340,7 +340,7 @@ namespace OutSmart.DAXon.Resources
                 this.originalErrorReporter = originalErrorReporter;
             }
 
-            public virtual void Report(IXmlProcessingError error)
+            public void Report(IXmlProcessingError error)
             {
                 if (error.IsWarning())
                 {

@@ -18,14 +18,14 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class ItemMappingIterator : ISequenceIterator, ILookaheadIterator, ILastPositionFinder
+    internal sealed class ItemMappingIterator : ISequenceIterator, ILookaheadIterator, ILastPositionFinder
     {
         private readonly ISequenceIterator @base;
         private readonly IItemMappingFunction action;
         private readonly OutSmart.DAXon.Core.Controller controller;   // null: no deadline check
         private bool oneToOne = false;
 
-        public virtual bool HasNext => ((ILookaheadIterator)@base).HasNext;
+        public bool HasNext => ((ILookaheadIterator)@base).HasNext;
         public ItemMappingIterator(ISequenceIterator @base, IItemMappingFunction action)
         {
             this.@base = @base;
@@ -59,12 +59,12 @@ namespace OutSmart.DAXon.Expressions
             return new ItemMappingIterator(@base, ItemFilter.Of(filterExpression));
         }
 
-        public virtual bool SupportsHasNext()
+        public bool SupportsHasNext()
         {
             return oneToOne && @base is ILookaheadIterator && ((ILookaheadIterator)@base).SupportsHasNext();
         }
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             try
             {
@@ -92,17 +92,17 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             @base.Dispose();
         }
 
-        public virtual bool SupportsGetLength()
+        public bool SupportsGetLength()
         {
             return oneToOne && SequenceTool.SupportsGetLength(@base);
         }
 
-        public virtual int GetLength()
+        public int GetLength()
         {
             return SequenceTool.GetLength(@base);
         }

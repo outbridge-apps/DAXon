@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Patterns
     // INSTANCE WithTests(object[]), so XPathParser's NameTestUnion.WithTests(tests) (tests is
     // IList<NodeTest>) hit CS0120 (object reference required) and the CastInjector wrapped the arg in
     // (object[]). Match the real static signature so the call binds directly with no injected cast.
-    internal class NameTestUnion : NodeTest
+    internal sealed class NameTestUnion : NodeTest
     {
         public override double DefaultPriority => 0;
         public NameTestUnion() { }

@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:analyze-string elements in the stylesheet. New at XSLT 2.0<BR>
     /// </summary>
-    internal class XSLAnalyzeString : StyleElement
+    internal sealed class XSLAnalyzeString : StyleElement
     {
         private Expression select;
         private Expression regex;

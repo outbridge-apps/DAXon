@@ -389,7 +389,7 @@ namespace OutSmart.DAXon.Functions
         /// <summary>
         /// Concrete subclass to define the fn:min() function
         /// </summary>
-        internal class Min : Minimax
+        internal sealed class Min : Minimax
         {
             public override bool IsMaxFunction()
             {
@@ -400,7 +400,7 @@ namespace OutSmart.DAXon.Functions
         /// <summary>
         /// Concrete subclass to define the fn:max() function
         /// </summary>
-        internal class Max : Minimax
+        internal sealed class Max : Minimax
         {
             public override bool IsMaxFunction()
             {

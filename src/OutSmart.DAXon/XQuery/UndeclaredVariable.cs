@@ -20,13 +20,13 @@ using OutSmart.DAXon.Collections.Trie;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.XQuery
 {
-    internal class UndeclaredVariable : GlobalVariable
+    internal sealed class UndeclaredVariable : GlobalVariable
     {
         public UndeclaredVariable()
         {
         }
 
-        public virtual void TransferReferences(GlobalVariable var)
+        public void TransferReferences(GlobalVariable var)
         {
             foreach (IBindingReference @ref in references)
             {

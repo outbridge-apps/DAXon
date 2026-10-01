@@ -16,7 +16,7 @@ using System.Text;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Model
 {
-    internal class OneOrMore<T> : ZeroOrMore<T>
+    internal sealed class OneOrMore<T> : ZeroOrMore<T>
     {
 
         public OneOrMore(IList<T> content) : base(content)

@@ -445,7 +445,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for an ArithmeticExpression (for example P + Q)
         /// </summary>
-        internal class ArithmeticElaborator : ItemElaborator
+        internal sealed class ArithmeticElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

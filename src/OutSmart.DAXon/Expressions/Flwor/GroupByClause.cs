@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
     /// <summary>
     /// This class represents an "group by" clause in a FLWOR expression
     /// </summary>
-    internal class GroupByClause : Clause
+    internal sealed class GroupByClause : Clause
     {
         Configuration config;
         LocalVariableBinding[] bindings; // Variables bound in the output tuple stream.
@@ -38,7 +38,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override ClauseName ClauseKey => GROUP_BY;
 
-        public virtual TupleExpression RetainedTupleExpression
+        public TupleExpression RetainedTupleExpression
         {
             get => (TupleExpression)retainedTupleOp.GetChildExpression(); set
             {
@@ -46,7 +46,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public virtual TupleExpression GroupingTupleExpression
+        public TupleExpression GroupingTupleExpression
         {
             get => (TupleExpression)groupingTupleOp.GetChildExpression(); set
             {
@@ -84,7 +84,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return g2;
         }
 
-        public virtual void InitRetainedTupleExpression(FLWORExpression flwor, TupleExpression expr)
+        public void InitRetainedTupleExpression(FLWORExpression flwor, TupleExpression expr)
         {
             retainedTupleOp = new Operand(flwor, expr, OperandRole.FLWOR_TUPLE_CONSTRAINED);
         }
@@ -112,17 +112,17 @@ namespace OutSmart.DAXon.Expressions.Flwor
             RetainedTupleExpression.SetVariables(retainingExpr);
         }
 
-        public virtual void InitGroupingTupleExpression(FLWORExpression flwor, TupleExpression expr)
+        public void InitGroupingTupleExpression(FLWORExpression flwor, TupleExpression expr)
         {
             groupingTupleOp = new Operand(flwor, expr, OperandRole.FLWOR_TUPLE_CONSTRAINED);
         }
 
-        public virtual void SetVariableBindings(LocalVariableBinding[] bindings)
+        public void SetVariableBindings(LocalVariableBinding[] bindings)
         {
             this.bindings = bindings;
         }
 
-        public virtual void SetComparers(GenericAtomicComparer[] comparers)
+        public void SetComparers(GenericAtomicComparer[] comparers)
         {
             this.comparers = comparers;
         }
@@ -163,7 +163,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return "group by ... ";
         }
 
-        public virtual void ProcessGroup(IList<ObjectToBeGrouped> group, IXPathContext context)
+        public void ProcessGroup(IList<ObjectToBeGrouped> group, IXPathContext context)
         {
             LocalVariableBinding[] bindings = RangeVariables;
             ISequence[] groupingValues = group[0].groupingValues.GetMembers();
@@ -192,7 +192,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public virtual TupleComparisonKey GetComparisonKey(Tuple t, GenericAtomicComparer[] comparers)
+        public TupleComparisonKey GetComparisonKey(Tuple t, GenericAtomicComparer[] comparers)
         {
             return new TupleComparisonKey(t.GetMembers(), comparers);
         }
@@ -202,13 +202,13 @@ namespace OutSmart.DAXon.Expressions.Flwor
             throw new NotSupportedException("Cannot use document projection with group-by");
         }
 
-        internal class ObjectToBeGrouped
+        internal sealed class ObjectToBeGrouped
         {
             public Tuple groupingValues;
             public Tuple retainedValues;
         }
 
-        internal class TupleComparisonKey
+        internal sealed class TupleComparisonKey
         {
             // Note: this is over-engineered. Each grouping value is required to be either a single atomic
             // value or an empty sequence.

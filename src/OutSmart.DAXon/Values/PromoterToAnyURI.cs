@@ -15,7 +15,7 @@ using OutSmart.DAXon.Types;
 // since TypeChecker has `using OutSmart.DAXon.Values`.
 namespace OutSmart.DAXon.Values
 {
-    internal class PromoterToAnyURI : Converter
+    internal sealed class PromoterToAnyURI : Converter
     {
         public PromoterToAnyURI() { }
     }

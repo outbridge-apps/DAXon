@@ -65,7 +65,7 @@ namespace OutSmart.DAXon.Functions
             return new RoundHalfToEvenElaborator();
         }
 
-        internal class RoundHalfToEvenElaborator : ItemElaborator
+        internal sealed class RoundHalfToEvenElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

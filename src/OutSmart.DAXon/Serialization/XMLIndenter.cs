@@ -25,7 +25,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Serialization
 {
-    internal class XMLIndenter : ProxyReceiver
+    internal sealed class XMLIndenter : ProxyReceiver
     {
         private int level = 0;
         private bool sameline = false;
@@ -38,15 +38,15 @@ namespace OutSmart.DAXon.Serialization
         private HashSet<INodeName> suppressedElements = null;
         private readonly XMLEmitter emitter;
 
-        protected virtual int Indentation => 3;
+        protected int Indentation => 3;
 
-        protected virtual int LineLength => 80;
+        protected int LineLength => 80;
         public XMLIndenter(XMLEmitter next) : base(next)
         {
             emitter = next;
         }
 
-        public virtual void SetOutputProperties(Properties props)
+        public void SetOutputProperties(Properties props)
         {
             string omit = props.GetProperty(DAXonOutputKeys.OMIT_XML_DECLARATION);
             afterEndTag = omit == null || !"yes".Equals(Whitespace.Trim(omit)) || props.GetProperty(DAXonOutputKeys.DOCTYPE_SYSTEM) != null;
@@ -307,7 +307,7 @@ namespace OutSmart.DAXon.Serialization
             base.EndDocument();
         }
 
-        protected virtual bool IsDoubleSpaced(INodeName name)
+        protected bool IsDoubleSpaced(INodeName name)
         {
             return false;
         }

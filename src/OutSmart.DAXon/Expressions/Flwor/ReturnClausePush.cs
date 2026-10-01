@@ -16,7 +16,7 @@ using OutSmart.DAXon.Expressions.Instructions;
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     // Final destination of a FLWOR push pipeline: evaluates the return clause for each tuple.
-    internal class ReturnClausePush : TuplePush
+    internal sealed class ReturnClausePush : TuplePush
     {
         private readonly IPushEvaluator returnExpr;
         public ReturnClausePush(Outputter outputter, IPushEvaluator returnExpr) : base(outputter)

@@ -20,11 +20,11 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Transformation.Rules
 {
-    internal class FailRuleSet : IBuiltInRuleSet
+    internal sealed class FailRuleSet : IBuiltInRuleSet
     {
         private static readonly FailRuleSet THE_INSTANCE = new FailRuleSet();
 
-        public virtual string Name => "fail";
+        public string Name => "fail";
 
         private FailRuleSet()
         {
@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             return THE_INSTANCE;
         }
 
-        public virtual void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter output, IXPathContext context, ILocation locationId)
+        public void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter output, IXPathContext context, ILocation locationId)
         {
             string id = Err.Depict(item);
             XPathException err = new XPathException("No user-defined template rule in " + context.GetCurrentMode().GetActor().GetModeTitle(false) + " matches " + id, "XTDE0555");
@@ -42,7 +42,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             throw err;
         }
 
-        public virtual BuiltInRules[] GetActionForParentNodes(int nodeKind)
+        public BuiltInRules[] GetActionForParentNodes(int nodeKind)
         {
             return new BuiltInRules[]
             {

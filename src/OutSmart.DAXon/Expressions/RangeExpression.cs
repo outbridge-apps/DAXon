@@ -26,14 +26,14 @@ using OutSmart.DAXon.Internal.Collections;
 using System.Numerics;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class RangeExpression : Expression
+    internal sealed class RangeExpression : Expression
     {
         private readonly Operand start;
         private readonly Operand end;
 
-        public virtual Expression StartExpression => start.GetChildExpression();
+        public Expression StartExpression => start.GetChildExpression();
 
-        public virtual Expression EndExpression => end.GetChildExpression();
+        public Expression EndExpression => end.GetChildExpression();
 
         public override IntegerValue[] IntegerBounds
         {
@@ -238,7 +238,7 @@ namespace OutSmart.DAXon.Expressions
             return new RangeElaborator();
         }
 
-        internal class RangeElaborator : PullElaborator
+        internal sealed class RangeElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

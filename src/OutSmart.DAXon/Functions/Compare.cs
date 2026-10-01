@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class implements the XPath 2.0 fn:compare() function
     /// </summary>
-    internal class Compare : CollatingFunctionFixed
+    internal sealed class Compare : CollatingFunctionFixed
     {
         private static Int64Value CompareFn(StringValue s1, StringValue s2, IAtomicComparer comparer)
         {

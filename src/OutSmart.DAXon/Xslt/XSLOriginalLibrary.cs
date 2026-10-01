@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// A function library that recognizes the function name "xsl:original", which may appear within xsl:@override
     /// </summary>
-    internal class XSLOriginalLibrary : IFunctionLibrary
+    internal sealed class XSLOriginalLibrary : IFunctionLibrary
     {
         private static readonly XSLOriginalLibrary THE_INSTANCE = new XSLOriginalLibrary();
         private XSLOriginalLibrary()
@@ -33,7 +33,7 @@ namespace OutSmart.DAXon.Xslt
             return THE_INSTANCE;
         }
 
-        public virtual Expression Bind(SymbolicName.F functionName, Expression[] staticArgs, Dictionary<StructuredQName, int> keywords, IStaticContext env, IList<string> reasons)
+        public Expression Bind(SymbolicName.F functionName, Expression[] staticArgs, Dictionary<StructuredQName, int> keywords, IStaticContext env, IList<string> reasons)
         {
             try
             {
@@ -54,19 +54,19 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        public virtual bool IsAvailable(SymbolicName.F functionName, int languageLevel)
+        public bool IsAvailable(SymbolicName.F functionName, int languageLevel)
         {
 
             // xsl:original is not recognized by function-available() - W3C bug 28122
             return false;
         }
 
-        public virtual IFunctionLibrary Copy()
+        public IFunctionLibrary Copy()
         {
             return this;
         }
 
-        public virtual IFunctionItem GetFunctionItem(SymbolicName.F functionName, IStaticContext env)
+        public IFunctionItem GetFunctionItem(SymbolicName.F functionName, IStaticContext env)
         {
             if (functionName.ComponentKind == StandardNames.XSL_FUNCTION && functionName.ComponentName.HasURI(NamespaceUri.XSLT) && functionName.ComponentName.GetLocalPart().Equals("original") && env is ExpressionContext)
             {

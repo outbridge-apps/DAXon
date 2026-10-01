@@ -13,7 +13,7 @@ using OutSmart.DAXon.Text;
 
 namespace OutSmart.DAXon.Types
 {
-    internal class StringToGYearMonth : StringConverter
+    internal sealed class StringToGYearMonth : StringConverter
     {
         private readonly StringConverter inner;
         public StringToGYearMonth(object x) : base(x as ConversionRules) { inner = new StringConverter.StringToGYearMonth(x as ConversionRules); }

@@ -23,11 +23,11 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.XPath
 {
-    internal class XPathEvaluator
+    internal sealed class XPathEvaluator
     {
         private IXPathStaticContext staticContext;
 
-        public virtual IXPathStaticContext StaticContext
+        public IXPathStaticContext StaticContext
         {
             get => staticContext; set
             {
@@ -39,12 +39,12 @@ namespace OutSmart.DAXon.XPath
             staticContext = new IndependentContext(config);
         }
 
-        public virtual Configuration GetConfiguration()
+        public Configuration GetConfiguration()
         {
             return staticContext.GetConfiguration();
         }
 
-        public virtual XPathExpression CreateExpression(string expression)
+        public XPathExpression CreateExpression(string expression)
         {
             Configuration config = GetConfiguration();
             Executable exec = new Executable(config);
@@ -97,12 +97,12 @@ namespace OutSmart.DAXon.XPath
             return xpe;
         }
 
-        protected virtual Expression PostProcess(Expression exp, ExpressionVisitor visitor, ContextItemStaticInfo cit)
+        protected Expression PostProcess(Expression exp, ExpressionVisitor visitor, ContextItemStaticInfo cit)
         {
             return exp;
         }
 
-        public virtual XPathExpression CreatePattern(string pattern)
+        public XPathExpression CreatePattern(string pattern)
         {
             Configuration config = GetConfiguration();
             Executable exec = new Executable(config);

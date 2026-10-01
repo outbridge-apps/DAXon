@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Expressions
     // EvaluateItem fast-path (TinyElementImpl attribute value, else element attribute by name). Elaborator omitted
     // (String_1 pattern); never-hit XPDY0002 error branches dropped. Copy returns base Expression (covariant
     // AttributeGetter return would be CS8830 on net472).
-    internal class AttributeGetter : Expression
+    internal sealed class AttributeGetter : Expression
     {
         private readonly FingerprintedQName attributeName;
         public override int ImplementationMethod => EVALUATE_METHOD;

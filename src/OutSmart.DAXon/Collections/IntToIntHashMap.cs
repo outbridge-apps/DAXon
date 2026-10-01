@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Collections
     // as three copies because the empty-slot encoding differs per class — here any int value is
     // valid, so occupancy needs the explicit _filled[] array. The probe loops sit on hot paths
     // and must stay monomorphic, without a shared dispatching core.
-    internal class IntToIntHashMap : IIntToIntMap
+    internal sealed class IntToIntHashMap : IIntToIntMap
     {
         private const int NBIT = 30; // NMAX = 2^NBIT
         private const int NMAX = 1 << NBIT; // maximum number of keys mapped
@@ -35,13 +35,13 @@ namespace OutSmart.DAXon.Collections
         private int[] _value; // array[_nmax] of values
         private bool[] _filled; // _filled[i]==true iff _key[i] is mapped
 
-        public virtual int this[int key]
+        public int this[int key]
         {
             get { return Get(key); }
             set { Put(key, value); }
         }
 
-        public virtual int DefaultValue
+        public int DefaultValue
         {
             get => _defaultValue; set
             {
@@ -63,7 +63,7 @@ namespace OutSmart.DAXon.Collections
             SetCapacity(capacity);
         }
 
-        public virtual void Clear()
+        public void Clear()
         {
             _n = 0;
             for (int i = 0; i < _nmax; ++i)
@@ -72,23 +72,23 @@ namespace OutSmart.DAXon.Collections
             }
         }
 
-        public virtual bool Contains(int key)
+        public bool Contains(int key)
         {
             return _filled[IndexOf(key)];
         }
 
-        public virtual int Get(int key)
+        public int Get(int key)
         {
             int i = IndexOf(key);
             return _filled[i] ? _value[i] : _defaultValue;
         }
 
-        public virtual int Size()
+        public int Size()
         {
             return _n;
         }
 
-        public virtual bool Remove(int key)
+        public bool Remove(int key)
         {
 
             // Knuth, v. 3, 527, Algorithm R.
@@ -121,7 +121,7 @@ namespace OutSmart.DAXon.Collections
             }
         }
 
-        public virtual void Put(int key, int value)
+        public void Put(int key, int value)
         {
             int i = IndexOf(key);
             if (_filled[i])
@@ -137,7 +137,7 @@ namespace OutSmart.DAXon.Collections
             }
         }
 
-        public virtual IIntIterator KeyIterator()
+        public IIntIterator KeyIterator()
         {
             return new IntToIntHashMapKeyIterator(this);
         }
@@ -247,7 +247,7 @@ namespace OutSmart.DAXon.Collections
             return buffer.ToString();
         }
 
-        private class IntToIntHashMapKeyIterator : AbstractIntIterator
+        private sealed class IntToIntHashMapKeyIterator : AbstractIntIterator
         {
             private readonly IntToIntHashMap map;
             private int i = 0;

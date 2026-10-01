@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Resources
     /// FailedResource represents an item in a collection that could not be processed because of some error.
     /// Reading its item throws the recorded error (used with the ?on-error=fail query parameter).
     /// </summary>
-    internal class FailedResource : IResource
+    internal sealed class FailedResource : IResource
     {
         private readonly string uri;
         private readonly XPathException error;

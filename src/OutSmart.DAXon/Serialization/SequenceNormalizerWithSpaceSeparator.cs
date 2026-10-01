@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Serialization
     // (the receiver chain's final close at end of XsltController.ApplyTemplates). Reparent it onto the real
     // OutSmart.DAXon.Events.SequenceNormalizer and carry the two real overrides (Append -> Decompose, error code SENR0001),
     // exactly as the excluded file does. The bogus implicit operator (=> null) is dropped: it IS-A SequenceNormalizer now.
-    internal class SequenceNormalizerWithSpaceSeparator : SequenceNormalizer
+    internal sealed class SequenceNormalizerWithSpaceSeparator : SequenceNormalizer
     {
         protected override string ErrorCodeForDecomposingFunctionItems => "SENR0001";
         public SequenceNormalizerWithSpaceSeparator(IReceiver next) : base(next) { }

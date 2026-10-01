@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Model
 {
-    internal class AllElementsSpaceStrippingRule : ISpaceStrippingRule
+    internal sealed class AllElementsSpaceStrippingRule : ISpaceStrippingRule
     {
         private static readonly AllElementsSpaceStrippingRule THE_INSTANCE = new AllElementsSpaceStrippingRule();
         public static AllElementsSpaceStrippingRule GetInstance()
@@ -25,17 +25,17 @@ namespace OutSmart.DAXon.Model
             return THE_INSTANCE;
         }
 
-        public virtual int IsSpacePreserving(INodeName fingerprint, ISchemaType schemaType)
+        public int IsSpacePreserving(INodeName fingerprint, ISchemaType schemaType)
         {
             return Stripper.STRIP_DEFAULT;
         }
 
-        public virtual ProxyReceiver MakeStripper(IReceiver next)
+        public ProxyReceiver MakeStripper(IReceiver next)
         {
             return new Stripper(this, next);
         }
 
-        public virtual void Export(ExpressionPresenter presenter)
+        public void Export(ExpressionPresenter presenter)
         {
             presenter.StartElement("strip.all");
             presenter.EndElement();

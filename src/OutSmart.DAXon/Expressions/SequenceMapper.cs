@@ -16,7 +16,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class SequenceMapper : IMappingFunction
+    internal sealed class SequenceMapper : IMappingFunction
     {
 
         private readonly ILambda lambda;
@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Expressions
             return new SequenceMapper(lambda);
         }
 
-        public virtual ISequenceIterator IMap(IItem item)
+        public ISequenceIterator IMap(IItem item)
         {
             return lambda(item);
         }

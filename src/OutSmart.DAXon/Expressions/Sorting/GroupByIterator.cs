@@ -25,7 +25,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class GroupByIterator : IGroupIterator, ILastPositionFinder, ILookaheadIterator
+    internal sealed class GroupByIterator : IGroupIterator, ILastPositionFinder, ILookaheadIterator
     {
         private readonly object syncLock = new object();
         private ISequenceIterator population;
@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         protected IList<IAtomicSequence> groupKeys = new List<IAtomicSequence>(40);
         protected bool composite;
 
-        public virtual bool HasNext => position < groups.Count;
+        public bool HasNext => position < groups.Count;
         public GroupByIterator(ISequenceIterator population, Expression keyExpression, IXPathContext keyContext, IStringCollator collator, bool composite)
         {
             this.population = population;
@@ -465,7 +465,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual IAtomicSequence GetCurrentGroupingKey()
+        public IAtomicSequence GetCurrentGroupingKey()
         {
             lock (syncLock)
             {
@@ -481,17 +481,17 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual IGroundedValue CurrentGroup()
+        public IGroundedValue CurrentGroup()
         {
             return SequenceExtent.MakeSequenceExtent(groups[position - 1]);
         }
 
-        public virtual bool SupportsHasNext()
+        public bool SupportsHasNext()
         {
             return true;
         }
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             if (position >= 0 && position < groups.Count)
             {
@@ -517,7 +517,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return groups[position - 1][0];
         }
 
-        public virtual bool SupportsGetLength()
+        public bool SupportsGetLength()
         {
             return true;
         }
@@ -525,11 +525,11 @@ namespace OutSmart.DAXon.Expressions.Sorting
         /// <summary>
         /// Get the last position (that @is, the number of groups)
         /// </summary>
-        public virtual int GetLength()
+        public int GetLength()
         {
             return groups.Count;
         }
-        public virtual void Dispose() { }
+        public void Dispose() { }
 
         // A group always has at least one member, and the overwhelming majority of groups in a
         // large for-each-group are singletons. Grp stores the first member inline and allocates the

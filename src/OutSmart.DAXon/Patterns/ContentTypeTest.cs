@@ -19,7 +19,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Patterns
 {
-    internal class ContentTypeTest : NodeTest
+    internal sealed class ContentTypeTest : NodeTest
     {
         private readonly int kind; // element or attribute
         private readonly ISchemaType schemaType;
@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Patterns
             return nillable;
         }
 
-        public virtual ISchemaType GetSchemaType()
+        public ISchemaType GetSchemaType()
         {
             return schemaType;
         }

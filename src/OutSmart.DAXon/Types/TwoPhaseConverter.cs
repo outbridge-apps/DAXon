@@ -13,7 +13,7 @@ using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Types
 {
-    internal class TwoPhaseConverter : Converter
+    internal sealed class TwoPhaseConverter : Converter
     {
         private readonly Converter phaseOne;
         private readonly Converter phaseTwo;

@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Events
     // path (GetAssociatedStylesheet) could never find an embedded/associated stylesheet.
     // A ProxyReceiver that looks for xml-stylesheet processing instructions matching given criteria;
     // for those that do, it creates a ResolvedResource referring to the relevant stylesheet.
-    internal class PIGrabber : ProxyReceiver
+    internal sealed class PIGrabber : ProxyReceiver
     {
         private Configuration config = null;
         private string reqMedia = null;
@@ -38,7 +38,7 @@ namespace OutSmart.DAXon.Events
         /// Return the list of stylesheets that matched, as an array of ResolvedResource objects
         /// (the port's replacement for the deleted JAXP Source hierarchy), or null if none matched.
         /// </summary>
-        public virtual ResolvedResource[] AssociatedStylesheets
+        public ResolvedResource[] AssociatedStylesheets
         {
             get
             {
@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Events
         {
         }
 
-        public virtual void SetFactory(Configuration config)
+        public void SetFactory(Configuration config)
         {
             this.config = config;
         }
@@ -89,18 +89,18 @@ namespace OutSmart.DAXon.Events
         /// CSS3 media-query syntax; by default the media value comparison uses
         /// Configuration.GetMediaQueryEvaluator().
         /// </summary>
-        public virtual void SetCriteria(string media, string title)
+        public void SetCriteria(string media, string title)
         {
             this.reqMedia = media;
             this.reqTitle = title;
         }
 
-        public virtual void SetBaseURI(string uri)
+        public void SetBaseURI(string uri)
         {
             baseURI = uri;
         }
 
-        public virtual void SetResourceResolver(IResourceResolver resolver)
+        public void SetResourceResolver(IResourceResolver resolver)
         {
             resourceResolver = resolver;
         }
@@ -120,7 +120,7 @@ namespace OutSmart.DAXon.Events
         /// Determine whether the parse terminated because the first start element tag was found
         /// (as distinct from being terminated by an exception condition such as a parse error).
         /// </summary>
-        public virtual bool IsTerminated()
+        public bool IsTerminated()
         {
             return terminated;
         }

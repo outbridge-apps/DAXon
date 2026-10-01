@@ -12,7 +12,7 @@ using OutSmart.DAXon.Expressions.Elaboration;
 
 namespace OutSmart.DAXon.Expressions
 {
-    internal class StreamingArgumentEvaluator : ISequenceEvaluator
+    internal sealed class StreamingArgumentEvaluator : ISequenceEvaluator
     {
         public StreamingArgumentEvaluator(object expr) { }
         public ISequence Evaluate(IXPathContext context) => throw new NotImplementedException("STUB: StreamingArgumentEvaluator.Evaluate not ported (excluded stub)");

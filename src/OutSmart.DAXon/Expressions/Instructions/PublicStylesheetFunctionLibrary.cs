@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// A PublicStylesheetFunctionLibrary filters a StylesheetFunctionLibrary to include only those functions
     /// whose visibility is final or public. Used by xsl:evaluate
     /// </summary>
-    internal class PublicStylesheetFunctionLibrary : IFunctionLibrary
+    internal sealed class PublicStylesheetFunctionLibrary : IFunctionLibrary
     {
         private readonly IFunctionLibrary @base;
 

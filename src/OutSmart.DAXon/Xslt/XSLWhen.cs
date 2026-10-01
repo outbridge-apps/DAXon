@@ -17,11 +17,11 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class XSLWhen : StyleElement
+    internal sealed class XSLWhen : StyleElement
     {
         private Expression test;
         private Expression select;
-        public virtual Expression Condition => test;
+        public Expression Condition => test;
 
         public override void PrepareAttributes()
         {

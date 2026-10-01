@@ -1383,7 +1383,7 @@ namespace OutSmart.DAXon.XQuery
         }
 
         /*clause.getRangeVariable()*/
-        private class SortSpec
+        private sealed class SortSpec
         {
             public Expression sortKey;
             public bool ascending;
@@ -1537,7 +1537,7 @@ namespace OutSmart.DAXon.XQuery
         //
         // OK
         // OK
-        private class AttributeDetails
+        private sealed class AttributeDetails
         {
             public string value;
             public int startOffset;
@@ -1548,7 +1548,7 @@ namespace OutSmart.DAXon.XQuery
         //
         // OK
         // OK
-        private class Import
+        private sealed class Import
         {
             public NamespaceUri namespaceURI;
             public IList<string> locationURIs;

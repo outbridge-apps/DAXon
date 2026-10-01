@@ -78,7 +78,7 @@ namespace OutSmart.DAXon.Regex
  *   recursive depth; the old code had one level of recursion per input character in some cases. In addition
  *   the compiled code for expressions involving large finite counters is much more compact.
  */
-    internal class RECompiler
+    internal sealed class RECompiler
     {
         // Node flags
         static readonly int NODE_NORMAL = 0; // No flags (nothing special)
@@ -100,7 +100,7 @@ namespace OutSmart.DAXon.Regex
         REFlags reFlags;
         IList<string> warnings;
 
-        public virtual IList<string> Warnings
+        public IList<string> Warnings
         {
             get
             {
@@ -121,7 +121,7 @@ namespace OutSmart.DAXon.Regex
         {
         }
 
-        public virtual void SetFlags(REFlags flags)
+        public void SetFlags(REFlags flags)
         {
             this.reFlags = flags;
             isXPath = flags.IsAllowsXPath20Extensions();
@@ -139,12 +139,12 @@ namespace OutSmart.DAXon.Regex
             warnings.Add(s);
         }
 
-        protected virtual void InternalError()
+        protected void InternalError()
         {
             throw new InvalidOperationException("Internal error!");
         }
 
-        protected virtual void SyntaxError(string s)
+        protected void SyntaxError(string s)
         {
             throw new RESyntaxException(s, idx);
         }
@@ -161,7 +161,7 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        protected virtual void Bracket()
+        protected void Bracket()
         {
 
             // Current character must be a '{'
@@ -279,7 +279,7 @@ namespace OutSmart.DAXon.Regex
             return ch >= '0' && ch <= '9';
         }
 
-        protected virtual ICharacterClass Escape(bool inSquareBrackets)
+        protected ICharacterClass Escape(bool inSquareBrackets)
         {
 
             // "Shouldn't" happen
@@ -500,7 +500,7 @@ namespace OutSmart.DAXon.Regex
         // is not a blanket win, so it is applied only where it pays.
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
 #endif
-        protected virtual ICharacterClass ParseCharacterClass()
+        protected ICharacterClass ParseCharacterClass()
         {
 
             // Check for bad calling or empty class
@@ -889,7 +889,7 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        protected virtual Operation ParseAtom()
+        protected Operation ParseAtom()
         {
 
             // Length of atom
@@ -1039,7 +1039,7 @@ namespace OutSmart.DAXon.Regex
             return Trace(new OpAtom(ub.ToUnicodeString()));
         }
 
-        protected virtual Operation ParseTerminal(int[] flags)
+        protected Operation ParseTerminal(int[] flags)
         {
             switch (pattern.CodePointAt(idx))
             {
@@ -1139,7 +1139,7 @@ namespace OutSmart.DAXon.Regex
             return ParseAtom();
         }
 
-        protected virtual Operation Piece(int[] flags)
+        protected Operation Piece(int[] flags)
         {
 
             // Values to pass by reference to terminal()
@@ -1291,7 +1291,7 @@ namespace OutSmart.DAXon.Regex
             return Trace(result);
         }
 
-        protected virtual Operation ParseBranch()
+        protected Operation ParseBranch()
         {
 
             // Get each possibly qnatified piece and concat
@@ -1442,7 +1442,7 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        public virtual REProgram Compile(UnicodeString pattern)
+        public REProgram Compile(UnicodeString pattern)
         {
 
             // Initialize variables for compilation
@@ -1571,7 +1571,7 @@ namespace OutSmart.DAXon.Regex
         /// <summary>
         /// For convenience a back-reference is treated as an ICharacterClass, although this a fiction
         /// </summary>
-        class BackReference : SingletonCharacterClass
+        sealed class BackReference : SingletonCharacterClass
         {
             public BackReference(int number) : base(number)
             {

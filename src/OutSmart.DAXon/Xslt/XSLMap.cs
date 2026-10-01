@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:map instructions in an XSLT 3.0 stylesheet. <br>
     /// </summary>
-    internal class XSLMap : StyleElement
+    internal sealed class XSLMap : StyleElement
     {
         private Expression select = null;
         private Expression onDuplicates = null;

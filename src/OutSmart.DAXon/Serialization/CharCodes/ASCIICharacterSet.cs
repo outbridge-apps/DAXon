@@ -17,11 +17,11 @@ namespace OutSmart.DAXon.Serialization.CharCodes
     /// <summary>
     /// This class defines properties of the US-ASCII character set
     /// </summary>
-    internal class ASCIICharacterSet : ICharacterSet
+    internal sealed class ASCIICharacterSet : ICharacterSet
     {
         public static readonly ASCIICharacterSet theInstance = new ASCIICharacterSet();
 
-        public virtual string CanonicalName => "US-ASCII";
+        public string CanonicalName => "US-ASCII";
         private ASCIICharacterSet()
         {
         }

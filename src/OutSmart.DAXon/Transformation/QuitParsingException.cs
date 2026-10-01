@@ -11,7 +11,7 @@ namespace OutSmart.DAXon.Transformation
     // raw Exception with an NIE implicit-conversion operator — upstream it IS an XPathException
     // (code SXQP0001), thrown by a Receiver to abandon parsing early (fn:stream-available probe,
     // streamed early-exit); catch sites (ReceivingContentHandler, XsltController) treat it specially.
-    internal class QuitParsingException : XPathException
+    internal sealed class QuitParsingException : XPathException
     {
         private readonly bool notifiedByConsumer;
 

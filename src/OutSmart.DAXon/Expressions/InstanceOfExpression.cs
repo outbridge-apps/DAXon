@@ -226,7 +226,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for an {@code instance of} expression
         /// </summary>
-        internal class InstanceOfElaborator : BooleanElaborator
+        internal sealed class InstanceOfElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {

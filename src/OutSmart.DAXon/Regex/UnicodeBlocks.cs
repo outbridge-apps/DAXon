@@ -26,7 +26,7 @@ using System.Globalization;
 using System.IO;
 namespace OutSmart.DAXon.Regex
 {
-    internal class UnicodeBlocks
+    internal sealed class UnicodeBlocks
     {
         private readonly Dictionary<string, IntSet> blocks = new Dictionary<string, IntSet>(250);
         private UnicodeBlocks()
@@ -134,7 +134,7 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
-        private class Holder
+        private sealed class Holder
         {
             // See https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom
             // The idea here is that the initialization occurs the first time getInstance() is called,

@@ -10,7 +10,7 @@ namespace OutSmart.DAXon.Expressions
     // GetItemType threw, so any use of current() crashed at type-check.
     // Generated when compiling the current() function in XSLT: differs from ContextItemExpression "."
     // only in the error code returned when there is no context item.
-    internal class CurrentItemExpression : ContextItemExpression
+    internal sealed class CurrentItemExpression : ContextItemExpression
     {
         public CurrentItemExpression()
         {

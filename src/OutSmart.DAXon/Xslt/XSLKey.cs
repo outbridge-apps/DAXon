@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:key elements in stylesheet. <br>
     /// </summary>
-    internal class XSLKey : StyleElement, IStylesheetComponent
+    internal sealed class XSLKey : StyleElement, IStylesheetComponent
     {
 
         private static readonly Func<Expression, bool> containsGlobalVariable = (e) => (e is GlobalVariableReference || e is UserFunctionCall || e is CallTemplate || e is ApplyTemplates);
@@ -42,7 +42,7 @@ namespace OutSmart.DAXon.Xslt
         private bool composite = false;
         private KeyDefinition keyDefinition;
 
-        public virtual StructuredQName KeyName
+        public StructuredQName KeyName
         {
             get
             {

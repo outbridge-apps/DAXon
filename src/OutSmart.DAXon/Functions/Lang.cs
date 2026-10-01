@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
-    internal class Lang : SystemFunction
+    internal sealed class Lang : SystemFunction
     {
         public static bool IsLang(string arglang, NodeInfo target)
         {

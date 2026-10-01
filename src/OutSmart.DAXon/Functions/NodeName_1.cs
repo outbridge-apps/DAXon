@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the node-name() function with a single argument
     /// </summary>
-    internal class NodeName_1 : ScalarSystemFunction
+    internal sealed class NodeName_1 : ScalarSystemFunction
     {
         public override AtomicValue Evaluate(IItem item, IXPathContext context)
         {
@@ -53,7 +53,7 @@ namespace OutSmart.DAXon.Functions
         /// <summary>
         /// Elaborator for the fn:node-name() function
         /// </summary>
-        internal class NodeNameFnElaborator : ItemElaborator
+        internal sealed class NodeNameFnElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

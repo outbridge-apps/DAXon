@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
     // Faithful port of net.sf.saxon.tree.wrapper.VirtualUntypedCopy (Saxon 12.9). Was a hollow stub, so the
     // lazy (pull-mode) xsl:copy-of path with validation=strip crashed (copy-43xx family in xslt30-test).
     // A virtual copy of a node with type annotations stripped.
-    internal class VirtualUntypedCopy : VirtualCopy
+    internal sealed class VirtualUntypedCopy : VirtualCopy
     {
 
         protected VirtualUntypedCopy(NodeInfo @base, NodeInfo root) : base(@base, root)

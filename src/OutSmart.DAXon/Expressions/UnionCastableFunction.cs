@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Expressions
     /// <summary>
     /// Function to test castability to a union type
     /// </summary>
-    internal class UnionCastableFunction : UnionConstructorFunction
+    internal sealed class UnionCastableFunction : UnionConstructorFunction
     {
 
         public override IFunctionItemType FunctionItemType => new SpecificFunctionType(new SequenceType[] { SequenceType.ANY_SEQUENCE }, SequenceType.SINGLE_BOOLEAN);

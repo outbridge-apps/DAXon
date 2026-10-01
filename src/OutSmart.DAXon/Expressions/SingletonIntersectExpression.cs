@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Expressions
     /// zero-or-one. This is handled as a special case because the standard sort-merge algorithm
     /// involves an unnecessary sort on B.
     /// </summary>
-    internal class SingletonIntersectExpression : VennExpression
+    internal sealed class SingletonIntersectExpression : VennExpression
     {
 
         public override string ExpressionName => "singleton-intersect";
@@ -112,7 +112,7 @@ namespace OutSmart.DAXon.Expressions
         }
 
         /// <summary>Elaborator for a singleton-intersect expression (A among B).</summary>
-        internal class SingletonIntersectElaborator : ItemElaborator
+        internal sealed class SingletonIntersectElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Functions
             return new FloorElaborator();
         }
 
-        internal class FloorElaborator : ItemElaborator
+        internal sealed class FloorElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

@@ -701,7 +701,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Elaborator for a general comparison expression such as (A = B).
         /// </summary>
-        internal class GeneralComparisonElaborator : BooleanElaborator
+        internal sealed class GeneralComparisonElaborator : BooleanElaborator
         {
             public override IBooleanEvaluator ElaborateForBoolean()
             {
@@ -913,7 +913,7 @@ namespace OutSmart.DAXon.Expressions
                 }
             }
 
-            public virtual bool EvaluateManyToOne(ISequenceIterator iter0, AtomicValue value1, int singletonOperator, IAtomicComparer comparer, bool runTimeCheckNeeded, RetainedStaticContext staticContext, ILocation loc, IXPathContext context)
+            public bool EvaluateManyToOne(ISequenceIterator iter0, AtomicValue value1, int singletonOperator, IAtomicComparer comparer, bool runTimeCheckNeeded, RetainedStaticContext staticContext, ILocation loc, IXPathContext context)
             {
                 try
                 {
@@ -947,7 +947,7 @@ namespace OutSmart.DAXon.Expressions
                 }
             }
 
-            public virtual bool EvaluateManyToMany(ISequenceIterator iter0, ISequenceIterator iter1, int singletonOperator, IAtomicComparer comparer, bool runTimeCheckNeeded, RetainedStaticContext staticContext, ILocation loc, IXPathContext context)
+            public bool EvaluateManyToMany(ISequenceIterator iter0, ISequenceIterator iter1, int singletonOperator, IAtomicComparer comparer, bool runTimeCheckNeeded, RetainedStaticContext staticContext, ILocation loc, IXPathContext context)
             {
                 try
                 {

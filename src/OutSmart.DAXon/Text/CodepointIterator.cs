@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Text
     /// <summary>
     /// IIterator over a string to produce a sequence of single character strings
     /// </summary>
-    internal class CodepointIterator : IAtomicIterator
+    internal sealed class CodepointIterator : IAtomicIterator
     {
         readonly IIntIterator codepoints;
         public CodepointIterator(IIntIterator codepoints)
@@ -33,12 +33,12 @@ namespace OutSmart.DAXon.Text
         // instead of boxing an Int64Value per character. Valid only before the first Next().
         internal IIntIterator RawCodepoints => codepoints;
 
-        public virtual AtomicValue Next()
+        public AtomicValue Next()
         {
             return codepoints.MoveNext() ? new Int64Value(codepoints.Current) : null;
         }
         IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
-        public virtual void Dispose() { }
+        public void Dispose() { }
     }
 }
 

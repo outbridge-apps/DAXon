@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the nilled() function
     /// </summary>
-    internal class Nilled_1 : SystemFunction, ICallable
+    internal sealed class Nilled_1 : SystemFunction, ICallable
     {
         private static BooleanValue GetNilledProperty(NodeInfo node)
         {

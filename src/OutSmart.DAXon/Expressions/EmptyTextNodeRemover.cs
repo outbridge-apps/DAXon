@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Expressions
     // Faithful port of net/sf/saxon/expr/EmptyTextNodeRemover.java (Saxon 12.9).
     // Removes zero-length text nodes from a sequence (simple content construction, phase 1
     // degenerate case when no merging of adjacent text nodes is needed).
-    internal class EmptyTextNodeRemover : UnaryExpression, IItemMappingFunction
+    internal sealed class EmptyTextNodeRemover : UnaryExpression, IItemMappingFunction
     {
 
         public override int ImplementationMethod => Expression.ITERATE_METHOD | ITEM_FEED_METHOD | WATCH_METHOD;
@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.Expressions
             return new EmptyTextNodeRemoverElaborator();
         }
 
-        internal class EmptyTextNodeRemoverElaborator : PullElaborator
+        internal sealed class EmptyTextNodeRemoverElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

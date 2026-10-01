@@ -26,7 +26,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class HomogeneityChecker : UnaryExpression
+    internal sealed class HomogeneityChecker : UnaryExpression
     {
 
         public override int ImplementationMethod => ITERATE_METHOD;
@@ -122,7 +122,7 @@ namespace OutSmart.DAXon.Expressions
             return new HomogeneityCheckerElaborator();
         }
 
-        internal class HomogeneityCheckerElaborator : PullElaborator
+        internal sealed class HomogeneityCheckerElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

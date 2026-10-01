@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement XPath function fn:reverse()
     /// </summary>
-    internal class Reverse : SystemFunction
+    internal sealed class Reverse : SystemFunction
     {
 
         public override string StreamerName => "Reverse";
@@ -151,7 +151,7 @@ namespace OutSmart.DAXon.Functions
             return new ReverseListIterator(Enumerable.ToList(Enumerable.Select(list, x => (IItem)(object)x)));
         }
 
-        internal class ReverseListIterator : ISequenceIterator, ILastPositionFinder, IReversibleIterator
+        internal sealed class ReverseListIterator : ISequenceIterator, ILastPositionFinder, IReversibleIterator
         {
             private int pos;
             private readonly IList<IItem> list;
@@ -161,26 +161,26 @@ namespace OutSmart.DAXon.Functions
                 this.pos = list.Count;
             }
 
-            public virtual bool SupportsGetLength()
+            public bool SupportsGetLength()
             {
                 return true;
             }
 
-            public virtual int GetLength()
+            public int GetLength()
             {
                 return list.Count;
             }
 
-            public virtual IItem Next()
+            public IItem Next()
             {
                 return pos > 0 ? list[--pos] : null;
             }
 
-            public virtual ISequenceIterator GetReverseIterator()
+            public ISequenceIterator GetReverseIterator()
             {
                 return new ListIterator.Of<IItem>(list);
             }
-            public virtual void Dispose() { }
+            public void Dispose() { }
         }
 
         // Reversed view over a same-tree node-number extent; interface surface mirrors

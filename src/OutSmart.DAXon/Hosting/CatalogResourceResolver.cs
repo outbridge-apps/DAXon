@@ -12,7 +12,7 @@ using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Lib
 {
     // CatalogResourceResolver implements IResourceResolver.
-    internal class CatalogResourceResolver : IResourceResolver
+    internal sealed class CatalogResourceResolver : IResourceResolver
     {
         public CatalogResourceResolver() { }
         public ResolvedResource Resolve(ResourceRequest request) => null;

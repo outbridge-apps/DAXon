@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Regex
     /// <summary>
     /// A choice of several branches within a regular expression
     /// </summary>
-    internal class OpChoice : Operation
+    internal sealed class OpChoice : Operation
     {
         IList<Operation> branches;
 

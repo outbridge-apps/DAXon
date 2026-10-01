@@ -429,7 +429,7 @@ namespace OutSmart.DAXon.Transformation
             FAILED
         }
 
-        private class CompositeAtomicMatchKey : IAtomicMatchKey
+        private sealed class CompositeAtomicMatchKey : IAtomicMatchKey
         {
             private readonly IList<IAtomicMatchKey> keys;
             public CompositeAtomicMatchKey(IList<IAtomicMatchKey> keys)
@@ -437,7 +437,7 @@ namespace OutSmart.DAXon.Transformation
                 this.keys = keys;
             }
 
-            public virtual AtomicValue AsAtomic()
+            public AtomicValue AsAtomic()
             {
                 throw new NotSupportedException();
             }

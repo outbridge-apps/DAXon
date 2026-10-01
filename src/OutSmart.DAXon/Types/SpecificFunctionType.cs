@@ -25,7 +25,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Types
 {
-    internal class SpecificFunctionType : AnyFunctionType
+    internal sealed class SpecificFunctionType : AnyFunctionType
     {
         private readonly SequenceType[] argTypes;
         private readonly SequenceType resultType;
@@ -64,7 +64,7 @@ namespace OutSmart.DAXon.Types
             this.annotations = annotations ?? throw new NullReferenceException();
         }
 
-        public virtual int GetArity()
+        public int GetArity()
         {
             return argTypes.Length;
         }

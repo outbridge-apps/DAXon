@@ -26,7 +26,7 @@ using OutSmart.DAXon.Collections.Trie;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class UseAttributeSet : Instruction, IComponentInvocation, IContextOriginator
+    internal sealed class UseAttributeSet : Instruction, IComponentInvocation, IContextOriginator
     {
         private readonly StructuredQName targetName;
         private AttributeSet target;
@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override int IntrinsicDependencies => StaticProperty.DEPENDS_ON_XSLT_CONTEXT | StaticProperty.DEPENDS_ON_FOCUS;
 
-        public virtual StructuredQName TargetAttributeSetName => targetName;
+        public StructuredQName TargetAttributeSetName => targetName;
 
         public override string ExpressionName => "useAS";
 
@@ -136,12 +136,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return invocation;
         }
 
-        public virtual bool IsDeclaredStreamable()
+        public bool IsDeclaredStreamable()
         {
             return declaredStreamable;
         }
 
-        public virtual void SetTarget(AttributeSet target)
+        public void SetTarget(AttributeSet target)
         {
             this.target = target;
         }
@@ -212,7 +212,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new UseAttributeSetElaborator();
         }
 
-        internal class UseAttributeSetElaborator : PushElaborator
+        internal sealed class UseAttributeSetElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

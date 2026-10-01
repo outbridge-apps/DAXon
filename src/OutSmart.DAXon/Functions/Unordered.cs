@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// XPath 2.0 unordered() function
     /// </summary>
-    internal class Unordered : SystemFunction
+    internal sealed class Unordered : SystemFunction
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

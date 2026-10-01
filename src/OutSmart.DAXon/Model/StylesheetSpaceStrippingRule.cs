@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Model
     /// <summary>
     /// A whitespace stripping rule that strips whitespace according to the rules defined for XSLT stylesheets
     /// </summary>
-    internal class StylesheetSpaceStrippingRule : ISpaceStrippingRule
+    internal sealed class StylesheetSpaceStrippingRule : ISpaceStrippingRule
     {
         //    Any child of one of the following elements is removed from the tree,
         //    regardless of any xml:space attributes. Note that this array must be in numeric
@@ -48,7 +48,7 @@ namespace OutSmart.DAXon.Model
             this.namePool = pool;
         }
 
-        public virtual int IsSpacePreserving(INodeName elementName, ISchemaType schemaType)
+        public int IsSpacePreserving(INodeName elementName, ISchemaType schemaType)
         {
             int fingerprint = elementName.ObtainFingerprint(namePool);
             if (fingerprint == (StandardNames.XSL_TEXT & NamePool.FP_MASK))
@@ -64,12 +64,12 @@ namespace OutSmart.DAXon.Model
             return Stripper.STRIP_DEFAULT;
         }
 
-        public virtual ProxyReceiver MakeStripper(IReceiver next)
+        public ProxyReceiver MakeStripper(IReceiver next)
         {
             return new Stripper(this, next);
         }
 
-        public virtual void Export(ExpressionPresenter presenter)
+        public void Export(ExpressionPresenter presenter)
         {
         }
     }

@@ -28,7 +28,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class TryCatch : Expression
+    internal sealed class TryCatch : Expression
     {
         private readonly Operand tryOp;
         private readonly IList<CatchClause> catchClauses = new List<CatchClause>();
@@ -47,7 +47,7 @@ namespace OutSmart.DAXon.Expressions
             return err is XPathException.StackOverflow || err.HasErrorCode(DAXonErrorCode.SXTO0001);
         }
 
-        public virtual Expression TryExpr => tryOp.GetChildExpression();
+        public Expression TryExpr => tryOp.GetChildExpression();
 
         public override int ImplementationMethod => ITERATE_METHOD;
 
@@ -62,7 +62,7 @@ namespace OutSmart.DAXon.Expressions
             this.tryOp = new Operand(this, tryExpr, OperandRole.SAME_FOCUS_ACTION);
         }
 
-        public virtual void AddCatchExpression(IQNameTest test, Expression catchExpr)
+        public void AddCatchExpression(IQNameTest test, Expression catchExpr)
         {
             CatchClause clause = new CatchClause();
             clause.catchOp = new Operand(this, catchExpr, OperandRole.SAME_FOCUS_ACTION);
@@ -70,7 +70,7 @@ namespace OutSmart.DAXon.Expressions
             catchClauses.Add(clause);
         }
 
-        public virtual void SetRollbackOutput(bool rollback)
+        public void SetRollbackOutput(bool rollback)
         {
             this.rollbackOutput = rollback;
         }
@@ -208,13 +208,13 @@ namespace OutSmart.DAXon.Expressions
             return new TryCatchElaborator();
         }
 
-        internal class CatchClause
+        internal sealed class CatchClause
         {
             public Operand catchOp;
             public IQNameTest nameTest;
         }
 
-        private class TryCatchElaborator : PushElaborator
+        private sealed class TryCatchElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {
@@ -455,7 +455,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// An error listener that filters out reporting of any errors that are caught be the try/catch
         /// </summary>
-        private class FilteringErrorReporter : IErrorReporter
+        private sealed class FilteringErrorReporter : IErrorReporter
         {
             private readonly IErrorReporter @base;
             private readonly IList<CatchClause> catchClauses;
@@ -485,7 +485,7 @@ namespace OutSmart.DAXon.Expressions
                 return false;
             }
 
-            public virtual void Report(IXmlProcessingError error)
+            public void Report(IXmlProcessingError error)
             {
                 if (error.IsWarning() || !IsCaught(error))
                 {

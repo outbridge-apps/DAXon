@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Text
     /// A Unicode string consisting of 24-bit characters, implemented as a range
     /// of an underlying byte array holding three bytes per codepoint.
     /// </summary>
-    internal class Slice24 : UnicodeString
+    internal sealed class Slice24 : UnicodeString
     {
         private readonly byte[] bytes;
         private readonly int start;

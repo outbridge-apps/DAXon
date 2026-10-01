@@ -22,7 +22,7 @@ using OutSmart.DAXon.Internal;
 
 namespace OutSmart.DAXon.Events
 {
-    internal class NamespaceReducer : ProxyReceiver, INamespaceResolver
+    internal sealed class NamespaceReducer : ProxyReceiver, INamespaceResolver
     {
         private NamespaceBinding[] namespaces = new NamespaceBinding[50]; // all namespace codes currently declared
         private int namespacesSize = 0; // all namespaces currently declared

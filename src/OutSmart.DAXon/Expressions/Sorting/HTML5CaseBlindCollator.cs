@@ -19,17 +19,17 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class HTML5CaseBlindCollator : IStringCollator, ISubstringMatcher
+    internal sealed class HTML5CaseBlindCollator : IStringCollator, ISubstringMatcher
     {
         private static readonly HTML5CaseBlindCollator theInstance = new HTML5CaseBlindCollator();
 
-        public virtual string CollationURI => NamespaceConstant.HTML5_CASE_BLIND_COLLATION_URI;
+        public string CollationURI => NamespaceConstant.HTML5_CASE_BLIND_COLLATION_URI;
         public static HTML5CaseBlindCollator GetInstance()
         {
             return theInstance;
         }
 
-        public virtual int CompareStrings(UnicodeString a, UnicodeString b)
+        public int CompareStrings(UnicodeString a, UnicodeString b)
         {
 
             // Note that Java does UTF-16 code unit comparison, which is not the same as Unicode codepoint comparison
@@ -83,31 +83,31 @@ namespace OutSmart.DAXon.Expressions.Sorting
         }
 
         // Java IStringCollator.isEqualToEmpty default method (no DIM on net472 -> emitted per-impl).
-        public virtual bool IsEqualToEmpty(UnicodeString s1)
+        public bool IsEqualToEmpty(UnicodeString s1)
         {
             return ComparesEqual(s1, EmptyUnicodeString.GetInstance());
         }
-        public virtual bool ComparesEqual(UnicodeString s1, UnicodeString s2)
+        public bool ComparesEqual(UnicodeString s1, UnicodeString s2)
         {
             return CompareCS(s1, s2) == 0;
         }
 
-        public virtual bool Contains(UnicodeString s1, UnicodeString s2)
+        public bool Contains(UnicodeString s1, UnicodeString s2)
         {
             return Normalize(s1).IndexOf(Normalize(s2), 0) >= 0;
         }
 
-        public virtual bool EndsWith(UnicodeString s1, UnicodeString s2)
+        public bool EndsWith(UnicodeString s1, UnicodeString s2)
         {
             return Normalize(s1).HasSubstring(Normalize(s2), s1.Length() - s2.Length());
         }
 
-        public virtual bool StartsWith(UnicodeString s1, UnicodeString s2)
+        public bool StartsWith(UnicodeString s1, UnicodeString s2)
         {
             return Normalize(s1).HasSubstring(Normalize(s2), 0);
         }
 
-        public virtual UnicodeString SubstringAfter(UnicodeString s1, UnicodeString s2)
+        public UnicodeString SubstringAfter(UnicodeString s1, UnicodeString s2)
         {
             long i = Normalize(s1).IndexOf(Normalize(s2), 0);
             if (i < 0)
@@ -118,7 +118,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return s1.Substring(i + s2.Length(), s1.Length());
         }
 
-        public virtual UnicodeString SubstringBefore(UnicodeString s1, UnicodeString s2)
+        public UnicodeString SubstringBefore(UnicodeString s1, UnicodeString s2)
         {
             long j = Normalize(s1).IndexOf(Normalize(s2), 0);
             if (j < 0)
@@ -129,7 +129,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return s1.Prefix(j);
         }
 
-        public virtual IAtomicMatchKey GetCollationKey(UnicodeString s)
+        public IAtomicMatchKey GetCollationKey(UnicodeString s)
         {
             return Normalize(s);
         }

@@ -22,7 +22,7 @@ using System.Text;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Functions
 {
-    internal class AvailableSystemProperties : SystemFunction
+    internal sealed class AvailableSystemProperties : SystemFunction
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

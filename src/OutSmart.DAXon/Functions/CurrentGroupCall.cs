@@ -28,14 +28,14 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implements the XSLT function current-group()
     /// </summary>
-    internal class CurrentGroupCall : Expression, ICallable
+    internal sealed class CurrentGroupCall : Expression, ICallable
     {
         private bool inHigherOrderOperand = false;
         private ItemType itemType = AnyItemType.GetInstance();
         private ForEachGroup controllingInstruction = null; // may be unknown, when current group has dynamic scope
         public override Expression ScopingExpression => ControllingInstruction;
 
-        public virtual ForEachGroup ControllingInstruction
+        public ForEachGroup ControllingInstruction
         {
             get
             {
@@ -54,7 +54,7 @@ namespace OutSmart.DAXon.Functions
 
         public override string StreamerName => "CurrentGroup";
 
-        public virtual void SetControllingInstruction(ForEachGroup instruction, ItemType itemType, bool isHigherOrder)
+        public void SetControllingInstruction(ForEachGroup instruction, ItemType itemType, bool isHigherOrder)
         {
             ResetLocalStaticProperties();
             this.controllingInstruction = instruction;
@@ -163,7 +163,7 @@ namespace OutSmart.DAXon.Functions
             return new CurrentGroupCallElaborator();
         }
 
-        private class CurrentGroupCallElaborator : PullElaborator
+        private sealed class CurrentGroupCallElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

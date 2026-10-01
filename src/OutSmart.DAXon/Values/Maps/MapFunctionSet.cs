@@ -31,7 +31,7 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Values.Maps
 {
-    internal class MapFunctionSet : BuiltInFunctionSet
+    internal sealed class MapFunctionSet : BuiltInFunctionSet
     {
         private static readonly MapFunctionSet instance31 = new MapFunctionSet(31);
         private static readonly MapFunctionSet instance40 = new MapFunctionSet(40);
@@ -97,7 +97,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the XPath 3.1 function map:contains(IMap, key) =&gt; boolean
         /// </summary>
-        internal class MapContains : SystemFunction
+        internal sealed class MapContains : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
@@ -116,7 +116,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the proposed XPath 4.0 function map:filter(IMap, function(*)) =&gt; IMap
         /// </summary>
-        internal class MapFilter : SystemFunction
+        internal sealed class MapFilter : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
@@ -139,7 +139,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the XPath 3.1 function map:get(IMap, key) =&gt; value
         /// </summary>
-        internal class MapGet : SystemFunction
+        internal sealed class MapGet : SystemFunction
         {
             string pendingWarning = null;
             public override void SupplyTypeInformation(ExpressionVisitor visitor, ContextItemStaticInfo contextItemType, Expression[] arguments)
@@ -327,7 +327,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the XPath 3.1 function map:find(item()*, key) =&gt; array
         /// </summary>
-        internal class MapFind : SystemFunction
+        internal sealed class MapFind : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
@@ -368,7 +368,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the extension function map:entry(key, value) =&gt; IMap
         /// </summary>
-        internal class MapEntry : SystemFunction
+        internal sealed class MapEntry : SystemFunction
         {
 
             public override string StreamerName => "MapEntry";
@@ -453,7 +453,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the function map:for-each(IMap, Function) =&gt; item()*
         /// </summary>
-        internal class MapForEach : SystemFunction
+        internal sealed class MapForEach : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
@@ -480,7 +480,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the proposed 4.0 function map:entries(IMap) =&gt; map(*)*
         /// </summary>
-        internal class MapEntries : SystemFunction
+        internal sealed class MapEntries : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
@@ -498,7 +498,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the proposed 4.0 function map:pair(key, value) =&gt; record(key, value)
         /// </summary>
-        internal class MapPair : SystemFunction
+        internal sealed class MapPair : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
@@ -514,7 +514,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the proposed 4.0 function map:pairs(IMap) =&gt; record(key, value)*
         /// </summary>
-        internal class MapPairs : SystemFunction
+        internal sealed class MapPairs : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
@@ -532,7 +532,7 @@ namespace OutSmart.DAXon.Values.Maps
             }
         }
 
-        internal class MapKeys : SystemFunction
+        internal sealed class MapKeys : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
@@ -559,7 +559,7 @@ namespace OutSmart.DAXon.Values.Maps
             }
         }
 
-        internal class MapMerge : SystemFunction
+        internal sealed class MapMerge : SystemFunction
         {
             public static readonly string finalKey = "Q{" + NamespaceConstant.SAXON + "}final";
             public static readonly string keyTypeKey = "Q{" + NamespaceConstant.SAXON + "}key-type";
@@ -1144,7 +1144,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the function map:of-pairs() =&gt; IMap
         /// </summary>
-        internal class MapOfPairs : SystemFunction
+        internal sealed class MapOfPairs : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
@@ -1190,7 +1190,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the extension function map:put() =&gt; IMap
         /// </summary>
-        internal class MapPut : SystemFunction
+        internal sealed class MapPut : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
@@ -1210,7 +1210,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the XPath 3.1 function map:remove(IMap, key) =&gt; value
         /// </summary>
-        internal class MapRemove : SystemFunction
+        internal sealed class MapRemove : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
@@ -1230,7 +1230,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// <summary>
         /// Implementation of the extension function map:size(map) =&gt; integer
         /// </summary>
-        internal class MapSize : SystemFunction
+        internal sealed class MapSize : SystemFunction
         {
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {

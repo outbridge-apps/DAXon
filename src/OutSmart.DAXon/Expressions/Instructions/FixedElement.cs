@@ -26,13 +26,13 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class FixedElement : ElementCreator
+    internal sealed class FixedElement : ElementCreator
     {
         private readonly INodeName elementName;
         protected NamespaceMap namespaceBindings;
         private Types.ItemType itemType;
 
-        public virtual INodeName FixedElementName => elementName;
+        public INodeName FixedElementName => elementName;
 
         public override string ExpressionName => "element";
         public FixedElement(INodeName elementName, NamespaceMap namespaceBindings, bool inheritNamespacesToChildren, bool inheritNamespacesFromParent, ISchemaType schemaType, int validation)
@@ -426,7 +426,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         /// <summary>
         /// Elaborator for a FixedElement (literal result element) expression.
         /// </summary>
-        internal class FixedElementElaborator : ComplexNodePushElaborator
+        internal sealed class FixedElementElaborator : ComplexNodePushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

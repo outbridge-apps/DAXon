@@ -12,5 +12,5 @@ using OutSmart.DAXon.Events;
 
 namespace OutSmart.DAXon.Serialization
 {
-    internal class XML10ContentChecker : ProxyReceiver { public XML10ContentChecker(IReceiver next) : base(next) { } }
+    internal sealed class XML10ContentChecker : ProxyReceiver { public XML10ContentChecker(IReceiver next) : base(next) { } }
 }

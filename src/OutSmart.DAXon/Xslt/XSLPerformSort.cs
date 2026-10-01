@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:perform-sort elements in stylesheet (XSLT 2.0). <br>
     /// </summary>
-    internal class XSLPerformSort : StyleElement
+    internal sealed class XSLPerformSort : StyleElement
     {
         Expression select = null;
         public override bool IsInstruction()

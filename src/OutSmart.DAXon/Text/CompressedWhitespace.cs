@@ -16,7 +16,7 @@ using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Text
 {
-    internal class CompressedWhitespace : WhitespaceString
+    internal sealed class CompressedWhitespace : WhitespaceString
     {
         private static readonly char[] WHITE_CHARS = new[]
         {
@@ -63,7 +63,7 @@ namespace OutSmart.DAXon.Text
         };
         private readonly long value;
 
-        public virtual long CompressedValue => value;
+        public long CompressedValue => value;
         public CompressedWhitespace(long compressedValue)
         {
             value = compressedValue;

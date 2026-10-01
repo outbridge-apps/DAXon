@@ -27,7 +27,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Functions
 {
-    internal class Trace : SystemFunction, ITraceable
+    internal sealed class Trace : SystemFunction, ITraceable
     {
         ILocation location = Loc.NONE;
 
@@ -45,7 +45,7 @@ namespace OutSmart.DAXon.Functions
             return arguments[0].GetCardinality();
         }
 
-        public virtual void NotifyListener(string label, ISequence val, IXPathContext context)
+        public void NotifyListener(string label, ISequence val, IXPathContext context)
         {
             Dictionary<string, object> info = new Dictionary<string, object>();
             info["label"] = label;
@@ -145,12 +145,12 @@ namespace OutSmart.DAXon.Functions
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual void GatherProperties(Action<string, object> consumer) { } // upstream Traceable default: no properties
+        public void GatherProperties(Action<string, object> consumer) { } // upstream Traceable default: no properties
 
         /// <summary>
         /// Tracing IIterator class
         /// </summary>
-        private class TracingIterator : ISequenceIterator
+        private sealed class TracingIterator : ISequenceIterator
         {
             private readonly ISequenceIterator @base;
             private readonly string label;
@@ -164,7 +164,7 @@ namespace OutSmart.DAXon.Functions
                 this.@out = @out;
             }
 
-            public virtual IItem Next()
+            public IItem Next()
             {
                 IItem n = @base.Next();
                 position++;
@@ -184,7 +184,7 @@ namespace OutSmart.DAXon.Functions
                 return n;
             }
 
-            public virtual void Dispose()
+            public void Dispose()
             {
                 @base.Dispose();
             }

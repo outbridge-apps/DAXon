@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// Iterate over the instructions in a sequence of instructions (or an XPath comma expression),
     /// concatenating the result of each instruction into a single combined sequence.
     /// </summary>
-    internal class BlockIterator : AbstractBlockIterator
+    internal sealed class BlockIterator : AbstractBlockIterator
     {
         private readonly Operand[] operanda;
 

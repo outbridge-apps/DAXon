@@ -75,52 +75,52 @@ namespace OutSmart.DAXon.Expressions.Parsing
             return null;
         }
 
-        internal class TemporaryXSLTVariableBinding : ILocalBinding
+        internal sealed class TemporaryXSLTVariableBinding : ILocalBinding
         {
             public SourceBinding declaration;
 
-            public virtual int LocalSlotNumber => 0;
+            public int LocalSlotNumber => 0;
 
-            public virtual IntegerValue[] IntegerBoundsForVariable => null;
+            public IntegerValue[] IntegerBoundsForVariable => null;
             public TemporaryXSLTVariableBinding(SourceBinding decl)
             {
                 this.declaration = decl;
             }
 
-            public virtual SequenceType GetRequiredType()
+            public SequenceType GetRequiredType()
             {
                 return declaration.GetInferredType(true);
             }
 
-            public virtual ISequence EvaluateVariable(IXPathContext context)
+            public ISequence EvaluateVariable(IXPathContext context)
             {
                 throw new NotSupportedException();
             }
 
-            public virtual bool IsGlobal()
+            public bool IsGlobal()
             {
                 return false;
             }
 
-            public virtual bool IsAssignable()
+            public bool IsAssignable()
             {
                 return false;
             }
 
-            public virtual StructuredQName GetVariableQName()
+            public StructuredQName GetVariableQName()
             {
                 return declaration.VariableQName;
             }
 
-            public virtual void AddReference(VariableReference @ref, bool isLoopingReference)
+            public void AddReference(VariableReference @ref, bool isLoopingReference)
             {
             }
 
-            public virtual void SetIndexedVariable()
+            public void SetIndexedVariable()
             {
             }
 
-            public virtual bool IsIndexedVariable()
+            public bool IsIndexedVariable()
             {
                 return false;
             }

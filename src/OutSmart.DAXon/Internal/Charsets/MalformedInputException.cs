@@ -11,7 +11,7 @@ using System.IO;
 
 namespace OutSmart.DAXon.Internal.Charsets
 {
-    internal class MalformedInputException : CharacterCodingException
+    internal sealed class MalformedInputException : CharacterCodingException
     {
     }
 }

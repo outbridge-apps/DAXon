@@ -15,7 +15,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class DataElement : ElementImpl
+    internal sealed class DataElement : ElementImpl
     {
     }
 }

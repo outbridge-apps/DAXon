@@ -30,7 +30,7 @@ using OutSmart.DAXon.Internal;
 using System.Numerics;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class NumberSequenceFormatter : Expression
+    internal sealed class NumberSequenceFormatter : Expression
     {
         private Operand valueOp;
         private Operand formatOp;
@@ -108,7 +108,7 @@ namespace OutSmart.DAXon.Expressions
             return base.Simplify();
         }
 
-        public virtual void PreallocateNumberer(Configuration config)
+        public void PreallocateNumberer(Configuration config)
         {
             if (langOp == null)
             {
@@ -202,7 +202,7 @@ namespace OutSmart.DAXon.Expressions
             return new StringValue(s);
         }
 
-        public virtual IList<int> ParseStartAtValue(string value)
+        public IList<int> ParseStartAtValue(string value)
         {
             IList<int> list = new List<int>();
             string[] tokens = value.SplitRegex("\\s+");
@@ -291,7 +291,7 @@ namespace OutSmart.DAXon.Expressions
             return new NumberSequenceFormatterElaborator();
         }
 
-        private class NumberSequenceFormatterElaborator : StringElaborator
+        private sealed class NumberSequenceFormatterElaborator : StringElaborator
         {
             public override IUnicodeStringEvaluator ElaborateForUnicodeString(bool zeroLengthWhenAbsent)
             {

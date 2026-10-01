@@ -447,7 +447,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
         /// VirtualCopier implements the XPath axes as applied to a VirtualCopy node, copying each node found
         /// on the underlying axis and truncating axes that stray outside the copied subtree.
         /// </summary>
-        protected internal class VirtualCopier : IAxisIterator
+        protected internal sealed class VirtualCopier : IAxisIterator
         {
             protected VirtualCopy node;
             protected IAxisIterator @base;

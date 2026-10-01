@@ -23,7 +23,7 @@ using OutSmart.DAXon.Internal;
 
 namespace OutSmart.DAXon.Events
 {
-    internal class IgnorableWhitespaceStripper : ProxyReceiver
+    internal sealed class IgnorableWhitespaceStripper : ProxyReceiver
     {
         private bool[] stripStack = new bool[100];
         private int top = 0;

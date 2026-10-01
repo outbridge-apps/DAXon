@@ -171,7 +171,7 @@ namespace OutSmart.DAXon.Model
         /// <summary>
         /// Cached data to support optimization of the getSiblingPosition() method
         /// </summary>
-        private class SiblingMemory
+        private sealed class SiblingMemory
         {
             public NodeTest mostRecentNodeTest = null;
             public NodeInfo mostRecentNode = null;

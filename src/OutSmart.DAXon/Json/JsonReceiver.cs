@@ -23,7 +23,7 @@ using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Json
 {
-    internal class JsonReceiver : IReceiver
+    internal sealed class JsonReceiver : IReceiver
     {
         private static readonly string ERR_INPUT = "FOJS0006";
 
@@ -65,7 +65,7 @@ namespace OutSmart.DAXon.Json
         private readonly List<KeyChecker> spareKeyCheckers = new List<KeyChecker>();
         private IFunctionItem numberFormatter = null;
 
-        public virtual IFunctionItem NumberFormatter
+        public IFunctionItem NumberFormatter
         {
             get => this.numberFormatter; set
             {
@@ -83,43 +83,43 @@ namespace OutSmart.DAXon.Json
             this.context = context;
         }
 
-        public virtual void SetPipelineConfiguration(PipelineConfiguration pipe)
+        public void SetPipelineConfiguration(PipelineConfiguration pipe)
         {
             this.pipe = pipe;
         }
 
-        public virtual PipelineConfiguration GetPipelineConfiguration()
+        public PipelineConfiguration GetPipelineConfiguration()
         {
             return pipe;
         }
 
-        public virtual void SetSystemId(string systemId)
+        public void SetSystemId(string systemId)
         {
         }
 
-        public virtual void SetIndenting(bool indenting)
+        public void SetIndenting(bool indenting)
         {
             this.indenting = indenting;
         }
 
-        public virtual void Open()
+        public void Open()
         {
             output.Open();
         }
 
-        public virtual void StartDocument(int properties)
+        public void StartDocument(int properties)
         {
         }
 
-        public virtual void EndDocument()
+        public void EndDocument()
         {
         }
 
-        public virtual void SetUnparsedEntity(string name, string systemID, string publicID)
+        public void SetUnparsedEntity(string name, string systemID, string publicID)
         {
         }
 
-        public virtual void StartElement(INodeName elemName, ISchemaType type, IAttributeMap attributes, NamespaceMap namespaces, ILocation location, int properties)
+        public void StartElement(INodeName elemName, ISchemaType type, IAttributeMap attributes, NamespaceMap namespaces, ILocation location, int properties)
         {
             string local = elemName.GetLocalPart();
             string parent = stack.Count == 0 ? null : stack.Peek();
@@ -342,7 +342,7 @@ namespace OutSmart.DAXon.Json
             }
         }
 
-        public virtual void EndElement()
+        public void EndElement()
         {
             string local = stack.Pop();
             // Single-text-chunk fast path: the usual element carries exactly one Characters event, kept
@@ -561,7 +561,7 @@ namespace OutSmart.DAXon.Json
         {
             return c.ToString("X4"); // uppercase, zero-padded to 4 — same as the old pad loop
         }
-        public virtual void Characters(UnicodeString chars, ILocation locationId, int properties)
+        public void Characters(UnicodeString chars, ILocation locationId, int properties)
         {
             if (stack.Count > 0 && !Whitespace.IsAllWhite(chars))
             {
@@ -588,15 +588,15 @@ namespace OutSmart.DAXon.Json
             }
         }
 
-        public virtual void ProcessingInstruction(string name, UnicodeString data, ILocation locationId, int properties)
+        public void ProcessingInstruction(string name, UnicodeString data, ILocation locationId, int properties)
         {
         }
 
-        public virtual void Comment(UnicodeString content, ILocation locationId, int properties)
+        public void Comment(UnicodeString content, ILocation locationId, int properties)
         {
         }
 
-        public virtual void Close()
+        public void Close()
         {
             if (output != null)
             {
@@ -605,7 +605,7 @@ namespace OutSmart.DAXon.Json
             }
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             if (output != null)
             {
@@ -614,12 +614,12 @@ namespace OutSmart.DAXon.Json
             }
         }
 
-        public virtual bool UsesTypeAnnotations()
+        public bool UsesTypeAnnotations()
         {
             return false;
         }
 
-        public virtual string GetSystemId()
+        public string GetSystemId()
         {
             return null;
         }
@@ -766,8 +766,8 @@ namespace OutSmart.DAXon.Json
 
         // Upstream Receiver defaults: this receiver takes the xml-to-json element vocabulary as
         // events, never composed items.
-        public virtual void Append(IItem item, ILocation locationId, int properties) => throw new InvalidOperationException("The xml-to-json receiver does not accept composed items");
-        public virtual void Append(IItem item) => throw new InvalidOperationException("The xml-to-json receiver does not accept composed items");
-        public virtual bool HandlesAppend() => false;
+        public void Append(IItem item, ILocation locationId, int properties) => throw new InvalidOperationException("The xml-to-json receiver does not accept composed items");
+        public void Append(IItem item) => throw new InvalidOperationException("The xml-to-json receiver does not accept composed items");
+        public bool HandlesAppend() => false;
     }
 }

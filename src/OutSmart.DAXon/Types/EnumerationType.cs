@@ -303,7 +303,7 @@ namespace OutSmart.DAXon.Types
         public virtual string ExplainMismatch(IItem item, TypeHierarchy th) => null; // upstream default: no extra explanation (diagnostics must not throw)
 
         // TBA
-        private class StringToEnumConverter : StringConverter
+        private sealed class StringToEnumConverter : StringConverter
         {
             private readonly EnumerationType enumType;
             public StringToEnumConverter(EnumerationType enumType)

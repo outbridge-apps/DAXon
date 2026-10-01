@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Expressions
             throw new NotSupportedException();
         }
 
-        internal class DefaultCollationArgument : DefaultedArgumentExpression
+        internal sealed class DefaultCollationArgument : DefaultedArgumentExpression
         {
             public override Expression TypeCheck(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
             {

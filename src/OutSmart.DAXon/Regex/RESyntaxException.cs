@@ -32,7 +32,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Regex
 {
-    internal class RESyntaxException : Exception
+    internal sealed class RESyntaxException : Exception
     {
         public RESyntaxException(string s) : base(s)
         {

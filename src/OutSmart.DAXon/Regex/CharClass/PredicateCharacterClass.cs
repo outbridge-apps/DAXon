@@ -15,7 +15,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Regex.CharClass
 {
-    internal class PredicateCharacterClass : ICharacterClass
+    internal sealed class PredicateCharacterClass : ICharacterClass
     {
         private readonly Func<int, bool> predicate;
         // BMP verdict memo: the three instances (\i \c \w in Categories) are process-wide statics
@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Regex.CharClass
             this.predicate = predicate;
         }
 
-        public virtual bool Test(int value)
+        public bool Test(int value)
         {
             if (value >= 0 && value < 65536)
             {
@@ -48,17 +48,17 @@ namespace OutSmart.DAXon.Regex.CharClass
             return predicate(value);
         }
 
-        public virtual bool IsDisjoint(ICharacterClass other)
+        public bool IsDisjoint(ICharacterClass other)
         {
             return other is InverseCharacterClass && other.IsDisjoint(this);
         }
 
-        public virtual IntSet GetIntSet()
+        public IntSet GetIntSet()
         {
             return null; // Not known
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual IIntPredicateProxy Union(IIntPredicateProxy other) => OutSmart.DAXon.Collections.IntUnionPredicate.MakeUnion(this, other); // upstream IntPredicateProxy default
+        public IIntPredicateProxy Union(IIntPredicateProxy other) => OutSmart.DAXon.Collections.IntUnionPredicate.MakeUnion(this, other); // upstream IntPredicateProxy default
     }
 }

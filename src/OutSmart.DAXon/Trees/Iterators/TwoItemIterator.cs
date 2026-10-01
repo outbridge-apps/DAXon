@@ -13,13 +13,13 @@ using OutSmart.DAXon.Values;
 namespace OutSmart.DAXon.Trees.Iterators
 {
     /// <summary>An iterator over a pair of items.</summary>
-    internal class TwoItemIterator : ISequenceIterator, ILookaheadIterator, IGroundedIterator, ILastPositionFinder
+    internal sealed class TwoItemIterator : ISequenceIterator, ILookaheadIterator, IGroundedIterator, ILastPositionFinder
     {
         private readonly IItem one;
         private readonly IItem two;
         private int pos = 0;
 
-        public virtual bool HasNext => pos < 2;
+        public bool HasNext => pos < 2;
 
         public TwoItemIterator(IItem one, IItem two)
         {
@@ -27,9 +27,9 @@ namespace OutSmart.DAXon.Trees.Iterators
             this.two = two;
         }
 
-        public virtual bool SupportsHasNext() => true;
+        public bool SupportsHasNext() => true;
 
-        public virtual IItem Next()
+        public IItem Next()
         {
             switch (pos++)
             {
@@ -39,15 +39,15 @@ namespace OutSmart.DAXon.Trees.Iterators
             }
         }
 
-        public virtual bool SupportsGetLength() => true;
+        public bool SupportsGetLength() => true;
 
-        public virtual int GetLength() => 2;
+        public int GetLength() => 2;
 
-        public virtual bool IsActuallyGrounded() => true;
+        public bool IsActuallyGrounded() => true;
 
-        public virtual IGroundedValue Materialize() => new SequenceExtent.Of<IItem>(new IItem[] { one, two });
+        public IGroundedValue Materialize() => new SequenceExtent.Of<IItem>(new IItem[] { one, two });
 
-        public virtual IGroundedValue GetResidue()
+        public IGroundedValue GetResidue()
         {
             switch (pos)
             {
@@ -56,6 +56,6 @@ namespace OutSmart.DAXon.Trees.Iterators
                 default: return EmptySequence.GetInstance();
             }
         }
-        public virtual void Dispose() { }
+        public void Dispose() { }
     }
 }

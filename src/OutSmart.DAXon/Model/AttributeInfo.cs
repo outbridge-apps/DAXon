@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Model
         /// <summary>
         /// AttributeInfo.Deleted is a subclass used to mark a deleted attribute (in XQuery Update)
         /// </summary>
-        internal class Deleted : AttributeInfo
+        internal sealed class Deleted : AttributeInfo
         {
             public Deleted(AttributeInfo att) : base(att.GetNodeName(), att.GetType(), att.Value, att.GetLocation(), att.GetProperties())
             {

@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Represents an xsl:override element in a package manifest.
     /// </summary>
-    internal class XSLOverride : StyleElement
+    internal sealed class XSLOverride : StyleElement
     {
         public override void PrepareAttributes()
         {

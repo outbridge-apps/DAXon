@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Functions
         /// <summary>
         /// Implement the XPath function default-collation()
         /// </summary>
-        internal class DefaultCollation : StaticContextAccessor
+        internal sealed class DefaultCollation : StaticContextAccessor
         {
             public override AtomicValue Evaluate(RetainedStaticContext rsc)
             {

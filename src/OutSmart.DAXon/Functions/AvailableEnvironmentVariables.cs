@@ -19,7 +19,7 @@ using System.Text;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Functions
 {
-    internal class AvailableEnvironmentVariables : SystemFunction
+    internal sealed class AvailableEnvironmentVariables : SystemFunction
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

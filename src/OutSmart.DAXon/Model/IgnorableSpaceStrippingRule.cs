@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Model
 {
-    internal class IgnorableSpaceStrippingRule : ISpaceStrippingRule
+    internal sealed class IgnorableSpaceStrippingRule : ISpaceStrippingRule
     {
         private static readonly IgnorableSpaceStrippingRule THE_INSTANCE = new IgnorableSpaceStrippingRule();
         public static IgnorableSpaceStrippingRule GetInstance()
@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Model
             return THE_INSTANCE;
         }
 
-        public virtual int IsSpacePreserving(INodeName name, ISchemaType schemaType)
+        public int IsSpacePreserving(INodeName name, ISchemaType schemaType)
         {
             if (schemaType != Untyped.INSTANCE && schemaType.IsComplexType() && !((IComplexType)schemaType).IsSimpleContent() && !((IComplexType)schemaType).IsMixedContent())
             {
@@ -37,12 +37,12 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        public virtual ProxyReceiver MakeStripper(IReceiver next)
+        public ProxyReceiver MakeStripper(IReceiver next)
         {
             return new IgnorableWhitespaceStripper(next);
         }
 
-        public virtual void Export(ExpressionPresenter presenter)
+        public void Export(ExpressionPresenter presenter)
         {
             presenter.StartElement("strip.ignorable");
             presenter.EndElement();

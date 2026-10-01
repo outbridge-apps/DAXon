@@ -22,7 +22,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Core;
 namespace OutSmart.DAXon.Lib
 {
-    internal class DAXonOutputKeys
+    internal sealed class DAXonOutputKeys
     {
         // The W3C serialization property names (ex-JAXP OutputKeys).
         public const string METHOD = "method";

@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// An xsl:analyze-string element in the stylesheet. New at XSLT 2.0
     /// </summary>
-    internal class AnalyzeString : Instruction, IContextOriginator
+    internal sealed class AnalyzeString : Instruction, IContextOriginator
     {
         private static readonly OperandRole ACTION = new OperandRole(OperandRole.USES_NEW_FOCUS | OperandRole.HIGHER_ORDER, OperandUsage.NAVIGATION);
         private static readonly OperandRole SELECT = new OperandRole(OperandRole.SETS_NEW_FOCUS, OperandUsage.ABSORPTION, SequenceType.SINGLE_STRING);
@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private Operand nonMatchingOp;
         private IRegularExpression pattern;
 
-        public virtual Expression Select
+        public Expression Select
         {
             get => selectOp.GetChildExpression(); set
             {
@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual Expression Regex
+        public Expression Regex
         {
             get => regexOp.GetChildExpression(); set
             {
@@ -57,7 +57,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual Expression Flags
+        public Expression Flags
         {
             get => flagsOp.GetChildExpression(); set
             {
@@ -65,7 +65,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual Expression Matching
+        public Expression Matching
         {
             get => matchingOp == null ? null : matchingOp.GetChildExpression(); set
             {
@@ -80,7 +80,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual Expression NonMatching
+        public Expression NonMatching
         {
             get => nonMatchingOp == null ? null : nonMatchingOp.GetChildExpression(); set
             {
@@ -100,7 +100,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public override int ImplementationMethod => Expression.PROCESS_METHOD | Expression.ITERATE_METHOD;
 
         /// <returns>the compiled regular expression, if it was known statically</returns>
-        public virtual IRegularExpression PatternExpression => pattern;
+        public IRegularExpression PatternExpression => pattern;
 
         /// <returns>the compiled regular expression, if it was known statically</returns>
         public override string ExpressionName => "analyzeString";
@@ -191,7 +191,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         }
 
         /// <returns>the compiled regular expression, if it was known statically</returns>
-        public virtual void PrecomputeRegex(Configuration config, IList<string> warnings)
+        public void PrecomputeRegex(Configuration config, IList<string> warnings)
         {
             if (pattern == null && Regex is StringLiteral && Flags is StringLiteral)
             {
@@ -348,7 +348,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private delegate IRegularExpression IRegexEvaluator(IXPathContext context); /*Java SAM interface -> delegate (lambda call sites)*/
 
         /// <returns>the compiled regular expression, if it was known statically</returns>
-        internal class AnalyzeStringElaborator : PullElaborator
+        internal sealed class AnalyzeStringElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {

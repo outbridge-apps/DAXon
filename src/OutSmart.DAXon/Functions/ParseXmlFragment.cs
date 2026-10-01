@@ -26,7 +26,7 @@ using OutSmart.DAXon.Internal;
 using System.IO;
 namespace OutSmart.DAXon.Functions
 {
-    internal class ParseXmlFragment : SystemFunction, ICallable
+    internal sealed class ParseXmlFragment : SystemFunction, ICallable
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
@@ -142,7 +142,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        private class OuterElementStripper : ProxyReceiver
+        private sealed class OuterElementStripper : ProxyReceiver
         {
 
             private int level = 0;

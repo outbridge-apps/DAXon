@@ -23,7 +23,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Events
 {
-    internal class SignificantItemDetector : ProxyOutputter
+    internal sealed class SignificantItemDetector : ProxyOutputter
     {
         private int level = 0;
         private bool empty = true;
@@ -222,7 +222,7 @@ namespace OutSmart.DAXon.Events
         /// <summary>
         /// End of element
         /// </summary>
-        public virtual bool IsEmpty()
+        public bool IsEmpty()
         {
             return empty;
         }

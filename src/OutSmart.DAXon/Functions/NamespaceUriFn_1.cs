@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// This class supports the namespace-uri() function
     /// </summary>
-    internal class NamespaceUriFn_1 : ScalarSystemFunction
+    internal sealed class NamespaceUriFn_1 : ScalarSystemFunction
     {
         public override AtomicValue Evaluate(IItem item, IXPathContext context)
         {
@@ -42,7 +42,7 @@ namespace OutSmart.DAXon.Functions
         /// <summary>
         /// Elaborator for the namespace-uri() function
         /// </summary>
-        internal class NamespaceUriFnElaborator : ItemElaborator
+        internal sealed class NamespaceUriFnElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

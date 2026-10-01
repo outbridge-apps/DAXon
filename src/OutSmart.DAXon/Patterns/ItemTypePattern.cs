@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Patterns
     // Upstream: a pattern that matches any item of a given ItemType (the base of predicate
     // patterns built by PatternParser). Was a hollow stub that DROPPED the item type in its
     // constructor and answered Matches => false for everything.
-    internal class ItemTypePattern : Pattern
+    internal sealed class ItemTypePattern : Pattern
     {
         private readonly ItemType itemType;
 

@@ -14,7 +14,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Collections
 {
-    internal class IntUnionPredicate : IIntPredicateProxy
+    internal sealed class IntUnionPredicate : IIntPredicateProxy
     {
         private readonly IIntPredicateProxy p1;
         private readonly IIntPredicateProxy p2;
@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Collections
             return new IntUnionPredicate(p1, p2);
         }
 
-        public virtual bool Test(int value)
+        public bool Test(int value)
         {
             return p1.Test(value) || p2.Test(value);
         }
@@ -40,6 +40,6 @@ namespace OutSmart.DAXon.Collections
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual IIntPredicateProxy Union(IIntPredicateProxy other) => MakeUnion(this, other); // upstream IntPredicateProxy default method
+        public IIntPredicateProxy Union(IIntPredicateProxy other) => MakeUnion(this, other); // upstream IntPredicateProxy default method
     }
 }

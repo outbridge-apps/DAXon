@@ -26,7 +26,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Values.Arrays
 {
-    internal class SquareArrayConstructor : Expression, IPingable
+    internal sealed class SquareArrayConstructor : Expression, IPingable
     {
         private OperandArray operanda;
         private double numberOfCalls = 0;
@@ -48,12 +48,12 @@ namespace OutSmart.DAXon.Values.Arrays
             SetOperanda(new OperandArray(this, kids, OperandRole.NAVIGATE));
         }
 
-        protected virtual void SetOperanda(OperandArray operanda)
+        protected void SetOperanda(OperandArray operanda)
         {
             this.operanda = operanda;
         }
 
-        public virtual OperandArray GetOperanda()
+        public OperandArray GetOperanda()
         {
             return operanda;
         }
@@ -247,7 +247,7 @@ namespace OutSmart.DAXon.Values.Arrays
             numberOfConversions++;
         }
 
-        protected virtual ArrayItem MakeArray(IList<IGroundedValue> members)
+        protected ArrayItem MakeArray(IList<IGroundedValue> members)
         {
             if (numberOfConversions > numberOfCalls * 0.5)
             {
@@ -281,7 +281,7 @@ namespace OutSmart.DAXon.Values.Arrays
             return new SquareArrayConstructorElaborator();
         }
 
-        private class SquareArrayConstructorElaborator : ItemElaborator
+        private sealed class SquareArrayConstructorElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

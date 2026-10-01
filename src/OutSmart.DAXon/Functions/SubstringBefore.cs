@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Functions
     // default collation via CollatingFunctionFixed.SetRetainedStaticContext -> AllocateCollator, which also
     // validates/upgrades it to an ISubstringMatcher because IsSubstringMatchingFunction()=>true. The 3-arg form
     // (CollatingFunctionFree, excluded) is intentionally NOT provided; Invoice only needs substring-before#2.
-    internal class SubstringBefore : CollatingFunctionFixed
+    internal sealed class SubstringBefore : CollatingFunctionFixed
     {
         public SubstringBefore() { }
         public static Func<SubstringBefore> New() => () => new SubstringBefore();

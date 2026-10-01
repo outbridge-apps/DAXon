@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement the XPath function static-base-uri()
     /// </summary>
-    internal class StaticBaseUri : SystemFunction
+    internal sealed class StaticBaseUri : SystemFunction
     {
         public override ISequence Call(IXPathContext context, ISequence[] args)
         {

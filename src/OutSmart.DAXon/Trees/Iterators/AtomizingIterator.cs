@@ -18,7 +18,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Trees.Iterators
 {
-    internal class AtomizingIterator : ISequenceIterator
+    internal sealed class AtomizingIterator : ISequenceIterator
     {
         private readonly ISequenceIterator @base;
         private IAtomicSequence currentValue = null;
@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Trees.Iterators
             this.@base = @base;
         }
 
-        public virtual AtomicValue Next()
+        public AtomicValue Next()
         {
             while (true)
             {
@@ -84,7 +84,7 @@ namespace OutSmart.DAXon.Trees.Iterators
             }
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             @base.Dispose();
         }

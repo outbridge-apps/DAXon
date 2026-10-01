@@ -23,14 +23,14 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Transformation.Rules
 {
-    internal class ShallowSkipRuleSet : IBuiltInRuleSet
+    internal sealed class ShallowSkipRuleSet : IBuiltInRuleSet
     {
         private static readonly ShallowSkipRuleSet THE_INSTANCE = new ShallowSkipRuleSet();
 
         // fall through!
         // no action
         // no action (e.g. for atomic values and function items
-        public virtual string Name => "shallow-skip";
+        public string Name => "shallow-skip";
 
         protected ShallowSkipRuleSet()
         {
@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             return THE_INSTANCE;
         }
 
-        public virtual void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter output, IXPathContext context, ILocation locationId)
+        public void Process(IItem item, ParameterSet parameters, ParameterSet tunnelParams, Outputter output, IXPathContext context, ILocation locationId)
         {
             if (item is NodeInfo)
             {
@@ -104,7 +104,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             }
         }
 
-        public virtual BuiltInRules[] GetActionForParentNodes(int nodeKind)
+        public BuiltInRules[] GetActionForParentNodes(int nodeKind)
         {
             return new BuiltInRules[]
             {

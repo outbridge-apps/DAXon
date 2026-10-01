@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
     /// <summary>
     /// Implementation of TreeInfo for a Virtual Copy tree
     /// </summary>
-    internal class VirtualTreeInfo : GenericTreeInfo
+    internal sealed class VirtualTreeInfo : GenericTreeInfo
     {
         private bool copyAccumulators;
 
@@ -28,12 +28,12 @@ namespace OutSmart.DAXon.Trees.Wrappers
         {
         }
 
-        public virtual void SetCopyAccumulators(bool copy)
+        public void SetCopyAccumulators(bool copy)
         {
             this.copyAccumulators = copy;
         }
 
-        public virtual bool IsCopyAccumulators() => copyAccumulators;
+        public bool IsCopyAccumulators() => copyAccumulators;
 
         public override String[] GetUnparsedEntity(string name)
         {

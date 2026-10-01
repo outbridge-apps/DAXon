@@ -14,7 +14,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
 namespace OutSmart.DAXon.Expressions.Flwor
 {
-    internal class WhereClausePush : TuplePush
+    internal sealed class WhereClausePush : TuplePush
     {
         private readonly TuplePush destination;
         private readonly IBooleanEvaluator predicate;

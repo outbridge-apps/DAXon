@@ -15,7 +15,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    class LFUCacheEntryWithCounter<W>
+    sealed class LFUCacheEntryWithCounter<W>
     {
         public W value;
         public int counter;

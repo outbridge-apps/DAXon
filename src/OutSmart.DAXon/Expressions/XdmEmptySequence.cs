@@ -12,7 +12,7 @@ using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Expressions
 {
     // More Expr stubs.
-    internal class XdmEmptySequence
+    internal sealed class XdmEmptySequence
     {
         private static readonly XdmEmptySequence _instance = new XdmEmptySequence();
         public XdmEmptySequence() { }

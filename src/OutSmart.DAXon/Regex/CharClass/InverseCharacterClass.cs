@@ -15,33 +15,33 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Regex.CharClass
 {
-    internal class InverseCharacterClass : ICharacterClass
+    internal sealed class InverseCharacterClass : ICharacterClass
     {
         private readonly ICharacterClass complement;
 
-        public virtual ICharacterClass Complement => complement;
+        public ICharacterClass Complement => complement;
         public InverseCharacterClass(ICharacterClass complement)
         {
             this.complement = complement;
         }
 
-        public virtual bool Test(int value)
+        public bool Test(int value)
         {
             return !complement.Test(value);
         }
 
-        public virtual bool IsDisjoint(ICharacterClass other)
+        public bool IsDisjoint(ICharacterClass other)
         {
             return other == complement;
         }
 
-        public virtual IntSet GetIntSet()
+        public IntSet GetIntSet()
         {
             IntSet comp = complement.GetIntSet();
             return comp == null ? null : new IntComplementSet(complement.GetIntSet());
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual IIntPredicateProxy Union(IIntPredicateProxy other) => OutSmart.DAXon.Collections.IntUnionPredicate.MakeUnion(this, other); // upstream IntPredicateProxy default
+        public IIntPredicateProxy Union(IIntPredicateProxy other) => OutSmart.DAXon.Collections.IntUnionPredicate.MakeUnion(this, other); // upstream IntPredicateProxy default
     }
 }

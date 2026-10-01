@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// An xsl:apply-templates element in the stylesheet
     /// </summary>
-    internal class XSLApplyTemplates : StyleElement
+    internal sealed class XSLApplyTemplates : StyleElement
     {
         private Expression select;
         private Expression separator;

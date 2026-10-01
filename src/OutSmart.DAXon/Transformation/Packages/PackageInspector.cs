@@ -22,7 +22,7 @@ using OutSmart.DAXon.Internal.Collections;
 using OutSmart.DAXon.Internal.Streams;
 namespace OutSmart.DAXon.Transformation.Packages
 {
-    internal class PackageInspector : ProxyReceiver
+    internal sealed class PackageInspector : ProxyReceiver
     {
         private bool isSefFile;
         private string packageName;
@@ -50,7 +50,7 @@ namespace OutSmart.DAXon.Transformation.Packages
             }
         }
 
-        public virtual string Diagnostics => diagnostics;
+        public string Diagnostics => diagnostics;
         public PackageInspector(PipelineConfiguration pipe) : base(new Sink(pipe))
         {
         }
@@ -94,7 +94,7 @@ namespace OutSmart.DAXon.Transformation.Packages
             }
         }
 
-        public virtual PackageDetails GetPackageDetails(string top, Configuration config)
+        public PackageDetails GetPackageDetails(string top, Configuration config)
         {
             try
             {

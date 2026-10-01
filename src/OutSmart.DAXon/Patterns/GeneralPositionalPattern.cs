@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Patterns
     // implicit conversion to Pattern threw, so any match pattern with a complex positional predicate
     // (match="x[position() gt 2]", match="x[last()]") crashed at compile.
     // A pattern of the form A[P] where A is an axis expression using the child axis and P depends on position.
-    internal class GeneralPositionalPattern : Pattern
+    internal sealed class GeneralPositionalPattern : Pattern
     {
         private readonly NodeTest nodeTest;
         private Expression positionExpr;

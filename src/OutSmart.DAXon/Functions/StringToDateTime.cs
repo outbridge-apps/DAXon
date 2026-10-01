@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
     // New() must qualify StringToDateTime: this stub extends StringConverter, which has an inherited
     // nested type also named StringToDateTime (ctor (ConversionRules) only), so the bare name bound to
     // the inherited nested type and `new StringToDateTime()` failed with CS7036. Qualify to this stub.
-    internal class StringToDateTime : StringConverter
+    internal sealed class StringToDateTime : StringConverter
     {
         private readonly StringConverter inner;
         public StringToDateTime(object rules) : base(rules as ConversionRules) { inner = new StringConverter.StringToDateTime(rules as ConversionRules); }

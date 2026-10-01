@@ -18,7 +18,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Values;
 namespace OutSmart.DAXon.Functions.HigherOrder
 {
-    internal class Sort_3 : Sort_2
+    internal sealed class Sort_3 : Sort_2
     {
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {

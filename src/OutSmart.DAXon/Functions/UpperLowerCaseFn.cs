@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Functions
 
     // fn:upper-case/lower-case: Call-only impl (String_1 pattern) — the full UpperCase/LowerCase ports drag
     // the StringElaborator cluster.
-    internal class UpperLowerCaseFn : ScalarSystemFunction
+    internal sealed class UpperLowerCaseFn : ScalarSystemFunction
     {
 
         // UPPERCASE overlay: unconditional one-to-many SpecialCasing.txt entries PLUS the few simple (1:1)

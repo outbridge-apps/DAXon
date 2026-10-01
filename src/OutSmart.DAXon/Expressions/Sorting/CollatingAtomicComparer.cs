@@ -17,11 +17,11 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    internal class CollatingAtomicComparer : IAtomicComparer
+    internal sealed class CollatingAtomicComparer : IAtomicComparer
     {
         private readonly IStringCollator collator;
 
-        public virtual IStringCollator Collator => collator;
+        public IStringCollator Collator => collator;
         public CollatingAtomicComparer(IStringCollator collator)
         {
             if (collator == null)
@@ -34,12 +34,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        public virtual IAtomicComparer ProvideContext(IXPathContext context)
+        public IAtomicComparer ProvideContext(IXPathContext context)
         {
             return this;
         }
 
-        public virtual int CompareAtomicValues(AtomicValue a, AtomicValue b)
+        public int CompareAtomicValues(AtomicValue a, AtomicValue b)
         {
             if (a == null)
             {
@@ -60,12 +60,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return collator.CompareStrings(a.UnicodeStringValue, b.UnicodeStringValue);
         }
 
-        public virtual bool ComparesEqual(AtomicValue a, AtomicValue b)
+        public bool ComparesEqual(AtomicValue a, AtomicValue b)
         {
             return CompareAtomicValues(a, b) == 0;
         }
 
-        public virtual string Save()
+        public string Save()
         {
             return "CAC|" + Collator.CollationURI;
         }

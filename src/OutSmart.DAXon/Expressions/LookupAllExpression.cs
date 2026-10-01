@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Expressions
     /// <summary>
     /// A lookup expression is an expression of the form A?*, where A must be a map or an array
     /// </summary>
-    internal class LookupAllExpression : UnaryExpression
+    internal sealed class LookupAllExpression : UnaryExpression
     {
 
         public override double Cost => BaseExpression.Cost + 1;
@@ -200,7 +200,7 @@ namespace OutSmart.DAXon.Expressions
             return new LookupAllElaborator();
         }
 
-        internal class LookupAllElaborator : PullElaborator
+        internal sealed class LookupAllElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {
@@ -210,7 +210,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        private class LookupAllIterator : ISequenceIterator
+        private sealed class LookupAllIterator : ISequenceIterator
         {
             readonly LookupAllExpression expr;
             readonly ISequenceIterator level0;
@@ -226,7 +226,7 @@ namespace OutSmart.DAXon.Expressions
                 this.expr = expr;
             }
 
-            public virtual IItem Next()
+            public IItem Next()
             {
                 if (level2 == null)
                 {
@@ -295,7 +295,7 @@ namespace OutSmart.DAXon.Expressions
                 }
             }
 
-            public virtual void Dispose()
+            public void Dispose()
             {
                 if (level0 != null)
                 {

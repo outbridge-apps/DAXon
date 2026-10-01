@@ -53,7 +53,7 @@ namespace OutSmart.DAXon.Model
             return false;
         }
 
-        private class TinyTree : TreeModel
+        private sealed class TinyTree : TreeModel
         {
 
             public override int SymbolicValue => Builder.TINY_TREE;
@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        private class TinyTreeCondensed : TreeModel
+        private sealed class TinyTreeCondensed : TreeModel
         {
 
             public override int SymbolicValue => Builder.TINY_TREE_CONDENSED;
@@ -91,7 +91,7 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        private class LinkedTree : TreeModel
+        private sealed class LinkedTree : TreeModel
         {
             private readonly bool mutable;
 

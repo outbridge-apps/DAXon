@@ -25,14 +25,14 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement XPath function fn:error()
     /// </summary>
-    internal class Error : SystemFunction, ICallable
+    internal sealed class Error : SystemFunction, ICallable
     {
         public override int GetSpecialProperties(Expression[] arguments)
         {
             return base.GetSpecialProperties(arguments) & ~StaticProperty.NO_NODES_NEWLY_CREATED;
         }
 
-        public virtual IItem ErrorFn(IXPathContext context, QNameValue errorCode, StringValue desc, ISequenceIterator errObject)
+        public IItem ErrorFn(IXPathContext context, QNameValue errorCode, StringValue desc, ISequenceIterator errObject)
         {
             QNameValue qname = null;
             if (GetArity() > 0)
@@ -132,7 +132,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        internal class UserDefinedXPathException : XPathException
+        internal sealed class UserDefinedXPathException : XPathException
         {
             public UserDefinedXPathException(string message) : base(message)
             {

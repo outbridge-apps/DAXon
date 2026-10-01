@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Json
     /// <summary>
     /// Implement the XML to JSON conversion as a built-in function - fn:xml-to-json()
     /// </summary>
-    internal class XMLToJsonFn : SystemFunction, IPushableFunction
+    internal sealed class XMLToJsonFn : SystemFunction, IPushableFunction
     {
         private static readonly IFunctionItemType formatterFunctionType = new SpecificFunctionType(new SequenceType[] { SequenceType.SINGLE_STRING }, SequenceType.SINGLE_STRING);
 
@@ -119,7 +119,7 @@ namespace OutSmart.DAXon.Json
             r.Close();
         }
 
-        private class Options
+        private sealed class Options
         {
             public bool indent;
             public IFunctionItem numberFormatter;

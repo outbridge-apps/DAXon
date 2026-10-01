@@ -28,7 +28,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class ForEachGroup : Instruction, ISortKeyEvaluator, IContextSwitchingExpression
+    internal sealed class ForEachGroup : Instruction, ISortKeyEvaluator, IContextSwitchingExpression
     {
         public const int GROUP_BY = 0;
         public const int GROUP_ADJACENT = 1;
@@ -49,15 +49,15 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override int InstructionNameCode => StandardNames.XSL_FOR_EACH_GROUP;
 
-        public virtual byte Algorithm => algorithm;
+        public byte Algorithm => algorithm;
 
-        public virtual Expression GroupingKey => keyOp.GetChildExpression();
+        public Expression GroupingKey => keyOp.GetChildExpression();
 
-        public virtual SortKeyDefinitionList SortKeyDefinitions => sortKeysOp == null ? null : (SortKeyDefinitionList)sortKeysOp.GetChildExpression();
+        public SortKeyDefinitionList SortKeyDefinitions => sortKeysOp == null ? null : (SortKeyDefinitionList)sortKeysOp.GetChildExpression();
 
         public override string StreamerName => "ForEachGroup";
 
-        public virtual Expression CollationNameExpression
+        public Expression CollationNameExpression
         {
             get => collationOp == null ? null : collationOp.GetChildExpression(); set
             {
@@ -110,22 +110,22 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return actionOp.GetChildExpression();
         }
 
-        public virtual bool IsComposite()
+        public bool IsComposite()
         {
             return composite;
         }
 
-        public virtual void SetComposite(bool composite)
+        public void SetComposite(bool composite)
         {
             this.composite = composite;
         }
 
-        public virtual bool IsInFork()
+        public bool IsInFork()
         {
             return inFork;
         }
 
-        public virtual void SetIsInFork(bool inFork)
+        public void SetIsInFork(bool inFork)
         {
             this.inFork = inFork;
         }
@@ -486,7 +486,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return (AtomicValue)sortKeyEvaluators[n].Eval(c);
         }
 
-        public virtual SortKeyDefinitionList GetSortKeyDefinitionList()
+        public SortKeyDefinitionList GetSortKeyDefinitionList()
         {
             if (sortKeysOp == null)
             {
@@ -561,7 +561,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new ForEachGroupElaborator();
         }
 
-        internal class ForEachGroupElaborator : PushElaborator
+        internal sealed class ForEachGroupElaborator : PushElaborator
         {
             private IPullEvaluator GroupIteratorProvider
             {

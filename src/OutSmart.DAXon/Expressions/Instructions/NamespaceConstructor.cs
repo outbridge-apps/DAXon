@@ -32,11 +32,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// A namespace constructor instruction. (xsl:namespace in XSLT 2.0, or namespace{}{} in XQuery 1.1)
     /// </summary>
-    internal class NamespaceConstructor : SimpleNodeConstructor
+    internal sealed class NamespaceConstructor : SimpleNodeConstructor
     {
         private readonly Operand nameOp;
 
-        public virtual Expression NameExp
+        public Expression NameExp
         {
             get => nameOp.GetChildExpression(); set
             {
@@ -119,7 +119,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return CheckPrefix(prefix, context);
         }
 
-        public virtual string CheckPrefix(string prefix, IXPathContext context)
+        public string CheckPrefix(string prefix, IXPathContext context)
         {
             prefix = Whitespace.Trim(prefix);
             if (!((prefix.Length == 0) || NameChecker.IsValidNCName(prefix)))
@@ -213,7 +213,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new NamespaceConstructorElaborator();
         }
 
-        private class NamespaceConstructorElaborator : SimpleNodePushElaborator
+        private sealed class NamespaceConstructorElaborator : SimpleNodePushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

@@ -16,7 +16,7 @@ using OutSmart.DAXon.Types;
 // since TypeChecker has `using OutSmart.DAXon.Values`.
 namespace OutSmart.DAXon.Values
 {
-    internal class PromoterToString : Converter
+    internal sealed class PromoterToString : Converter
     {
         public PromoterToString() { }
         // net472 port: the real OutSmart.DAXon.Types.Converter (poc/output/full/Converter.cs) is EXCLUDED from the

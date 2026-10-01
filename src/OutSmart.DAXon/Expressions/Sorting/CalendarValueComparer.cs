@@ -21,22 +21,22 @@ namespace OutSmart.DAXon.Expressions.Sorting
     /// <summary>
     /// A comparer specifically for comparing two date, time, or dateTime values
     /// </summary>
-    internal class CalendarValueComparer : IAtomicComparer
+    internal sealed class CalendarValueComparer : IAtomicComparer
     {
         private readonly IXPathContext context;
 
-        public virtual IStringCollator Collator => null;
+        public IStringCollator Collator => null;
         public CalendarValueComparer(IXPathContext context)
         {
             this.context = context;
         }
 
-        public virtual IAtomicComparer ProvideContext(IXPathContext context)
+        public IAtomicComparer ProvideContext(IXPathContext context)
         {
             return new CalendarValueComparer(context);
         }
 
-        public virtual int CompareAtomicValues(AtomicValue a, AtomicValue b)
+        public int CompareAtomicValues(AtomicValue a, AtomicValue b)
         {
             if (a == null)
             {
@@ -50,12 +50,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return ((CalendarValue)a).CompareTo((CalendarValue)b, context.GetImplicitTimezone());
         }
 
-        public virtual bool ComparesEqual(AtomicValue a, AtomicValue b)
+        public bool ComparesEqual(AtomicValue a, AtomicValue b)
         {
             return CompareAtomicValues(a, b) == 0;
         }
 
-        public virtual string Save()
+        public string Save()
         {
             return "CalVC";
         }

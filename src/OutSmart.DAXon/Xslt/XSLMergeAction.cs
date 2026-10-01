@@ -17,7 +17,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class XSLMergeAction : StyleElement
+    internal sealed class XSLMergeAction : StyleElement
     {
         public override bool IsInstruction()
         {

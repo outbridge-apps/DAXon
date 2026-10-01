@@ -24,7 +24,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Serialization
 {
-    internal class HTMLIndenter : ProxyReceiver
+    internal sealed class HTMLIndenter : ProxyReceiver
     {
         private const int IS_INLINE = 1;
         private const int IS_FORMATTED = 2;
@@ -119,10 +119,10 @@ namespace OutSmart.DAXon.Serialization
         private HashSet<string> suppressed = null;
 
         /*!afterFormatted &&*/
-        protected virtual int LineLength => 80;
+        protected int LineLength => 80;
 
         /*!afterFormatted &&*/
-        protected virtual int Indentation => 3;
+        protected int Indentation => 3;
         static HTMLIndenter()
         {
             inlineTable.UnionWith(inlineTags);
@@ -132,7 +132,7 @@ namespace OutSmart.DAXon.Serialization
         {
         }
 
-        public virtual void SetOutputProperties(Properties props)
+        public void SetOutputProperties(Properties props)
         {
             string s = props.GetProperty(DAXonOutputKeys.SUPPRESS_INDENTATION);
             if (s != null)
@@ -145,7 +145,7 @@ namespace OutSmart.DAXon.Serialization
             }
         }
 
-        public virtual int ClassifyTag(INodeName name)
+        public int ClassifyTag(INodeName name)
         {
             int r = 0;
             if (inlineTable.Contains(name.GetLocalPart().ToLowerInvariant()))

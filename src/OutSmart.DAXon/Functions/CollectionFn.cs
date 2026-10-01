@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Functions
     /// wrapper is not ported. The stable-collection caching in Controller UserData IS retained, because
     /// repeated calls (e.g. collection() | collection()) rely on node identity being preserved.
     /// </summary>
-    internal class CollectionFn : SystemFunction, ICallable
+    internal sealed class CollectionFn : SystemFunction, ICallable
     {
         /// <summary>URI representing a collection that is always empty.</summary>
         public static string EMPTY_COLLECTION_URI = "http://saxon.sf.net/collection/empty";
@@ -190,7 +190,7 @@ namespace OutSmart.DAXon.Functions
             return new LazySequence(result);
         }
 
-        private class EmptyCollection : IResourceCollection
+        private sealed class EmptyCollection : IResourceCollection
         {
             private readonly string collectionUri;
             public string CollectionURI => collectionUri;
@@ -203,7 +203,7 @@ namespace OutSmart.DAXon.Functions
         // A SequenceIterator over the resources of a collection, delivering each Resource's item.
         // (Upstream wraps each resource in ObjectValue<Resource> and maps through a multithreaded
         // iterator; the observable sequence is identical to mapping each Resource to its item.)
-        private class CollectionIterator : ISequenceIterator
+        private sealed class CollectionIterator : ISequenceIterator
         {
             private readonly IEnumerator<IResource> sources;
             private readonly IXPathContext context;

@@ -206,7 +206,7 @@ namespace OutSmart.DAXon.Expressions
             return new StaticFunctionCallElaborator();
         }
 
-        private class StaticFunctionCallElaborator : FunctionCallElaborator
+        private sealed class StaticFunctionCallElaborator : FunctionCallElaborator
         {
             public override void SetExpression(Expression expr)
             {

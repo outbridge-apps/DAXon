@@ -18,7 +18,7 @@ using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Functions.HigherOrder
 {
-    internal class CurriedFunction : AbstractFunction
+    internal sealed class CurriedFunction : AbstractFunction
     {
         private readonly IFunctionItem targetFunction;
         private readonly ISequence[] boundValues;

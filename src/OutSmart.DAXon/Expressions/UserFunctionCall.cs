@@ -680,7 +680,7 @@ namespace OutSmart.DAXon.Expressions
         //
         //
         //    }
-        private class TailCallElaborator : PullElaborator
+        private sealed class TailCallElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {
@@ -722,7 +722,7 @@ namespace OutSmart.DAXon.Expressions
         //
         //
         //    }
-        private class UserFunctionCallElaborator : PullElaborator
+        private sealed class UserFunctionCallElaborator : PullElaborator
         {
             private void TestNotAbstract(UserFunctionCall expr, Component target)
             {

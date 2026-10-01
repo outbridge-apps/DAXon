@@ -16,7 +16,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class ItemFilter : IItemMappingFunction
+    internal sealed class ItemFilter : IItemMappingFunction
     {
 
         private readonly ILambda lambda;
@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Expressions
             return new ItemFilter(lambda);
         }
 
-        public virtual IItem MapItem(IItem item)
+        public IItem MapItem(IItem item)
         {
             if (lambda(item))
             {

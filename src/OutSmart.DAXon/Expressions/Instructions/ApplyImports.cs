@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// <summary>
     /// An xsl:apply-imports element in the stylesheet.
     /// </summary>
-    internal class ApplyImports : ApplyNextMatchingTemplate, IITemplateCall
+    internal sealed class ApplyImports : ApplyNextMatchingTemplate, IITemplateCall
     {
 
         public override int InstructionNameCode => StandardNames.XSL_APPLY_IMPORTS;
@@ -68,7 +68,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new ApplyImportsElaborator();
         }
 
-        private class ApplyImportsElaborator : PushElaborator
+        private sealed class ApplyImportsElaborator : PushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

@@ -15,7 +15,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Regex.CharClass
 {
-    internal class IntSetCharacterClass : ICharacterClass
+    internal sealed class IntSetCharacterClass : ICharacterClass
     {
         private readonly IntSet intSet;
         public IntSetCharacterClass(IntSet intSet)
@@ -23,17 +23,17 @@ namespace OutSmart.DAXon.Regex.CharClass
             this.intSet = intSet;
         }
 
-        public virtual IntSet GetIntSet()
+        public IntSet GetIntSet()
         {
             return intSet;
         }
 
-        public virtual bool Test(int value)
+        public bool Test(int value)
         {
             return intSet.Contains(value);
         }
 
-        public virtual bool IsDisjoint(ICharacterClass other)
+        public bool IsDisjoint(ICharacterClass other)
         {
             if (other is IntSetCharacterClass)
             {
@@ -50,6 +50,6 @@ namespace OutSmart.DAXon.Regex.CharClass
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual IIntPredicateProxy Union(IIntPredicateProxy other) => OutSmart.DAXon.Collections.IntUnionPredicate.MakeUnion(this, other); // upstream IntPredicateProxy default
+        public IIntPredicateProxy Union(IIntPredicateProxy other) => OutSmart.DAXon.Collections.IntUnionPredicate.MakeUnion(this, other); // upstream IntPredicateProxy default
     }
 }

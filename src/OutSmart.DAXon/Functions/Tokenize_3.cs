@@ -19,7 +19,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
-    internal class Tokenize_3 : RegexFunction
+    internal sealed class Tokenize_3 : RegexFunction
     {
         protected override bool AllowRegexMatchingEmptyString()
         {

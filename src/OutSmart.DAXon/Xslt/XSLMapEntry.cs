@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Xslt
     /// <summary>
     /// Handler for xsl:map-entry instructions in an XSLT 3.0 stylesheet. <br>
     /// </summary>
-    internal class XSLMapEntry : StyleElement
+    internal sealed class XSLMapEntry : StyleElement
     {
         Expression key = null;
         Expression select = null;

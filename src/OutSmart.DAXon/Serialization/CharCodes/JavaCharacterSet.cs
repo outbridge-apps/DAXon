@@ -12,7 +12,7 @@ namespace OutSmart.DAXon.Serialization.CharCodes
     // Faithful port of net.sf.saxon.serialize.charcode.JavaCharacterSet (Saxon 12.9). Was a hollow stub, so
     // serializing with ANY encoding outside the built-in table (us-ascii/iso-8859-1/utf) crashed.
     // Probes the platform encoder for encodability, caching per-BMP-character results.
-    internal class JavaCharacterSet : ICharacterSet
+    internal sealed class JavaCharacterSet : ICharacterSet
     {
         private const byte GOOD = 1;
         private const byte BAD = 2;

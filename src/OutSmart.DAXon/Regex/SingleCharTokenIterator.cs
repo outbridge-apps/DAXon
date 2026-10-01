@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Regex
     /// token sequence is identical to ATokenIterator's, including leading/trailing/adjacent
     /// separators producing zero-length tokens.
     /// </summary>
-    internal class SingleCharTokenIterator : IAtomicIterator
+    internal sealed class SingleCharTokenIterator : IAtomicIterator
     {
         private readonly UnicodeString input;
         private readonly int separator;
@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Regex
             prevEnd = 0;
         }
 
-        public virtual StringValue Next()
+        public StringValue Next()
         {
             if (prevEnd < 0)
             {
@@ -68,7 +68,7 @@ namespace OutSmart.DAXon.Regex
 
         AtomicValue IAtomicIterator.Next() => Next();
         IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
-        public virtual void Dispose() { }
+        public void Dispose() { }
 
         /// <summary>
         /// Bulk-materialize the remaining tokens (used by array{tokenize(...)}): separators are

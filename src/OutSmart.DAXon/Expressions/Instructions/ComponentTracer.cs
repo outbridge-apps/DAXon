@@ -24,13 +24,13 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class ComponentTracer : Instruction
+    internal sealed class ComponentTracer : Instruction
     {
         private Operand baseOp;
         private Dictionary<string, object> properties = new Dictionary<string, object>(10);
         private ITraceableComponent component;
 
-        public virtual Expression Child => baseOp.GetChildExpression();
+        public Expression Child => baseOp.GetChildExpression();
 
         public override string ExpressionName => "trace";
 
@@ -67,12 +67,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
         {
         }
 
-        public virtual Expression GetBody()
+        public Expression GetBody()
         {
             return baseOp.GetChildExpression();
         }
 
-        public virtual void SetProperty(string name, object value)
+        public void SetProperty(string name, object value)
         {
             properties[name] = value;
         }
@@ -151,7 +151,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new ComponentTracerElaborator();
         }
 
-        private class ComponentTracerElaborator : PullElaborator
+        private sealed class ComponentTracerElaborator : PullElaborator
         {
             public override IUpdateEvaluator ElaborateForUpdate()
             {

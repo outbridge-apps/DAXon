@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Functions
     // LocalNameFn1 is a SEPARATE class (not a NameFn1 flag) because FilterExpression:445 keys the
     // [local-name()='x'] positional-filter optimization on IsCallOn(typeof(LocalNameFn1)) - a shared class
     // would wrongly match fn:name() too (different semantics under prefixes).
-    internal class LocalNameFn1 : ScalarSystemFunction
+    internal sealed class LocalNameFn1 : ScalarSystemFunction
     {
         public LocalNameFn1() { }
         public static Func<LocalNameFn1> New() => () => new LocalNameFn1();

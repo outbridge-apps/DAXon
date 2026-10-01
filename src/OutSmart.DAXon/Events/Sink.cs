@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Events
     /// <summary>
     /// A Sink is a IReceiver that discards all information passed to it
     /// </summary>
-    internal class Sink : SequenceReceiver
+    internal sealed class Sink : SequenceReceiver
     {
         public Sink(PipelineConfiguration pipe) : base(pipe)
         {

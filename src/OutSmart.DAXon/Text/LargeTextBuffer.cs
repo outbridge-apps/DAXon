@@ -413,17 +413,17 @@ namespace OutSmart.DAXon.Text
         /// <summary>
         /// A ISegment comprising 8-bit characters (codepoints in the range 0-255)
         /// </summary>
-        private class Segment8 : ISegment
+        private sealed class Segment8 : ISegment
         {
             public byte[] bytes;
 
-            public virtual int Width => 8;
+            public int Width => 8;
             public Segment8(byte[] bytes)
             {
                 this.bytes = bytes;
             }
 
-            public virtual ISegment Stretch(int oldLength, int newLength, int newWidth)
+            public ISegment Stretch(int oldLength, int newLength, int newWidth)
             {
                 if (newWidth <= 8)
                 {
@@ -448,12 +448,12 @@ namespace OutSmart.DAXon.Text
                 }
             }
 
-            public virtual UnicodeString AsUnicodeString()
+            public UnicodeString AsUnicodeString()
             {
                 return new Twine8(bytes);
             }
 
-            public virtual UnicodeString Substring(int start, int end)
+            public UnicodeString Substring(int start, int end)
             {
                 return new Slice8(bytes, start, end);
             }
@@ -462,17 +462,17 @@ namespace OutSmart.DAXon.Text
         /// <summary>
         /// A ISegment comprising 16-bit characters (codepoints in the range 0-65535)
         /// </summary>
-        private class Segment16 : ISegment
+        private sealed class Segment16 : ISegment
         {
             public char[] chars;
 
-            public virtual int Width => 16;
+            public int Width => 16;
             public Segment16(char[] chars)
             {
                 this.chars = chars;
             }
 
-            public virtual ISegment Stretch(int oldLength, int newLength, int newWidth)
+            public ISegment Stretch(int oldLength, int newLength, int newWidth)
             {
                 if (newWidth <= 16)
                 {
@@ -491,12 +491,12 @@ namespace OutSmart.DAXon.Text
                 }
             }
 
-            public virtual UnicodeString AsUnicodeString()
+            public UnicodeString AsUnicodeString()
             {
                 return new Twine16(chars);
             }
 
-            public virtual UnicodeString Substring(int start, int end)
+            public UnicodeString Substring(int start, int end)
             {
                 return new Slice16(chars, start, end);
             }
@@ -505,17 +505,17 @@ namespace OutSmart.DAXon.Text
         /// <summary>
         /// A ISegment comprising 24-bit characters (any Unicode codepoints)
         /// </summary>
-        private class Segment24 : ISegment
+        private sealed class Segment24 : ISegment
         {
             public byte[] bytes;
 
-            public virtual int Width => 24;
+            public int Width => 24;
             public Segment24(byte[] bytes)
             {
                 this.bytes = bytes;
             }
 
-            public virtual ISegment Stretch(int oldLength, int newLength, int newWidth)
+            public ISegment Stretch(int oldLength, int newLength, int newWidth)
             {
                 if (newLength * 3 > bytes.Length)
                 {
@@ -525,12 +525,12 @@ namespace OutSmart.DAXon.Text
                 return this;
             }
 
-            public virtual UnicodeString Substring(int start, int length)
+            public UnicodeString Substring(int start, int length)
             {
                 return new Slice24(bytes, start, length);
             }
 
-            public virtual UnicodeString AsUnicodeString()
+            public UnicodeString AsUnicodeString()
             {
                 return new Twine24(bytes);
             }

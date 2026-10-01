@@ -12,7 +12,7 @@ using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Patterns
 {
     // TypeIsInstancePredicate — wraps a System.Type as INodePredicate for Children() callers.
-    internal class TypeIsInstancePredicate : INodePredicate
+    internal sealed class TypeIsInstancePredicate : INodePredicate
     {
         private readonly System.Type _t;
         public TypeIsInstancePredicate(System.Type t) { _t = t; }

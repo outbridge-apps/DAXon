@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
     /// <summary>
     /// Implement the XPath string-length() function
     /// </summary>
-    internal class StringLength_1 : ScalarSystemFunction
+    internal sealed class StringLength_1 : ScalarSystemFunction
     {
         public override IntegerValue[] IntegerBounds => new IntegerValue[]
             {
@@ -62,7 +62,7 @@ namespace OutSmart.DAXon.Functions
             return new StringLengthFnElaborator();
         }
 
-        internal class StringLengthFnElaborator : ItemElaborator
+        internal sealed class StringLengthFnElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()
             {

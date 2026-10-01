@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Events
     // Extracts the subtree of a document rooted at the element with a given ID value. Namespace
     // declarations outside this subtree are treated as if present on the identified element.
     // Note: only looks for ID attributes, not ID elements.
-    internal class IDFilter : ProxyReceiver
+    internal sealed class IDFilter : ProxyReceiver
     {
         private readonly string requiredId;
         private int activeDepth = 0;

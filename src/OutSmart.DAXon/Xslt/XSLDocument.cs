@@ -21,7 +21,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Xslt
 {
-    internal class XSLDocument : StyleElement
+    internal sealed class XSLDocument : StyleElement
     {
         private int validationAction = Validation.STRIP;
         private ISchemaType schemaType = null;

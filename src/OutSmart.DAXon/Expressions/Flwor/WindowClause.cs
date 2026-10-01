@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
     /// <summary>
     /// Implements an XQuery 3.0 sliding or tumbling window clause within a FLWOR expression
     /// </summary>
-    internal class WindowClause : Clause
+    internal sealed class WindowClause : Clause
     {
         public const int WINDOW_VAR = 0;
         public const int START_ITEM = 1;
@@ -52,7 +52,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override ClauseName ClauseKey => WINDOW;
 
-        public virtual Expression Sequence
+        public Expression Sequence
         {
             get => sequenceOp.GetChildExpression(); set
             {
@@ -60,7 +60,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public virtual Expression StartCondition
+        public Expression StartCondition
         {
             get => startConditionOp.GetChildExpression(); set
             {
@@ -68,7 +68,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public virtual Expression EndCondition
+        public Expression EndCondition
         {
             get => endConditionOp == null ? null : endConditionOp.GetChildExpression(); set
             {
@@ -76,7 +76,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public virtual ItemTypeCheckingFunction ItemTypeChecker => itemTypeChecker;
+        public ItemTypeCheckingFunction ItemTypeChecker => itemTypeChecker;
 
         public override LocalVariableBinding[] RangeVariables
         {
@@ -96,47 +96,47 @@ namespace OutSmart.DAXon.Expressions.Flwor
         {
         }
 
-        public virtual void SetIsSlidingWindow(bool sliding)
+        public void SetIsSlidingWindow(bool sliding)
         {
             this.sliding = sliding;
         }
 
-        public virtual bool IsSlidingWindow()
+        public bool IsSlidingWindow()
         {
             return sliding;
         }
 
-        public virtual bool IsTumblingWindow()
+        public bool IsTumblingWindow()
         {
             return !sliding;
         }
 
-        public virtual void SetIncludeUnclosedWindows(bool include)
+        public void SetIncludeUnclosedWindows(bool include)
         {
             this.includeUnclosedWindows = include;
         }
 
-        public virtual bool IsIncludeUnclosedWindows()
+        public bool IsIncludeUnclosedWindows()
         {
             return includeUnclosedWindows;
         }
 
-        public virtual void InitSequence(FLWORExpression flwor, Expression sequence)
+        public void InitSequence(FLWORExpression flwor, Expression sequence)
         {
             sequenceOp = new Operand(flwor, sequence, OperandRole.INSPECT);
         }
 
-        public virtual void InitStartCondition(FLWORExpression flwor, Expression startCondition)
+        public void InitStartCondition(FLWORExpression flwor, Expression startCondition)
         {
             startConditionOp = new Operand(flwor, startCondition, OperandRole.INSPECT);
         }
 
-        public virtual void InitEndCondition(FLWORExpression flwor, Expression endCondition)
+        public void InitEndCondition(FLWORExpression flwor, Expression endCondition)
         {
             endConditionOp = new Operand(flwor, endCondition, OperandRole.INSPECT);
         }
 
-        public virtual void SetVariableBinding(int role, LocalVariableBinding binding)
+        public void SetVariableBinding(int role, LocalVariableBinding binding)
         {
             foreach (LocalVariableBinding b in windowVars.ValueSet())
             {
@@ -149,7 +149,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             windowVars.Put(role, binding);
         }
 
-        public virtual LocalVariableBinding GetVariableBinding(int role)
+        public LocalVariableBinding GetVariableBinding(int role)
         {
             return windowVars[role];
         }
@@ -187,7 +187,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        protected internal virtual void CheckWindowContents(Window w)
+        protected internal void CheckWindowContents(Window w)
         {
             if (windowMustBeSingleton && w.contents.Count > 1)
             {
@@ -266,7 +266,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             @out.EndElement();
         }
 
-        protected internal virtual bool MatchesStart(IItem previous, IItem current, IItem next, int position, IXPathContext context)
+        protected internal bool MatchesStart(IItem previous, IItem current, IItem next, int position, IXPathContext context)
         {
             WindowClause clause = this;
             LocalVariableBinding binding;
@@ -297,7 +297,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return clause.StartCondition.EffectiveBooleanValue(context);
         }
 
-        protected internal virtual bool MatchesEnd(Window window, IItem previous, IItem current, IItem next, int position, IXPathContext context)
+        protected internal bool MatchesEnd(Window window, IItem previous, IItem current, IItem next, int position, IXPathContext context)
         {
             WindowClause clause = this;
             LocalVariableBinding binding;
@@ -364,7 +364,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        protected internal class Window
+        protected internal sealed class Window
         {
             public IItem startItem;
             public int startPosition;
@@ -376,12 +376,12 @@ namespace OutSmart.DAXon.Expressions.Flwor
             public IItem endNextItem;
             public IList<IItem> contents;
             public bool despatched = false;
-            public virtual bool IsFinished()
+            public bool IsFinished()
             {
                 return endPosition > 0;
             }
 
-            public virtual bool IsDespatched()
+            public bool IsDespatched()
             {
                 return despatched;
             }

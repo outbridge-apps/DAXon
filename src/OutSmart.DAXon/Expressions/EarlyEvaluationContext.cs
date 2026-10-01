@@ -25,14 +25,14 @@ using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class EarlyEvaluationContext : IXPathContext
+    internal sealed class EarlyEvaluationContext : IXPathContext
     {
         private readonly Configuration config;
 
-        public virtual XPathContextMajor MajorContext => null;
+        public XPathContextMajor MajorContext => null;
 
         // no-op
-        public virtual int TemporaryOutputState
+        public int TemporaryOutputState
         {
             get => 0; set
             {
@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Expressions
         }
 
         // no-op
-        public virtual string CurrentOutputUri
+        public string CurrentOutputUri
         {
             get => null; set
             {
@@ -51,23 +51,23 @@ namespace OutSmart.DAXon.Expressions
             this.config = config;
         }
 
-        public virtual ISequence EvaluateLocalVariable(int slotnumber)
+        public ISequence EvaluateLocalVariable(int slotnumber)
         {
             NotAllowed();
             return null;
         }
 
-        public virtual IXPathContext GetCaller()
+        public IXPathContext GetCaller()
         {
             return null;
         }
 
-        public virtual IResourceResolver GetResourceResolver()
+        public IResourceResolver GetResourceResolver()
         {
             return config.GetResourceResolver();
         }
 
-        public virtual IErrorReporter GetErrorReporter()
+        public IErrorReporter GetErrorReporter()
         {
             return config.MakeErrorReporter();
         }
@@ -75,7 +75,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Get the current component
         /// </summary>
-        public virtual Component GetCurrentComponent()
+        public Component GetCurrentComponent()
         {
             NotAllowed();
             return null;
@@ -84,7 +84,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Get the Configuration
         /// </summary>
-        public virtual Configuration GetConfiguration()
+        public Configuration GetConfiguration()
         {
             return config;
         }
@@ -92,98 +92,98 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Get the Configuration
         /// </summary>
-        public virtual IItem GetContextItem()
+        public IItem GetContextItem()
         {
             return null;
         }
 
-        public virtual Controller GetController()
+        public Controller GetController()
         {
             return null;
         }
 
-        public virtual IGroupIterator GetCurrentGroupIterator()
-        {
-            NotAllowed();
-            return null;
-        }
-
-        public virtual IGroupIterator GetCurrentMergeGroupIterator()
+        public IGroupIterator GetCurrentGroupIterator()
         {
             NotAllowed();
             return null;
         }
 
-        public virtual Component.M GetCurrentMode()
+        public IGroupIterator GetCurrentMergeGroupIterator()
         {
             NotAllowed();
             return null;
         }
 
-        public virtual IRegexIterator GetCurrentRegexIterator()
+        public Component.M GetCurrentMode()
+        {
+            NotAllowed();
+            return null;
+        }
+
+        public IRegexIterator GetCurrentRegexIterator()
         {
             return null;
         }
 
-        public virtual Rule GetCurrentTemplateRule()
+        public Rule GetCurrentTemplateRule()
         {
             return null;
         }
 
-        public virtual int GetLast()
+        public int GetLast()
         {
             XPathException err = new XPathException("The context item is absent", "XPDY0002");
             throw new UncheckedXPathException(err);
         }
 
-        public virtual ParameterSet GetLocalParameters()
+        public ParameterSet GetLocalParameters()
         {
             NotAllowed();
             return null;
         }
 
-        public virtual NamePool GetNamePool()
+        public NamePool GetNamePool()
         {
             return config.GetNamePool();
         }
 
-        public virtual StackFrame GetStackFrame()
+        public StackFrame GetStackFrame()
         {
             NotAllowed();
             return null;
         }
 
-        public virtual ParameterSet GetTunnelParameters()
+        public ParameterSet GetTunnelParameters()
         {
             NotAllowed();
             return null;
         }
 
-        public virtual bool IsAtLast()
+        public bool IsAtLast()
         {
             XPathException err = new XPathException("The context item is absent");
             err.SetErrorCode("XPDY0002");
             throw err;
         }
 
-        public virtual XPathContextMajor NewCleanContext()
+        public XPathContextMajor NewCleanContext()
         {
             NotAllowed();
             return null;
         }
 
-        public virtual XPathContextMajor NewContext()
+        public XPathContextMajor NewContext()
         {
             Controller controller = new Controller(config);
             return controller.NewXPathContext();
         }
 
-        public virtual XPathContextMinor NewMinorContext()
+        public XPathContextMinor NewMinorContext()
         {
             return NewContext().NewMinorContext();
         }
 
-        public virtual void SetCaller(IXPathContext caller)
+        public void SetCaller(IXPathContext caller)
         {
         }
 
@@ -191,7 +191,7 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Set a new sequence iterator.
         /// </summary>
-        public virtual void SetCurrentIterator(IFocusIterator iter)
+        public void SetCurrentIterator(IFocusIterator iter)
         {
             NotAllowed();
         }
@@ -200,44 +200,44 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Set a new sequence iterator.
         /// </summary>
-        public virtual IFocusIterator TrackFocus(ISequenceIterator iter)
+        public IFocusIterator TrackFocus(ISequenceIterator iter)
         {
             NotAllowed();
             return null;
         }
 
         // no-op
-        public virtual void SetLocalVariable(int slotNumber, ISequence value)
+        public void SetLocalVariable(int slotNumber, ISequence value)
         {
             NotAllowed();
         }
 
         // no-op
-        public virtual int UseLocalParameter(StructuredQName parameterId, int slotNumber, bool isTunnel)
+        public int UseLocalParameter(StructuredQName parameterId, int slotNumber, bool isTunnel)
         {
             return ParameterSet.NOT_SUPPLIED;
         }
 
         // no-op
-        public virtual DateTimeValue GetCurrentDateTime()
+        public DateTimeValue GetCurrentDateTime()
         {
             throw new NoDynamicContextException("current-dateTime");
         }
 
         // no-op
-        public virtual int GetImplicitTimezone()
+        public int GetImplicitTimezone()
         {
             return CalendarValue.MISSING_TIMEZONE;
         }
 
         // no-op
-        public virtual XPathException GetCurrentException()
+        public XPathException GetCurrentException()
         {
             return null;
         }
 
         // no-op
-        public virtual void WaitForChildThreads()
+        public void WaitForChildThreads()
         {
             GetCaller().WaitForChildThreads();
         }
@@ -249,13 +249,13 @@ namespace OutSmart.DAXon.Expressions
         }
 
         // no-op
-        public virtual XPathContextMajor.ThreadManager GetThreadManager()
+        public XPathContextMajor.ThreadManager GetThreadManager()
         {
             return null;
         }
 
         // no-op
-        public virtual Component GetTargetComponent(int bindingSlot)
+        public Component GetTargetComponent(int bindingSlot)
         {
             return null;
         }

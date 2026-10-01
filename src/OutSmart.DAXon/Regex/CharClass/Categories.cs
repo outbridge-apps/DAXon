@@ -27,7 +27,7 @@ using OutSmart.DAXon.Internal.Streams;
 using System.IO;
 namespace OutSmart.DAXon.Regex.CharClass
 {
-    internal class Categories
+    internal sealed class Categories
     {
 
         public static readonly ICharacterClass ESCAPE_s = new IntSetCharacterClass(IntArraySet.Make(new int[] { 9, 10, 13, 32 }, 4));
@@ -120,7 +120,7 @@ namespace OutSmart.DAXon.Regex.CharClass
                 return GetInstance().CATEGORIES.GetOrDefault(cat);
             }
         }
-        internal class Category : ICharacterClass
+        internal sealed class Category : ICharacterClass
         {
             private readonly string label;
             private readonly IIntPredicateProxy predicate;
@@ -130,12 +130,12 @@ namespace OutSmart.DAXon.Regex.CharClass
                 this.predicate = predicate;
             }
 
-            public virtual bool Test(int value)
+            public bool Test(int value)
             {
                 return predicate.Test(value);
             }
 
-            public virtual bool IsDisjoint(ICharacterClass other)
+            public bool IsDisjoint(ICharacterClass other)
             {
                 if (other is Category)
                 {
@@ -179,7 +179,7 @@ namespace OutSmart.DAXon.Regex.CharClass
                 }
             }
 
-            public virtual IntSet GetIntSet()
+            public IntSet GetIntSet()
             {
                 return Extent(predicate);
             }
@@ -195,10 +195,10 @@ namespace OutSmart.DAXon.Regex.CharClass
             }
 
             // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-            public virtual IIntPredicateProxy Union(IIntPredicateProxy other) => IntPredicateLambda.Of((i) => Test(i) || other.Test(i));
+            public IIntPredicateProxy Union(IIntPredicateProxy other) => IntPredicateLambda.Of((i) => Test(i) || other.Test(i));
         }
 
-        private class Holder
+        private sealed class Holder
         {
             // See https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom
             // The idea here is that the initialization occurs the first time getInstance() is called,

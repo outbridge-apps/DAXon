@@ -26,7 +26,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
-    internal class ComputedElement : ElementCreator
+    internal sealed class ComputedElement : ElementCreator
     {
         private readonly Operand nameOp;
         private Operand namespaceOp;
@@ -49,22 +49,22 @@ namespace OutSmart.DAXon.Expressions.Instructions
             allowNameAsQName = allowQName;
         }
 
-        public virtual Expression GetNameExp()
+        public Expression GetNameExp()
         {
             return nameOp.GetChildExpression();
         }
 
-        public virtual Expression GetNamespaceExp()
+        public Expression GetNamespaceExp()
         {
             return namespaceOp == null ? null : namespaceOp.GetChildExpression();
         }
 
-        protected virtual void SetNameExp(Expression elementName)
+        protected void SetNameExp(Expression elementName)
         {
             nameOp.SetChildExpression(elementName);
         }
 
-        protected virtual void SetNamespaceExp(Expression @namespace)
+        protected void SetNamespaceExp(Expression @namespace)
         {
             if (namespaceOp == null)
             {
@@ -81,7 +81,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return OperandSparseList(contentOp, nameOp, namespaceOp);
         }
 
-        public virtual INamespaceResolver GetNamespaceResolver()
+        public INamespaceResolver GetNamespaceResolver()
         {
             return GetRetainedStaticContext();
         }
@@ -261,7 +261,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         /// <summary>
         /// Elaborator for a FixedElement (literal result element) expression.
         /// </summary>
-        internal class ComputedElementElaborator : ComplexNodePushElaborator
+        internal sealed class ComputedElementElaborator : ComplexNodePushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
             {

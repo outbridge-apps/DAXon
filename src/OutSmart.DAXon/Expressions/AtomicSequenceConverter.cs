@@ -448,21 +448,21 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Mapping function wrapped around a converter
         /// </summary>
-        internal class AtomicSequenceMappingFunction : IItemMappingFunction
+        internal sealed class AtomicSequenceMappingFunction : IItemMappingFunction
         {
             private Converter converter;
             private string errorCode;
-            public virtual void SetConverter(Converter converter)
+            public void SetConverter(Converter converter)
             {
                 this.converter = converter;
             }
 
-            public virtual void SetErrorCode(string code)
+            public void SetErrorCode(string code)
             {
                 this.errorCode = code;
             }
 
-            public virtual IItem MapItem(IItem item) /* net472: no covariant returns -> declare IItem (was AtomicValue) for IItemMappingFunction.MapItem */
+            public IItem MapItem(IItem item) /* net472: no covariant returns -> declare IItem (was AtomicValue) for IItemMappingFunction.MapItem */
             {
                 IConversionResult result = converter.Convert((AtomicValue)item);
                 if (errorCode != null && result is ValidationFailure)
@@ -482,16 +482,16 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Mapping function that converts every item in a sequence to a string
         /// </summary>
-        internal class ToStringMappingFunction : IItemMappingFunction
+        internal sealed class ToStringMappingFunction : IItemMappingFunction
         {
-            public virtual IItem MapItem(IItem item) /* net472: no covariant returns -> declare IItem (was StringValue) */
+            public IItem MapItem(IItem item) /* net472: no covariant returns -> declare IItem (was StringValue) */
             {
                 return new StringValue(item.UnicodeStringValue);
             }
             IItem IItemMappingFunction.MapItem(IItem arg0) => MapItem(arg0);
         }
 
-        internal class AtomicSequenceConverterElaborator : PullElaborator
+        internal sealed class AtomicSequenceConverterElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
             {
