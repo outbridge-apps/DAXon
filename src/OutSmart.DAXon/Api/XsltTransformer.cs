@@ -166,6 +166,7 @@ namespace OutSmart.DAXon.Api
         /*staticParameters*/
         public virtual void Transform()
         {
+            using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
                 IActiveSource initialSelection = initialSource;

@@ -339,6 +339,7 @@ namespace OutSmart.DAXon.XQuery
 
         public virtual XQueryExpression CompileQuery(string query)
         {
+            using RunResources run = RunResources.Enter();
             // Compile under the Processor's deadline: constant folding of hostile query text is
             // otherwise unbounded work before any run-time deadline exists (see ArmThreadDeadline).
             Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config);

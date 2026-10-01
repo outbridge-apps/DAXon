@@ -46,6 +46,7 @@ namespace OutSmart.DAXon.XPath
 
         public XPathExpression CreateExpression(string expression)
         {
+            using RunResources run = RunResources.Enter();
             Configuration config = GetConfiguration();
             Executable exec = new Executable(config);
             exec.TopLevelPackage = staticContext.GetPackageData();

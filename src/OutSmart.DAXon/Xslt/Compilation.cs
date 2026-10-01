@@ -103,6 +103,7 @@ namespace OutSmart.DAXon.Xslt
 
         public static PreparedStylesheet CompileSingletonPackage(Configuration config, CompilerInfo compilerInfo, ResolvedResource source)
         {
+            using RunResources run = RunResources.Enter();
             try
             {
                 Compilation compilation = new Compilation(config, compilerInfo);
@@ -122,6 +123,7 @@ namespace OutSmart.DAXon.Xslt
         // Source-free compile (P5): compile a stylesheet from a System.Xml.XmlReader with an explicit system id.
         public static PreparedStylesheet CompileSingletonPackage(Configuration config, CompilerInfo compilerInfo, System.Xml.XmlReader reader, string systemId)
         {
+            using RunResources run = RunResources.Enter();
             try
             {
                 Compilation compilation = new Compilation(config, compilerInfo);
@@ -236,6 +238,7 @@ namespace OutSmart.DAXon.Xslt
 
         public virtual PrincipalStylesheetModule CompilePackage(ResolvedResource source)
         {
+            using RunResources run = RunResources.Enter();
             SetMinimalPackageData();
             NodeInfo document;
             NodeInfo outermost = null;

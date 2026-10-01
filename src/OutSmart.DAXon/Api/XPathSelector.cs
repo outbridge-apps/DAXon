@@ -133,6 +133,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual XdmValue Evaluate()
         {
+            using RunResources run = RunResources.Enter();
             ISequence value;
             try
             {
@@ -160,6 +161,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual XdmItem EvaluateSingle()
         {
+            using RunResources run = RunResources.Enter();
             try
             {
                 IItem i = exp.EvaluateSingle(dynamicContext);
@@ -182,22 +184,31 @@ namespace OutSmart.DAXon.Api
 
         public virtual XdmSequenceIterator<XdmItem> IIterator()
         {
+            RunResources scope = RunResources.Detached();
+            RunResources saved = scope.Activate();
             try
             {
-                return new XdmSequenceIterator<XdmItem>(exp.Iterate(dynamicContext));
+                return new XdmSequenceIterator<XdmItem>(exp.Iterate(dynamicContext), scope);
             }
             catch (XPathException e)
             {
+                scope.CloseAll();
                 throw new DAXonApiUncheckedException(e);
             }
             catch (RecursionDepthError e)
             {
+                scope.CloseAll();
                 throw new DAXonApiUncheckedException(e.ToXPathException());
+            }
+            finally
+            {
+                RunResources.Restore(saved);
             }
         }
 
         public virtual bool EffectiveBooleanValue()
         {
+            using RunResources run = RunResources.Enter();
             try
             {
                 return exp.EffectiveBooleanValue(dynamicContext);
@@ -214,10 +225,12 @@ namespace OutSmart.DAXon.Api
         // s9api XPathSelector is Iterable<XdmItem>: foreach over the selector evaluates it.
         public IEnumerator<XdmItem> GetEnumerator()
         {
-            XdmSequenceIterator<XdmItem> it = IIterator();
-            while (it.HasNext())
+            using (XdmSequenceIterator<XdmItem> it = IIterator())
             {
-                yield return it.Next();
+                while (it.HasNext())
+                {
+                    yield return it.Next();
+                }
             }
         }
 

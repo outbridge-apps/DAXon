@@ -143,6 +143,7 @@ namespace OutSmart.DAXon.Api
         // explicit system identifier — the caller no longer constructs a JAXP Source.
         public virtual void ApplyTemplates(Stream input, string systemId, IDestination destination)
         {
+            using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
                 if (destination == null)
@@ -190,6 +191,7 @@ namespace OutSmart.DAXon.Api
         /*staticParameters*/
         public virtual void ApplyTemplates(XdmValue selection, IDestination destination)
         {
+            using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
                 if (selection == null)
@@ -238,6 +240,7 @@ namespace OutSmart.DAXon.Api
         /*staticParameters*/
         public virtual XdmValue ApplyTemplates(XdmValue selection)
         {
+            using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
                 if (selection == null)
@@ -251,6 +254,7 @@ namespace OutSmart.DAXon.Api
         /*staticParameters*/
         public virtual void CallTemplate(QName templateName, IDestination destination)
         {
+            using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
                 if (destination == null)
@@ -305,6 +309,7 @@ namespace OutSmart.DAXon.Api
         /*staticParameters*/
         public virtual XdmValue CallTemplate(QName templateName)
         {
+            using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
                 RawDestination dest = new RawDestination();
@@ -316,6 +321,7 @@ namespace OutSmart.DAXon.Api
         /*staticParameters*/
         public virtual XdmValue CallFunction(QName function, XdmValue[] arguments)
         {
+            using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
                 if (function == null)
@@ -403,6 +409,7 @@ namespace OutSmart.DAXon.Api
         /*staticParameters*/
         public virtual void CallFunction(QName function, XdmValue[] arguments, IDestination destination)
         {
+            using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
                 controller.OpenTraceEpisode();

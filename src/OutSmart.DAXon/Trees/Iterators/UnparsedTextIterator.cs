@@ -10,6 +10,7 @@ using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Functions;
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Internal.Net;
 using OutSmart.DAXon.Model;
@@ -30,6 +31,7 @@ namespace OutSmart.DAXon.Trees.Iterators
     internal sealed class UnparsedTextIterator : ISequenceIterator
     {
         private TextReader reader;
+        private readonly RunResources scope;   // the API call that closes the reader if this iterator does not
         private readonly IIntPredicateProxy checker;
         private readonly URI uri;
         private int position = 0;   // lines delivered so far; -1 after end
@@ -64,6 +66,7 @@ namespace OutSmart.DAXon.Trees.Iterators
             }
 
             this.reader = r;
+            this.scope = RunResources.Track(this);
             this.uri = absoluteURI;
             this.checker = config.ValidCharacterChecker;
         }
@@ -82,6 +85,11 @@ namespace OutSmart.DAXon.Trees.Iterators
             {
                 Dispose();
                 return null;
+            }
+
+            if (reader == null)
+            {
+                throw new XPathException("unparsed-text-lines(): " + uri + " was closed when the evaluation that opened it ended", "FOUT1170");
             }
 
             string s;
@@ -164,6 +172,7 @@ namespace OutSmart.DAXon.Trees.Iterators
             {
                 reader.Dispose();
                 reader = null;
+                scope?.Untrack(this);
             }
 
             GC.SuppressFinalize(this);

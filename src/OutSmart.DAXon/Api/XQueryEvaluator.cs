@@ -179,6 +179,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void Run()
         {
+            using RunResources run = RunResources.Enter();
             try
             {
                 if (expression.IsUpdateQuery())
@@ -218,6 +219,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void Run(IDestination destination)
         {
+            using RunResources run = RunResources.Enter();
             if (expression.IsUpdateQuery())
             {
                 throw new InvalidOperationException("Query is updating");
@@ -246,6 +248,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void RunStreamed(ResolvedResource source, IDestination destination)
         {
+            using RunResources run = RunResources.Enter();
             if (expression.IsUpdateQuery())
             {
                 throw new InvalidOperationException("Query is updating; cannot run with streaming");
@@ -286,6 +289,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual XdmValue Evaluate()
         {
+            using RunResources run = RunResources.Enter();
             if (expression.IsUpdateQuery())
             {
                 throw new InvalidOperationException("Query is updating");
@@ -312,6 +316,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual XdmItem EvaluateSingle()
         {
+            using RunResources run = RunResources.Enter();
             try
             {
                 ISequenceIterator iter = expression.IIterator(context);
@@ -339,17 +344,25 @@ namespace OutSmart.DAXon.Api
                 throw new InvalidOperationException("Query is updating");
             }
 
+            RunResources scope = RunResources.Detached();
+            RunResources saved = scope.Activate();
             try
             {
-                return new XdmSequenceIterator<XdmItem>(expression.IIterator(context));
+                return new XdmSequenceIterator<XdmItem>(expression.IIterator(context), scope);
             }
             catch (XPathException e)
             {
+                scope.CloseAll();
                 throw new DAXonApiUncheckedException(e);
             }
             catch (RecursionDepthError e)
             {
+                scope.CloseAll();
                 throw new DAXonApiUncheckedException(e.ToXPathException());
+            }
+            finally
+            {
+                RunResources.Restore(saved);
             }
         }
 
@@ -427,6 +440,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual XdmValue CallFunction(QName function, params XdmValue[] arguments)
         {
+            using RunResources run = RunResources.Enter();
             UserFunction fn = expression.MainModule.GetUserDefinedFunction(function.GetNamespaceUri(), function.LocalName, arguments.Length);
             if (fn == null)
             {
@@ -462,6 +476,8 @@ namespace OutSmart.DAXon.Api
                 }
 
                 ISequence result = fn.Call(vr, controller);
+                // grounded here: a lazy result could still read from a file this call closes on return
+                result = result.Materialize();
                 return XdmValue.Wrap(result);
             }
             catch (XPathException e)
@@ -476,10 +492,12 @@ namespace OutSmart.DAXon.Api
         // s9api XQueryEvaluator is Iterable<XdmItem>: foreach over the evaluator runs the query.
         public IEnumerator<XdmItem> GetEnumerator()
         {
-            XdmSequenceIterator<XdmItem> it = IIterator();
-            while (it.HasNext())
+            using (XdmSequenceIterator<XdmItem> it = IIterator())
             {
-                yield return it.Next();
+                while (it.HasNext())
+                {
+                    yield return it.Next();
+                }
             }
         }
 

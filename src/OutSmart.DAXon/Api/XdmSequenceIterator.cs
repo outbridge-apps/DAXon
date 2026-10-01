@@ -22,26 +22,46 @@ namespace OutSmart.DAXon.Api
     public class XdmSequenceIterator<T> : IEnumerator<T>
     {
         private readonly ILookaheadIterator @base;
+        private readonly RunResources scope;   // what the lazy evaluation opens; closed when it ends
         private bool closed = false;
-        public T Current => default;
-        object System.Collections.IEnumerator.Current => null;
-        public XdmSequenceIterator(ISequenceIterator @base)
+        private T current;
+
+        public T Current => current;
+        object System.Collections.IEnumerator.Current => current;
+
+        public XdmSequenceIterator(ISequenceIterator @base) : this(@base, null)
         {
+        }
+
+        internal XdmSequenceIterator(ISequenceIterator @base, RunResources scope)
+        {
+            this.scope = scope;
+            RunResources saved = scope?.Activate();
             try
             {
                 this.@base = LookaheadIteratorImpl.MakeLookaheadIterator(@base);
             }
             catch (UncheckedXPathException uxe)
             {
+                scope?.CloseAll();
                 throw new DAXonApiUncheckedException(uxe.GetXPathException());
             }
             catch (XPathException xe)
             {
+                scope?.CloseAll();
                 throw new DAXonApiUncheckedException(xe);
             }
             catch (RecursionDepthError xe)
             {
+                scope?.CloseAll();
                 throw new DAXonApiUncheckedException(xe.ToXPathException());
+            }
+            finally
+            {
+                if (scope != null)
+                {
+                    RunResources.Restore(saved);
+                }
             }
         }
 
@@ -62,11 +82,39 @@ namespace OutSmart.DAXon.Api
 
         public virtual bool HasNext()
         {
-            return !closed && @base.HasNext;
+            if (closed)
+            {
+                return false;
+            }
+
+            RunResources saved = scope?.Activate();
+            try
+            {
+                bool more = @base.HasNext;
+                if (!more)
+                {
+                    scope?.CloseAll();
+                }
+
+                return more;
+            }
+            catch (UncheckedXPathException e)
+            {
+                scope?.CloseAll();
+                throw new DAXonApiUncheckedException(e.GetXPathException());
+            }
+            finally
+            {
+                if (scope != null)
+                {
+                    RunResources.Restore(saved);
+                }
+            }
         }
 
         public virtual T Next()
         {
+            RunResources saved = scope?.Activate();
             try
             {
                 IItem it = @base.Next();
@@ -81,7 +129,15 @@ namespace OutSmart.DAXon.Api
             }
             catch (UncheckedXPathException e)
             {
+                scope?.CloseAll();
                 throw new DAXonApiUncheckedException(e.GetXPathException());
+            }
+            finally
+            {
+                if (scope != null)
+                {
+                    RunResources.Restore(saved);
+                }
             }
         }
 
@@ -94,8 +150,25 @@ namespace OutSmart.DAXon.Api
         {
             closed = true;
             @base.Dispose();
+            scope?.CloseAll();
         }
-        bool System.Collections.IEnumerator.MoveNext() => false;
-        void System.Collections.IEnumerator.Reset() { }
+
+        // IEnumerator over the same items: MoveNext had always answered false, so a plain
+        // while (it.MoveNext()) loop saw an empty sequence.
+        bool System.Collections.IEnumerator.MoveNext()
+        {
+            if (!HasNext())
+            {
+                current = default;
+                return false;
+            }
+
+            current = Next();
+            return true;
+        }
+
+        void System.Collections.IEnumerator.Reset()
+        {
+        }
     }
 }
