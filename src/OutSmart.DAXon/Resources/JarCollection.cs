@@ -180,16 +180,22 @@ namespace OutSmart.DAXon.Resources
             return "jar:" + archiveURI + "!/" + entry.FullName;
         }
 
-        // The properties .NET reads on every runtime; upstream adds crc, comment, extra and method.
+        // Upstream's entry properties as far as .NET exposes them: crc and comment from .NET 7 on,
+        // extra and compression-method nowhere.
         private static IDictionary<string, IGroundedValue> EntryProperties(ZipArchiveEntry entry)
         {
-            return new Dictionary<string, IGroundedValue>
+            var properties = new Dictionary<string, IGroundedValue>
             {
                 ["entry-name"] = StringValue.MakeStringValue(entry.FullName),
                 ["size"] = new Int64Value(entry.Length),
                 ["compressed-size"] = new Int64Value(entry.CompressedLength),
                 ["last-modified"] = DateTimeValue.FromJavaTime(entry.LastWriteTime.ToUnixTimeMilliseconds()),
             };
+#if NET
+            properties["crc"] = new Int64Value(entry.Crc32);
+            properties["comment"] = StringValue.MakeStringValue(entry.Comment ?? "");
+#endif
+            return properties;
         }
     }
 }
