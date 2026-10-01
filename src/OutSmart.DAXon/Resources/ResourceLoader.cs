@@ -162,8 +162,8 @@ namespace OutSmart.DAXon.Resources
             }
             else
             {
-                // a gzip body is decoded by the platform (HttpRequestDefaults)
-                return ResourceLoader.UrlConnection(new Uri(url), config, kind).InputStream;
+                return ResourceLoader.UrlConnection(new Uri(url), config, kind)
+                    .DecodedStream(InputSizeLimit.MaxFor(config), url, kind == OutSmart.DAXon.Api.ResourceKind.Text ? "FOUT1170" : "FODC0002");
             }
         }
 
@@ -176,7 +176,7 @@ namespace OutSmart.DAXon.Resources
             else
             {
                 URLConnection conn = ResourceLoader.UrlConnection(new Uri(url), config, OutSmart.DAXon.Api.ResourceKind.Text);
-                System.IO.Stream inputStream = conn.InputStream;
+                System.IO.Stream inputStream = conn.DecodedStream(InputSizeLimit.MaxFor(config), url, "FOUT1170");
                 if (true)
                 {
                     inputStream = new BufferedStream(inputStream);

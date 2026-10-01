@@ -46,6 +46,26 @@ namespace OutSmart.DAXon.Internal.Net
             }
         }
         public virtual string ContentType { get { try { return _url == null || IsFile ? null : Response().ContentType; } catch { return null; } } }
+
+        // The body as the caller reads it: a gzip response decoded above the deadline guard, its
+        // compressed bytes held to maxInput; the caller caps the decoded bytes.
+        internal global::System.IO.Stream DecodedStream(long maxInput, string systemId, string errorCode)
+        {
+            global::System.IO.Stream body = InputStream;
+            string contentEncoding = null;
+            if (!IsFile && body != null)
+            {
+                try
+                {
+                    contentEncoding = (Response() as global::System.Net.HttpWebResponse)?.ContentEncoding;
+                }
+                catch (global::System.Exception)
+                {
+                }
+            }
+
+            return HttpContentDecoding.Decode(body, contentEncoding, maxInput, systemId, errorCode);
+        }
         public URLConnection(global::System.Uri url) { _url = url; }
         protected global::System.Net.WebResponse Response()
         {

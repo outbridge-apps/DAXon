@@ -114,35 +114,7 @@ namespace OutSmart.DAXon.Lib
                 }
                 else
                 {
-                    // Remote fetch: no length known up front, so read through the counting wrapper.
-                    // Encoding precedence (F&O rules; matches what DownloadString did before the
-                    // cap): explicit argument, else the Content-Type header's charset
-                    // (unparsed-text-2002 exercises exactly this), else BOM, else UTF-8.
-                    using (var wc = new TimedWebClient())
-                    {
-                        var opened = NetworkDeadline.Guard(wc.OpenRead(sysUri));
-                        string effective = encoding;
-                        if (string.IsNullOrEmpty(effective) && wc.ResponseHeaders != null)
-                        {
-                            string contentType = wc.ResponseHeaders["Content-Type"];
-                            if (contentType != null)
-                            {
-                                var cm = System.Text.RegularExpressions.Regex.Match(contentType, "charset\\s*=\\s*[\"']?([A-Za-z0-9._-]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                                if (cm.Success)
-                                {
-                                    effective = cm.Groups[1].Value;
-                                }
-                            }
-                        }
-
-                        using (var raw = OutSmart.DAXon.Internal.Streams.InputSizeLimit.Apply(opened, maxInput, absoluteURI.ToString(), "FOUT1170"))
-                        using (var sr = string.IsNullOrEmpty(effective)
-                            ? new StreamReader(raw, new UTF8Encoding(false), detectEncodingFromByteOrderMarks: true)
-                            : new StreamReader(raw, Encoding.GetEncoding(effective)))
-                        {
-                            text = sr.ReadToEnd();
-                        }
-                    }
+                    text = ReadWeb(sysUri, encoding, maxInput, absoluteURI.ToString());
                 }
                 return new StringReader(text);
             }
@@ -179,7 +151,7 @@ namespace OutSmart.DAXon.Lib
                     {
                         return new StringReader(ReadRestricted(u, encoding, config, OutSmart.DAXon.Internal.Streams.InputSizeLimit.MaxFor(config), sysId));
                     }
-                    using (var wc = new TimedWebClient()) { return new StringReader(wc.DownloadString(u)); }
+                    return new StringReader(ReadWeb(u, encoding, OutSmart.DAXon.Internal.Streams.InputSizeLimit.MaxFor(config), sysId));
                 }
             }
             // Upstream contract is `throws XPathException` (StandardUnparsedTextResolver.java:157) and the
@@ -196,23 +168,52 @@ namespace OutSmart.DAXon.Lib
         private static string ReadRestricted(Uri uri, string encoding, Configuration config, long maxInput, string systemId)
         {
             OutSmart.DAXon.Internal.Net.URLConnection conn = OutSmart.DAXon.Resources.ResourceLoader.UrlConnection(uri, config, OutSmart.DAXon.Api.ResourceKind.Text);
-            string effective = encoding;
-            if (string.IsNullOrEmpty(effective) && conn.ContentType != null)
+            string effective = string.IsNullOrEmpty(encoding) ? CharsetOf(conn.ContentType) : encoding;
+            return ReadCapped(conn.DecodedStream(maxInput, systemId, "FOUT1170"), effective, maxInput, systemId);
+        }
+
+        // The default path of a remote fetch; WebClient follows redirects itself.
+        private static string ReadWeb(Uri uri, string encoding, long maxInput, string systemId)
+        {
+            using (var wc = new TimedWebClient())
             {
-                var cm = System.Text.RegularExpressions.Regex.Match(conn.ContentType, "charset\\s*=\\s*[\"']?([A-Za-z0-9._-]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                if (cm.Success)
+                Stream body = NetworkDeadline.Guard(wc.OpenRead(uri));
+                try
                 {
-                    effective = cm.Groups[1].Value;
+                    WebHeaderCollection headers = wc.ResponseHeaders;
+                    string effective = string.IsNullOrEmpty(encoding) ? CharsetOf(headers?["Content-Type"]) : encoding;
+                    body = HttpContentDecoding.Decode(body, headers?["Content-Encoding"], maxInput, systemId, "FOUT1170");
+                    return ReadCapped(body, effective, maxInput, systemId);
+                }
+                finally
+                {
+                    body.Dispose();
                 }
             }
+        }
 
-            using (var raw = OutSmart.DAXon.Internal.Streams.InputSizeLimit.Apply(conn.InputStream, maxInput, systemId, "FOUT1170"))
-            using (var sr = string.IsNullOrEmpty(effective)
+        // Decoded bytes against the cap. Encoding precedence (F&O rules): the argument, else the
+        // Content-Type charset (unparsed-text-2002), else a BOM, else UTF-8.
+        private static string ReadCapped(Stream body, string encoding, long maxInput, string systemId)
+        {
+            using (var raw = OutSmart.DAXon.Internal.Streams.InputSizeLimit.Apply(body, maxInput, systemId, "FOUT1170"))
+            using (var sr = string.IsNullOrEmpty(encoding)
                 ? new StreamReader(raw, new UTF8Encoding(false), detectEncodingFromByteOrderMarks: true)
-                : new StreamReader(raw, Encoding.GetEncoding(effective)))
+                : new StreamReader(raw, Encoding.GetEncoding(encoding)))
             {
                 return sr.ReadToEnd();
             }
+        }
+
+        private static string CharsetOf(string contentType)
+        {
+            if (contentType == null)
+            {
+                return null;
+            }
+
+            var cm = System.Text.RegularExpressions.Regex.Match(contentType, "charset\\s*=\\s*[\"']?([A-Za-z0-9._-]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            return cm.Success ? cm.Groups[1].Value : null;
         }
 
         // WebClient builds its request internally, so this is the only place its timeouts can be
