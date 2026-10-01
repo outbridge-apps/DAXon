@@ -17,11 +17,11 @@ namespace OutSmart.DAXon.Collections
     /// <summary>
     /// An immutable integer set containing a single integer
     /// </summary>
-    internal class IntSingletonSet : IntSet
+    internal sealed class IntSingletonSet : IntSet
     {
         private readonly int value;
 
-        public virtual int Member => value;
+        public int Member => value;
         public IntSingletonSet(int value)
         {
             this.value = value;

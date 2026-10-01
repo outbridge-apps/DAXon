@@ -984,8 +984,9 @@ namespace OutSmart.DAXon.Regex
                             int idxBeforeEscape = idx;
                             ICharacterClass charClass = Escape(false);
 
-                            // Check if it's a simple escape (as opposed to, say, a backreference)
-                            if (!(charClass is IntValuePredicate))
+                            // Check if it's a simple escape (as opposed to, say, a backreference). Upstream
+                            // tests IntValuePredicate here, which no escape ever is, so it never merged one.
+                            if (!(charClass is SingletonCharacterClass single) || charClass is BackReference)
                             {
 
                                 // Not a simple escape, so backup to where we were before the escape.
@@ -996,7 +997,7 @@ namespace OutSmart.DAXon.Regex
 
 
                             // Add escaped char to atom
-                            ub.Append(((IntValuePredicate)charClass).GetTarget());
+                            ub.Append(single.Codepoint);
                             lenAtom++;
                             break;
                         }
@@ -1117,7 +1118,7 @@ namespace OutSmart.DAXon.Regex
 
                             return Trace(new OpBackReference(backreference));
                         }
-                        else if (esc is IntSingletonSet)
+                        else if (esc is SingletonCharacterClass)
                         {
 
                             // We had a simple escape and we want to have it end up in

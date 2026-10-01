@@ -240,7 +240,7 @@ namespace OutSmart.DAXon.Regex
 
             // A stack of iterators, one for each piece in the sequence
             Stack<IIntIterator> iterators = new Stack<IIntIterator>();
-            REMatcher.State savedState = ContainsCapturingExpressions() ? matcher.CaptureState() : null;
+            int[] savedState = ContainsCapturingExpressions() ? matcher.CaptureState() : null;
             return new AnonymousIntIterator(this, iterators, matcher, position, savedState);
         }
 
@@ -251,11 +251,11 @@ namespace OutSmart.DAXon.Regex
             private readonly Stack<IIntIterator> iterators;
             private readonly REMatcher matcher;
             private readonly int position;
-            private readonly REMatcher.State savedState;
+            private readonly int[] savedState;
             private bool primed = false;
             private int nextPos;
             // Phase5: closure-captured locals from IterateMatches
-            public AnonymousIntIterator(OpSequence parent, Stack<IIntIterator> iterators, REMatcher matcher, int position, REMatcher.State savedState)
+            public AnonymousIntIterator(OpSequence parent, Stack<IIntIterator> iterators, REMatcher matcher, int position, int[] savedState)
             {
                 this.parent = parent;
                 this.iterators = iterators;

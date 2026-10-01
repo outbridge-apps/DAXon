@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Collections
     /// <summary>
     /// An Func<int, bool> that matches a single specific integer
     /// </summary>
-    internal class IntValuePredicate : IIntPredicateProxy
+    internal sealed class IntValuePredicate : IIntPredicateProxy
     {
         private readonly int target;
         public IntValuePredicate(int target)
@@ -25,17 +25,17 @@ namespace OutSmart.DAXon.Collections
             this.target = target;
         }
 
-        public virtual bool Test(int value)
+        public bool Test(int value)
         {
             return value == target;
         }
 
-        public virtual int GetTarget()
+        public int GetTarget()
         {
             return target;
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public virtual IIntPredicateProxy Union(IIntPredicateProxy other) => IntUnionPredicate.MakeUnion(this, other);
+        public IIntPredicateProxy Union(IIntPredicateProxy other) => IntUnionPredicate.MakeUnion(this, other);
     }
 }
