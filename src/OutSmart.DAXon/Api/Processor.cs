@@ -37,6 +37,9 @@ namespace OutSmart.DAXon.Api
         // ~450 MB; the cap keeps a single oversized document from exhausting the host.
         public const long DefaultMaxInputBytes = 150L * 1024 * 1024;
 
+        private const string ObsoleteLimits = "Use Processor(ProcessorOptions): TransformTimeout, and Resources.MaxInputBytes for the input cap.";
+        private const string ObsoleteEdition = "licensedEdition has no effect (DAXon has one edition): use new Processor(), or Processor(ProcessorOptions) for limits.";
+
         /// <summary>
         /// Wall-clock limit for ONE engine call; exceeded calls abort with SXTO0001.
         /// TimeSpan.Zero (or negative) means no limit.
@@ -116,14 +119,16 @@ namespace OutSmart.DAXon.Api
         // a zero-parameter one and do not fill defaults in. This is that constructor; C# overload
         // resolution prefers it for `new Processor()` because it substitutes no defaults.
         public Processor()
-            : this(null, DefaultMaxInputBytes)
+            : this(LegacyOptions(null, DefaultMaxInputBytes), Configuration.NewLicensedConfiguration())
         {
         }
 
+        /// <summary>Kept for compatibility; use <see cref="Processor(ProcessorOptions)"/>.</summary>
         /// <param name="transformTimeout">Wall-clock limit per transformation; null for the
         /// default (1 minute), TimeSpan.Zero (or negative) for no limit.</param>
         /// <param name="maxInputBytes">Largest input DocumentCache accepts; long.MaxValue
         /// effectively disables the check.</param>
+        [Obsolete(ObsoleteLimits)]
         public Processor(TimeSpan? transformTimeout = null, long maxInputBytes = DefaultMaxInputBytes)
             : this(LegacyOptions(transformTimeout, maxInputBytes), Configuration.NewLicensedConfiguration())
         {
@@ -135,6 +140,11 @@ namespace OutSmart.DAXon.Api
         {
         }
 
+        /// <summary>
+        /// The s9api form, kept for compatibility. This port has one edition, so both values of
+        /// <paramref name="licensedEdition"/> give the same configuration.
+        /// </summary>
+        [Obsolete(ObsoleteEdition)]
         public Processor(bool licensedEdition, TimeSpan? transformTimeout = null, long maxInputBytes = DefaultMaxInputBytes)
             : this(LegacyOptions(transformTimeout, maxInputBytes), licensedEdition ? Configuration.NewConfiguration() : new Configuration())
         {

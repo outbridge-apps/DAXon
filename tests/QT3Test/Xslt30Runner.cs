@@ -47,7 +47,7 @@ namespace OutSmart.DAXon.ConformanceTests
             _xTsUri = new Uri(Path.GetFullPath(tsPath)).AbsoluteUri;
 
             // conformance measures correctness, not wall-clock; no transformation time limit
-            _proc = new S.Processor(false, transformTimeout: TimeSpan.Zero);
+            _proc = new S.Processor(new S.ProcessorOptions { TransformTimeout = TimeSpan.Zero });
             _dummy = DummyDoc(_proc);
 
             var envs = setEl.Elements(X + "environment").Where(e => e.Attribute("name") != null)

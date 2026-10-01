@@ -356,7 +356,7 @@ namespace OutSmart.DAXon.ConformanceTests
 
         static int RealMain(string[] args)
         {
-            _proc = new S.Processor(false, transformTimeout: TimeSpan.Zero);  // conformance measures correctness, not wall-clock
+            _proc = new S.Processor(new S.ProcessorOptions { TransformTimeout = TimeSpan.Zero });  // conformance measures correctness, not wall-clock
             _proc.UnderlyingConfiguration.SetResourceResolver(new QtResourceResolver());
             _proc.UnderlyingConfiguration.UnparsedTextURIResolver=new QtTextResolver(_proc.UnderlyingConfiguration.UnparsedTextURIResolver);
             InstallFotsEnv(_proc);
@@ -790,7 +790,7 @@ namespace OutSmart.DAXon.ConformanceTests
             // Fresh Processor per test-set: shares the (cheap) parse across the set's cases, but resets the
             // Configuration's document pool / caches between sets so a 32k-case run doesn't accumulate memory
             // and slow to a crawl (what made the first "optimized" full run degrade over ~40 min).
-            _proc = new S.Processor(false, transformTimeout: TimeSpan.Zero);  // conformance measures correctness, not wall-clock
+            _proc = new S.Processor(new S.ProcessorOptions { TransformTimeout = TimeSpan.Zero });  // conformance measures correctness, not wall-clock
             _proc.UnderlyingConfiguration.SetResourceResolver(new QtResourceResolver());
             _proc.UnderlyingConfiguration.UnparsedTextURIResolver=new QtTextResolver(_proc.UnderlyingConfiguration.UnparsedTextURIResolver);
             InstallFotsEnv(_proc);
