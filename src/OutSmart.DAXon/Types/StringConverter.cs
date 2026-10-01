@@ -810,7 +810,12 @@ namespace OutSmart.DAXon.Types
 
                 try
                 {
-                    string[] parts = NameChecker.GetQNameParts(Whitespace.Trim(input.ToString()));
+                    string[] parts = NameChecker.TryGetQNameParts(Whitespace.Trim(input.ToString()));
+                    if (parts == null)
+                    {
+                        return new ValidationFailure("Invalid lexical QName " + Err.Wrap(input));
+                    }
+
                     NamespaceUri uri = nsResolver.GetURIForPrefix(parts[0], true);
                     if (uri == null)
                     {
@@ -820,10 +825,6 @@ namespace OutSmart.DAXon.Types
                     }
 
                     return new QNameValue(parts[0], uri, parts[1], BuiltInAtomicType.QNAME, false);
-                }
-                catch (QNameException err)
-                {
-                    return new ValidationFailure("Invalid lexical QName " + Err.Wrap(input));
                 }
                 catch (XPathException err)
                 {
@@ -865,7 +866,12 @@ namespace OutSmart.DAXon.Types
 
                 try
                 {
-                    string[] parts = NameChecker.GetQNameParts(Whitespace.Trim(input.ToString()));
+                    string[] parts = NameChecker.TryGetQNameParts(Whitespace.Trim(input.ToString()));
+                    if (parts == null)
+                    {
+                        return new ValidationFailure("Invalid lexical QName " + Err.Wrap(input));
+                    }
+
                     NamespaceUri uri = GetNamespaceResolver().GetURIForPrefix(parts[0], true);
                     if (uri == null)
                     {
@@ -882,10 +888,6 @@ namespace OutSmart.DAXon.Types
                     }
 
                     return new NotationValue(parts[0], uri, parts[1], false);
-                }
-                catch (QNameException err)
-                {
-                    return new ValidationFailure("Invalid lexical QName " + Err.Wrap(input));
                 }
                 catch (XPathException err)
                 {

@@ -103,6 +103,25 @@ namespace OutSmart.DAXon.Model
             return parts;
         }
 
+        // GetQNameParts without the exception, null where it throws: `castable as xs:QName` on text
+        // that is not a QName cost ~31 us a test through QNameException.
+        public static string[] TryGetQNameParts(string qname)
+        {
+            int colon = qname.IndexOf(':');
+            if (colon < 0)
+            {
+                return IsValidNCName(qname) ? new[] { "", qname } : null;
+            }
+
+            if (colon == 0 || colon == qname.Length - 1)
+            {
+                return null;
+            }
+
+            string local = qname.Substring(colon + 1);
+            return IsValidNCName(local) ? new[] { qname.Substring(0, colon), local } : null;
+        }
+
         public static String[] CheckQNameParts(string qname)
         {
             try

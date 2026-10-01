@@ -66,14 +66,7 @@ namespace OutSmart.DAXon.Collections.Zeno
 
         public IItem ItemAt(int n)
         {
-            try
-            {
-                return chain[n];
-            }
-            catch (IndexOutOfRangeException e)
-            {
-                return null;
-            }
+            return n >= 0 && n < chain.Size() ? chain[n] : null;
         }
 
         public IItem Head()

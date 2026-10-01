@@ -280,32 +280,22 @@ namespace OutSmart.DAXon.Values
             else
             {
 
-                // for longer numbers, rely on library routines
-                try
+                // For longer numbers, the library routine once the digits are known good: a
+                // FormatException per value made `castable as xs:integer` on long text ~35 us a test.
+                if (start > 0 || last < len - 1)
                 {
-                    if (start > 0 || last < len - 1)
-                    {
-                        s = s.Substring(start, last + 1 - start) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
-                    }
+                    s = s.Substring(start, last + 1 - start);
+                }
 
-                    if (s[0] == '+')
+                for (int i = s[0] == '+' || s[0] == '-' ? 1 : 0; i < s.Length; i++)
+                {
+                    if (s[i] < '0' || s[i] > '9')
                     {
-                        s = s.Substring(1);
-                    }
-
-                    if (s.Length < 16)
-                    {
-                        return new Int64Value(long.Parse(s));
-                    }
-                    else
-                    {
-                        return new BigIntegerValue(BigIntegers.FromString(s));
+                        return new ValidationFailure("Cannot convert string " + Err.Wrap(s[0] == '+' ? s.Substring(1) : s, Err.VALUE) + " to an integer");
                     }
                 }
-                catch (FormatException err)
-                {
-                    return new ValidationFailure("Cannot convert string " + Err.Wrap(s, Err.VALUE) + " to an integer");
-                }
+
+                return new BigIntegerValue(BigIntegers.FromString(s[0] == '+' ? s.Substring(1) : s));
             }
         }
 
