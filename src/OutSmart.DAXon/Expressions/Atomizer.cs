@@ -386,17 +386,17 @@ namespace OutSmart.DAXon.Expressions
             }
             catch (TerminationException e)
             {
-                throw e;
+                throw;
             }
             catch (Error.UserDefinedXPathException e)
             {
-                throw e;
+                throw;
             }
             catch (XPathException e)
             {
                 if (roleSupplier == null)
                 {
-                    throw e;
+                    throw;
                 }
                 else
                 {
@@ -630,17 +630,17 @@ namespace OutSmart.DAXon.Expressions
                         }
                         catch (TerminationException e)
                         {
-                            throw e;
+                            throw;
                         }
                         catch (Error.UserDefinedXPathException e)
                         {
-                            throw e;
+                            throw;
                         }
                         catch (XPathException e)
                         {
                             if (expr.roleSupplier == null)
                             {
-                                throw e;
+                                throw;
                             }
                             else
                             {
@@ -674,17 +674,17 @@ namespace OutSmart.DAXon.Expressions
                     }
                     catch (TerminationException e)
                     {
-                        throw e;
+                        throw;
                     }
                     catch (Error.UserDefinedXPathException e)
                     {
-                        throw e;
+                        throw;
                     }
                     catch (XPathException e)
                     {
                         if (expr.roleSupplier == null)
                         {
-                            throw e;
+                            throw;
                         }
                         else
                         {

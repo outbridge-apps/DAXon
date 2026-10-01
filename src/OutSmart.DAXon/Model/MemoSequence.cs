@@ -396,7 +396,7 @@ namespace OutSmart.DAXon.Model
                         catch (UncheckedXPathException e)
                         {
                             container.state = State.ERROR;
-                            throw e;
+                            throw;
                         }
 
                         position = container.used;

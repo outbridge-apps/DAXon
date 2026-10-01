@@ -65,7 +65,7 @@ namespace OutSmart.DAXon.Json
                 }
 
                 err.MaybeSetErrorCode("FOUT1170");
-                throw err;
+                throw;
             }
 
             if (reader == null)

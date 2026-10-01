@@ -283,7 +283,7 @@ namespace OutSmart.DAXon.Functions
             catch (XPathException e)
             {
                 e.MaybeSetErrorCode("SENR0001");
-                throw e;
+                throw;
             }
         }
 

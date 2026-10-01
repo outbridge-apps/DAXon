@@ -118,11 +118,11 @@ namespace OutSmart.DAXon.Lib
                                 throw new XPathException("Invalid URI " + uri, (Exception)(iae.InnerException));
                             }
 
-                            throw e;
+                            throw;
                         }
                         else
                         {
-                            throw e;
+                            throw;
                         }
                     }
 

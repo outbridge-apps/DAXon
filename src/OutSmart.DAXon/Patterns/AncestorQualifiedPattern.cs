@@ -86,7 +86,7 @@ namespace OutSmart.DAXon.Patterns
                 {
                     if (basePattern.Matches(node, context))
                     {
-                        throw e;
+                        throw;
                     }
                     return false;
                 }
@@ -101,7 +101,7 @@ namespace OutSmart.DAXon.Patterns
                     testUpperPatternFirst = true;
                     if (upperPattern.Matches(node, context))
                     {
-                        throw e;
+                        throw;
                     }
                     return false;
                 }

@@ -157,7 +157,7 @@ namespace OutSmart.DAXon.Functions
                     throw new XPathException("Cannot call the key() function when the context item is an atomic value", "XTDE1270", context);
                 }
 
-                throw e;
+                throw;
             }
 
             return arg2;

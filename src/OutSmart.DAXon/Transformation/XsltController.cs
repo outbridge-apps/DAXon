@@ -428,7 +428,7 @@ namespace OutSmart.DAXon.Transformation
                     ReportFatalError(err);
                 }
 
-                throw err;
+                throw;
             }
             catch (UncheckedXPathException err)
             {
@@ -701,7 +701,7 @@ namespace OutSmart.DAXon.Transformation
                     ReportFatalError(err);
                 }
 
-                throw err;
+                throw;
             }
             catch (UncheckedXPathException err)
             {

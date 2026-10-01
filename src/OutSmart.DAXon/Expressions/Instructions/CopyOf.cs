@@ -895,7 +895,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         {
                             err.MaybeSetLocation(expr.GetLocation());
                             err.MaybeSetContext(context);
-                            throw err;
+                            throw;
                         }
 
                         IGroundedValue result = @out.Sequence;

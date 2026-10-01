@@ -321,7 +321,7 @@ namespace OutSmart.DAXon.Expressions
                         }
 
                         err.SetHasBeenReported(false);
-                        throw err;
+                        throw;
                     }
 
                     return null;
@@ -396,7 +396,7 @@ namespace OutSmart.DAXon.Expressions
                         }
 
                         err.SetHasBeenReported(false);
-                        throw err;
+                        throw;
                     }
                 };
             }
@@ -446,7 +446,7 @@ namespace OutSmart.DAXon.Expressions
                         }
 
                         err.SetHasBeenReported(false);
-                        throw err;
+                        throw;
                     }
                 };
             }

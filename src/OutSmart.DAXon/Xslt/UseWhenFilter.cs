@@ -265,7 +265,7 @@ namespace OutSmart.DAXon.Xslt
                         compilation.ReportError(e);
                     }
 
-                    throw e;
+                    throw;
                 }
             }
         }

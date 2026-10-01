@@ -277,7 +277,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     if (!failed)
                     {
 
-                        throw e;
+                        throw;
                     } // Otherwise, no further action; report the original error in preference. Bug 4227
                 }
             }
@@ -412,7 +412,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 }
                 catch (XPathException e)
                 {
-                    throw e;
+                    throw;
                 }
                 catch (Exception err)
                 {
@@ -562,7 +562,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         }
                         else
                         {
-                            throw e;
+                            throw;
                         }
                     }
                 }
@@ -706,7 +706,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             catch (XPathException err)
                             {
                                 err.MaybeSetErrorCode("SEPM0016");
-                                throw err;
+                                throw;
                             }
                         }
 

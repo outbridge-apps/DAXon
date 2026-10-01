@@ -375,7 +375,7 @@ namespace OutSmart.DAXon.Functions
             {
                 err.SetErrorCode("FODC0005");
                 err.MaybeSetContext(context);
-                throw err;
+                throw;
             }
             catch (Exception ex)
             {

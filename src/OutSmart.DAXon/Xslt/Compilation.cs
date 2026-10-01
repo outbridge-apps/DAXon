@@ -115,7 +115,7 @@ namespace OutSmart.DAXon.Xslt
                     compilerInfo.ErrorReporter.Report(new XmlProcessingException(err));
                 }
 
-                throw err;
+                throw;
             }
         }
 
@@ -134,7 +134,7 @@ namespace OutSmart.DAXon.Xslt
                     compilerInfo.ErrorReporter.Report(new XmlProcessingException(err));
                 }
 
-                throw err;
+                throw;
             }
         }
 
@@ -290,7 +290,7 @@ namespace OutSmart.DAXon.Xslt
                     GetCompilerInfo().ErrorReporter.Report(new XmlProcessingException(e));
                 }
 
-                throw e;
+                throw;
             }
 
             if (Compilation.TIMING)
@@ -329,7 +329,7 @@ namespace OutSmart.DAXon.Xslt
             catch (XPathException e)
             {
                 info.ErrorReporter.Report(new XmlProcessingException(e));
-                throw e;
+                throw;
             }
 
             if (ErrorCount == 0)

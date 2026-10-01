@@ -214,7 +214,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     // mustn't throw the error unless the branch is actually selected, unless its a type error
                     if (err.IsTypeError())
                     {
-                        throw err;
+                        throw;
                     }
                     else
                     {
@@ -467,7 +467,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     if (err.IsStaticError())
                     {
-                        throw err;
+                        throw;
                     }
 
                     ErrorExpression ee = new ErrorExpression(new XmlProcessingException(err));
@@ -549,7 +549,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     // mustn't throw the error unless the branch is actually selected, unless its a type error
                     if (err.IsTypeError() && !visitor.IsInliningFunctions())
                     {
-                        throw err;
+                        throw;
                     }
                     else
                     {

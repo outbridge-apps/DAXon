@@ -158,7 +158,7 @@ namespace OutSmart.DAXon.XQuery
                     ReportError(e);
                 }
 
-                throw e;
+                throw;
             }
         }
 

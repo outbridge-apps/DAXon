@@ -255,7 +255,7 @@ namespace OutSmart.DAXon.Patterns
             }
             catch (XPathException.Circularity e)
             {
-                throw e;
+                throw;
             }
             // No StackOverflow catch: post-round-BC a recursion overflow raises RecursionDepthError,
             // a foreign type that passes through the XPathException catch below untouched. The old

@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 failed = true;
-                throw e;
+                throw;
             }
         }
 
@@ -89,7 +89,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 failed = true;
-                throw e;
+                throw;
             }
         }
 
@@ -106,7 +106,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 failed = true;
-                throw e;
+                throw;
             }
         }
 
@@ -123,7 +123,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 failed = true;
-                throw e;
+                throw;
             }
         }
 
@@ -138,7 +138,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 failed = true;
-                throw e;
+                throw;
             }
         }
 

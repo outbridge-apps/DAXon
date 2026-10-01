@@ -53,7 +53,7 @@ namespace OutSmart.DAXon.Functions
             {
                 err.MaybeSetErrorCode("FORX0002");
                 err.MaybeSetContext(context);
-                throw err;
+                throw;
             }
 
             return re.ContainsMatch(input);

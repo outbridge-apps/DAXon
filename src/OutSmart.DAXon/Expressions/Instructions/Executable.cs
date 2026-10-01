@@ -393,7 +393,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             }
                         }
 
-                        throw e;
+                        throw;
                     }
 
                     if (contextItem == null)

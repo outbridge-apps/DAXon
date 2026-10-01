@@ -173,7 +173,7 @@ namespace OutSmart.DAXon.Patterns
             }
             catch (XPathException.Circularity e)
             {
-                throw e;
+                throw;
             }
             // No StackOverflow catch: RecursionDepthError (a foreign type since round BC) is not an
             // XPathException, so it propagates untouched; the old subtype is never thrown here.

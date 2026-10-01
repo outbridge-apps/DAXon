@@ -411,13 +411,13 @@ namespace OutSmart.DAXon.Expressions
             {
 
                 // Suggests that the current component is null, which would be a bug
-                throw e;
+                throw;
             }
             catch (IndexOutOfRangeException e)
             {
 
                 // Suggests that the current component's binding vector is the wrong size, which would be a bug.
-                throw e;
+                throw;
             }
         }
 

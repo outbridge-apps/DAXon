@@ -19,7 +19,7 @@
     <RootNamespace>OutSmart.DAXon</RootNamespace>
     <!-- CS0114 (hide-virtual-without-override) deliberately NOT suppressed: silent covariant/plain
          shadows of Java overrides were a recurring dispatch-bug family (R10 sweep closed 247). -->
-    <NoWarn>CS0108;CS0252;CS0618;CS0649;CS1591;CS8073;CS0162;CS0219;CS0168;CS0414;CS0660;CS0661;CS1717;CS0628;CS0626;CS1574;CS1573;CS0419;CS1570;CA2200</NoWarn>
+    <NoWarn>CS0108;CS0618;CS0649;CS1591;CS8073;CS0162;CS0219;CS0168;CS0414;CS0660;CS0661;CS1717;CS0628;CS0626;CS1574;CS1573;CS0419;CS1570</NoWarn>
     <!-- CA2200 (.NET analyzers): 'throw e;' at ~90 ported catch sites - a Java idiom that only costs the
          rethrown stack trace; to be converted to 'throw;' separately, not hidden under a blanket. -->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>

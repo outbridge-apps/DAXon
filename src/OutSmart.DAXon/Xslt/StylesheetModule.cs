@@ -276,7 +276,7 @@ namespace OutSmart.DAXon.Xslt
                     compilation.ReportError(err);
                 }
 
-                throw err;
+                throw;
             }
             finally
             {
@@ -376,7 +376,7 @@ namespace OutSmart.DAXon.Xslt
                     compilation.ReportError(err);
                 }
 
-                throw err;
+                throw;
             }
         }
 

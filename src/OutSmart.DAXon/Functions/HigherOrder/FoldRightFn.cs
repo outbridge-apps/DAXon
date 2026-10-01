@@ -139,7 +139,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 catch (XPathException e)
                 {
                     e.MaybeSetContext(context);
-                    throw e;
+                    throw;
                 }
             }
 

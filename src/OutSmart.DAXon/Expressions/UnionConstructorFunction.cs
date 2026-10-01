@@ -197,7 +197,7 @@ namespace OutSmart.DAXon.Expressions
                 catch (ValidationException e)
                 {
                     e.SetErrorCode("FORG0001");
-                    throw e;
+                    throw;
                 }
             }
 

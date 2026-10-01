@@ -54,7 +54,7 @@ namespace OutSmart.DAXon.Functions
             catch (XPathException err)
             {
                 err.MaybeSetErrorCode("FOUT1170");
-                throw err;
+                throw;
             }
 
             if (reader == null)

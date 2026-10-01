@@ -256,7 +256,7 @@ namespace OutSmart.DAXon.XQuery
                         e.MaybeSetLocation(this);
                         if (e.IsReportableStatically())
                         {
-                            throw e;
+                            throw;
                         }
                         else
                         {
@@ -294,7 +294,7 @@ namespace OutSmart.DAXon.XQuery
             catch (XPathException e)
             {
                 e.MaybeSetLocation(this);
-                throw e;
+                throw;
             }
         }
 

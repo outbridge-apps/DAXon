@@ -317,7 +317,7 @@ namespace OutSmart.DAXon.Text
                 }
                 catch (IndexOutOfRangeException e)
                 {
-                    throw e;
+                    throw;
                 }
             }
             else

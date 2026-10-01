@@ -161,7 +161,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     }
                 }
 
-                throw e;
+                throw;
             }
 
             AdoptChildExpression(Select);

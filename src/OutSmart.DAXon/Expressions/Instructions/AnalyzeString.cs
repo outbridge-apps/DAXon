@@ -206,7 +206,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     if (err.HasErrorCode("XTDE1150"))
                     {
-                        throw err;
+                        throw;
                     }
 
                     if (err.HasErrorCode("FORX0001"))

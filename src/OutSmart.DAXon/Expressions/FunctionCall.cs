@@ -324,7 +324,7 @@ namespace OutSmart.DAXon.Expressions
                 }
                 else
                 {
-                    throw e;
+                    throw;
                 }
             }
         }

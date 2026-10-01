@@ -579,7 +579,7 @@ namespace OutSmart.DAXon.Expressions
                 }
                 else
                 {
-                    throw err;
+                    throw;
                 }
             }
         }

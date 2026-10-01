@@ -988,7 +988,7 @@ namespace OutSmart.DAXon.Core
                 if (!e.HasBeenReported())
                 {
                     ErrorReporter.Report(new XmlProcessingException(e));
-                    throw e;
+                    throw;
                 }
             }
 

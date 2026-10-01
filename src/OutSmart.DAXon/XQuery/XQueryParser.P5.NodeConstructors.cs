@@ -359,7 +359,7 @@ namespace OutSmart.DAXon.XQuery
                             return new ErrorExpression();
                         }
 
-                        throw staticError;
+                        throw;
                     }
 
                     if ((attributeName.GetPrefix().Length == 0) && !attributeName.HasURI(NamespaceUri.NULL))

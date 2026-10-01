@@ -83,7 +83,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 state = State.FAILED;
-                throw e;
+                throw;
             }
         }
 
@@ -102,7 +102,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 state = State.FAILED;
-                throw e;
+                throw;
             }
         }
 
@@ -138,7 +138,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 state = State.FAILED;
-                throw e;
+                throw;
             }
         }
 
@@ -161,7 +161,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 state = State.FAILED;
-                throw e;
+                throw;
             }
         }
 
@@ -189,7 +189,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 state = State.FAILED;
-                throw e;
+                throw;
             }
         }
 
@@ -207,7 +207,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 state = State.FAILED;
-                throw e;
+                throw;
             }
         }
 
@@ -222,7 +222,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 state = State.FAILED;
-                throw e;
+                throw;
             }
         }
 
@@ -238,7 +238,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 state = State.FAILED;
-                throw e;
+                throw;
             }
         }
 
@@ -298,7 +298,7 @@ namespace OutSmart.DAXon.Events
             catch (XPathException e)
             {
                 state = State.FAILED;
-                throw e;
+                throw;
             }
         }
         internal enum State

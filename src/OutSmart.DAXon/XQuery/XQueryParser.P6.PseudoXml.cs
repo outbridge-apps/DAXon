@@ -243,7 +243,7 @@ namespace OutSmart.DAXon.XQuery
                             Grumble(err.Message);
                         }
 
-                        throw err;
+                        throw;
                     }
 
 
@@ -499,7 +499,7 @@ namespace OutSmart.DAXon.XQuery
                     catch (XPathException err)
                     {
                         err.SetIsStaticError(true);
-                        throw err;
+                        throw;
                     }
 
                     attInst.SetRetainedStaticContext(env.MakeRetainedStaticContext());

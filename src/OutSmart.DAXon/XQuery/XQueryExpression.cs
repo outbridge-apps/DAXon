@@ -110,7 +110,7 @@ namespace OutSmart.DAXon.XQuery
             {
 
                 mainModule.ReportStaticError(err);
-                throw err;
+                throw;
             }
 
             ExpressionTool.AllocateSlots(exp, 0, stackFrameMap);
@@ -362,7 +362,7 @@ namespace OutSmart.DAXon.XQuery
             catch (XPathException err)
             {
                 controller.ReportFatalError(err);
-                throw err;
+                throw;
             }
             finally
             {
@@ -595,7 +595,7 @@ namespace OutSmart.DAXon.XQuery
                     XmlProcessingException err = new XmlProcessingException(xe);
                     reporter.Report(err);
                     xe.SetHasBeenReported(true);
-                    throw e1;
+                    throw;
                 }
             }
 

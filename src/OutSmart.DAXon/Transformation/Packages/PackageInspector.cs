@@ -107,7 +107,7 @@ namespace OutSmart.DAXon.Transformation.Packages
                 // early exit is expected
                 if (!e.Message.Equals("#start#"))
                 {
-                    throw e;
+                    throw;
                 }
             }
 

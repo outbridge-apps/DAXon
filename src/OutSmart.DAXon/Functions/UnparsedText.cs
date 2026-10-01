@@ -58,7 +58,7 @@ namespace OutSmart.DAXon.Functions
                     throw e.ReplacingErrorCode("FOUT1200", "FOUT1190");
                 }
 
-                throw e;
+                throw;
             }
         }
 
@@ -93,7 +93,7 @@ namespace OutSmart.DAXon.Functions
                         e.SetErrorCode("FOUT1190");
                     }
 
-                    throw e;
+                    throw;
                 }
             }
         }
@@ -174,7 +174,7 @@ namespace OutSmart.DAXon.Functions
             catch (XPathException err)
             {
                 err.MaybeSetErrorCode("FOUT1170");
-                throw err;
+                throw;
             }
 
             return result;

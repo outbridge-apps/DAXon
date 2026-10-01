@@ -145,7 +145,7 @@ namespace OutSmart.DAXon.Serialization
                         }
                         else
                         {
-                            throw err;
+                            throw;
                         }
                     }
                 }

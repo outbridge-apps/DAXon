@@ -325,7 +325,7 @@ namespace OutSmart.DAXon.Functions
                         {
 
                             // internal error
-                            throw err;
+                            throw;
                         }
                         else
                         {

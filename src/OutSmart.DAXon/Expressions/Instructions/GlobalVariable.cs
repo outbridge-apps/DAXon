@@ -552,7 +552,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         e.SetIsGlobalError(true);
                     }
 
-                    throw e;
+                    throw;
                 }
             }
         }
@@ -655,11 +655,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     // Detect it more quickly the next time (in a pattern, the error is recoverable)
                     b.SetGlobalVariable(this, new FailureValue(err));
                     err.SetLocation(GetLocation());
-                    throw err;
+                    throw;
                 }
                 else
                 {
-                    throw err;
+                    throw;
                 }
             }
             catch (OutSmart.DAXon.Types.Circularity circ)
