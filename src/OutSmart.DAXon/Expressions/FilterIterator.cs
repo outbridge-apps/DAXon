@@ -12,7 +12,7 @@ using OutSmart.DAXon.Model;
 // PHASE-7-EXCLUDED-CLASS-STUBS-2-BLOCK
 namespace OutSmart.DAXon.Expressions
 {
-    using global::OutSmart.DAXon.Model;
+    using OutSmart.DAXon.Model;
     internal static class FilterIterator
     {
 
@@ -23,40 +23,40 @@ namespace OutSmart.DAXon.Expressions
         // form produced by the //x/y rewrite, so any such path expression returned empty.)
         public static bool TestPredicateValue(object iter, int pos, object ctx)
         {
-            global::OutSmart.DAXon.Model.ISequenceIterator iterator = (global::OutSmart.DAXon.Model.ISequenceIterator)iter;
+            ISequenceIterator iterator = (ISequenceIterator)iter;
             IItem first = iterator.Next();
             if (first == null)
             {
                 return false;
             }
 
-            if (first is global::OutSmart.DAXon.Model.NodeInfo)
+            if (first is NodeInfo)
             {
                 iterator.Dispose();
                 return true;
             }
 
-            if (first is global::OutSmart.DAXon.Values.BooleanValue bv)
+            if (first is OutSmart.DAXon.Values.BooleanValue bv)
             {
-                if (iterator.Next() != null) { iterator.Dispose(); global::OutSmart.DAXon.Expressions.Parsing.ExpressionTool.EbvError("a sequence of two or more items starting with a boolean value"); }
+                if (iterator.Next() != null) { iterator.Dispose(); OutSmart.DAXon.Expressions.Parsing.ExpressionTool.EbvError("a sequence of two or more items starting with a boolean value"); }
                 iterator.Dispose();
                 return bv.GetBooleanValue();
             }
 
-            if (first is global::OutSmart.DAXon.Values.StringValue sv)
+            if (first is OutSmart.DAXon.Values.StringValue sv)
             {
-                if (iterator.Next() != null) { iterator.Dispose(); global::OutSmart.DAXon.Expressions.Parsing.ExpressionTool.EbvError("a sequence of two or more items starting with a string value"); }
+                if (iterator.Next() != null) { iterator.Dispose(); OutSmart.DAXon.Expressions.Parsing.ExpressionTool.EbvError("a sequence of two or more items starting with a string value"); }
                 return !sv.IsEmpty();
             }
 
-            if (first is global::OutSmart.DAXon.Values.NumericValue nv)
+            if (first is OutSmart.DAXon.Values.NumericValue nv)
             {
-                if (iterator.Next() != null) { iterator.Dispose(); global::OutSmart.DAXon.Expressions.Parsing.ExpressionTool.EbvError("a sequence of two or more items starting with a numeric value"); }
+                if (iterator.Next() != null) { iterator.Dispose(); OutSmart.DAXon.Expressions.Parsing.ExpressionTool.EbvError("a sequence of two or more items starting with a numeric value"); }
                 return nv.CompareTo((long)pos) == 0;
             }
 
             iterator.Dispose();
-            global::OutSmart.DAXon.Expressions.Parsing.ExpressionTool.EbvError("a sequence starting with an atomic value that is not a boolean, string, or number");
+            OutSmart.DAXon.Expressions.Parsing.ExpressionTool.EbvError("a sequence starting with an atomic value that is not a boolean, string, or number");
             return false;
         }
 

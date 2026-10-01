@@ -6,7 +6,7 @@
 namespace OutSmart.DAXon.Internal.Regex
 {
     using System.Threading;
-    using global::OutSmart.DAXon.Internal.Caching;
+    using OutSmart.DAXon.Internal.Caching;
     using SysRegex = System.Text.RegularExpressions.Regex;
     using RegexOptions = System.Text.RegularExpressions.RegexOptions;
 

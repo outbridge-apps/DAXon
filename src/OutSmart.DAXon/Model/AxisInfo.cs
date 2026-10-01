@@ -82,12 +82,12 @@ namespace OutSmart.DAXon.Model
         public const int PRECEDING_OR_ANCESTOR = 13;
 
         private const int DOC = 1 << 9 /* Types.DOCUMENT */;
-        private const int ELE = 1 << 1 /* global::OutSmart.DAXon.Types.Type.ELEMENT */;
-        private const int ATT = 1 << 2 /* global::OutSmart.DAXon.Types.Type.ATTRIBUTE */;
+        private const int ELE = 1 << 1 /* OutSmart.DAXon.Types.Type.ELEMENT */;
+        private const int ATT = 1 << 2 /* OutSmart.DAXon.Types.Type.ATTRIBUTE */;
         private const int TEX = 1 << 3 /* Types.TEXT */;
         private const int PIN = 1 << 7 /* Types.PROCESSING_INSTRUCTION */;
         private const int COM = 1 << 8 /* Types.COMMENT */;
-        private const int NAM = 1 << 13 /* global::OutSmart.DAXon.Types.Type.NAMESPACE */;
+        private const int NAM = 1 << 13 /* OutSmart.DAXon.Types.Type.NAMESPACE */;
         /// <summary>
         /// Table indicating the principal node type of each axis
         /// </summary>

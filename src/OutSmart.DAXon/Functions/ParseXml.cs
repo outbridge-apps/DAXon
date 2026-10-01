@@ -92,7 +92,7 @@ namespace OutSmart.DAXon.Functions
                 s.SetPipelineConfiguration(b.GetPipelineConfiguration());
 
                 // P5: parse the literal XML string via the direct System.Xml.XmlReader path (no JAXP Source).
-                using (System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(sr, null, baseURI, null, false, false, config))
+                using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(sr, null, baseURI, null, false, false, config))
                 {
                     Sender.Send(reader, baseURI, s, options);
                 }

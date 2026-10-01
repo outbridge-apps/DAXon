@@ -66,7 +66,7 @@ namespace OutSmart.DAXon.Regex
             NodeInfo doc;
             try
             {
-                using (System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, @in, "casevariants.xml"))
+                using (System.Xml.XmlReader reader = OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, @in, "casevariants.xml"))
                 {
                     doc = config.BuildDocumentTree(reader, "casevariants.xml", options).GetRootNode();
                 }

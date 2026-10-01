@@ -18,7 +18,7 @@ using OutSmart.DAXon.Values;
 // static methods. Add a public static facade in the OutSmart.DAXon.Types namespace.
 namespace OutSmart.DAXon.Types
 {
-    using global::OutSmart.DAXon.Model;
+    using OutSmart.DAXon.Model;
     internal static class Type
     {
         public const int ITEM = 88;

@@ -12,7 +12,7 @@ using OutSmart.DAXon.Events;
 
 namespace OutSmart.DAXon.Trees.Tiny
 {
-    using global::OutSmart.DAXon.Model;
+    using OutSmart.DAXon.Model;
     // BuilderMonitor inheritance trips CS0534 (abstract MarkNextNode/GetMarkedNode). Keep bare for now.
     // Inherit BuilderMonitor (impl 2 abstract members).
     internal sealed class TinyBuilderMonitor : BuilderMonitor

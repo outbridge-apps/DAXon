@@ -18,7 +18,7 @@ using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Types
 {
-    using global::OutSmart.DAXon.Text;
+    using OutSmart.DAXon.Text;
 
     /// <summary>
     /// Converts a string to a built-in subtype of integer.

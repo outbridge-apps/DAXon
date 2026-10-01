@@ -533,7 +533,7 @@ namespace OutSmart.DAXon.Api
                 charStream = InputSizeLimit.Apply(charStream, MaxInput, systemId, "FODC0002");
                 byteStream = InputSizeLimit.Apply(byteStream, MaxInput, systemId, "FODC0002");
                 CompilerInfo ci2 = new CompilerInfo(compilerInfo);
-                using (System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(charStream, byteStream, systemId, resolver))
+                using (System.Xml.XmlReader reader = OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(charStream, byteStream, systemId, resolver))
                 {
                     PreparedStylesheet pss = Compilation.CompileSingletonPackage(config, ci2, reader, systemId);
                     return new XsltExecutable(processor, pss);

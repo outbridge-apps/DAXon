@@ -131,19 +131,19 @@ namespace OutSmart.DAXon.Trees.Tiny
 
         public ISchemaType[] TypeArray => typeArray;
 
-        //                case global::OutSmart.DAXon.Types.Type.TEXTUAL_ELEMENT: {
+        //                case OutSmart.DAXon.Types.Type.TEXTUAL_ELEMENT: {
         //                    nameCode[to] = (source.nameCode[from] & NamePool.FP_MASK) |
-        //                case global::OutSmart.DAXon.Types.Type.TEXT: {
-        //                case global::OutSmart.DAXon.Types.Type.WHITESPACE_TEXT: {
+        //                case OutSmart.DAXon.Types.Type.TEXT: {
+        //                case OutSmart.DAXon.Types.Type.WHITESPACE_TEXT: {
         //                    alpha[to] = source.alpha[from];
         //                    beta[to] = source.beta[from];
-        //                case global::OutSmart.DAXon.Types.Type.COMMENT: {
+        //                case OutSmart.DAXon.Types.Type.COMMENT: {
         //                    string text = source.commentBuffer.subSequence(start, start+len);
-        //                case global::OutSmart.DAXon.Types.Type.PROCESSING_INSTRUCTION:
+        //                case OutSmart.DAXon.Types.Type.PROCESSING_INSTRUCTION:
         //                    nameCode[to] = source.nameCode[from];
         //                    string text = source.commentBuffer.subSequence(start, start + len);
         //
-        //                case global::OutSmart.DAXon.Types.Type.PARENT_POINTER:
+        //                case OutSmart.DAXon.Types.Type.PARENT_POINTER:
         //                    alpha[to] = source.alpha[from] + (to - from);
         //                    beta[to] = -1;
         //                default:

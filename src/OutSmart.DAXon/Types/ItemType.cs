@@ -22,6 +22,6 @@ namespace OutSmart.DAXon.Types
         bool IsAtomicType();
         bool IsPlainType();
         string BasicAlphaCode { get; }
-        bool Matches(global::OutSmart.DAXon.Model.IItem item, TypeHierarchy th);
+        bool Matches(OutSmart.DAXon.Model.IItem item, TypeHierarchy th);
     }
 }

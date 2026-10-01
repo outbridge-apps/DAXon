@@ -567,7 +567,7 @@ namespace OutSmart.DAXon.Trees.Tiny
 
                 nodeNr = tt.AddNode(Types.Type.TEXT, currentDepth, bufferStart, len, -1);
 
-                //nodeNr = tt.addNode(global::OutSmart.DAXon.Types.Type.TEXT, currentDepth, tt.textChunksUsed, -1, -1);
+                //nodeNr = tt.addNode(OutSmart.DAXon.Types.Type.TEXT, currentDepth, tt.textChunksUsed, -1, -1);
                 int prev = prevAtDepth[currentDepth];
                 if (prev > 0)
                 {
