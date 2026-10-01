@@ -148,11 +148,7 @@ namespace OutSmart.DAXon.Functions
             }
             catch (XPathException e)
             {
-                if (e.HasErrorCode("XPDY0002") && argument2 is RootExpression)
-                {
-                    throw new XPathException("Cannot call the key() function when there is no context node", "XTDE1270", context);
-                }
-                else if (e.HasErrorCode("XPDY0050"))
+                if (e.HasErrorCode("XPDY0050"))
                 {
                     throw new XPathException("In the key() function," + " the node supplied in the third argument (or the context node if absent)" + " must be in a tree whose root is a document node", "XTDE1270", context);
                 }

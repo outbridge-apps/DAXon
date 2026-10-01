@@ -489,7 +489,7 @@ namespace OutSmart.DAXon.Events
                     return;
                 }
 
-                if (OutSmart.DAXon.Internal.ResourceGate.CheckRead(pipe.GetConfiguration(), abs.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity) != null)
+                if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(pipe.GetConfiguration()) && OutSmart.DAXon.Internal.ResourceGate.CheckRead(pipe.GetConfiguration(), abs.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity) != null)
                 {
                     return;
                 }
@@ -756,11 +756,11 @@ namespace OutSmart.DAXon.Events
 
             // principal: the document itself when the parser opens it by system id. It was asked
             // for by the host or already passed the gate as a document; only what it references is
-            // an external entity.
+            // an external entity. Resolved only under a restricted policy, the only one that asks.
             public FileOnlyXmlResolver(Configuration config, string principalSystemId)
             {
                 this.config = config;
-                if (config != null && !string.IsNullOrEmpty(principalSystemId))
+                if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config) && !string.IsNullOrEmpty(principalSystemId))
                 {
                     try
                     {
@@ -777,7 +777,7 @@ namespace OutSmart.DAXon.Events
             {
                 if (absoluteUri != null && absoluteUri.IsFile)
                 {
-                    if (config != null && !absoluteUri.Equals(principal))
+                    if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config) && !absoluteUri.Equals(principal))
                     {
                         string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, absoluteUri.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity);
                         if (denied != null)

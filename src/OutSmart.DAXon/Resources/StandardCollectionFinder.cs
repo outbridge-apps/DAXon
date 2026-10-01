@@ -43,7 +43,9 @@ namespace OutSmart.DAXon.Resources
                 throw new XPathException("Invalid collection URI " + collectionURI + " passed to collection() function: " + e.Message, "FODC0004", context);
             }
 
-            string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(context.GetConfiguration(), resolvedURI.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.Collection);
+            string denied = OutSmart.DAXon.Internal.ResourceGate.IsRestricted(context.GetConfiguration())
+                ? OutSmart.DAXon.Internal.ResourceGate.CheckRead(context.GetConfiguration(), resolvedURI.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.Collection)
+                : null;
             if (denied != null)
             {
                 throw new XPathException(denied, "FODC0002", context);

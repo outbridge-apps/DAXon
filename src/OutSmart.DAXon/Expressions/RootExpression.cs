@@ -25,7 +25,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions
 {
-    internal class RootExpression : Expression
+    internal sealed class RootExpression : Expression
     {
         private bool contextMaybeUndefined = true;
         private bool doneWarnings = false;
@@ -86,7 +86,7 @@ namespace OutSmart.DAXon.Expressions
             return StaticProperty.ORDERED_NODESET | StaticProperty.CONTEXT_DOCUMENT_NODESET | StaticProperty.SINGLE_DOCUMENT_NODESET | StaticProperty.NO_NODES_NEWLY_CREATED;
         }
 
-        protected virtual string NoContextMessage()
+        private string NoContextMessage()
         {
             return "Leading '/' selects nothing";
         }
@@ -119,7 +119,7 @@ namespace OutSmart.DAXon.Expressions
             return "RootExpression".GetHashCode();
         }
 
-        public virtual NodeInfo GetNode(IXPathContext context)
+        public NodeInfo GetNode(IXPathContext context)
         {
             IItem current = context.GetContextItem();
             if (current == null)

@@ -60,7 +60,7 @@ namespace OutSmart.DAXon.Lib
 
             // The Processor's resource policy, before any file or network access.
             OutSmart.DAXon.Api.ResourceKind kind = ResourceGate.KindOfNature(request.nature);
-            string denied = ResourceGate.CheckRead(config, AbsoluteTarget(request), kind);
+            string denied = ResourceGate.IsRestricted(config) ? ResourceGate.CheckRead(config, AbsoluteTarget(request), kind) : null;
             if (denied != null)
             {
                 throw ResourceGate.Denied(denied, kind);
