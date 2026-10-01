@@ -224,6 +224,7 @@ namespace OutSmart.DAXon.Lib
             {
                 WebRequest request = base.GetWebRequest(address);
                 NetworkDeadline.Apply(request);
+                HttpRequestDefaults.Apply(request, null);
                 return request;
             }
         }

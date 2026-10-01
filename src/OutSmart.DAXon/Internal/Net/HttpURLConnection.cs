@@ -8,8 +8,8 @@ using System;
 namespace OutSmart.DAXon.Internal.Net
 {
 
-    // HTTP flavor for ResourceLoader's redirect/gzip loop. .NET WebRequest auto-follows redirects,
-    // so the first response is already the terminal one and the loop's redirect arm never re-enters.
+    // HTTP flavor for ResourceLoader's redirect loop. The platform follows redirects itself unless
+    // the resource-policy path turns that off; request headers come from HttpRequestDefaults.
     internal class HttpURLConnection : URLConnection
     {
         public const int HTTP_MOVED_PERM = 301;
@@ -17,11 +17,9 @@ namespace OutSmart.DAXon.Internal.Net
         public const int HTTP_SEE_OTHER = 303;
         public const int HTTP_TEMP_REDIRECT = 307;
         public const int HTTP_PERM_REDIRECT = 308;
-        private readonly global::System.Collections.Generic.Dictionary<string, string> _headers = new global::System.Collections.Generic.Dictionary<string, string>();
         public virtual int ResponseCode { get { var r = Response() as global::System.Net.HttpWebResponse; return r == null ? 200 : (int)r.StatusCode; } }
         public HttpURLConnection(global::System.Uri url) : base(url) { }
         public virtual void SetInstanceFollowRedirects(bool follow) { followRedirects = follow; }
-        public virtual void SetRequestProperty(string key, string value) { _headers[key] = value; }
         public virtual string GetHeaderField(string name) { try { return Response()?.Headers?[name]; } catch { return null; } }
     }
 }

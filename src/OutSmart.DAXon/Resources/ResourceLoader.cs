@@ -19,7 +19,6 @@ using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Streams;
 using System.IO;
-using System.IO.Compression;
 namespace OutSmart.DAXon.Resources
 {
     internal class ResourceLoader
@@ -39,18 +38,13 @@ namespace OutSmart.DAXon.Resources
             {
                 bool manual = ResourceGate.IsRestricted(config);
                 var visited = new HashSet<string>();
-                string cookies = null;
+                var cookies = new System.Net.CookieContainer();   // one fetch, all of its hops
                 int count = MAX_REDIRECTS;
                 for (; ; )
                 {
                     HttpURLConnection conn = new HttpURLConnection(url);
                     conn.SetInstanceFollowRedirects(!manual);
-                    conn.SetRequestProperty("Accept-Encoding", "gzip");
-                    if (cookies != null)
-                    {
-                        conn.SetRequestProperty("Cookie", cookies);
-                    }
-
+                    conn.Cookies = cookies;
                     int status = conn.ResponseCode;
                     bool redirect = manual
                         ? IsManualRedirect(status)
@@ -69,7 +63,6 @@ namespace OutSmart.DAXon.Resources
                         // header name had been mangled to "ILocation" by the ILocation-type rename
                         // sweep - a silent artifact precisely because the loop was dormant.
                         Uri previous = url;
-                        cookies = conn.GetHeaderField("Set-Cookie");
 
                         // Every header read above needs the response, so release it only now - but
                         // release it on EVERY exit from this hop, including the throws below.
@@ -169,15 +162,8 @@ namespace OutSmart.DAXon.Resources
             }
             else
             {
-                URLConnection conn = ResourceLoader.UrlConnection(new Uri(url), config, kind);
-                System.IO.Stream inputStream = conn.InputStream;
-                string contentEncoding = conn.ContentEncoding;
-                if ("gzip".Equals(contentEncoding))
-                {
-                    inputStream = new GZipStream(inputStream, CompressionMode.Decompress);
-                }
-
-                return inputStream;
+                // a gzip body is decoded by the platform (HttpRequestDefaults)
+                return ResourceLoader.UrlConnection(new Uri(url), config, kind).InputStream;
             }
         }
 
@@ -191,11 +177,6 @@ namespace OutSmart.DAXon.Resources
             {
                 URLConnection conn = ResourceLoader.UrlConnection(new Uri(url), config, OutSmart.DAXon.Api.ResourceKind.Text);
                 System.IO.Stream inputStream = conn.InputStream;
-                if ("gzip".Equals(conn.ContentEncoding))
-                {
-                    inputStream = new GZipStream(inputStream, CompressionMode.Decompress);
-                }
-
                 if (true)
                 {
                     inputStream = new BufferedStream(inputStream);

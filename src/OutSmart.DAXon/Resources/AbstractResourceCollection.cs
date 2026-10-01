@@ -154,8 +154,8 @@ namespace OutSmart.DAXon.Resources
                     URLConnection connection = ResourceLoader.UrlConnection(uri.Inner, config, OutSmart.DAXon.Api.ResourceKind.Collection);
                     try
                     {
+                        // the charset comes from Content-Type below; Content-Encoding is a transfer coding
                         inputDetails.contentType = connection.ContentType;
-                        inputDetails.encoding = connection.ContentEncoding;
                     }
                     finally
                     {

@@ -15,6 +15,8 @@ namespace OutSmart.DAXon.Internal.Net
         protected global::System.Net.WebResponse _resp;
         // false only on the resource-policy path, which follows redirects itself (ResourceLoader)
         protected bool followRedirects = true;
+        // shared by the hops of one fetch when ResourceLoader follows the redirects itself
+        internal global::System.Net.CookieContainer Cookies { get; set; }
         private bool IsFile => _url != null && _url.IsAbsoluteUri && _url.Scheme == global::System.Uri.UriSchemeFile;
         // Translate native I/O failures to the OutSmart.DAXon.Internal.IO family — transpiled callers
         // catch IOException per the Java contract (DirectResourceResolver "carry on", UnparsedTextFunction
@@ -44,7 +46,6 @@ namespace OutSmart.DAXon.Internal.Net
             }
         }
         public virtual string ContentType { get { try { return _url == null || IsFile ? null : Response().ContentType; } catch { return null; } } }
-        public virtual string ContentEncoding { get { try { if (IsFile) return null; return (Response() as global::System.Net.HttpWebResponse)?.ContentEncoding; } catch { return null; } } }
         public URLConnection(global::System.Uri url) { _url = url; }
         protected global::System.Net.WebResponse Response()
         {
@@ -54,6 +55,7 @@ namespace OutSmart.DAXon.Internal.Net
                 {
                     global::System.Net.WebRequest req = global::System.Net.WebRequest.Create(_url);
                     NetworkDeadline.Apply(req);   // a stalled connect must not outlive the run
+                    HttpRequestDefaults.Apply(req, Cookies);
                     if (!followRedirects && req is global::System.Net.HttpWebRequest http)
                     {
                         http.AllowAutoRedirect = false;
