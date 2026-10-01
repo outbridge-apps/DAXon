@@ -92,7 +92,7 @@ namespace OutSmart.DAXon.Functions
                 s.SetPipelineConfiguration(b.GetPipelineConfiguration());
 
                 // P5: parse the literal XML string via the direct System.Xml.XmlReader path (no JAXP Source).
-                using (global::System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(sr, null, baseURI, null, false, false, config))
+                using (System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(sr, null, baseURI, null, false, false, config))
                 {
                     Sender.Send(reader, baseURI, s, options);
                 }
@@ -109,7 +109,7 @@ namespace OutSmart.DAXon.Functions
                 xe.MaybeSetContext(context);
                 throw xe;
             }
-            catch (global::System.Xml.XmlException xmlErr)
+            catch (System.Xml.XmlException xmlErr)
             {
                 // The direct XmlReader path reports malformed input as XmlException. Map to FODC0006.
                 XPathException xe = new XPathException("Failure parsing XML: " + xmlErr.Message, "FODC0006");

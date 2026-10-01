@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Serialization
             {
                 if (systemId == null && publicId == null)
                 {
-                    if (name.GetLocalPart().Equals("html", global::System.StringComparison.OrdinalIgnoreCase))
+                    if (name.GetLocalPart().Equals("html", StringComparison.OrdinalIgnoreCase))
                     {
                         writer.WriteAscii(DOCTYPE);
                         if ("yes".Equals(outputProperties.GetProperty("indent", "yes")))

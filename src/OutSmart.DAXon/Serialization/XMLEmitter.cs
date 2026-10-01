@@ -181,12 +181,12 @@ namespace OutSmart.DAXon.Serialization
                 indenting = "yes".Equals(outputProperties.GetProperty(DAXonOutputKeys.INDENT));
                 string byteOrderMark = outputProperties.GetProperty(DAXonOutputKeys.BYTE_ORDER_MARK);
                 string encoding = outputProperties.GetProperty(DAXonOutputKeys.ENCODING);
-                if (encoding == null || encoding.Equals("utf8", global::System.StringComparison.OrdinalIgnoreCase) || canonical)
+                if (encoding == null || encoding.Equals("utf8", StringComparison.OrdinalIgnoreCase) || canonical)
                 {
                     encoding = "UTF-8";
                 }
 
-                if ("yes".Equals(byteOrderMark) && !canonical && ("UTF-8".Equals(encoding, global::System.StringComparison.OrdinalIgnoreCase) || "UTF-16LE".Equals(encoding, global::System.StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(encoding, global::System.StringComparison.OrdinalIgnoreCase)))
+                if ("yes".Equals(byteOrderMark) && !canonical && ("UTF-8".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16LE".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(encoding, StringComparison.OrdinalIgnoreCase)))
                 {
                     writer.WriteCodePoint(0xFEFF);
                 }

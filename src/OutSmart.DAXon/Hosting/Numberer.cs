@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Lib
     public interface INumberer
     {
         string Country { get; set; }
-        global::System.Globalization.CultureInfo DefaultedLocale();
+        System.Globalization.CultureInfo DefaultedLocale();
         string Format(long number, UnicodeString picture, int groupSize, string groupSeparator, string letterValue, string cardinal, string ordinal);
         string Format(long number, UnicodeString picture, NumericGroupFormatter numGrpFormatter, string letterValue, string cardinal, string ordinal);
         string MonthName(int month, int minWidth, int maxWidth);

@@ -241,7 +241,7 @@ namespace OutSmart.DAXon.Functions
 
                         throw err.MaybeWithLocation(locator).MaybeWithContext(c);
                     }
-                    catch (global::System.Xml.XmlException xe)
+                    catch (System.Xml.XmlException xe)
                     {
                         // .NET's XmlReader throws a raw XmlException on a malformed source document; upstream's
                         // SAX parser surfaced this as a wrapped error that fn:doc reports as FODC0002. Map it the

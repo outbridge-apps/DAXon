@@ -15,7 +15,7 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Text
 {
-    public interface IUniStringConsumer : global::System.IDisposable
+    public interface IUniStringConsumer : IDisposable
     {
         void Open();
         IUniStringConsumer Accept(UnicodeString chars);

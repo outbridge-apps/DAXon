@@ -86,8 +86,8 @@ namespace OutSmart.DAXon.Expressions
             converterMap[typeof(byte)] = FromByte.INSTANCE;
             converterMap[typeof(char)] = FromCharacter.INSTANCE;
             converterMap[typeof(URI)] = FromURI.INSTANCE;
-            converterMap[typeof(global::System.Uri)] = FromURI.INSTANCE;
-            converterMap[typeof(global::System.DateTime)] = FromDate.INSTANCE;
+            converterMap[typeof(Uri)] = FromURI.INSTANCE;
+            converterMap[typeof(DateTime)] = FromDate.INSTANCE;
             converterMap[typeof(long[])] = FromLongArray.INSTANCE;
             converterMap[typeof(int[])] = FromIntArray.INSTANCE;
             converterMap[typeof(short[])] = FromShortArray.INSTANCE;
@@ -554,13 +554,13 @@ namespace OutSmart.DAXon.Expressions
             public override IGroundedValue Convert(object @object, IXPathContext context)
             {
                 // Unspecified kind is treated as UTC (the shim-Date predecessor was epoch-based UTC).
-                global::System.DateTime dt = (global::System.DateTime)@object;
-                if (dt.Kind == global::System.DateTimeKind.Unspecified)
+                DateTime dt = (DateTime)@object;
+                if (dt.Kind == DateTimeKind.Unspecified)
                 {
-                    dt = global::System.DateTime.SpecifyKind(dt, global::System.DateTimeKind.Utc);
+                    dt = DateTime.SpecifyKind(dt, DateTimeKind.Utc);
                 }
 
-                return DateTimeValue.FromJavaTime(new global::System.DateTimeOffset(dt).ToUnixTimeMilliseconds());
+                return DateTimeValue.FromJavaTime(new DateTimeOffset(dt).ToUnixTimeMilliseconds());
             }
 
             public override Types.ItemType GetItemType()

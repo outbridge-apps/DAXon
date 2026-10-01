@@ -120,7 +120,7 @@ namespace OutSmart.DAXon.Xslt
         }
 
         // Source-free compile (P5): compile a stylesheet from a System.Xml.XmlReader with an explicit system id.
-        public static PreparedStylesheet CompileSingletonPackage(Configuration config, CompilerInfo compilerInfo, global::System.Xml.XmlReader reader, string systemId)
+        public static PreparedStylesheet CompileSingletonPackage(Configuration config, CompilerInfo compilerInfo, System.Xml.XmlReader reader, string systemId)
         {
             try
             {

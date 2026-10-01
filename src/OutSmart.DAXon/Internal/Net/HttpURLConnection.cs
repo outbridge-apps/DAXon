@@ -17,8 +17,8 @@ namespace OutSmart.DAXon.Internal.Net
         public const int HTTP_SEE_OTHER = 303;
         public const int HTTP_TEMP_REDIRECT = 307;
         public const int HTTP_PERM_REDIRECT = 308;
-        public int ResponseCode { get { var r = Response() as global::System.Net.HttpWebResponse; return r == null ? 200 : (int)r.StatusCode; } }
-        public HttpURLConnection(global::System.Uri url) : base(url) { }
+        public int ResponseCode { get { var r = Response() as System.Net.HttpWebResponse; return r == null ? 200 : (int)r.StatusCode; } }
+        public HttpURLConnection(Uri url) : base(url) { }
         public void SetInstanceFollowRedirects(bool follow) { followRedirects = follow; }
         public string GetHeaderField(string name) { try { return Response()?.Headers?[name]; } catch { return null; } }
     }

@@ -57,14 +57,14 @@ namespace OutSmart.DAXon.Internal
         public static SysBigInteger FromString(string s, int radix)
         {
             if (s == null)
-                throw new global::System.FormatException("null");
+                throw new System.FormatException("null");
             if (radix < 2 || radix > 36)
-                throw new global::System.FormatException("Radix out of range: " + radix);
+                throw new System.FormatException("Radix out of range: " + radix);
             int i = 0;
             bool negative = false;
             if (s.Length > 0 && (s[0] == '+' || s[0] == '-')) { negative = s[0] == '-'; i = 1; }
             if (i >= s.Length)
-                throw new global::System.FormatException("Zero length BigInteger");
+                throw new System.FormatException("Zero length BigInteger");
             SysBigInteger v = SysBigInteger.Zero;
             SysBigInteger r = new SysBigInteger(radix);
             for (; i < s.Length; i++)
@@ -78,7 +78,7 @@ namespace OutSmart.DAXon.Internal
                 else
                     d = -1;
                 if (d < 0 || d >= radix)
-                    throw new global::System.FormatException("For input string: \"" + s + "\"");
+                    throw new System.FormatException("For input string: \"" + s + "\"");
                 v = v * r + d;
             }
             return negative ? -v : v;
@@ -93,7 +93,7 @@ namespace OutSmart.DAXon.Internal
         public static SysBigInteger FromSignumMagnitude(int signum, byte[] magnitude)
         {
             if (signum < -1 || signum > 1)
-                throw new global::System.FormatException("Invalid signum value");
+                throw new System.FormatException("Invalid signum value");
             SysBigInteger v = SysBigInteger.Zero;
             if (magnitude != null)
                 for (int i = 0; i < magnitude.Length; i++)
@@ -101,7 +101,7 @@ namespace OutSmart.DAXon.Internal
             if (v.IsZero)
                 return SysBigInteger.Zero;
             if (signum == 0)
-                throw new global::System.FormatException("signum-magnitude mismatch");
+                throw new System.FormatException("signum-magnitude mismatch");
             return signum < 0 ? -v : v;
         }
 
@@ -112,7 +112,7 @@ namespace OutSmart.DAXon.Internal
         public static SysBigInteger Mod(this SysBigInteger v, SysBigInteger m)
         {
             if (m.Sign <= 0)
-                throw new global::System.ArithmeticException("BigInteger: modulus not positive");
+                throw new System.ArithmeticException("BigInteger: modulus not positive");
             SysBigInteger r = v % m;
             return r.Sign < 0 ? r + m : r;
         }
@@ -122,7 +122,7 @@ namespace OutSmart.DAXon.Internal
         public static bool TestBit(this SysBigInteger v, int n)
         {
             if (n < 0)
-                throw new global::System.ArithmeticException("Negative bit address");
+                throw new System.ArithmeticException("Negative bit address");
             return !((v >> n) & SysBigInteger.One).IsZero;
         }
 
@@ -165,14 +165,14 @@ namespace OutSmart.DAXon.Internal
         public static int IntValueExact(this SysBigInteger v)
         {
             if (v < int.MinValue || v > int.MaxValue)
-                throw new global::System.ArithmeticException("BigInteger out of int range");
+                throw new System.ArithmeticException("BigInteger out of int range");
             return (int)v;
         }
 
         public static long LongValueExact(this SysBigInteger v)
         {
             if (v < long.MinValue || v > long.MaxValue)
-                throw new global::System.ArithmeticException("BigInteger out of long range");
+                throw new System.ArithmeticException("BigInteger out of long range");
             return (long)v;
         }
         public static double DoubleValue(this SysBigInteger v)
@@ -185,11 +185,11 @@ namespace OutSmart.DAXon.Internal
             try
             {
                 return double.Parse(
-                    v.ToString(global::System.Globalization.CultureInfo.InvariantCulture),
-                    global::System.Globalization.NumberStyles.Integer,
-                    global::System.Globalization.CultureInfo.InvariantCulture);
+                    v.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    System.Globalization.NumberStyles.Integer,
+                    System.Globalization.CultureInfo.InvariantCulture);
             }
-            catch (global::System.OverflowException)
+            catch (System.OverflowException)
             {
                 return v.Sign < 0 ? double.NegativeInfinity : double.PositiveInfinity;
             }
@@ -213,7 +213,7 @@ namespace OutSmart.DAXon.Internal
             bool negative = v.Sign < 0;
             SysBigInteger m = negative ? -v : v;
             SysBigInteger r = new SysBigInteger(radix);
-            var sb = new global::System.Text.StringBuilder();
+            var sb = new System.Text.StringBuilder();
             while (!m.IsZero)
             {
                 SysBigInteger rem;

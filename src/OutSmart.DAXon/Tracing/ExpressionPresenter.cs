@@ -284,7 +284,7 @@ namespace OutSmart.DAXon.Tracing
         public static string GetNamespacesAsString(NamespaceMap sc, bool includeXmlNamespace)
         {
 
-            // Note that this will throw an global::System.NotSupportedException if the context does
+            // Note that this will throw an NotSupportedException if the context does
             // not allow namespace prefixes to be enumerated: that @is, if it is a JAXP static context.
             // Fortunately we don't need to serialize XPath expressions in that scenario.
             UnicodeBuilder ub = new UnicodeBuilder();

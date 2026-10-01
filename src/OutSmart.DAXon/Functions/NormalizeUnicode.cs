@@ -37,19 +37,19 @@ namespace OutSmart.DAXon.Functions
         public static string Normalize(string sv, string form)
         {
             NormalizationForm fb;
-            if (form.Equals("NFC", global::System.StringComparison.OrdinalIgnoreCase))
+            if (form.Equals("NFC", StringComparison.OrdinalIgnoreCase))
             {
                 fb = NormalizationForm.FormC;
             }
-            else if (form.Equals("NFD", global::System.StringComparison.OrdinalIgnoreCase))
+            else if (form.Equals("NFD", StringComparison.OrdinalIgnoreCase))
             {
                 fb = NormalizationForm.FormD;
             }
-            else if (form.Equals("NFKC", global::System.StringComparison.OrdinalIgnoreCase))
+            else if (form.Equals("NFKC", StringComparison.OrdinalIgnoreCase))
             {
                 fb = NormalizationForm.FormKC;
             }
-            else if (form.Equals("NFKD", global::System.StringComparison.OrdinalIgnoreCase))
+            else if (form.Equals("NFKD", StringComparison.OrdinalIgnoreCase))
             {
                 fb = NormalizationForm.FormKD;
             }

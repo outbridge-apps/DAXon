@@ -203,7 +203,7 @@ namespace OutSmart.DAXon.Values
 
         public override string ToString()
         {
-            return GetStringValue(); //throw new global::System.NotSupportedException();
+            return GetStringValue(); //throw new NotSupportedException();
             //return typeLabel + "(\"" + getStringValueCS() + "\")";
         }
 

@@ -97,17 +97,17 @@ namespace OutSmart.DAXon.Values
 
         // .NET-idiomatic instant conversions -- replacement for the dissolved java.util.Calendar
         // interop surface (GetCalendar()). No-timezone values are treated as UTC.
-        public global::System.DateTime ToSystemDateTimeUtc()
+        public DateTime ToSystemDateTimeUtc()
         {
             DateTimeValue dt = ToDateTime();
             long millis = (long)(dt.SecondsSinceEpoch().DoubleValue() * 1000);
-            return new global::System.DateTime(1970, 1, 1, 0, 0, 0, global::System.DateTimeKind.Utc).AddMilliseconds(millis);
+            return new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(millis);
         }
 
-        public global::System.DateTimeOffset ToSystemDateTimeOffset()
+        public DateTimeOffset ToSystemDateTimeOffset()
         {
             int tzMin = HasTimezone() ? TimezoneInMinutes : 0;
-            return new global::System.DateTimeOffset(ToSystemDateTimeUtc()).ToOffset(global::System.TimeSpan.FromMinutes(tzMin));
+            return new DateTimeOffset(ToSystemDateTimeUtc()).ToOffset(TimeSpan.FromMinutes(tzMin));
         }
 
         public abstract CalendarValue Add(DurationValue duration);

@@ -55,7 +55,7 @@ namespace OutSmart.DAXon.Transformation
         //         case "ascent":
         //             return ASCENT;
         //         default:
-        //             throw new global::System.ArgumentException();
+        //             throw new ArgumentException();
         // --------------------
     }
 }

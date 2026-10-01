@@ -209,17 +209,17 @@ namespace OutSmart.DAXon.Values
         {
             try
             {
-                var t = global::System.Type.GetType(fullTypeName + ", OutSmart.DAXon");
+                var t = Type.GetType(fullTypeName + ", OutSmart.DAXon");
                 if (t == null)
                 {
-                    foreach (var asm in global::System.AppDomain.CurrentDomain.GetAssemblies())
+                    foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
                     {
                         t = asm.GetType(fullTypeName);
                         if (t != null)
                             break;
                     }
                 }
-                return t == null ? null : t.GetMethod("GetInstance", global::System.Type.EmptyTypes)?.Invoke(null, null);
+                return t == null ? null : t.GetMethod("GetInstance", Type.EmptyTypes)?.Invoke(null, null);
             }
             catch { return null; }
         }
@@ -230,17 +230,17 @@ namespace OutSmart.DAXon.Values
         {
             try
             {
-                var t = global::System.Type.GetType(fullTypeName + ", OutSmart.DAXon");
+                var t = Type.GetType(fullTypeName + ", OutSmart.DAXon");
                 if (t == null)
                 {
-                    foreach (var asm in global::System.AppDomain.CurrentDomain.GetAssemblies())
+                    foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
                     {
                         t = asm.GetType(fullTypeName);
                         if (t != null)
                             break;
                     }
                 }
-                return t?.GetField(fieldName, global::System.Reflection.BindingFlags.Public | global::System.Reflection.BindingFlags.Static)?.GetValue(null);
+                return t?.GetField(fieldName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)?.GetValue(null);
             }
             catch { return null; }
         }

@@ -823,7 +823,7 @@ namespace OutSmart.DAXon.Values
                 if (NumericValue.IsInteger(((NumericValue)other)))
                 {
 
-                    // deliberately triggers a global::System.InvalidCastException if other value is the wrong type
+                    // deliberately triggers a InvalidCastException if other value is the wrong type
                     try
                     {
                         return value.CompareTo(((NumericValue)other).GetDecimalValue());

@@ -45,10 +45,10 @@ namespace OutSmart.DAXon.Internal.Collections
         };
         // null => UTC stub (default ctor, implicit-operator fallbacks, SimpleTimeZone). A resolved
         // TimeZoneInfo gives DST-aware offsets — needed by format-date/time with an Olson place.
-        private readonly global::System.TimeZoneInfo _tzi;
+        private readonly TimeZoneInfo _tzi;
 
         private TimeZone() { }
-        private TimeZone(global::System.TimeZoneInfo tzi) { _tzi = tzi; }
+        private TimeZone(TimeZoneInfo tzi) { _tzi = tzi; }
 
         // Offset in milliseconds at the given instant (millis since epoch), DST-aware. Mirrors
         // java.util.TimeZone.getOffset(long).
@@ -61,10 +61,10 @@ namespace OutSmart.DAXon.Internal.Collections
 
             try
             {
-                var when = global::System.DateTimeOffset.FromUnixTimeMilliseconds(date);
+                var when = DateTimeOffset.FromUnixTimeMilliseconds(date);
                 return (int)_tzi.GetUtcOffset(when).TotalMilliseconds;
             }
-            catch (global::System.ArgumentOutOfRangeException)
+            catch (ArgumentOutOfRangeException)
             {
                 // Instant outside DateTimeOffset's representable range (extreme XSD years): no DST
                 // data that far out, so fall back to the standard offset.
@@ -76,25 +76,25 @@ namespace OutSmart.DAXon.Internal.Collections
         // to the UTC stub, matching java.util.TimeZone.getTimeZone (which returns GMT for unrecognised ids).
         public static TimeZone GetTimeZone(string id)
         {
-            global::System.TimeZoneInfo tzi = Resolve(id);
+            TimeZoneInfo tzi = Resolve(id);
             return tzi == null ? new TimeZone() : new TimeZone(tzi);
         }
 
         // net472/Windows TimeZoneInfo speaks Windows ids, not IANA/Olson, so translate the CLDR
         // windowsZones aliases the format-date timezone tables reference; try the mapped Windows id
         // first, then the id verbatim (.NET Core accepts IANA directly). Returns null if unresolvable.
-        public static global::System.TimeZoneInfo Resolve(string id)
+        public static TimeZoneInfo Resolve(string id)
         {
             if (id == null)
                 return null;
             if (id == "UTC" || id == "GMT" || id == "Z" || id == "Etc/UTC" || id == "Etc/GMT")
-                return global::System.TimeZoneInfo.Utc;
+                return TimeZoneInfo.Utc;
             string win = IanaToWindows.TryGetValue(id, out string w) ? w : null;
             foreach (string candidate in win != null ? new[] { win, id } : new[] { id })
             {
-                try { return global::System.TimeZoneInfo.FindSystemTimeZoneById(candidate); }
-                catch (global::System.TimeZoneNotFoundException) { }
-                catch (global::System.InvalidTimeZoneException) { return null; }
+                try { return TimeZoneInfo.FindSystemTimeZoneById(candidate); }
+                catch (TimeZoneNotFoundException) { }
+                catch (InvalidTimeZoneException) { return null; }
             }
             return null;
         }

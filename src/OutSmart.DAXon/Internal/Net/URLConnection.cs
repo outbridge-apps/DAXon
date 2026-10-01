@@ -11,17 +11,17 @@ namespace OutSmart.DAXon.Internal.Net
     // Resource connection: file: opens the local file; other schemes go through WebRequest/WebResponse.
     internal class URLConnection
     {
-        protected readonly global::System.Uri _url;
-        protected global::System.Net.WebResponse _resp;
+        protected readonly Uri _url;
+        protected System.Net.WebResponse _resp;
         // false only on the resource-policy path, which follows redirects itself (ResourceLoader)
         protected bool followRedirects = true;
         // shared by the hops of one fetch when ResourceLoader follows the redirects itself
-        internal global::System.Net.CookieContainer Cookies { get; set; }
-        private bool IsFile => _url != null && _url.IsAbsoluteUri && _url.Scheme == global::System.Uri.UriSchemeFile;
+        internal System.Net.CookieContainer Cookies { get; set; }
+        private bool IsFile => _url != null && _url.IsAbsoluteUri && _url.Scheme == Uri.UriSchemeFile;
         // Translate native I/O failures to the OutSmart.DAXon.Internal.IO family — transpiled callers
         // catch IOException per the Java contract (DirectResourceResolver "carry on", UnparsedTextFunction
         // HandleIOError -> FOUT1170); a native System.IO exception flies past those catches and kills the transform.
-        public virtual global::System.IO.Stream InputStream
+        public virtual System.IO.Stream InputStream
         {
             get
             {
@@ -31,70 +31,70 @@ namespace OutSmart.DAXon.Internal.Net
                 {
                     if (IsFile)
                     {
-                        return global::System.IO.File.OpenRead(_url.LocalPath);
+                        return System.IO.File.OpenRead(_url.LocalPath);
                     }
                     // Guarded: the deadline is cooperative, so a server that trickles bytes would
                     // otherwise hold this thread long past the run's time limit (round AW).
                     return NetworkDeadline.Guard(Response().GetResponseStream());
                 }
-                catch (global::System.IO.IOException) { throw; }
+                catch (System.IO.IOException) { throw; }
                 // Native I/O failures (FileNotFoundException/DirectoryNotFoundException) ARE subtypes of
                 // System.IO.IOException, so the catch above propagates them to the resource-resolution
                 // consumers (ResourceLoader/DirectResourceResolver) which "carry on" per the Java IOException
                 // contract (unparsed-text-available false / FOUT1170). Non-IO failures wrap into IOException.
-                catch (global::System.Exception e) { throw new global::System.IO.IOException(e.Message); }
+                catch (Exception e) { throw new System.IO.IOException(e.Message); }
             }
         }
         public virtual string ContentType { get { try { return _url == null || IsFile ? null : Response().ContentType; } catch { return null; } } }
 
         // The body as the caller reads it: a gzip response decoded above the deadline guard, its
         // compressed bytes held to maxInput; the caller caps the decoded bytes.
-        internal global::System.IO.Stream DecodedStream(long maxInput, string systemId, string errorCode)
+        internal System.IO.Stream DecodedStream(long maxInput, string systemId, string errorCode)
         {
-            global::System.IO.Stream body = InputStream;
+            System.IO.Stream body = InputStream;
             string contentEncoding = null;
             if (!IsFile && body != null)
             {
                 try
                 {
-                    contentEncoding = (Response() as global::System.Net.HttpWebResponse)?.ContentEncoding;
+                    contentEncoding = (Response() as System.Net.HttpWebResponse)?.ContentEncoding;
                 }
-                catch (global::System.Exception)
+                catch (Exception)
                 {
                 }
             }
 
             return HttpContentDecoding.Decode(body, contentEncoding, maxInput, systemId, errorCode);
         }
-        public URLConnection(global::System.Uri url) { _url = url; }
-        protected global::System.Net.WebResponse Response()
+        public URLConnection(Uri url) { _url = url; }
+        protected System.Net.WebResponse Response()
         {
             if (_resp == null && _url != null)
             {
                 try
                 {
-                    global::System.Net.WebRequest req = global::System.Net.WebRequest.Create(_url);
+                    System.Net.WebRequest req = System.Net.WebRequest.Create(_url);
                     NetworkDeadline.Apply(req);   // a stalled connect must not outlive the run
                     HttpRequestDefaults.Apply(req, Cookies);
-                    if (!followRedirects && req is global::System.Net.HttpWebRequest http)
+                    if (!followRedirects && req is System.Net.HttpWebRequest http)
                     {
                         http.AllowAutoRedirect = false;
                     }
 
                     _resp = req.GetResponse();
                 }
-                catch (global::System.Net.WebException we) when (!followRedirects && IsRedirect(we.Response))
+                catch (System.Net.WebException we) when (!followRedirects && IsRedirect(we.Response))
                 {
                     // Some stacks raise a 3xx as an error once auto-redirect is off; it is the answer here.
                     _resp = we.Response;
                 }
-                catch (global::System.Net.WebException we)
+                catch (System.Net.WebException we)
                 {
                     // Java's URLConnection surfaces HTTP retrieval failures (including 4xx/5xx, which .NET raises
                     // as WebException from GetResponse) as java.io.IOException. Translate so the callers' existing
                     // IOException handlers fire — unparsed-text() -> FOUT1170, doc()/unparsed-text-available() ->
                     // not-available — instead of a raw WebException escaping as a code-less error and killing the query.
-                    throw new global::System.IO.IOException(we.Message, we);
+                    throw new System.IO.IOException(we.Message, we);
                 }
             }
 
@@ -107,16 +107,16 @@ namespace OutSmart.DAXon.Internal.Net
         // connections long before any memory curve moves.
         public virtual void Disconnect()
         {
-            global::System.Net.WebResponse r = _resp;
+            System.Net.WebResponse r = _resp;
             _resp = null;
             if (r != null)
             {
-                try { r.Close(); } catch (global::System.Exception) { }
+                try { r.Close(); } catch (Exception) { }
             }
         }
-        private static bool IsRedirect(global::System.Net.WebResponse response)
+        private static bool IsRedirect(System.Net.WebResponse response)
         {
-            int status = response is global::System.Net.HttpWebResponse h ? (int)h.StatusCode : 0;
+            int status = response is System.Net.HttpWebResponse h ? (int)h.StatusCode : 0;
             return status >= 300 && status <= 399;
         }
 
@@ -152,7 +152,7 @@ namespace OutSmart.DAXon.Internal.Net
         }
 
         // Reads up to 16 bytes, restoring the position of a seekable stream.
-        public static string GuessContentTypeFromStream(global::System.IO.Stream stream)
+        public static string GuessContentTypeFromStream(System.IO.Stream stream)
         {
             long start = stream.CanSeek ? stream.Position : 0;
             byte[] head = new byte[16];

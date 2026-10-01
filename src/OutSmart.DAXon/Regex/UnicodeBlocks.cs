@@ -90,7 +90,7 @@ namespace OutSmart.DAXon.Regex
             ITreeInfo doc;
             try
             {
-                using (global::System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, @in, "unicodeBlocks.xml"))
+                using (System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, @in, "unicodeBlocks.xml"))
                 {
                     doc = config.BuildDocumentTree(reader, "unicodeBlocks.xml", options);
                 }

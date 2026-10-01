@@ -220,7 +220,7 @@ namespace OutSmart.DAXon.Api
             StreamResult res = result;
             if (res.GetOutputStream() == null && res.GetWriter() == null && res.GetSystemId() == null)
             {
-                throw new InvalidOperationException("Either an outputStream, or a global::System.IO.TextWriter, or a string must be supplied");
+                throw new InvalidOperationException("Either an outputStream, or a TextWriter, or a string must be supplied");
             }
 
             SerializeNodeToResult(node, res);

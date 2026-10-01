@@ -21,7 +21,7 @@ using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Events
 {
     //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(global::System.Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
+    //        "    public void setErrorReporter(Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
     //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
     //                + "    }"
     //})

@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Internal.Charsets
     // discrimination). Java: CharacterCodingException extends IOException; Malformed/Unmappable extend it.
     // IO-removal: compat IO.IOException eliminated -> extend System.IO.IOException (Java CharacterCodingException
     // extends IOException; Malformed/Unmappable extend this). Faithful: keeps the FOUT1190/1200 discrimination chain.
-    internal class CharacterCodingException : global::System.IO.IOException
+    internal class CharacterCodingException : IOException
     {
         public CharacterCodingException() : base("character coding error") { }
     }

@@ -1000,7 +1000,7 @@ namespace OutSmart.DAXon.XQuery
                 Grumble("Invalid processing instruction name " + Err.Wrap(target));
             }
 
-            if (target.Equals("xml", global::System.StringComparison.OrdinalIgnoreCase))
+            if (target.Equals("xml", StringComparison.OrdinalIgnoreCase))
             {
                 Grumble("A processing instruction must not be named 'xml' in any combination of upper and lower case");
             }

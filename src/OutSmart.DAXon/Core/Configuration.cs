@@ -54,7 +54,7 @@ using System.IO;
 namespace OutSmart.DAXon.Core
 {
     //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(global::System.Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
+    //        "    public void setErrorReporter(Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
     //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
     //                + "    }"
     //})
@@ -390,7 +390,7 @@ namespace OutSmart.DAXon.Core
                 //                checkLicensedFeature(LicenseFeature.SCHEMA_VALIDATION, "strict validation", -1);
                 //                break;
                 //            default:
-                //                throw new global::System.ArgumentException("Unsupported validation mode " + validationMode);
+                //                throw new ArgumentException("Unsupported validation mode " + validationMode);
                 //        }
                 defaultParseOptions = defaultParseOptions.WithSchemaValidationMode(value);
             }
@@ -484,7 +484,7 @@ namespace OutSmart.DAXon.Core
             System.Type configurationClass = typeof(Configuration);
             try
             {
-                return (Configuration)global::System.Activator.CreateInstance(configurationClass);
+                return (Configuration)Activator.CreateInstance(configurationClass);
             }
             catch (Exception e)
             {
@@ -512,7 +512,7 @@ namespace OutSmart.DAXon.Core
         public static Configuration InstantiateConfiguration(string className)
         {
             System.Type theClass = System.Type.GetType(className);
-            return (Configuration)global::System.Activator.CreateInstance(theClass);
+            return (Configuration)Activator.CreateInstance(theClass);
         }
 
         public static bool IsAssertionsEnabled()
@@ -1314,7 +1314,7 @@ namespace OutSmart.DAXon.Core
                 // FormatDate marks with the [Language: en] prefix.
                 if (language != null && !language.StartsWith("en", StringComparison.Ordinal))
                 {
-                    global::System.Globalization.CultureInfo culture = DotNetPlatform.TryGetKnownCulture(language);
+                    System.Globalization.CultureInfo culture = DotNetPlatform.TryGetKnownCulture(language);
                     if (culture != null)
                     {
                         Numberer_bcl bcl = new Numberer_bcl(culture, language);
@@ -2062,7 +2062,7 @@ namespace OutSmart.DAXon.Core
         // XmlReaderToReceiver path, with the same builder / pipeline / space-stripping setup as
         // BuildDocumentTree(Source). Used by the .NET-native DocumentBuilder input so the common build path
         // never constructs a JAXP Source.
-        public virtual ITreeInfo BuildDocumentTree(global::System.Xml.XmlReader reader, string systemId, ParseOptions parseOptions)
+        public virtual ITreeInfo BuildDocumentTree(System.Xml.XmlReader reader, string systemId, ParseOptions parseOptions)
         {
             ParseOptions options = (parseOptions ?? defaultParseOptions).ApplyDefaults(this);
             TreeModel treeModel = options.Model;

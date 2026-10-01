@@ -68,7 +68,7 @@ namespace OutSmart.DAXon.Regex.CharClass
             NodeInfo doc;
             try
             {
-                using (global::System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, @in, "categories.xml"))
+                using (System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, @in, "categories.xml"))
                 {
                     doc = config.BuildDocumentTree(reader, "categories.xml", options).GetRootNode();
                 }

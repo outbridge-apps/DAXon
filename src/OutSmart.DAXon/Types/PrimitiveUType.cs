@@ -201,7 +201,7 @@ namespace OutSmart.DAXon.Types
         //         case EXTENSION:
         //             //return JavaExternalObjectType.EXTERNAL_OBJECT_TYPE;
         //         default:
-        //             throw new global::System.ArgumentException();
+        //             throw new ArgumentException();
         // --------------------
     }
 }

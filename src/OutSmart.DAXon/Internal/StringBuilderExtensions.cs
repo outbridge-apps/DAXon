@@ -9,7 +9,7 @@ namespace OutSmart.DAXon.Internal
     {
         // Appends a full code point, encoding astral values as a surrogate pair
         // (System.Text.StringBuilder has no code-point-aware append on net472).
-        public static global::System.Text.StringBuilder AppendCodePoint(this global::System.Text.StringBuilder sb, int codePoint)
+        public static System.Text.StringBuilder AppendCodePoint(this System.Text.StringBuilder sb, int codePoint)
         {
             if (codePoint < 0x10000)
             {

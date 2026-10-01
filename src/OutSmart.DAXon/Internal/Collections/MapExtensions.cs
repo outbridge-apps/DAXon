@@ -74,7 +74,7 @@ namespace OutSmart.DAXon.Internal.Collections
             return prev;
         }
 
-        public static TValue ComputeIfAbsent<TKey, TValue>(this IDictionary<TKey, TValue> d, TKey key, global::System.Func<TKey, TValue> factory)
+        public static TValue ComputeIfAbsent<TKey, TValue>(this IDictionary<TKey, TValue> d, TKey key, System.Func<TKey, TValue> factory)
         {
             if (!d.TryGetValue(key, out var v))
             {

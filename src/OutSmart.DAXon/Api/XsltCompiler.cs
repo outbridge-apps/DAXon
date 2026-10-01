@@ -497,14 +497,14 @@ namespace OutSmart.DAXon.Api
 
         // .NET-native input overloads (P5): compile a stylesheet directly from a Stream/TextReader with an
         // explicit system identifier — the caller no longer constructs a JAXP Source.
-        public virtual XsltExecutable Compile(global::System.IO.Stream input, string systemId)
+        public virtual XsltExecutable Compile(System.IO.Stream input, string systemId)
         {
             if (input == null)
                 throw new NullReferenceException("input");
             return CompileFromXmlReader(null, input, systemId);
         }
 
-        public virtual XsltExecutable Compile(global::System.IO.TextReader input, string systemId)
+        public virtual XsltExecutable Compile(System.IO.TextReader input, string systemId)
         {
             if (input == null)
                 throw new NullReferenceException("input");
@@ -518,12 +518,12 @@ namespace OutSmart.DAXon.Api
         // Saxonica .NET-API compat: compile with just the reader (BaseUri property, else a pseudo-URI).
         public virtual Uri BaseUri { get; set; }
 
-        public virtual XsltExecutable Compile(global::System.IO.TextReader input)
+        public virtual XsltExecutable Compile(System.IO.TextReader input)
             => Compile(input, BaseUri != null ? BaseUri.AbsoluteUri : "urn:stylesheet");
 
         // Source-free compile: parse the stylesheet via XmlReaderToReceiver (no JAXP StreamSource). External
         // stylesheet entities / DTD resolve through the config ResourceResolver, wrapped as a native XmlResolver.
-        private XsltExecutable CompileFromXmlReader(global::System.IO.TextReader charStream, global::System.IO.Stream byteStream, string systemId)
+        private XsltExecutable CompileFromXmlReader(System.IO.TextReader charStream, System.IO.Stream byteStream, string systemId)
         {
             System.Xml.XmlResolver resolver = new ResourceResolverXmlResolver(config.GetResourceResolver(), config, null);
             // Compile under the Processor's deadline (see Compile(ResolvedResource)).

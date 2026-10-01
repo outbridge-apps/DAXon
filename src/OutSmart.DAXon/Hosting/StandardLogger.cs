@@ -38,7 +38,7 @@ namespace OutSmart.DAXon.Lib
         {
         }
 
-        // IO-removal: StandardLogger(global::System.IO.TextWriter) dropped -- global::System.IO.TextWriter maps to System.IO.TextWriter, handled by StandardLogger(TextWriter).
+        // IO-removal: StandardLogger(TextWriter) dropped -- TextWriter maps to System.IO.TextWriter, handled by StandardLogger(TextWriter).
 
         public StandardLogger(TextWriter writer)
         {

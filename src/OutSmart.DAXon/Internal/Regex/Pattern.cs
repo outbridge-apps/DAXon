@@ -5,10 +5,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace OutSmart.DAXon.Internal.Regex
 {
-    using global::System.Threading;
+    using System.Threading;
     using global::OutSmart.DAXon.Internal.Caching;
-    using SysRegex = global::System.Text.RegularExpressions.Regex;
-    using RegexOptions = global::System.Text.RegularExpressions.RegexOptions;
+    using SysRegex = System.Text.RegularExpressions.Regex;
+    using RegexOptions = System.Text.RegularExpressions.RegexOptions;
 
     /// <summary>
     /// Java regex Pattern shim over .NET Regex. WARNING: Java and .NET regex have subtle differences in
@@ -90,7 +90,7 @@ namespace OutSmart.DAXon.Internal.Regex
         public int Flags() => _flags;
         public override string ToString() => _patternString;
 
-        private struct PatternKey : global::System.IEquatable<PatternKey>
+        private struct PatternKey : System.IEquatable<PatternKey>
         {
             internal readonly string PatternString;
             internal readonly int Flags;
@@ -103,7 +103,7 @@ namespace OutSmart.DAXon.Internal.Regex
 
             public bool Equals(PatternKey other) =>
                 Flags == other.Flags &&
-                string.Equals(PatternString, other.PatternString, global::System.StringComparison.Ordinal);
+                string.Equals(PatternString, other.PatternString, System.StringComparison.Ordinal);
 
             public override bool Equals(object obj) => obj is PatternKey other && Equals(other);
 

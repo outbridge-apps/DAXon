@@ -517,7 +517,7 @@ namespace OutSmart.DAXon.XQuery
         {
             string target = t.currentTokenValue;
             string warningMessage = null;
-            if (target.Equals("xml", global::System.StringComparison.OrdinalIgnoreCase))
+            if (target.Equals("xml", StringComparison.OrdinalIgnoreCase))
             {
                 warningMessage = "A processing instruction must not be named 'xml' in any combination of upper and lower case";
             }

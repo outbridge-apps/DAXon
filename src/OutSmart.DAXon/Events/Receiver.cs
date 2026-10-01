@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Events
 {
     // Close() = successful end-of-stream (flush, notify, release). Dispose() = abort-path release only:
     // idempotent, emits no events -- safe under `using`; a completed Close makes it a no-op.
-    public interface IReceiver : OutSmart.DAXon.Serialization.IResultTarget, global::System.IDisposable
+    public interface IReceiver : OutSmart.DAXon.Serialization.IResultTarget, IDisposable
     {
         void SetPipelineConfiguration(PipelineConfiguration pipe);
         PipelineConfiguration GetPipelineConfiguration();

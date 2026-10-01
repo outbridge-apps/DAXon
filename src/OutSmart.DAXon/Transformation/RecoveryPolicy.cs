@@ -31,7 +31,7 @@ namespace OutSmart.DAXon.Transformation
         //         case "doNotRecover":
         //             return DO_NOT_RECOVER;
         //         default:
-        //             throw new global::System.ArgumentException("Unrecognized value of RECOVERY_POLICY_NAME = '" + s + "'");
+        //             throw new ArgumentException("Unrecognized value of RECOVERY_POLICY_NAME = '" + s + "'");
         // --------------------
     }
 }

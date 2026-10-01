@@ -115,7 +115,7 @@ namespace OutSmart.DAXon.Serialization
 
         private static bool IsBooleanAttribute(string element, string attribute, string value)
         {
-            return attribute.Equals(value, global::System.StringComparison.OrdinalIgnoreCase) && booleanAttributes.Contains(attribute) && (booleanCombinations.Contains(element + '+' + attribute) || booleanCombinations.Contains("*+" + attribute));
+            return attribute.Equals(value, StringComparison.OrdinalIgnoreCase) && booleanAttributes.Contains(attribute) && (booleanCombinations.Contains(element + '+' + attribute) || booleanCombinations.Contains("*+" + attribute));
         }
 
         public override void SetEscapeNonAscii(bool escape)
@@ -137,7 +137,7 @@ namespace OutSmart.DAXon.Serialization
             }
 
             string byteOrderMark = outputProperties.GetProperty(DAXonOutputKeys.BYTE_ORDER_MARK);
-            if ("yes".Equals(byteOrderMark) && "UTF-8".Equals(outputProperties.GetProperty(DAXonOutputKeys.ENCODING), global::System.StringComparison.OrdinalIgnoreCase))
+            if ("yes".Equals(byteOrderMark) && "UTF-8".Equals(outputProperties.GetProperty(DAXonOutputKeys.ENCODING), StringComparison.OrdinalIgnoreCase))
             {
                 try
                 {
@@ -167,7 +167,7 @@ namespace OutSmart.DAXon.Serialization
             uri = elemName.GetNamespaceUri();
             base.StartElement(elemName, type, attributes, namespaces, location, properties);
             parentElement = elementStack.Peek();
-            if (IsHTMLElement(elemName) && (parentElement.Equals("script", global::System.StringComparison.OrdinalIgnoreCase) || parentElement.Equals("style", global::System.StringComparison.OrdinalIgnoreCase)))
+            if (IsHTMLElement(elemName) && (parentElement.Equals("script", StringComparison.OrdinalIgnoreCase) || parentElement.Equals("style", StringComparison.OrdinalIgnoreCase)))
             {
                 inScript = 0;
             }

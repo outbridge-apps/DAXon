@@ -63,12 +63,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -105,12 +105,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -134,12 +134,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -162,12 +162,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -328,12 +328,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -425,12 +425,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -460,12 +460,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -513,12 +513,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -565,12 +565,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -602,12 +602,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -706,12 +706,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -779,12 +779,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -851,12 +851,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -889,12 +889,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -1015,12 +1015,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -1118,12 +1118,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -1166,12 +1166,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;
@@ -1217,12 +1217,12 @@ namespace OutSmart.DAXon.Serialization
     ////////////////////////////////////////////////////////
      */
         /* Due to co-variance between Appendable and
-     * global::System.IO.TextWriter, this would not compile with javac 1.5, in 1.4 mode
+     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
      * (source and target set to "1.4". Not a huge deal, but since
      * the base impl is just fine, no point in overriding it.
      */
         /*
-    public global::System.IO.TextWriter append(char c) throws global::System.IO.IOException {
+    public TextWriter append(char c) throws IOException {
     // note: this is a JDK 1.5 method
         write(c);
         return this;

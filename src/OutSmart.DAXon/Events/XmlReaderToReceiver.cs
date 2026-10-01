@@ -437,13 +437,13 @@ namespace OutSmart.DAXon.Events
                 return;
             }
 
-            foreach (global::System.Text.RegularExpressions.Match decl in global::System.Text.RegularExpressions.Regex.Matches(internalSubset, @"<!ATTLIST\s+(\S+)\s+([\s\S]*?)>"))
+            foreach (System.Text.RegularExpressions.Match decl in System.Text.RegularExpressions.Regex.Matches(internalSubset, @"<!ATTLIST\s+(\S+)\s+([\s\S]*?)>"))
             {
                 string elem = decl.Groups[1].Value;
                 // Each attribute def is `name type default`. Anchoring on the default token that follows the
                 // type (#REQUIRED/#IMPLIED/#FIXED or a quoted value) avoids matching a type keyword that
                 // appears inside an enumeration or a default value earlier in the same ATTLIST.
-                foreach (global::System.Text.RegularExpressions.Match att in global::System.Text.RegularExpressions.Regex.Matches(decl.Groups[2].Value,
+                foreach (System.Text.RegularExpressions.Match att in System.Text.RegularExpressions.Regex.Matches(decl.Groups[2].Value,
                     "([^\\s>]+)\\s+(ID|IDREF|IDREFS|NMTOKEN|NMTOKENS|ENTITY|ENTITIES)\\s+(?:#(?:REQUIRED|IMPLIED|FIXED)|\"|')"))
                 {
                     if (dtdAttTypes == null)
@@ -467,17 +467,17 @@ namespace OutSmart.DAXon.Events
                 return;
             }
 
-            foreach (global::System.Text.RegularExpressions.Match decl in global::System.Text.RegularExpressions.Regex.Matches(internalSubset, @"<!ENTITY\s+([^\s%>][^\s>]*)\s+([\s\S]*?)>"))
+            foreach (System.Text.RegularExpressions.Match decl in System.Text.RegularExpressions.Regex.Matches(internalSubset, @"<!ENTITY\s+([^\s%>][^\s>]*)\s+([\s\S]*?)>"))
             {
                 string name = decl.Groups[1].Value;
                 string body = decl.Groups[2].Value;
-                if (!global::System.Text.RegularExpressions.Regex.IsMatch(body, @"\bNDATA\s+\S+\s*$"))
+                if (!System.Text.RegularExpressions.Regex.IsMatch(body, @"\bNDATA\s+\S+\s*$"))
                 {
                     continue;   // parsed (general) entity — not reported
                 }
 
                 string publicId = null, systemId = null;
-                var m = global::System.Text.RegularExpressions.Regex.Match(body, "^PUBLIC\\s+(?:\"([^\"]*)\"|'([^']*)')\\s+(?:\"([^\"]*)\"|'([^']*)')");
+                var m = System.Text.RegularExpressions.Regex.Match(body, "^PUBLIC\\s+(?:\"([^\"]*)\"|'([^']*)')\\s+(?:\"([^\"]*)\"|'([^']*)')");
                 if (m.Success)
                 {
                     publicId = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;
@@ -485,7 +485,7 @@ namespace OutSmart.DAXon.Events
                 }
                 else
                 {
-                    m = global::System.Text.RegularExpressions.Regex.Match(body, "^SYSTEM\\s+(?:\"([^\"]*)\"|'([^']*)')");
+                    m = System.Text.RegularExpressions.Regex.Match(body, "^SYSTEM\\s+(?:\"([^\"]*)\"|'([^']*)')");
                     if (!m.Success)
                     {
                         continue;
@@ -749,7 +749,7 @@ namespace OutSmart.DAXon.Events
         private INodeName GetNodeName(string uri, string prefix, string localname)
         {
             NameEntry[] cache = nameCache;
-            int h = global::System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(localname) & 255;
+            int h = System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(localname) & 255;
             if (ReferenceEquals(cache[h].Local, localname)
                 && ReferenceEquals(cache[h].Uri, uri)
                 && ReferenceEquals(cache[h].Prefix, prefix))

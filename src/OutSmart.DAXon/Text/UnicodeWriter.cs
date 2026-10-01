@@ -14,7 +14,7 @@ using System.Text;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Text
 {
-    public interface IUnicodeWriter : global::System.IDisposable
+    public interface IUnicodeWriter : IDisposable
     {
         void Write(UnicodeString chars);
         void WriteAscii(byte[] content);

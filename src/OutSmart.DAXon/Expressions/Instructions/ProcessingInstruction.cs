@@ -184,7 +184,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     throw DynamicError(GetLocation(), e, context);
                 }
 
-                if (expandedName.Equals("xml", global::System.StringComparison.OrdinalIgnoreCase))
+                if (expandedName.Equals("xml", StringComparison.OrdinalIgnoreCase))
                 {
                     XPathException e = new XPathException("Processing instructions cannot be named 'xml' in any combination of upper/lower case").WithXPathContext(context).WithErrorCode(IsXSLT() ? "XTDE0890" : "XQDY0064");
                     throw DynamicError(GetLocation(), e, context);

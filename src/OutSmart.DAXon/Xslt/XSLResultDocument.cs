@@ -276,7 +276,7 @@ namespace OutSmart.DAXon.Xslt
                     {
                         method = "xhtml";
                     }
-                    else if (first.GetLocalPart().Equals("html", global::System.StringComparison.OrdinalIgnoreCase) && first.GetNamespaceUri().IsEmpty())
+                    else if (first.GetLocalPart().Equals("html", StringComparison.OrdinalIgnoreCase) && first.GetNamespaceUri().IsEmpty())
                     {
                         method = "html";
                     }

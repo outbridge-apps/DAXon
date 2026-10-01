@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Api
     /// A class that exists to contain common code shared between XsltTransformer and Xslt30Transformer
     /// </summary>
     //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(global::System.Action<OutSmart.DAXon.Api.IXmlProcessingError> reporter) {"
+    //        "    public void setErrorReporter(Action<OutSmart.DAXon.Api.IXmlProcessingError> reporter) {"
     //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
     //                + "    }"
     //})
@@ -203,7 +203,7 @@ namespace OutSmart.DAXon.Api
         // Source-free apply-templates (P5): build the source tree from a System.Xml.XmlReader (with the
         // stylesheet's strip-space applied) and apply templates to it. A streamable initial mode yields the
         // same result over the full tree, so this path always builds the tree — no JAXP Source is constructed.
-        protected virtual void ApplyTemplatesToXmlReader(global::System.Xml.XmlReader reader, string systemId, IReceiver @out)
+        protected virtual void ApplyTemplatesToXmlReader(System.Xml.XmlReader reader, string systemId, IReceiver @out)
         {
             if (reader == null)
                 throw new NullReferenceException();

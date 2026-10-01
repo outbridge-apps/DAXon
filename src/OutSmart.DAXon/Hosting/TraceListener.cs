@@ -19,7 +19,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Lib
 {
-    public interface ITraceListener : global::System.IDisposable
+    public interface ITraceListener : IDisposable
     {
         void SetOutputDestination(Logger stream);
 

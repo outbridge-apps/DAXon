@@ -10,17 +10,17 @@ namespace OutSmart.DAXon.Serialization
     public class StreamResult : IResultTarget
     {
         public string SystemId { get; set; }
-        public global::System.IO.Stream OutputStream { get; set; }
-        public global::System.IO.TextWriter Writer { get; set; }
+        public System.IO.Stream OutputStream { get; set; }
+        public System.IO.TextWriter Writer { get; set; }
         public StreamResult() { }
         public StreamResult(string systemId) { SystemId = systemId; }
-        public StreamResult(global::System.IO.Stream s) { OutputStream = s; }
-        public StreamResult(global::System.IO.TextWriter w) { Writer = w; }
+        public StreamResult(System.IO.Stream s) { OutputStream = s; }
+        public StreamResult(System.IO.TextWriter w) { Writer = w; }
         public string GetSystemId() => SystemId;
         public void SetSystemId(string s) { SystemId = s; }
-        public global::System.IO.Stream GetOutputStream() => OutputStream;
-        public global::System.IO.TextWriter GetWriter() => Writer;
-        public void SetWriter(global::System.IO.TextWriter w) { Writer = w; }
-        public void SetOutputStream(global::System.IO.Stream s) { OutputStream = s; }
+        public System.IO.Stream GetOutputStream() => OutputStream;
+        public System.IO.TextWriter GetWriter() => Writer;
+        public void SetWriter(System.IO.TextWriter w) { Writer = w; }
+        public void SetOutputStream(System.IO.Stream s) { OutputStream = s; }
     }
 }

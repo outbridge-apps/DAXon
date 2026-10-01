@@ -48,7 +48,7 @@ namespace OutSmart.DAXon.Serialization
 
                 // If the writer uses a known encoding, change the encoding in the XML declaration
                 // to match. Any encoding actually specified in xsl:output is ignored, because encoding
-                // is being done by the user-supplied global::System.IO.TextWriter, and not by Saxon itself.
+                // is being done by the user-supplied TextWriter, and not by Saxon itself.
                 if (value is StreamWriter && outputProperties != null)
                 {
                     string enc = ((StreamWriter)value).Encoding.WebName;
@@ -72,11 +72,11 @@ namespace OutSmart.DAXon.Serialization
             {
                 encoding = "UTF8";
             }
-            else if (encoding.Equals("UTF-8", global::System.StringComparison.OrdinalIgnoreCase))
+            else if (encoding.Equals("UTF-8", StringComparison.OrdinalIgnoreCase))
             {
                 encoding = "UTF8";
             }
-            else if (encoding.Equals("UTF-16", global::System.StringComparison.OrdinalIgnoreCase))
+            else if (encoding.Equals("UTF-16", StringComparison.OrdinalIgnoreCase))
             {
                 encoding = "UTF16";
             }
@@ -215,19 +215,19 @@ namespace OutSmart.DAXon.Serialization
         {
             outputStream = stream;
 
-            // If the user supplied an global::System.IO.Stream, but the Emitter is written to
-            // use a global::System.IO.TextWriter (this is the most common case), then we create a global::System.IO.TextWriter
-            // to wrap the supplied global::System.IO.Stream; the complications are to ensure that
+            // If the user supplied an Stream, but the Emitter is written to
+            // use a TextWriter (this is the most common case), then we create a TextWriter
+            // to wrap the supplied Stream; the complications are to ensure that
             // the character encoding is correct.
             try
             {
-                if (encoding.Equals("UTF8", global::System.StringComparison.OrdinalIgnoreCase))
+                if (encoding.Equals("UTF8", StringComparison.OrdinalIgnoreCase))
                 {
                     writer = new UTF8Writer(outputStream);
                 }
                 else
                 {
-                    Encoding dotnetEncoding = encoding.Equals("iso-646", global::System.StringComparison.OrdinalIgnoreCase) || encoding.Equals("iso646", global::System.StringComparison.OrdinalIgnoreCase)
+                    Encoding dotnetEncoding = encoding.Equals("iso-646", StringComparison.OrdinalIgnoreCase) || encoding.Equals("iso646", StringComparison.OrdinalIgnoreCase)
                         ? Encoding.ASCII
                         : Encoding.GetEncoding(encoding);
                     writer = new StreamWriter(outputStream, dotnetEncoding);
@@ -237,7 +237,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (Exception err)
             {
-                if (encoding.Equals("UTF8", global::System.StringComparison.OrdinalIgnoreCase))
+                if (encoding.Equals("UTF8", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new XPathException("Failed to create a UTF8 output writer");
                 }
@@ -251,7 +251,7 @@ namespace OutSmart.DAXon.Serialization
             outputStream = stream;
             try
             {
-                if (encoding.Equals("UTF8", global::System.StringComparison.OrdinalIgnoreCase))
+                if (encoding.Equals("UTF8", StringComparison.OrdinalIgnoreCase))
                 {
                     return new UTF8Writer(outputStream);
                 }
@@ -263,7 +263,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (Exception err)
             {
-                if (encoding.Equals("UTF8", global::System.StringComparison.OrdinalIgnoreCase))
+                if (encoding.Equals("UTF8", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new XPathException("Failed to create a UTF8 output writer");
                 }

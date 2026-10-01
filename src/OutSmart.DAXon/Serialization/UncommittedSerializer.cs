@@ -57,7 +57,7 @@ namespace OutSmart.DAXon.Serialization
         }
 
         /// <summary>
-        /// Produce character output using the current global::System.IO.TextWriter. <BR>
+        /// Produce character output using the current System.IO.TextWriter. <BR>
         /// </summary>
         public override void Characters(UnicodeString chars, ILocation locationId, int properties)
         {
@@ -123,7 +123,7 @@ namespace OutSmart.DAXon.Serialization
             {
                 string name = elemName.GetLocalPart();
                 NamespaceUri uri = elemName.GetNamespaceUri();
-                if (name.Equals("html", global::System.StringComparison.OrdinalIgnoreCase) && uri.IsEmpty())
+                if (name.Equals("html", StringComparison.OrdinalIgnoreCase) && uri.IsEmpty())
                 {
                     SwitchToMethod("html");
                 }

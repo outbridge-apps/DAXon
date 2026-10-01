@@ -291,7 +291,7 @@ namespace OutSmart.DAXon.Xslt
         // Sender.Send(XmlReader), without constructing a JAXP StreamSource. Mirrors LoadStylesheet(Source):
         // same pipeline (use-when filter, stylesheet stripper, comment stripper, Valve for precompiled SEF
         // packages) — only the parse-delivery differs. External entities resolve via the XmlReader's resolver.
-        public static PreparedStylesheet LoadStylesheet(global::System.Xml.XmlReader reader, string systemId, Compilation compilation)
+        public static PreparedStylesheet LoadStylesheet(System.Xml.XmlReader reader, string systemId, Compilation compilation)
         {
             DocumentKey docURI = systemId == null ? null : new DocumentKey(systemId);
             if (systemId != null && compilation.ImportStack.Contains(docURI))

@@ -24,7 +24,7 @@ using OutSmart.DAXon.Internal.Streams;
 namespace OutSmart.DAXon.Transformation
 {
     //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(global::System.Action<OutSmart.DAXon.Api.IXmlProcessingError> reporter) {"
+    //        "    public void setErrorReporter(Action<OutSmart.DAXon.Api.IXmlProcessingError> reporter) {"
     //      + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
     //      + "    }"
     //})

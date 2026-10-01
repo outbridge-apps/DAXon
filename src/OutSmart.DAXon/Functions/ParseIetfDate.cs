@@ -101,7 +101,7 @@ namespace OutSmart.DAXon.Functions
         {
             foreach (string s in dayNames)
             {
-                if (s.Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+                if (s.Equals(str, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -113,7 +113,7 @@ namespace OutSmart.DAXon.Functions
         {
             foreach (string s in monthNames)
             {
-                if (s.Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+                if (s.Equals(str, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -124,51 +124,51 @@ namespace OutSmart.DAXon.Functions
 
         private byte GetMonthNumber(string str)
         {
-            if ("Jan".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            if ("Jan".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)1;
             }
-            else if ("Feb".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("Feb".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)2;
             }
-            else if ("Mar".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("Mar".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)3;
             }
-            else if ("Apr".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("Apr".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)4;
             }
-            else if ("May".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("May".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)5;
             }
-            else if ("Jun".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("Jun".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)6;
             }
-            else if ("Jul".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("Jul".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)7;
             }
-            else if ("Aug".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("Aug".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)8;
             }
-            else if ("Sep".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("Sep".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)9;
             }
-            else if ("Oct".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("Oct".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)10;
             }
-            else if ("Nov".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("Nov".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)11;
             }
-            else if ("Dec".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("Dec".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return (byte)12;
             }
@@ -213,7 +213,7 @@ namespace OutSmart.DAXon.Functions
         {
             foreach (string s in timezoneNames)
             {
-                if (s.Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+                if (s.Equals(str, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }
@@ -224,39 +224,39 @@ namespace OutSmart.DAXon.Functions
 
         private int GetTimezoneOffsetFromName(string str)
         {
-            if ("UT".Equals(str, global::System.StringComparison.OrdinalIgnoreCase) | "UTC".Equals(str, global::System.StringComparison.OrdinalIgnoreCase) | "GMT".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            if ("UT".Equals(str, StringComparison.OrdinalIgnoreCase) | "UTC".Equals(str, StringComparison.OrdinalIgnoreCase) | "GMT".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return 0;
             }
-            else if ("EST".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("EST".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return -5 * 60;
             }
-            else if ("EDT".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("EDT".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return -4 * 60;
             }
-            else if ("CST".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("CST".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return -6 * 60;
             }
-            else if ("CDT".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("CDT".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return -5 * 60;
             }
-            else if ("MST".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("MST".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return -7 * 60;
             }
-            else if ("MDT".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("MDT".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return -6 * 60;
             }
-            else if ("PST".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("PST".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return -8 * 60;
             }
-            else if ("PDT".Equals(str, global::System.StringComparison.OrdinalIgnoreCase))
+            else if ("PDT".Equals(str, StringComparison.OrdinalIgnoreCase))
             {
                 return -7 * 60;
             }

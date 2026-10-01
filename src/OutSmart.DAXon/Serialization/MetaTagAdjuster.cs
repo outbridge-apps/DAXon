@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Serialization
             }
             else
             {
-                return name1.Equals(name2, global::System.StringComparison.OrdinalIgnoreCase);
+                return name1.Equals(name2, StringComparison.OrdinalIgnoreCase);
             }
         }
 
@@ -106,7 +106,7 @@ namespace OutSmart.DAXon.Serialization
             }
             else
             {
-                return name.GetLocalPart().Equals(local, global::System.StringComparison.OrdinalIgnoreCase);
+                return name.GetLocalPart().Equals(local, StringComparison.OrdinalIgnoreCase);
             }
         }
 
@@ -128,7 +128,7 @@ namespace OutSmart.DAXon.Serialization
                         if (ComparesEqual(name, "http-equiv"))
                         {
                             string value = Whitespace.Trim(att.Value);
-                            if (value.Equals("Content-Type", global::System.StringComparison.OrdinalIgnoreCase))
+                            if (value.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
                             {
 
                                 // case-blind comparison even for XHTML

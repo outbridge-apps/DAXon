@@ -107,7 +107,7 @@ namespace OutSmart.DAXon.Functions
                 xe.MaybeSetContext(context);
                 throw xe;
             }
-            catch (global::System.Xml.XmlException xmlErr)
+            catch (System.Xml.XmlException xmlErr)
             {
                 // The direct XmlReader path reports a malformed fragment as a raw XmlException (the SAX
                 // error handler is not consulted here); map to FODC0006 like ParseXml does, instead of

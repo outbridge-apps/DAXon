@@ -83,7 +83,7 @@ namespace OutSmart.DAXon.Internal.Collections
         /// (only explicit ICollection&lt;T&gt;.Add), so this extension binds for both
         /// statement-position and result-consuming call sites.
         /// </summary>
-        public static bool Add<T>(this global::System.Collections.Generic.LinkedList<T> list, T item)
+        public static bool Add<T>(this LinkedList<T> list, T item)
         {
             list.AddLast(item);
             return true;
@@ -94,11 +94,11 @@ namespace OutSmart.DAXon.Internal.Collections
         /// (Java: NoSuchElementException; here: InvalidOperationException - equivalent
         /// fail-fast semantics).
         /// </summary>
-        public static T GetFirst<T>(this global::System.Collections.Generic.LinkedList<T> list)
+        public static T GetFirst<T>(this LinkedList<T> list)
         {
             var node = list.First;
             if (node == null)
-                throw new global::System.InvalidOperationException("LinkedList is empty (java.util.NoSuchElementException)");
+                throw new System.InvalidOperationException("LinkedList is empty (java.util.NoSuchElementException)");
             return node.Value;
         }
 
@@ -106,11 +106,11 @@ namespace OutSmart.DAXon.Internal.Collections
         /// java.util.LinkedList.getLast() - last element; throws on an empty list
         /// (Java: NoSuchElementException; here: InvalidOperationException).
         /// </summary>
-        public static T GetLast<T>(this global::System.Collections.Generic.LinkedList<T> list)
+        public static T GetLast<T>(this LinkedList<T> list)
         {
             var node = list.Last;
             if (node == null)
-                throw new global::System.InvalidOperationException("LinkedList is empty (java.util.NoSuchElementException)");
+                throw new System.InvalidOperationException("LinkedList is empty (java.util.NoSuchElementException)");
             return node.Value;
         }
 
@@ -119,7 +119,7 @@ namespace OutSmart.DAXon.Internal.Collections
         /// throws on empty. Named RemoveFirstAndGet because the BCL RemoveFirst() is a void
         /// INSTANCE method; CollectionsModernizer rewrites result-consuming sites here.
         /// </summary>
-        public static T RemoveFirstAndGet<T>(this global::System.Collections.Generic.LinkedList<T> list)
+        public static T RemoveFirstAndGet<T>(this LinkedList<T> list)
         {
             T v = list.GetFirst();
             list.RemoveFirst();
@@ -131,7 +131,7 @@ namespace OutSmart.DAXon.Internal.Collections
         /// throws on empty. Named RemoveLastAndGet for the same instance-collision reason.
         /// </summary>
         // java.util.Collection.containsAll.
-        public static bool ContainsAll<T>(this ICollection<T> c, global::System.Collections.Generic.IEnumerable<T> other)
+        public static bool ContainsAll<T>(this ICollection<T> c, IEnumerable<T> other)
         {
             if (other == null)
                 return true;
@@ -144,7 +144,7 @@ namespace OutSmart.DAXon.Internal.Collections
         }
 
         // List<T>.AddRange for arbitrary ICollection receivers (HashSet, IList, ...).
-        public static void AddRange<T>(this ICollection<T> dest, global::System.Collections.Generic.IEnumerable<T> src)
+        public static void AddRange<T>(this ICollection<T> dest, IEnumerable<T> src)
         {
             if (src == null)
                 return;
@@ -161,7 +161,7 @@ namespace OutSmart.DAXon.Internal.Collections
             return result;
         }
 
-        public static T RemoveLastAndGet<T>(this global::System.Collections.Generic.LinkedList<T> list)
+        public static T RemoveLastAndGet<T>(this LinkedList<T> list)
         {
             T v = list.GetLast();
             list.RemoveLast();

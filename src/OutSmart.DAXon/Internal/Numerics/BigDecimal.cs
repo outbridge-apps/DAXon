@@ -266,7 +266,7 @@ namespace OutSmart.DAXon.Internal.Numerics
         public BigDecimal(double value)
         {
             if (double.IsNaN(value) || double.IsInfinity(value))
-                throw new global::System.FormatException("Infinite or NaN");
+                throw new FormatException("Infinite or NaN");
             long bits = BitConverter.DoubleToInt64Bits(value);
             bool negative = bits < 0;
             int exp = (int)((bits >> 52) & 0x7FFL);
@@ -478,7 +478,7 @@ namespace OutSmart.DAXon.Internal.Numerics
         public BigDecimal Divide(BigDecimal divisor)
         {
             if (divisor.Sign == 0)
-                throw new global::System.ArithmeticException("Division by zero");
+                throw new ArithmeticException("Division by zero");
             int preferredScale = _scale - divisor._scale;
             if (Sign == 0)
                 return new BigDecimal(SysBigInt.Zero, Math.Max(0, preferredScale));
@@ -513,7 +513,7 @@ namespace OutSmart.DAXon.Internal.Numerics
                 d = q5; fives++;
             }
             if (!d.IsOne)
-                throw new global::System.ArithmeticException("Non-terminating decimal expansion; no exact representable decimal result.");
+                throw new ArithmeticException("Non-terminating decimal expansion; no exact representable decimal result.");
 
             int extra = Math.Max(twos, fives);
             if (extra > twos)
@@ -542,7 +542,7 @@ namespace OutSmart.DAXon.Internal.Numerics
             if (roundingMode < ROUND_UP || roundingMode > ROUND_UNNECESSARY)
                 throw new ArgumentException("Invalid rounding mode: " + roundingMode);
             if (divisor.Sign == 0)
-                throw new global::System.ArithmeticException("/ by zero");
+                throw new ArithmeticException("/ by zero");
 
             // this/divisor = (u1/u2) * 10^(s2-s1); at target scale: q = u1*10^(scale+s2-s1) / u2.
             int shift = scale + divisor._scale - _scale;
@@ -594,7 +594,7 @@ namespace OutSmart.DAXon.Internal.Numerics
                             case ROUND_HALF_UP: inc = twice >= bb; break;
                             case ROUND_HALF_DOWN: inc = twice > bb; break;
                             case ROUND_HALF_EVEN: inc = twice > bb || (twice == bb && !acc.IsEven); break;
-                            case ROUND_UNNECESSARY: throw new global::System.ArithmeticException("Rounding necessary");
+                            case ROUND_UNNECESSARY: throw new ArithmeticException("Rounding necessary");
                             default: throw new ArgumentException("Invalid rounding mode: " + roundingMode);
                         }
                         if (inc)
@@ -656,7 +656,7 @@ namespace OutSmart.DAXon.Internal.Numerics
         private BigDecimal DivideToIntegralRaw(BigDecimal divisor)
         {
             if (divisor.Sign == 0)
-                throw new global::System.ArithmeticException("Division by zero");
+                throw new ArithmeticException("Division by zero");
             int preferredScale = _scale - divisor._scale;
             int shift = divisor._scale - _scale; // = -preferredScale
             var num = Unscaled;
@@ -704,7 +704,7 @@ namespace OutSmart.DAXon.Internal.Numerics
                     case ROUND_HALF_UP: increment = twiceRem >= d; break;
                     case ROUND_HALF_DOWN: increment = twiceRem > d; break;
                     case ROUND_HALF_EVEN: increment = twiceRem > d || (twiceRem == d && !q.IsEven); break;
-                    case ROUND_UNNECESSARY: throw new global::System.ArithmeticException("Rounding necessary");
+                    case ROUND_UNNECESSARY: throw new ArithmeticException("Rounding necessary");
                     default: throw new ArgumentException("Invalid rounding mode: " + roundingMode);
                 }
                 if (increment)
@@ -740,7 +740,7 @@ namespace OutSmart.DAXon.Internal.Numerics
                 case ROUND_HALF_EVEN: increment = twiceRem > divisor || (twiceRem == divisor && !(q % 2).IsZero); break;
                 // Must be System.ArithmeticException: transpiled callers catch that type
                 // (the converter's mapping of java.lang.ArithmeticException).
-                case ROUND_UNNECESSARY: throw new global::System.ArithmeticException("Rounding necessary");
+                case ROUND_UNNECESSARY: throw new ArithmeticException("Rounding necessary");
                 default: increment = false; break;
             }
             return new BigDecimal(increment ? q + sign : q, newScale);
@@ -866,7 +866,7 @@ namespace OutSmart.DAXon.Internal.Numerics
                 return ToBigInteger();
             var q = SysBigInt.DivRem(Unscaled, Pow10(_scale), out var r);
             if (!r.IsZero)
-                throw new global::System.ArithmeticException("Rounding necessary");
+                throw new ArithmeticException("Rounding necessary");
             return q;
         }
         // Java pow(int n): exact — unscaled^n at scale*n; n must be in [0, 999999999]
@@ -875,7 +875,7 @@ namespace OutSmart.DAXon.Internal.Numerics
         public BigDecimal Pow(int n)
         {
             if (n < 0 || n > 999999999)
-                throw new global::System.ArithmeticException("Invalid operation");
+                throw new ArithmeticException("Invalid operation");
             if (n == 0)
                 return One;
             return new BigDecimal(SysBigInt.Pow(Unscaled, n), _scale * n);

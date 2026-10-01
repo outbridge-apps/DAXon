@@ -268,7 +268,7 @@ namespace OutSmart.DAXon.Lib
         {
             s1 = Whitespace.RemoveAllWhitespace(s1);
             s2 = Whitespace.RemoveAllWhitespace(s2);
-            if (s1.Equals(s2, global::System.StringComparison.OrdinalIgnoreCase))
+            if (s1.Equals(s2, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }

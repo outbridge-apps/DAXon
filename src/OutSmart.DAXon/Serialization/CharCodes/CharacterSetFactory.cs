@@ -80,12 +80,12 @@ namespace OutSmart.DAXon.Serialization.CharCodes
                 // Not one of the built-in sets: consult the platform. An encoding the platform doesn't
                 // recognise must raise SESU0007 — mirrors java.nio.Charset.forName throwing
                 // IllegalCharsetNameException / UnsupportedCharsetException.
-                global::System.Text.Encoding platformEncoding;
+                Encoding platformEncoding;
                 try
                 {
-                    platformEncoding = global::System.Text.Encoding.GetEncoding(encoding);
+                    platformEncoding = Encoding.GetEncoding(encoding);
                 }
-                catch (global::System.ArgumentException)
+                catch (ArgumentException)
                 {
                     throw new XPathException("Unknown encoding requested: " + encoding, "SESU0007");
                 }
@@ -99,7 +99,7 @@ namespace OutSmart.DAXon.Serialization.CharCodes
         public static void Main(string[] args)
         {
             Console.Error.WriteLine("Available platform encodings:");
-            foreach (string s in global::System.Text.Encoding.GetEncodings().Select(e => e.Name).OrderBy(n => n, StringComparer.Ordinal))
+            foreach (string s in Encoding.GetEncodings().Select(e => e.Name).OrderBy(n => n, StringComparer.Ordinal))
             {
                 Console.Error.WriteLine("    " + s);
             }

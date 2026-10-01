@@ -38,7 +38,7 @@ using OutSmart.DAXon.Internal.Streams;
 namespace OutSmart.DAXon.Core
 {
     //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(global::System.Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
+    //        "    public void setErrorReporter(Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
     //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
     //                + "    }"
     //})
@@ -1150,7 +1150,7 @@ namespace OutSmart.DAXon.Core
         // applying the stylesheet's strip-space / type-annotation stripping exactly as MakeSourceTree(Source).
         // The stripper is applied manually here (as in the Source path); the pipe parse options carry no
         // stripping rule, so Sender's own wrapping does not strip a second time.
-        public virtual NodeInfo MakeSourceTree(global::System.Xml.XmlReader reader, string systemId, int validationMode)
+        public virtual NodeInfo MakeSourceTree(System.Xml.XmlReader reader, string systemId, int validationMode)
         {
             Builder sourceBuilder = MakeBuilder();
             sourceBuilder.SetUseEventLocation(true);

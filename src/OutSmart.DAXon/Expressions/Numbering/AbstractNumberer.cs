@@ -145,7 +145,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                 this.country = value;
             }
         }
-        public virtual global::System.Globalization.CultureInfo DefaultedLocale()
+        public virtual System.Globalization.CultureInfo DefaultedLocale()
         {
             return null;
         }

@@ -50,7 +50,7 @@ namespace OutSmart.DAXon.Serialization
 
             // Write a BOM if requested
             string encoding = outputProperties.GetProperty(DAXonOutputKeys.ENCODING);
-            if (encoding == null || encoding.Equals("utf8", global::System.StringComparison.OrdinalIgnoreCase))
+            if (encoding == null || encoding.Equals("utf8", StringComparison.OrdinalIgnoreCase))
             {
                 encoding = "UTF-8";
             }
@@ -63,7 +63,7 @@ namespace OutSmart.DAXon.Serialization
                 newlineMatcher = OutSmart.DAXon.Internal.Regex.Pattern.Compile("\\n");
             }
 
-            if ("yes".Equals(byteOrderMark) && ("UTF-8".Equals(encoding, global::System.StringComparison.OrdinalIgnoreCase) || "UTF-16LE".Equals(encoding, global::System.StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(encoding, global::System.StringComparison.OrdinalIgnoreCase)))
+            if ("yes".Equals(byteOrderMark) && ("UTF-8".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16LE".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(encoding, StringComparison.OrdinalIgnoreCase)))
             {
                 try
                 {

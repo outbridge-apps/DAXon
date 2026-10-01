@@ -141,7 +141,7 @@ namespace OutSmart.DAXon.Api
 
         // .NET-native input overload (P5): apply templates to a document read directly from a Stream with an
         // explicit system identifier — the caller no longer constructs a JAXP Source.
-        public virtual void ApplyTemplates(global::System.IO.Stream input, string systemId, IDestination destination)
+        public virtual void ApplyTemplates(Stream input, string systemId, IDestination destination)
         {
             lock (syncLock)
             {
@@ -155,7 +155,7 @@ namespace OutSmart.DAXon.Api
                 try
                 {
                     IReceiver sOut = GetDestinationReceiver(controller, destination);
-                    using (global::System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, input, systemId, null, false, false, processor.UnderlyingConfiguration))
+                    using (System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, input, systemId, null, false, false, processor.UnderlyingConfiguration))
                     {
                         ApplyTemplatesToXmlReader(reader, systemId, sOut);
                     }

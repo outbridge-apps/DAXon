@@ -45,7 +45,7 @@ namespace OutSmart.DAXon.Functions
 
             while (true)
             {
-                if (arglang.Equals(doclang, global::System.StringComparison.OrdinalIgnoreCase))
+                if (arglang.Equals(doclang, StringComparison.OrdinalIgnoreCase))
                 {
                     return true;
                 }

@@ -156,7 +156,7 @@ namespace OutSmart.DAXon.Values
         public static DayTimeDurationValue FromSeconds(BigDecimal seconds, IAtomicType typeLabel)
         {
             BigInteger wholeSeconds = seconds.ToBigInteger();
-            long wholeSecondsL = wholeSeconds.LongValueExact(); // global::System.ArithmeticException if out of range
+            long wholeSecondsL = wholeSeconds.LongValueExact(); // ArithmeticException if out of range
             BigDecimal fractionalPart = seconds.Remainder(BigDecimal.One);
             BigDecimal nanoseconds = fractionalPart * BigDecimalValue.BIG_DECIMAL_ONE_BILLION;
             int nanosecondsL = nanoseconds.IntValue();

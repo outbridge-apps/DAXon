@@ -10,7 +10,7 @@ namespace OutSmart.DAXon.Internal
     internal static class RegexStringExtensions
     {
         public static string[] SplitRegex(this string s, string regex)
-            => s == null ? new string[0] : global::System.Text.RegularExpressions.Regex.Split(s, regex);
+            => s == null ? new string[0] : System.Text.RegularExpressions.Regex.Split(s, regex);
 
         // limit > 0 caps the part count and keeps the tail VERBATIM (separators included) —
         // Java's split(regex, limit) semantics, which .NET's count overload matches exactly.
@@ -20,16 +20,16 @@ namespace OutSmart.DAXon.Internal
             if (s == null)
                 return new string[0];
             if (limit > 0)
-                return new global::System.Text.RegularExpressions.Regex(regex).Split(s, limit);
-            return global::System.Text.RegularExpressions.Regex.Split(s, regex);
+                return new System.Text.RegularExpressions.Regex(regex).Split(s, limit);
+            return System.Text.RegularExpressions.Regex.Split(s, regex);
         }
 
         // Whole-string regex match.
         public static bool MatchesRegex(this string s, string regex)
-            => s != null && global::System.Text.RegularExpressions.Regex.IsMatch(s, "^(?:" + regex + ")$");
+            => s != null && System.Text.RegularExpressions.Regex.IsMatch(s, "^(?:" + regex + ")$");
 
         // Regex-based replace, first occurrence only.
         public static string ReplaceFirstRegex(this string s, string regex, string replacement)
-            => s == null ? null : new global::System.Text.RegularExpressions.Regex(regex).Replace(s, replacement, 1);
+            => s == null ? null : new System.Text.RegularExpressions.Regex(regex).Replace(s, replacement, 1);
     }
 }

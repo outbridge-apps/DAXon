@@ -100,7 +100,7 @@ namespace OutSmart.DAXon.Events
         // Source-free parse entry: drive the Receiver pipeline directly from a System.Xml.XmlReader, applying
         // the same filter/validator/stripper wrapping as the Source path. Used by the .NET-native s9api input
         // so the common document-build path never constructs a JAXP Source.
-        public static void Send(global::System.Xml.XmlReader reader, string systemId, IReceiver receiver, ParseOptions options)
+        public static void Send(System.Xml.XmlReader reader, string systemId, IReceiver receiver, ParseOptions options)
         {
             PipelineConfiguration pipe = receiver.GetPipelineConfiguration();
             if (options == null)

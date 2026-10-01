@@ -53,7 +53,7 @@ namespace OutSmart.DAXon.Expressions
             jpmap[typeof(double)] = SequenceType.SINGLE_DOUBLE;
             jpmap[typeof(double)] = SequenceType.OPTIONAL_DOUBLE;
             jpmap[typeof(URI)] = SequenceType.OPTIONAL_ANY_URI;
-            jpmap[typeof(global::System.Uri)] = SequenceType.OPTIONAL_ANY_URI;
+            jpmap[typeof(Uri)] = SequenceType.OPTIONAL_ANY_URI;
             jpmap[typeof(BigInteger)] = SequenceType.OPTIONAL_INTEGER;
             jpmap[typeof(BigDecimal)] = SequenceType.OPTIONAL_DECIMAL;
             jpmap[typeof(UnicodeString)] = SequenceType.OPTIONAL_STRING;
@@ -365,7 +365,7 @@ namespace OutSmart.DAXon.Expressions
                         {
                             return AnyURIValueToURI.INSTANCE;
                         }
-                        else if (typeof(global::System.Uri).IsAssignableFrom(targetClass))
+                        else if (typeof(Uri).IsAssignableFrom(targetClass))
                         {
                             return AnyURIValueToSystemUri.INSTANCE;
                         }
@@ -429,11 +429,11 @@ namespace OutSmart.DAXon.Expressions
                         {
                             return Identity.INSTANCE;
                         }
-                        else if (targetClass == typeof(global::System.DateTime))
+                        else if (targetClass == typeof(DateTime))
                         {
                             return CalendarValueToDateTime.INSTANCE;
                         }
-                        else if (targetClass == typeof(global::System.DateTimeOffset))
+                        else if (targetClass == typeof(DateTimeOffset))
                         {
                             return CalendarValueToDateTimeOffset.INSTANCE;
                         }
@@ -448,11 +448,11 @@ namespace OutSmart.DAXon.Expressions
                         {
                             return Identity.INSTANCE;
                         }
-                        else if (targetClass == typeof(global::System.DateTime))
+                        else if (targetClass == typeof(DateTime))
                         {
                             return CalendarValueToDateTime.INSTANCE;
                         }
-                        else if (targetClass == typeof(global::System.DateTimeOffset))
+                        else if (targetClass == typeof(DateTimeOffset))
                         {
                             return CalendarValueToDateTimeOffset.INSTANCE;
                         }
@@ -467,11 +467,11 @@ namespace OutSmart.DAXon.Expressions
                         {
                             return Identity.INSTANCE;
                         }
-                        else if (targetClass == typeof(global::System.DateTime))
+                        else if (targetClass == typeof(DateTime))
                         {
                             return CalendarValueToDateTime.INSTANCE;
                         }
-                        else if (targetClass == typeof(global::System.DateTimeOffset))
+                        else if (targetClass == typeof(DateTimeOffset))
                         {
                             return CalendarValueToDateTimeOffset.INSTANCE;
                         }
@@ -688,7 +688,7 @@ namespace OutSmart.DAXon.Expressions
                 {
                     try
                     {
-                        list = (Collection<object>)global::System.Activator.CreateInstance(targetClass);
+                        list = (Collection<object>)Activator.CreateInstance(targetClass);
                     }
                     catch (MissingMethodException e)
                     {
@@ -1059,7 +1059,7 @@ namespace OutSmart.DAXon.Expressions
                 AnyURIValue av = (AnyURIValue)value.Head();
                 try
                 {
-                    return av == null ? null : new global::System.Uri(((AnyURIValue)value).GetStringValue());
+                    return av == null ? null : new Uri(((AnyURIValue)value).GetStringValue());
                 }
                 catch (UriFormatException err)
                 {

@@ -18,7 +18,7 @@ using OutSmart.DAXon.Internal.Collections;
 using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Api
 {
-    public interface IDestination : global::System.IDisposable
+    public interface IDestination : IDisposable
     {
         URI DestinationBaseURI { get; set; }
         IReceiver GetReceiver(PipelineConfiguration pipe, SerializationProperties @params);

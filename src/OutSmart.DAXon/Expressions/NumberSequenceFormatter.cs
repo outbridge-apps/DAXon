@@ -313,7 +313,7 @@ namespace OutSmart.DAXon.Expressions
                 {
                     IList<object> vec = new List<object>(4); // a list whose items may be of type either Long or
 
-                    // global::System.Numerics.BigInteger or the string to be output (e.g. "NaN")
+                    // BigInteger or the string to be output (e.g. "NaN")
                     ConversionRules rules = context.GetConfiguration().GetConversionRules();
                     string startAv = startAtEvaluator.Eval(context);
                     Tuple<string, IList<int>> memo = startAtMemo;

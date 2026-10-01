@@ -465,7 +465,7 @@ namespace OutSmart.DAXon.Values
         public override IntegerValue Plus(IntegerValue other)
         {
 
-            // if either of the values is large, we use global::System.Numerics.BigInteger arithmetic to be on the safe side
+            // if either of the values is large, we use BigInteger arithmetic to be on the safe side
             if (other is Int64Value)
             {
                 long topa = (value >> 60) & 0xf;
@@ -494,7 +494,7 @@ namespace OutSmart.DAXon.Values
         public override IntegerValue Minus(IntegerValue other)
         {
 
-            // if either of the values is large, we use global::System.Numerics.BigInteger arithmetic to be on the safe side
+            // if either of the values is large, we use BigInteger arithmetic to be on the safe side
             if (other is Int64Value)
             {
                 long topa = (value >> 60) & 0xf;
@@ -523,7 +523,7 @@ namespace OutSmart.DAXon.Values
         public override IntegerValue Times(IntegerValue other)
         {
 
-            // if either of the values is large, we use global::System.Numerics.BigInteger arithmetic to be on the safe side
+            // if either of the values is large, we use BigInteger arithmetic to be on the safe side
             if (other is Int64Value)
             {
                 if (IsLong() || ((Int64Value)other).IsLong())
@@ -547,7 +547,7 @@ namespace OutSmart.DAXon.Values
         public override NumericValue Div(IntegerValue other)
         {
 
-            // if either of the values is large, we use global::System.Numerics.BigInteger arithmetic to be on the safe side
+            // if either of the values is large, we use BigInteger arithmetic to be on the safe side
             if (other is Int64Value)
             {
                 long quotient = ((Int64Value)other).value;
@@ -585,7 +585,7 @@ namespace OutSmart.DAXon.Values
         public override IntegerValue Mod(IntegerValue other)
         {
 
-            // if either of the values is large, we use global::System.Numerics.BigInteger arithmetic to be on the safe side
+            // if either of the values is large, we use BigInteger arithmetic to be on the safe side
             if (other is Int64Value)
             {
                 long quotient = ((Int64Value)other).value;
@@ -615,7 +615,7 @@ namespace OutSmart.DAXon.Values
         public override IntegerValue Idiv(IntegerValue other)
         {
 
-            // if either of the values is large, we use global::System.Numerics.BigInteger arithmetic to be on the safe side
+            // if either of the values is large, we use BigInteger arithmetic to be on the safe side
             if (other.Signum() == 0)
             {
                 throw new XPathException("Integer division by zero", "FOAR0001");
@@ -651,7 +651,7 @@ namespace OutSmart.DAXon.Values
         }
 
         /// <summary>
-        /// Get the value as a global::System.Numerics.BigInteger
+        /// Get the value as a BigInteger
         /// </summary>
         public override BigInteger AsBigInteger()
         {

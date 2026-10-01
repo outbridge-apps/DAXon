@@ -30,7 +30,7 @@ using System.IO;
 namespace OutSmart.DAXon.XQuery
 {
     //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(global::System.Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
+    //        "    public void setErrorReporter(Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
     //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
     //                + "    }"
     //})

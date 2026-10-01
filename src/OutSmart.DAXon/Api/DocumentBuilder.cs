@@ -208,7 +208,7 @@ namespace OutSmart.DAXon.Api
 
         // .NET-native input overloads (P5): build a document directly from a Stream/TextReader with an
         // explicit system identifier — the caller no longer constructs a JAXP Source.
-        public virtual XdmNode Build(global::System.IO.Stream input, string systemId)
+        public virtual XdmNode Build(System.IO.Stream input, string systemId)
         {
             if (input == null)
                 throw new NullReferenceException("input");
@@ -217,7 +217,7 @@ namespace OutSmart.DAXon.Api
                 null, InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), systemId, null, ws, ws, config), systemId);
         }
 
-        public virtual XdmNode Build(global::System.IO.TextReader input, string systemId)
+        public virtual XdmNode Build(System.IO.TextReader input, string systemId)
         {
             if (input == null)
                 throw new NullReferenceException("input");
@@ -249,7 +249,7 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        public virtual XdmNode Build(global::System.IO.TextReader input)
+        public virtual XdmNode Build(System.IO.TextReader input)
             => Build(input, BaseUri != null ? BaseUri.AbsoluteUri : "urn:input");
 
         // Source-free document build: parse the reader straight into a tree (Configuration.BuildDocumentTree
@@ -257,7 +257,7 @@ namespace OutSmart.DAXon.Api
         // The reader is built by a factory rather than passed in: creating it already reads from
         // the input (encoding sniff, prolog), so the input cap can fire there - inside the guard
         // that turns an engine XPathException into the API's own exception type.
-        private XdmNode BuildFromXmlReader(Func<global::System.Xml.XmlReader> makeReader, string systemId)
+        private XdmNode BuildFromXmlReader(Func<System.Xml.XmlReader> makeReader, string systemId)
         {
             ParseOptions options = GetParseOptions();
             // A standalone build runs outside any transformation, but the parse loop honours the
@@ -266,7 +266,7 @@ namespace OutSmart.DAXon.Api
             OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(config);
             try
             {
-                using (global::System.Xml.XmlReader reader = makeReader())
+                using (System.Xml.XmlReader reader = makeReader())
                 {
                     ITreeInfo doc = config.BuildDocumentTree(reader, systemId, options);
                     return new XdmNode(doc.GetRootNode());
@@ -381,7 +381,7 @@ namespace OutSmart.DAXon.Api
             {
                 ParseOptions options = GetParseOptions();
                 PipelineConfiguration pipe = config.MakePipelineConfiguration();
-                using (global::System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, null, file, null, false, false, config))
+                using (System.Xml.XmlReader reader = global::OutSmart.DAXon.Events.XmlReaderToReceiver.CreateXmlReader(null, null, file, null, false, false, config))
                 {
                     Sender.Send(reader, file, destination.GetReceiver(pipe, new SerializationProperties()), options);
                 }

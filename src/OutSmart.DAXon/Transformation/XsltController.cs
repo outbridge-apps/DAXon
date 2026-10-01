@@ -730,7 +730,7 @@ namespace OutSmart.DAXon.Transformation
 
             // Determine whether we need to close the output stream at the end. We
             // do this if the Result object is a StreamResult and is supplied as a
-            // system ID, not as a global::System.IO.TextWriter or global::System.IO.Stream
+            // system ID, not as a System.IO.TextWriter or System.IO.Stream
             ComplexContentOutputter dest = PrepareOutputReceiver(result);
             XPathContextMajor initialContext = NewXPathContext();
             initialContext.Origin = this;

@@ -82,7 +82,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -100,7 +100,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -304,7 +304,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -331,7 +331,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -352,7 +352,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -442,7 +442,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -470,7 +470,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -491,7 +491,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -512,7 +512,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -648,7 +648,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -724,7 +724,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -760,7 +760,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -781,7 +781,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -802,7 +802,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -829,7 +829,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -862,7 +862,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -889,7 +889,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -916,7 +916,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -937,7 +937,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -958,7 +958,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -991,7 +991,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -1015,7 +1015,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.
@@ -1036,7 +1036,7 @@ namespace OutSmart.DAXon.Expressions
       *
       * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
       *     expression
-      * @exception global::System.InvalidCastException if the result type of the
+      * @exception InvalidCastException if the result type of the
       *     expression is not xs:string?
       * @param context The context in which the expression is to be evaluated
       * @return the value of the expression, evaluated in the current context.

@@ -21,7 +21,7 @@ using OutSmart.DAXon.Internal.Collections;
 using OutSmart.DAXon.Core;
 namespace OutSmart.DAXon.Transformation
 {
-    public class XPathException : global::System.Exception
+    public class XPathException : Exception
     {
         private bool _isTypeError = false;
         private bool _isSyntaxError = false;

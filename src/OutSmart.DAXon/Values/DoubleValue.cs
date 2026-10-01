@@ -330,10 +330,10 @@ namespace OutSmart.DAXon.Values
      */ //    public static void printInternalForm(double d) {
         //                             (bits & 0xfffffffffffffL) << 1 :
         //                             (bits & 0xfffffffffffffL) | 0x10000000000000L;
-        //                dec = dec.multiply(new BigDecimal(global::System.Numerics.BigInteger.valueOf(2).pow(exponent)));
+        //                dec = dec.multiply(new BigDecimal(System.Numerics.BigInteger.valueOf(2).pow(exponent)));
         //            } else {
         //                // Next line is sometimes failing, e.g. on -3.62e-5. Not investigated.
-        //                dec = dec.divide(new BigDecimal(global::System.Numerics.BigInteger.valueOf(2).pow(-exponent)), BigDecimal.ROUND_HALF_EVEN);
+        //                dec = dec.divide(new BigDecimal(System.Numerics.BigInteger.valueOf(2).pow(-exponent)), BigDecimal.ROUND_HALF_EVEN);
         //    public static DoubleValue fromInternalForm(String hex) {
         //        return new DoubleValue(Double.longBitsToDouble(Long.parseLong(hex, 16)));
         //
