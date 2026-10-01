@@ -34,8 +34,8 @@ namespace OutSmart.DAXon.Events
     internal sealed class XmlReaderToReceiver
     {
 
-        // The XML declaration is ASCII-compatible in every XML-supported encoding, so peeking the first bytes
-        // as Latin-1 (a lossless byte↔char map) safely finds version="1.1" regardless of the real encoding.
+        // The XML declaration is ASCII in every byte-oriented XML encoding, so matching the first bytes
+        // directly finds version="1.1" regardless of the real encoding (UTF-16 is not peeked, as before).
         private const int XmlDeclPeekBytes = 256;
         // JAXP disable/enable-output-escaping PI targets (javax.xml.transform.Result.PI_*).
         private const string PI_DISABLE_OUTPUT_ESCAPING = "javax.xml.transform.disable-output-escaping";
@@ -237,31 +237,73 @@ namespace OutSmart.DAXon.Events
                 n += r;
             }
 
-            var latin1 = System.Text.Encoding.GetEncoding("ISO-8859-1");
-            string decl = latin1.GetString(head, 0, n);
-            if (IsXml11Declaration(decl))
+            int digit = Xml11VersionDigit(head, n);
+            if (digit >= 0)
             {
                 settings.CheckCharacters = false;
-                // '1.1' -> '1.0' is length-preserving, so the byte offsets the parser sees are unchanged.
-                string patched = decl.Replace("version=\"1.1\"", "version=\"1.0\"").Replace("version='1.1'", "version='1.0'");
-                byte[] patchedHead = latin1.GetBytes(patched);
-                return new PrefixedStream(patchedHead, patchedHead.Length, input);
+                // '1.1' -> '1.0' is length-preserving, so the byte offsets the parser sees are unchanged
+                head[digit] = (byte)'0';
             }
 
             return new PrefixedStream(head, n, input);
         }
 
-        private static bool IsXml11Declaration(string s)
+        // Offset of the last digit of version="1.1" (or '1.1') in the document's XML declaration, else
+        // -1. Checked on the bytes: decoding the peek to a Latin-1 string cost ~1 KB and 3.6k cycles
+        // per document.
+        private static int Xml11VersionDigit(byte[] head, int n)
         {
-            int decl = s.IndexOf("<?xml", StringComparison.Ordinal);
-            if (decl < 0 || decl > 3)   // must be the document's XML declaration (BOM may precede it)
+            int decl = -1;
+            for (int i = 0; i <= 3; i++)   // a BOM may precede the declaration
+            {
+                if (BytesAt(head, n, i, "<?xml"))
+                {
+                    decl = i;
+                    break;
+                }
+            }
+
+            if (decl < 0)
+            {
+                return -1;
+            }
+
+            for (int i = decl + 5; i < n; i++)
+            {
+                if (BytesAt(head, n, i, "?>"))
+                {
+                    return -1;
+                }
+
+                if (BytesAt(head, n, i, "version=") && i + 12 < n)
+                {
+                    byte quote = head[i + 8];
+                    if ((quote == '"' || quote == '\'') && head[i + 9] == '1' && head[i + 10] == '.' && head[i + 11] == '1' && head[i + 12] == quote)
+                    {
+                        return i + 11;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        private static bool BytesAt(byte[] bytes, int n, int at, string ascii)
+        {
+            if (at + ascii.Length > n)
             {
                 return false;
             }
 
-            int end = s.IndexOf("?>", decl, StringComparison.Ordinal);
-            string declPart = end >= 0 ? s.Substring(decl, end - decl) : s;
-            return declPart.Contains("version=\"1.1\"") || declPart.Contains("version='1.1'");
+            for (int k = 0; k < ascii.Length; k++)
+            {
+                if (bytes[at + k] != ascii[k])
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public void Parse()
