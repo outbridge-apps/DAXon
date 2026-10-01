@@ -19,6 +19,12 @@ namespace OutSmart.DAXon.Api
     /// as before this type existed. Resolvers and handlers the host installs are the host's own
     /// code and are not gated. A policy is frozen when a <see cref="Processor"/> takes it; a frozen
     /// policy is immutable and can serve any number of processors.
+    /// <para>
+    /// A denied read fails the way a missing resource fails - the function's usual error code, with
+    /// a message naming the missing permission or rule - before any file or network access;
+    /// doc-available() and unparsed-text-available() return false. Under any policy but the default,
+    /// HTTP redirects are followed by the engine and every hop is checked like the first URI.
+    /// </para>
     /// </summary>
     public class ResourceAccessPolicy
     {
@@ -32,6 +38,7 @@ namespace OutSmart.DAXon.Api
         private volatile bool frozen;
         private bool unrestricted;
 
+        /// <summary>A policy that allows everything, with the 150 MB input cap - the behaviour of 1.3.3.</summary>
         public ResourceAccessPolicy()
         {
             AllowedHosts = new HostRuleCollection();
@@ -82,7 +89,11 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        /// <summary>Largest input accepted, in bytes; <see cref="long.MaxValue"/> disables the cap.</summary>
+        /// <summary>
+        /// Largest input accepted, in bytes; <see cref="long.MaxValue"/> disables the cap. Unlike the
+        /// access flags it is not only about what a stylesheet fetches: it also caps input the host
+        /// passes in directly - DocumentBuilder, JsonBuilder, XsltCompiler, DocumentCache.
+        /// </summary>
         public long MaxInputBytes
         {
             get => maxInputBytes;
@@ -104,8 +115,10 @@ namespace OutSmart.DAXon.Api
         /// <summary>A network host matching any of these rules is denied; checked before <see cref="AllowedHosts"/>.</summary>
         public HostRuleCollection BlockedHosts { get; }
 
+        /// <summary>True once a Processor has taken the policy (or <see cref="Freeze"/> was called); setters then throw.</summary>
         public bool IsFrozen => frozen;
 
+        /// <summary>Makes the policy and its rule lists immutable. Called by the Processor; idempotent.</summary>
         public void Freeze()
         {
             if (frozen)
@@ -138,6 +151,11 @@ namespace OutSmart.DAXon.Api
             return Reason(uri, true) == null;
         }
 
+        /// <summary>
+        /// Whether the built-in resolver may read the environment variable <paramref name="name"/>;
+        /// a denied variable reads as unset, and available-environment-variables() lists only the
+        /// permitted names.
+        /// </summary>
         public virtual bool PermitsEnvironmentVariable(string name)
         {
             return allowEnvironmentVariables;

@@ -39,6 +39,7 @@ namespace OutSmart.DAXon.Api
             }
         }
 
+        /// <summary>True once a Processor has taken the options (or <see cref="Freeze"/> was called); setters then throw.</summary>
         public bool IsFrozen => frozen;
 
         /// <summary>Makes the options and their policy immutable; a null <see cref="Resources"/> becomes the default policy.</summary>

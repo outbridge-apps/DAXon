@@ -21,6 +21,7 @@ namespace OutSmart.DAXon.Api
     /// </summary>
     public abstract class HostRule
     {
+        /// <summary>For a custom rule: derive and implement <see cref="Matches"/>.</summary>
         protected HostRule()
         {
         }
@@ -50,6 +51,13 @@ namespace OutSmart.DAXon.Api
         /// An IPv4 or IPv6 range in CIDR form (<c>10.0.0.0/8</c>, <c>fd00::/8</c>; a bare address is
         /// a single-address range). Tested against a literal IP in the URI, or against the addresses
         /// a host name resolves to.
+        /// <para>
+        /// For a host name the addresses are resolved before the request, within the run's deadline,
+        /// and the HTTP stack resolves the name again when it connects; a DNS answer that changes in
+        /// between is not seen. Host-name rules (<see cref="Exact"/>, <see cref="Wildcard"/>) are the
+        /// reliable form of an allow-list; IP ranges are an additional layer, typically for blocking
+        /// internal networks.
+        /// </para>
         /// </summary>
         public static HostRule IpRange(string cidr)
         {

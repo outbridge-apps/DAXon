@@ -37,8 +37,8 @@ embedded data files. If your clone predates that file, run
 using System.IO;
 using OutSmart.DAXon.Api;
 
-// One Processor per process — reusable and thread-safe. Optional resource limits:
-// new Processor(transformTimeout: TimeSpan.FromMinutes(1), maxInputBytes: 150L * 1024 * 1024)
+// One Processor per process — reusable and thread-safe. Time limit, input cap and what a
+// stylesheet may reach: new Processor(new ProcessorOptions { ... }) — see Security below.
 var proc = new Processor();
 
 // Compile once, reuse for any number of transformations (thread-safe).
@@ -60,6 +60,58 @@ string result = output.ToString();
 Expected failures (bad stylesheet, bad input, resource limit hit) arrive as
 `DAXonApiException` with standard XSLT/XPath error codes — one `try/catch` around the
 transform call is the whole error-handling contract.
+
+## Security
+
+A stylesheet or query can reach outside the transformation through the engine's built-in
+resolvers:
+
+- read local files and fetch URLs — `doc`, `document`, `xsl:source-document`, `unparsed-text`,
+  `json-doc`, `collection`, `xsl:include` / `xsl:import`, `fn:transform`, `load-xquery-module`,
+  and external entities / DTDs in any XML it parses;
+- read environment variables — `environment-variable`, `available-environment-variables`,
+  `system-property`;
+- write files — `xsl:result-document`.
+
+**Everything is allowed by default**, as in every earlier version. When stylesheets come from
+people you do not fully trust, restrict it when you create the `Processor`:
+
+```csharp
+var policy = new ResourceAccessPolicy
+{
+    AllowFileRead = false,
+    AllowFileWrite = false,
+    AllowEnvironmentVariables = false,
+    MaxInputBytes = 50L * 1024 * 1024,
+};
+policy.AllowedHosts.Add(HostRule.Exact("api.contoso.com"));
+policy.AllowedHosts.Add(HostRule.Wildcard("*.contoso.net"));    // subdomains only
+policy.BlockedHosts.Add(HostRule.IpRange("10.0.0.0/8"));
+
+var proc = new Processor(new ProcessorOptions
+{
+    TransformTimeout = TimeSpan.FromSeconds(30),
+    Resources = policy,
+});
+```
+
+- A denied read fails the way a missing resource fails: the function's usual error code
+  (`FODC0002`, `FOUT1170`, `XTSE0165`, ...) with a message naming the missing permission, before
+  any file or network access. `doc-available` / `unparsed-text-available` return `false`, a
+  denied environment variable reads as unset, a denied `xsl:result-document` raises `SXRD0004`.
+- Network hosts: `BlockedHosts` is checked first, then — if it is not empty — `AllowedHosts`.
+  Rules are `Exact`, `Wildcard`, `Regex` (anchored, case-insensitive, with a match timeout) and
+  `IpRange` (CIDR); hosts compare in canonical form (punycode, lower case, IPv4-mapped addresses
+  as IPv4). Under a policy, HTTP redirects are followed by the engine and every hop is checked.
+  Prefer host-name rules for allow-lists: an IP range is checked against the addresses resolved
+  before the request, and the HTTP stack resolves the name again when it connects.
+- Your own code is trusted and not gated: a resolver or `xsl:result-document` handler you
+  install, and calls with an explicit path such as `DocumentBuilder.Build(file)`.
+  `MaxInputBytes` caps input you pass in directly too (`DocumentBuilder`, `XsltCompiler`, ...).
+- The `Processor` freezes the policy; a frozen policy can be shared between processors, and
+  `fn:transform` / `xsl:evaluate` inherit it. For decisions of your own, derive from
+  `ResourceAccessPolicy` and override `PermitsRead`, `PermitsWrite` or
+  `PermitsEnvironmentVariable` (and `DescribeDenial` for the message).
 
 ## Status
 
