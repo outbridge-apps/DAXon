@@ -69,7 +69,6 @@ namespace OutSmart.DAXon.Resources
                         // header name had been mangled to "ILocation" by the ILocation-type rename
                         // sweep - a silent artifact precisely because the loop was dormant.
                         Uri previous = url;
-                        url = new Uri(url, location);
                         cookies = conn.GetHeaderField("Set-Cookie");
 
                         // Every header read above needs the response, so release it only now - but
@@ -77,6 +76,15 @@ namespace OutSmart.DAXon.Resources
                         // Nobody will ever read this hop's body, and an abandoned response keeps its
                         // socket checked out of the pool until finalization.
                         conn.Disconnect();
+                        try
+                        {
+                            url = new Uri(url, location);
+                        }
+                        catch (UriFormatException e)
+                        {
+                            throw new IOException("Redirect from " + previous + " to an invalid location: " + e.Message, e);
+                        }
+
                         if (manual)
                         {
                             CheckHop(previous, url, config, kind);
