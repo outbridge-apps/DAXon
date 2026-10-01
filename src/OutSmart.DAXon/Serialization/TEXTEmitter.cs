@@ -44,6 +44,7 @@ namespace OutSmart.DAXon.Serialization
             if (characterSet == null)
             {
                 characterSet = UTF8CharacterSet.GetInstance();
+                allCharactersEncodable = true;
             }
 
 

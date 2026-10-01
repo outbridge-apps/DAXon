@@ -24,12 +24,12 @@ namespace OutSmart.DAXon.Model
         public const int USER_DEFINED_MASK = 0xffc00;
         // Limit: maximum number of fingerprints
         private static readonly int MAX_FINGERPRINT = FP_MASK;
-        // Writes happen under the AllocateFingerprint lock, but GetFingerprint and
+        // Writes happen under the AllocateFingerprint lock, but its hit path, GetFingerprint and
         // GetUnprefixedQName read lock-free from transform threads, so both maps must be
         // concurrent (upstream: ConcurrentHashMap): a plain-Dictionary read that straddles
         // the writer's resize walks a mixed-modulus chain and misses a present key.
-        // A map from QNames to fingerprints
-        private readonly ConcurrentDictionary<StructuredQName, int> qNameToInteger = new ConcurrentDictionary<StructuredQName, int>(1, 1000);
+        // A map from names to fingerprints
+        private readonly ConcurrentDictionary<NameKey, int> qNameToInteger = new ConcurrentDictionary<NameKey, int>(1, 1000);
         // A map from fingerprints to QNames
         private readonly ConcurrentDictionary<int, StructuredQName> integerToQName = new ConcurrentDictionary<int, StructuredQName>(1, 1000);
         // Next fingerprint available to be allocated. Starts at 1024 as low-end fingerprints are statically allocated to system-defined
@@ -83,20 +83,25 @@ namespace OutSmart.DAXon.Model
 
         public int AllocateFingerprint(NamespaceUri uri, string local)
         {
+            if (NamespaceUri.IsReserved(uri) || NamespaceUri.SAXON.Equals(uri))
+            {
+                int fp = StandardNames.GetFingerprint(uri, local);
+                if (fp != -1)
+                {
+                    return fp;
+                }
+            }
+
+            // Every document re-resolves the same names: a hit needs neither the lock nor an allocation
+            NameKey key = new NameKey(uri, local);
+            if (qNameToInteger.TryGetValue(key, out int existing))
+            {
+                return existing;
+            }
+
             lock (syncLock)
             {
-                if (NamespaceUri.IsReserved(uri) || NamespaceUri.SAXON.Equals(uri))
-                {
-                    int fp = StandardNames.GetFingerprint(uri, local);
-                    if (fp != -1)
-                    {
-                        return fp;
-                    }
-                }
-
-                StructuredQName qName = new StructuredQName("", uri, local);
-                int existing = qNameToInteger.GetOrDefault(qName, -1);
-                if (existing >= 0)
+                if (qNameToInteger.TryGetValue(key, out existing))
                 {
                     return existing;
                 }
@@ -118,22 +123,11 @@ namespace OutSmart.DAXon.Model
                 }
 
                 int next = (int)nextUnique;
-                int existing2 = qNameToInteger.PutIfAbsent(qName, next);
-                if (KeyWasAbsent(existing2))
-                {
-                    integerToQName[next] = qName;
-                    return next;
-                }
-                else
-                {
-                    return existing;
-                }
+                // Reverse map first: a lock-free reader that finds the fingerprint must be able to resolve it
+                integerToQName[next] = new StructuredQName("", uri, local);
+                qNameToInteger[key] = next;
+                return next;
             }
-        }
-
-        private static bool KeyWasAbsent(int result)
-        {
-            return result == 0;
         }
 
         /// <summary>
@@ -216,7 +210,24 @@ namespace OutSmart.DAXon.Model
                 }
             }
 
-            return qNameToInteger.GetOrDefault(new StructuredQName("", uri, localName), -1);
+            return qNameToInteger.TryGetValue(new NameKey(uri, localName), out int found) ? found : -1;
+        }
+
+        // StructuredQName equality (identity of the interned URI, ordinal local part) without the allocation
+        private readonly struct NameKey : IEquatable<NameKey>
+        {
+            private readonly NamespaceUri uri;
+            private readonly string local;
+
+            public NameKey(NamespaceUri uri, string local)
+            {
+                this.uri = uri;
+                this.local = local;
+            }
+
+            public bool Equals(NameKey other) => uri == other.uri && string.Equals(local, other.local);
+            public override bool Equals(object obj) => obj is NameKey other && Equals(other);
+            public override int GetHashCode() => StructuredQName.ComputeHashCode(uri, local);
         }
 
         /// <summary>

@@ -22,6 +22,8 @@ namespace OutSmart.DAXon.Types
 {
     public class UType
     {
+        // Enum.GetValues reflects and allocates per call; compile-time node tests decompose constantly
+        private static readonly PrimitiveUType[] AllPrimitives = (PrimitiveUType[])Enum.GetValues(typeof(PrimitiveUType));
         public static readonly UType VOID = new UType(0);
         public static readonly UType DOCUMENT = PrimitiveUType.DOCUMENT.ToUType();
         public static readonly UType ELEMENT = PrimitiveUType.ELEMENT.ToUType();
@@ -216,7 +218,7 @@ namespace OutSmart.DAXon.Types
         public virtual HashSet<PrimitiveUType> Decompose()
         {
             HashSet<PrimitiveUType> result = new HashSet<PrimitiveUType>();
-            foreach (PrimitiveUType p in (PrimitiveUType[])Enum.GetValues(typeof(PrimitiveUType)))
+            foreach (PrimitiveUType p in AllPrimitives)
             {
                 if ((bits & (1 << p.GetBit())) != 0)
                 {

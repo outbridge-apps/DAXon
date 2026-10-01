@@ -136,6 +136,7 @@ namespace OutSmart.DAXon.Serialization
             if (characterSet == null)
             {
                 characterSet = UTF8CharacterSet.GetInstance();
+                allCharactersEncodable = true;
             }
 
             if (outputProperties == null)
@@ -689,6 +690,12 @@ namespace OutSmart.DAXon.Serialization
         //return;
         protected virtual int TestCharacters(UnicodeString chars)
         {
+            // UTF-8/16 encode every code point: skip the per-character delegate scan
+            if (allCharactersEncodable)
+            {
+                return 0;
+            }
+
             long foundInvalid = chars.IndexWhere((ch) => ch > 127 && !characterSet.InCharset(ch), 0);
             if (foundInvalid >= 0)
             {

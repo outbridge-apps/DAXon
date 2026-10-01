@@ -59,7 +59,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
         public IEnumerator<SortKeyDefinition> IIterator()
         {
-            return sortKeyDefinitions.ToList().GetEnumerator();
+            return ((IEnumerable<SortKeyDefinition>)sortKeyDefinitions).GetEnumerator();
         }
 
         public override Expression Copy(RebindingMap rebindings)
@@ -80,7 +80,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 skd.Export(@out);
             }
         }
-        public IEnumerator<SortKeyDefinition> GetEnumerator() { foreach (var __skd in sortKeyDefinitions) yield return __skd; }
+        public IEnumerator<SortKeyDefinition> GetEnumerator() => IIterator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

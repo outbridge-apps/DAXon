@@ -65,7 +65,7 @@ namespace OutSmart.DAXon.Expressions.Operators
 
         public virtual IEnumerator<Operand> IIterator()
         {
-            return operandArray.ToList().GetEnumerator();
+            return ((IEnumerable<Operand>)operandArray).GetEnumerator();
         }
 
         public virtual Operand[] Copy()
