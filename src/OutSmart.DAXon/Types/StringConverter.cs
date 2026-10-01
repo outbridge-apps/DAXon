@@ -474,17 +474,14 @@ namespace OutSmart.DAXon.Types
 
             public override IConversionResult ConvertString(UnicodeString input)
             {
-                try
+                if (GetConversionRules().StringToDoubleConverter.TryStringToNumber(input, out double d))
                 {
-                    float flt = (float)GetConversionRules().StringToDoubleConverter.StringToNumber(input);
-                    return new FloatValue(flt);
+                    return new FloatValue((float)d);
                 }
-                catch (FormatException err)
-                {
-                    ValidationFailure ve = new ValidationFailure("Cannot convert string to float: " + input);
-                    ve.SetErrorCode("FORG0001");
-                    return ve;
-                }
+
+                ValidationFailure ve = new ValidationFailure("Cannot convert string to float: " + input);
+                ve.SetErrorCode("FORG0001");
+                return ve;
             }
         }
 

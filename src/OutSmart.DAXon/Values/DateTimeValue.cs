@@ -560,7 +560,7 @@ namespace OutSmart.DAXon.Values
                         return BadDate("Non-numeric fractional seconds component", s);
                     }
 
-                    double fractionalSeconds = double.Parse('.' + tok.TokenString(effLen));
+                    double fractionalSeconds = double.Parse('.' + tok.TokenString(effLen), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
                     int nanoSeconds = (int)JavaMath.Round(fractionalSeconds * 1000000000);
                     if (nanoSeconds == 1000000000)
                     {

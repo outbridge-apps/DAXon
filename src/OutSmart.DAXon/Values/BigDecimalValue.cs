@@ -95,20 +95,33 @@ namespace OutSmart.DAXon.Values
         }
         public static IConversionResult MakeDecimalValue(string @in, bool validate)
         {
-            try
+            BigDecimalValue parsed = ParseCore(@in, out string error);
+            if (error == null)
             {
-                return Parse(@in);
+                return parsed;
             }
-            catch (FormatException err)
-            {
-                ValidationFailure e = new ValidationFailure("Cannot convert string " + Err.Wrap(@in, Err.VALUE) + " to xs:decimal: " + err.Message);
-                e.SetErrorCode("FORG0001");
-                return e;
-            }
+
+            ValidationFailure e = new ValidationFailure("Cannot convert string " + Err.Wrap(@in, Err.VALUE) + " to xs:decimal: " + error);
+            e.SetErrorCode("FORG0001");
+            return e;
         }
 
         public static BigDecimalValue Parse(string @in)
         {
+            BigDecimalValue parsed = ParseCore(@in, out string error);
+            if (error != null)
+            {
+                throw new FormatException(error);
+            }
+
+            return parsed;
+        }
+
+        // null with the reason in error when @in is not an xs:decimal lexical form; never throws on bad
+        // input, so casts and castable over dirty data stay cheap.
+        private static BigDecimalValue ParseCore(string @in, out string error)
+        {
+            error = null;
             // Compact fast path: one pass, no StringBuilder — the dominant case is a plain decimal
             // whose magnitude fits a long (≤18 significant digits). Same state machine and the same
             // FormatException texts as the general path; any overflow bails out BEFORE mutating
@@ -134,13 +147,14 @@ namespace OutSmart.DAXon.Values
 
                     if (state == 5)
                     {
-                        throw new FormatException("contains embedded whitespace");
+                        error = "contains embedded whitespace";
+                        return null;
                     }
 
                     foundDigit = true;
                     if (acc > (long.MaxValue - 9) / 10)
                     {
-                        return ParseSlow(@in);
+                        return ParseSlow(@in, out error);
                     }
 
                     acc = acc * 10 + (c - '0');
@@ -162,7 +176,8 @@ namespace OutSmart.DAXon.Values
                         case '+':
                             if (state != 0)
                             {
-                                throw new FormatException("unexpected sign");
+                                error = "unexpected sign";
+                                return null;
                             }
 
                             state = 1;
@@ -170,7 +185,8 @@ namespace OutSmart.DAXon.Values
                         case '-':
                             if (state != 0)
                             {
-                                throw new FormatException("unexpected sign");
+                                error = "unexpected sign";
+                                return null;
                             }
 
                             state = 1;
@@ -179,25 +195,29 @@ namespace OutSmart.DAXon.Values
                         case '.':
                             if (state == 5)
                             {
-                                throw new FormatException("contains embedded whitespace");
+                                error = "contains embedded whitespace";
+                                return null;
                             }
 
                             if (state >= 3)
                             {
-                                throw new FormatException("more than one decimal point");
+                                error = "more than one decimal point";
+                                return null;
                             }
 
                             state = 3;
                             break;
                         default:
-                            throw new FormatException("invalid character '" + c + "'");
+                            error = "invalid character '" + c + "'";
+                            return null;
                     }
                 }
             }
 
             if (!foundDigit)
             {
-                throw new FormatException("no digits in value");
+                error = "no digits in value";
+                return null;
             }
 
             // remove insignificant trailing zeroes
@@ -215,8 +235,9 @@ namespace OutSmart.DAXon.Values
             return new BigDecimalValue(BigDecimal.FromCompact(neg ? -acc : acc, scale));
         }
 
-        private static BigDecimalValue ParseSlow(string @in)
+        private static BigDecimalValue ParseSlow(string @in, out string error)
         {
+            error = null;
             StringBuilder digits = new StringBuilder(@in.Length);
             int scale = 0;
             int state = 0;
@@ -249,7 +270,8 @@ namespace OutSmart.DAXon.Values
                     case '+':
                         if (state != 0)
                         {
-                            throw new FormatException("unexpected sign");
+                            error = "unexpected sign";
+                            return null;
                         }
 
                         state = 1;
@@ -257,7 +279,8 @@ namespace OutSmart.DAXon.Values
                     case '-':
                         if (state != 0)
                         {
-                            throw new FormatException("unexpected sign");
+                            error = "unexpected sign";
+                            return null;
                         }
 
                         state = 1;
@@ -285,7 +308,8 @@ namespace OutSmart.DAXon.Values
 
                         if (state == 5)
                         {
-                            throw new FormatException("contains embedded whitespace");
+                            error = "contains embedded whitespace";
+                            return null;
                         }
 
                         digits.Append(c);
@@ -306,24 +330,28 @@ namespace OutSmart.DAXon.Values
                     case '.':
                         if (state == 5)
                         {
-                            throw new FormatException("contains embedded whitespace");
+                            error = "contains embedded whitespace";
+                            return null;
                         }
 
                         if (state >= 3)
                         {
-                            throw new FormatException("more than one decimal point");
+                            error = "more than one decimal point";
+                            return null;
                         }
 
                         state = 3;
                         break;
                     default:
-                        throw new FormatException("invalid character '" + c + "'");
+                        error = "invalid character '" + c + "'";
+                        return null;
                 }
             }
 
             if (!foundDigit)
             {
-                throw new FormatException("no digits in value");
+                error = "no digits in value";
+                return null;
             }
 
 

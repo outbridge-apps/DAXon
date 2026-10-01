@@ -277,7 +277,7 @@ namespace OutSmart.DAXon.Values
                         return BadTime("Non-numeric fractional seconds component", s);
                     }
 
-                    double fractionalSeconds = double.Parse('.' + part);
+                    double fractionalSeconds = double.Parse('.' + part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
                     nanosecond = (int)JavaMath.Round(fractionalSeconds * 1000000000);
                     if (hour == 24 && nanosecond != 0)
                     {

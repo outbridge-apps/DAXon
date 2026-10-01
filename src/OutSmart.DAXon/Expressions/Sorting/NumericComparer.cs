@@ -70,14 +70,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
             else
             {
-                try
-                {
-                    d1 = converter.StringToNumber(a.UnicodeStringValue);
-                }
-                catch (FormatException err)
-                {
-                    d1 = double.NaN;
-                }
+                d1 = converter.TryStringToNumber(a.UnicodeStringValue, out double v1) ? v1 : double.NaN;
             }
 
             if (b is NumericValue)
@@ -90,14 +83,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
             else
             {
-                try
-                {
-                    d2 = converter.StringToNumber(b.UnicodeStringValue);
-                }
-                catch (FormatException err)
-                {
-                    d2 = double.NaN;
-                }
+                d2 = converter.TryStringToNumber(b.UnicodeStringValue, out double v2) ? v2 : double.NaN;
             }
 
             if (double.IsNaN(d1))

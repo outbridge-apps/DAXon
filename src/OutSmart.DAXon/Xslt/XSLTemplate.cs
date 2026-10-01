@@ -492,7 +492,7 @@ namespace OutSmart.DAXon.Xslt
                         CompileError("Invalid numeric value for priority (" + priority + ')', "XTSE0530");
                     }
 
-                    priority = double.Parse(priorityAtt);
+                    priority = double.Parse(priorityAtt, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
                 }
                 catch (FormatException err)
                 {

@@ -101,8 +101,9 @@ namespace OutSmart.DAXon.Functions
 
                 if (value is StringValue && !(value is AnyURIValue))
                 {
-                    double d = config.GetConversionRules().StringToDoubleConverter.StringToNumber(value.UnicodeStringValue);
-                    return new DoubleValue(d);
+                    return config.GetConversionRules().StringToDoubleConverter.TryStringToNumber(value.UnicodeStringValue, out double d)
+                        ? new DoubleValue(d)
+                        : DoubleValue.NaN;
                 }
 
                 return DoubleValue.NaN;

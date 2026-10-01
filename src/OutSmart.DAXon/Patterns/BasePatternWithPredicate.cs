@@ -313,16 +313,7 @@ namespace OutSmart.DAXon.Patterns
                 UnicodeString us = TinyParentNodeImpl.GetStringValue(tiny.tree, tiny.nodeNr);
                 if (fp.Kind == FusedKind.Numeric)
                 {
-                    double d;
-                    try
-                    {
-                        d = StringToDouble11.GetInstance().StringToNumber(us);
-                    }
-                    catch (System.FormatException)
-                    {
-                        d = double.NaN;
-                    }
-
+                    double d = StringToDouble11.GetInstance().TryStringToNumber(us, out double parsed) ? parsed : double.NaN;
                     return CompareFusedNumeric(d, fp.Op, fp.NumLit);
                 }
 

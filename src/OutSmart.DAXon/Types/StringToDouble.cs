@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Globalization;
 using System.Text;
 using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
@@ -55,6 +56,27 @@ namespace OutSmart.DAXon.Types
 
         public virtual double StringToNumber(UnicodeString s)
         {
+            string error = ParseOrError(s, out double result);
+            if (error != null)
+            {
+                throw new FormatException(error);
+            }
+
+            return result;
+        }
+
+        // For callers that turn a bad value into NaN or a validation failure: dirty data (empty
+        // fields, "N/A") is common, and a thrown exception costs tens of microseconds per value.
+        internal bool TryStringToNumber(UnicodeString s, out double result)
+        {
+            return ParseOrError(s, out result) == null;
+        }
+
+        // null when s is an xs:double lexical form (result set), else why it is not. Never throws on
+        // bad input. Culture-invariant: under the thread culture de-DE read "-1.5" as -15.
+        internal string ParseOrError(UnicodeString s, out double result)
+        {
+            result = double.NaN;
 
             // first try to parse simple numbers by hand (it's cheaper)
             int len = s.Length32();
@@ -116,7 +138,7 @@ namespace OutSmart.DAXon.Types
                         case '9':
                             if (onlySpaceAllowed)
                             {
-                                throw new FormatException("Numeric value contains embedded whitespace");
+                                return "Numeric value contains embedded whitespace";
                             }
 
                             lastDigit = i;
@@ -132,12 +154,12 @@ namespace OutSmart.DAXon.Types
                         case '.':
                             if (onlySpaceAllowed)
                             {
-                                throw new FormatException("Numeric value contains embedded whitespace");
+                                return "Numeric value contains embedded whitespace";
                             }
 
                             if (dot != -1)
                             {
-                                throw new FormatException("Only one decimal point allowed");
+                                return "Only one decimal point allowed";
                             }
 
                             dot = i;
@@ -172,16 +194,18 @@ namespace OutSmart.DAXon.Types
                 {
                     if (lastDigit == -1)
                     {
-                        throw new FormatException("String to double conversion: no digits found");
+                        return "String to double conversion: no digits found";
                     }
                     else if (dot == -1 || dot > lastDigit)
                     {
-                        return (double)num;
+                        result = (double)num;
+                        return null;
                     }
                     else
                     {
                         int afterPoint = lastDigit - dot;
-                        return (double)num / powers[afterPoint];
+                        result = (double)num / powers[afterPoint];
+                        return null;
                     }
                 }
             }
@@ -231,73 +255,129 @@ namespace OutSmart.DAXon.Types
             string n = containsWhitespace ? Whitespace.Trim(s).ToString() : s.ToString();
             if ("INF".Equals(n))
             {
-                return double.PositiveInfinity;
+                result = double.PositiveInfinity;
+                return null;
             }
             else if ("+INF".Equals(n))
             {
-
                 // Allowed in XSD 1.1 but not in XSD 1.0
-                return SignedPositiveInfinity();
+                if (!PlusInfAllowed)
+                {
+                    return "the float/double value '+INF' is not allowed under XSD 1.0";
+                }
+
+                result = double.PositiveInfinity;
+                return null;
             }
             else if ("-INF".Equals(n))
             {
-                return double.NegativeInfinity;
+                result = double.NegativeInfinity;
+                return null;
             }
             else if ("NaN".Equals(n))
             {
-                return double.NaN;
+                result = double.NaN;
+                return null;
             }
-            else
+
+            // reject strings containing characters such as (x, f, d) allowed in Java but not in XPath,
+            // and other representations of NaN and Infinity such as 'Infinity'
+            if (containsDisallowedChars)
             {
+                return "invalid floating point value: " + s;
+            }
 
-                // reject strings containing characters such as (x, f, d) allowed in Java but not in XPath,
-                // and other representations of NaN and Infinity such as 'Infinity'
-                if (containsDisallowedChars)
+            if (!double.TryParse(n, NumberStyles.Float, CultureInfo.InvariantCulture, out double d))
+            {
+                if (!IsFloatLiteral(n))
                 {
-                    throw new FormatException("invalid floating point value: " + s);
+                    return "Input string was not in a correct format.";
                 }
 
-                try
-                {
-                    double d = double.Parse(n);
-                    // .NET's double.Parse collapses negative zero to +0.0; Java's Double.parseDouble
-                    // (which upstream Saxon relies on) preserves the sign. Restore it so e.g.
-                    // xs:double("-0e0") keeps string value "-0" (XPath/JSON canonical form).
-                    if (d == 0.0 && n[0] == '-')
-                    {
-                        return -0.0;
-                    }
+                // Out of range: .NET Framework reports that as a failure, Java's Double.parseDouble (and
+                // XPath xs:double) overflow to +/-INF.
+                d = n[0] == '-' ? double.NegativeInfinity : double.PositiveInfinity;
+            }
 
-                    return d;
-                }
-                catch (OverflowException)
+            // .NET's double.Parse collapses negative zero to +0.0; Java's Double.parseDouble (which
+            // upstream Saxon relies on) preserves the sign. Restore it so e.g. xs:double("-0e0") keeps
+            // string value "-0" (XPath/JSON canonical form).
+            result = d == 0.0 && n[0] == '-' ? -0.0 : d;
+            return null;
+        }
+
+        // [+-]? (digits [. digits*] | . digits) ([eE] [+-]? digits)? - what NumberStyles.Float takes
+        // once the whitespace is trimmed.
+        private static bool IsFloatLiteral(string n)
+        {
+            int i = 0;
+            if (i < n.Length && (n[i] == '+' || n[i] == '-'))
+            {
+                i++;
+            }
+
+            int mantissa = 0;
+            while (i < n.Length && n[i] >= '0' && n[i] <= '9')
+            {
+                i++;
+                mantissa++;
+            }
+
+            if (i < n.Length && n[i] == '.')
+            {
+                i++;
+                while (i < n.Length && n[i] >= '0' && n[i] <= '9')
                 {
-                    // net472 double.Parse throws OverflowException for magnitudes outside the double range
-                    // (e.g. 2e308); Java's Double.parseDouble (and XPath xs:double) overflow to +/-INF instead.
-                    return n[0] == '-' ? double.NegativeInfinity : double.PositiveInfinity;
-                }
-                catch (FormatException nfe)
-                {
-                    throw nfe;
+                    i++;
+                    mantissa++;
                 }
             }
+
+            if (mantissa == 0)
+            {
+                return false;
+            }
+
+            if (i < n.Length && (n[i] == 'e' || n[i] == 'E'))
+            {
+                i++;
+                if (i < n.Length && (n[i] == '+' || n[i] == '-'))
+                {
+                    i++;
+                }
+
+                int exponent = 0;
+                while (i < n.Length && n[i] >= '0' && n[i] <= '9')
+                {
+                    i++;
+                    exponent++;
+                }
+
+                if (exponent == 0)
+                {
+                    return false;
+                }
+            }
+
+            return i == n.Length;
         }
+
+        // Whether "+INF" is a legal lexical form: XSD 1.1 (StringToDouble11), not 1.0.
+        private protected virtual bool PlusInfAllowed => false;
 
         protected virtual double SignedPositiveInfinity()
         {
             throw new FormatException("the float/double value '+INF' is not allowed under XSD 1.0");
         }
+
         public override IConversionResult ConvertString(UnicodeString input)
         {
-            try
+            if (TryStringToNumber(input, out double d))
             {
-                double d = StringToNumber(input);
                 return new DoubleValue(d);
             }
-            catch (FormatException e)
-            {
-                return new ValidationFailure("Cannot convert string " + Err.Wrap(input, Err.VALUE) + " to double");
-            }
+
+            return new ValidationFailure("Cannot convert string " + Err.Wrap(input, Err.VALUE) + " to double");
         }
     }
 }

@@ -18,6 +18,8 @@ namespace OutSmart.DAXon.Functions
         public StringToDouble11() { }
         public static StringToDouble11 GetInstance() => _instance;
         // upstream: the ONE thing XSD 1.1 adds over 1.0 — "+INF" is a legal lexical form
+        private protected override bool PlusInfAllowed => true;
+
         protected override double SignedPositiveInfinity()
         {
             return double.PositiveInfinity;

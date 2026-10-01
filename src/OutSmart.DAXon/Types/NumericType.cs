@@ -155,15 +155,8 @@ namespace OutSmart.DAXon.Types
 
         public override ValidationFailure ValidateContent(UnicodeString value, INamespaceResolver nsResolver, ConversionRules rules)
         {
-            try
-            {
-                StringToDouble.GetInstance().StringToNumber(value);
-                return null;
-            }
-            catch (FormatException e)
-            {
-                return new ValidationFailure(e.Message);
-            }
+            string error = StringToDouble.GetInstance().ParseOrError(value, out _);
+            return error == null ? null : new ValidationFailure(error);
         }
 
         public override ValidationFailure CheckAgainstFacets(AtomicValue value, ConversionRules rules)

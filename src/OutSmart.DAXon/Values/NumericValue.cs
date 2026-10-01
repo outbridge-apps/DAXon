@@ -33,7 +33,7 @@ namespace OutSmart.DAXon.Values
             {
                 try
                 {
-                    return new DoubleValue(double.Parse(@in));
+                    return new DoubleValue(double.Parse(@in, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture));
                 }
                 catch (OverflowException)
                 {
