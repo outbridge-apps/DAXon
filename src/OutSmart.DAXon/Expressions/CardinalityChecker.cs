@@ -202,9 +202,16 @@ namespace OutSmart.DAXon.Expressions
 
         public override IItem EvaluateItem(IXPathContext context)
         {
+            return SingleItem(null, context);
+        }
+
+        // The singleton check with its two-item lookahead inline: no CardinalityCheckingIterator.
+        // A null operand evaluator means the interpreted operand.
+        private IItem SingleItem(IPullEvaluator operand, IXPathContext context)
+        {
             try
             {
-                ISequenceIterator iter = BaseExpression.Iterate(context);
+                ISequenceIterator iter = operand == null ? BaseExpression.Iterate(context) : operand(context);
                 IItem first = iter.Next();
                 if (first == null)
                 {
@@ -339,12 +346,14 @@ namespace OutSmart.DAXon.Expressions
                 return (context) => expr.CheckCardinality(argEval.Iterate(context), context);
             }
 
-            // Item consumers (fused scalar-fn args): EvaluateItem does the two-item lookahead inline,
-            // skipping the CardinalityCheckingIterator allocation of the pull path.
+            // Item consumers (fused scalar-fn args): the two-item lookahead inline, skipping the
+            // CardinalityCheckingIterator of the pull path. The operand is elaborated here, once:
+            // EvaluateItem's interpreted Iterate re-elaborated it on every call.
             public override IItemEvaluator ElaborateForItem()
             {
                 CardinalityChecker expr = (CardinalityChecker)GetExpression();
-                return (context) => expr.EvaluateItem(context);
+                IPullEvaluator argEval = expr.BaseExpression.MakeElaborator().ElaborateForPull();
+                return (context) => expr.SingleItem(argEval, context);
             }
 
             public override IPushEvaluator ElaborateForPush()

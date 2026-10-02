@@ -816,7 +816,7 @@ namespace OutSmart.DAXon.Expressions
         public void ComputeStaticProperties()
         {
             // Recurses into the operands' properties; after a reset the first query can come at run time.
-            StackGuard.Probe();
+            StackGuard.ProbeNesting(null);
             staticProperties = ComputeDependencies() | ComputeCardinality() | ComputeSpecialProperties();
         }
 
@@ -1198,6 +1198,9 @@ namespace OutSmart.DAXon.Expressions
         //
         public Elaborator MakeElaborator()
         {
+            // Every node of an elaboration passes here, and elaboration has no loop of its own to check
+            // the deadline in: a super-linear one (the nested-constructor 2^n) outlived TransformTimeout.
+            Controller.CheckActiveTimeout();
             Elaborator elab;
             lock (syncLock)
             {

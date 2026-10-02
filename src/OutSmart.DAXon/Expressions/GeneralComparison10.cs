@@ -5,6 +5,7 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Core;
+using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Expressions.Sorting;
 using OutSmart.DAXon.Functions;
@@ -174,6 +175,24 @@ namespace OutSmart.DAXon.Expressions.Compatibility
         public override bool EffectiveBooleanValue(IXPathContext context)
         {
             return EffectiveBooleanValue(GetLhsExpression().Iterate(context), GetRhsExpression().Iterate(context), context);
+        }
+
+        public override Elaborator GetElaborator()
+        {
+            return new GeneralComparison10Elaborator();
+        }
+
+        // The operands elaborated once. Through the fallback they were evaluated interpretively, and a
+        // function-call operand rebuilt its closures on every comparison (XSLT 1.0 stylesheets).
+        private sealed class GeneralComparison10Elaborator : BooleanElaborator
+        {
+            public override IBooleanEvaluator ElaborateForBoolean()
+            {
+                GeneralComparison10 expr = (GeneralComparison10)GetExpression();
+                IPullEvaluator lhs = expr.GetLhsExpression().MakeElaborator().ElaborateForPull();
+                IPullEvaluator rhs = expr.GetRhsExpression().MakeElaborator().ElaborateForPull();
+                return (context) => expr.EffectiveBooleanValue(lhs(context), rhs(context), context);
+            }
         }
 
         private bool EffectiveBooleanValue(ISequenceIterator iter0, ISequenceIterator iter1, IXPathContext context)

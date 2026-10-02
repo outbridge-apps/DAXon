@@ -6,6 +6,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Expressions;
+using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Model;
@@ -28,6 +29,7 @@ namespace OutSmart.DAXon.Patterns
     {
         private readonly NodeTest nodeTest;
         private Expression positionExpr;
+        private CachedEvaluator<IItemEvaluator> positionEvaluator;   // matching runs per node tested
         private bool usesPosition = true;
 
         public override int Dependencies => positionExpr.Dependencies & (StaticProperty.DEPENDS_ON_LOCAL_VARIABLES | StaticProperty.DEPENDS_ON_USER_FUNCTIONS);
@@ -144,10 +146,11 @@ namespace OutSmart.DAXon.Patterns
                     c = c3;
                 }
 
-                IItem predicate = positionExpr.EvaluateItem(c);
+                IItemEvaluator positionEval = CachedEvaluator<IItemEvaluator>.Get(ref positionEvaluator, positionExpr, e => e.ElaborateForItem());
+                IItem predicate = positionEval(c);
                 if (predicate is NumericValue)
                 {
-                    NumericValue position = (NumericValue)positionExpr.EvaluateItem(context);
+                    NumericValue position = (NumericValue)positionEval(context);
                     int requiredPos = position.AsSubscript();
                     if (actualPosition < 0 && requiredPos != -1)
                     {

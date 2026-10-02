@@ -30,11 +30,23 @@ namespace OutSmart.DAXon.Internal
     /// </summary>
     internal sealed class RecursionDepthError : Exception
     {
+        private const string NestingMessage = "Too many nested instructions or template/function calls for the thread's stack. "
+            + "The stylesheet may be looping, or be nested too deeply for this stack size.";
+
         private string description;
         private string errorCode;
         private ILocation location;
+        private bool nesting;
+        private ILocation nestingLocation;
 
         public RecursionDepthError() : base("") { }
+
+        /// <summary>Raised at a level of stylesheet nesting (an instruction's evaluation), not at a call.</summary>
+        internal static RecursionDepthError AtNesting(ILocation location)
+        {
+            bool known = location != null && (location.GetLineNumber() > 0 || location.GetSystemId() != null);
+            return new RecursionDepthError { nesting = true, nestingLocation = known ? location : null };
+        }
 
         public override string Message => description ?? base.Message;
 
@@ -44,6 +56,13 @@ namespace OutSmart.DAXon.Internal
         /// <summary>Records which recursion overflowed; returns this, for `throw e.Describe(...)`.</summary>
         public RecursionDepthError Describe(string message, string code, ILocation loc)
         {
+            if (nesting && code == DAXonErrorCode.SXLM0001)
+            {
+                // The claiming call sees a recursion, but the stack may have gone to nesting below it.
+                message = NestingMessage;
+                loc = nestingLocation ?? loc;
+            }
+
             description = message;
             errorCode = code;
             location = loc;
@@ -54,9 +73,9 @@ namespace OutSmart.DAXon.Internal
         public XPathException.StackOverflow ToXPathException()
         {
             return new XPathException.StackOverflow(
-                description ?? "Too many nested function or template calls. May be due to infinite recursion",
+                description ?? (nesting ? NestingMessage : "Too many nested function or template calls. May be due to infinite recursion"),
                 errorCode ?? DAXonErrorCode.SXLM0001,
-                location);
+                location ?? nestingLocation);
         }
     }
 }

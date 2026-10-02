@@ -167,7 +167,7 @@ namespace OutSmart.DAXon.Events
             if (level >= 1 && pendingStartTag)
             {
                 // Nested where-populated regions release into each other, a cascade as deep as the nesting.
-                StackGuard.Probe();
+                StackGuard.ProbeNesting(null);
                 if (pendingElemName == null)
                 {
                     NextOutputter.StartDocument(pendingProperties);

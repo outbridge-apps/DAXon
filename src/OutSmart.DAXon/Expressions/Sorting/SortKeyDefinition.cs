@@ -22,6 +22,7 @@ using System.Linq;
 using System.Text;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions;
+using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
@@ -33,6 +34,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
     public class SortKeyDefinition : PseudoExpression
     {
         protected Operand sortKey;
+        private CachedEvaluator<IItemEvaluator> sortKeyEvaluator;
         protected Operand order;
         protected Operand dataTypeExpression = null;
         protected Operand caseOrder;
@@ -47,6 +49,9 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private IAtomicComparer finalComparator = null;
 
         public virtual Expression SortKey => sortKey.GetChildExpression();
+
+        // For callers that evaluate the key per item outside elaborated code (order by, merge keys).
+        internal IItemEvaluator SortKeyEvaluator => CachedEvaluator<IItemEvaluator>.Get(ref sortKeyEvaluator, SortKey, e => e.ElaborateForItem());
 
         public virtual Operand SortKeyOperand => sortKey;
 

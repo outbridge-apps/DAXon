@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             sortKeyValues = new List<AtomicValue>(sKeys.Count);
             foreach (SortKeyDefinition sKey in sKeys)
             {
-                sortKeyValues.Add((AtomicValue)sKey.SortKey.EvaluateItem(context));
+                sortKeyValues.Add((AtomicValue)sKey.SortKeyEvaluator(context));
             }
         }
     }

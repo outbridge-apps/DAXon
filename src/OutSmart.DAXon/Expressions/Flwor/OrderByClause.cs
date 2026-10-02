@@ -167,7 +167,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
         public AtomicValue EvaluateSortKey(int n, IXPathContext c)
         {
             SortKeyDefinitionList sortKeys = SortKeyDefinitions;
-            return (AtomicValue)sortKeys.GetSortKeyDefinition(n).SortKey.EvaluateItem(c);
+            return (AtomicValue)sortKeys.GetSortKeyDefinition(n).SortKeyEvaluator(c);
         }
     }
 }

@@ -197,13 +197,55 @@ namespace OutSmart.DAXon.Trees.Linked
 
         public override void Copy(IReceiver @out, int copyOptions, ILocation location)
         {
-            // Recurses over the children, so the depth is the input document's. The tiny tree
-            // copies flat and needs no probe; this model is the one a host opts into.
-            StackGuard.Probe();
+            // A walk of the subtree, as the tiny tree's copy: recursing per level made the depth the
+            // input document's, and 1000 levels refused on a 256KB thread.
+            Func<NodeInfo, Object> informee = @out.GetPipelineConfiguration().CopyInformee;
+            Stack<ILocation> outer = null;   // the open ancestors' locations, when an informee rewrites them
+            ElementImpl element = this;
+            location = StartCopy(@out, copyOptions, location, informee);
+            NodeImpl next = GetFirstChild();
+            while (true)
+            {
+                if (next == null)
+                {
+                    @out.EndElement();
+                    if (element == this)
+                    {
+                        return;
+                    }
+
+                    next = element.GetNextSibling();
+                    element = (ElementImpl)element.GetRawParent();
+                    if (outer != null)
+                    {
+                        location = outer.Pop();
+                    }
+                }
+                else if (next is ElementImpl child)
+                {
+                    if (informee != null)
+                    {
+                        (outer ?? (outer = new Stack<ILocation>())).Push(location);
+                    }
+
+                    location = child.StartCopy(@out, copyOptions, location, informee);
+                    element = child;
+                    next = child.GetFirstChild();
+                }
+                else
+                {
+                    next.Copy(@out, copyOptions, location);
+                    next = next.GetNextSibling();
+                }
+            }
+        }
+
+        // One start tag of a copy. Returns the location the element's children are copied with.
+        private ILocation StartCopy(IReceiver @out, int copyOptions, ILocation location, Func<NodeInfo, Object> informee)
+        {
             bool copyTypes = CopyOptions.Includes(copyOptions, CopyOptions.TYPE_ANNOTATIONS);
             bool copyForUpdate = CopyOptions.Includes(copyOptions, CopyOptions.FOR_UPDATE);
             ISchemaType typeCode = copyTypes ? GetSchemaType() : Untyped.INSTANCE;
-            Func<NodeInfo, Object> informee = @out.GetPipelineConfiguration().CopyInformee;
             if (informee != null)
             {
                 object o = informee(this);
@@ -274,16 +316,7 @@ namespace OutSmart.DAXon.Trees.Linked
             }
 
             @out.StartElement(NameOfNode.MakeName(this), typeCode, SequenceTool.AttributeMapFromList(atts), nsMap, location, receiverOptions);
-
-            // output the children
-            NodeImpl next = GetFirstChild();
-            while (next != null)
-            {
-                next.Copy(@out, copyOptions, location);
-                next = next.GetNextSibling();
-            }
-
-            @out.EndElement();
+            return location;
         }
 
         protected virtual void CheckNotNamespaceSensitiveElement(ISchemaType type)

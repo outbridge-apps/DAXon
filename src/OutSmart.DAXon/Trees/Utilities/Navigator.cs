@@ -610,67 +610,9 @@ namespace OutSmart.DAXon.Trees.Utilities
             switch (node.GetNodeKind())
             {
                 case Types.Type.DOCUMENT:
-                    {
-                        @out.StartDocument(CopyOptions.GetStartDocumentProperties(copyOptions));
-                        StackGuard.Probe();
-                        foreach (NodeInfo child in node.Children())
-                        {
-                            child.Copy(@out, copyOptions, locationId);
-                        }
-
-                        @out.EndDocument();
-                        break;
-                    }
-
                 case Types.Type.ELEMENT:
                     {
-                        ISchemaType annotation = (copyOptions & CopyOptions.TYPE_ANNOTATIONS) != 0 ? node.GetSchemaType() : Untyped.INSTANCE;
-                        INodeName elementName = NameOfNode.MakeName(node);
-                        NamespaceMap nsMap;
-                        if (CopyOptions.Includes(copyOptions, CopyOptions.ALL_NAMESPACES))
-                        {
-                            nsMap = node.AllNamespaces;
-                        }
-                        else
-                        {
-
-                            // Bug #5861 - we need to ensure the namespaces used in element and attribute names are declared
-                            if ((elementName.GetPrefix().Length == 0) && elementName.HasURI(NamespaceUri.NULL))
-                            {
-                                nsMap = NamespaceMap.EmptyMap(); // Bug 6866
-                            }
-                            else
-                            {
-                                nsMap = NamespaceMap.Of(elementName.GetPrefix(), elementName.GetNamespaceUri());
-                            }
-
-                            foreach (AttributeInfo att in node.Attributes())
-                            {
-                                INodeName attName = att.GetNodeName();
-                                if (!(attName.GetPrefix().Length == 0))
-                                {
-                                    nsMap = nsMap.Put(attName.GetPrefix(), attName.GetNamespaceUri());
-                                }
-                            }
-                        }
-
-                        @out.StartElement(elementName, annotation, node.Attributes(), nsMap, locationId, ReceiverOption.BEQUEATH_INHERITED_NAMESPACES_ONLY | ReceiverOption.NAMESPACE_OK);
-
-                        // Only the children recurse, one level per level of the tree, so the depth
-                        // is the input document's. Probing here rather than on entry keeps it off
-                        // the leaf kinds below, which are most of a document's nodes. Unlike a
-                        // path, a copy is the RESULT, not a diagnostic: failing here is honest.
-                        StackGuard.Probe();
-
-                        // output the children
-                        foreach (NodeInfo child in node.Children())
-                        {
-                            child.Copy(@out, copyOptions, locationId);
-                        }
-
-
-                        // finally the end tag
-                        @out.EndElement();
+                        CopyTree(node, @out, copyOptions, locationId);
                         return;
                     }
 
@@ -720,47 +662,9 @@ namespace OutSmart.DAXon.Trees.Utilities
             switch (node.GetNodeKind())
             {
                 case Types.Type.DOCUMENT:
-                    {
-                        @out.StartDocument(CopyOptions.GetStartDocumentProperties(copyOptions));
-                        StackGuard.Probe();
-                        foreach (NodeInfo child in node.Children())
-                        {
-                            Copy(child, @out, copyOptions, locationId);
-                        }
-
-                        @out.EndDocument();
-                        break;
-                    }
-
                 case Types.Type.ELEMENT:
                     {
-                        ISchemaType annotation = keepTypes ? node.GetSchemaType() : Untyped.INSTANCE;
-                        @out.StartElement(NameOfNode.MakeName(node), annotation, locationId, ReceiverOption.DISINHERIT_NAMESPACES | ReceiverOption.NAMESPACE_OK);
-                        if ((copyOptions & CopyOptions.ALL_NAMESPACES) != 0)
-                        {
-                            foreach (NamespaceBinding ns in node.AllNamespaces)
-                            {
-                                @out.Namespace(ns.GetPrefix(), ns.GetNamespaceUri(), ReceiverOption.NONE);
-                            }
-                        }
-
-                        foreach (AttributeInfo attr in node.Attributes())
-                        {
-                            ISimpleType attType = keepTypes ? attr.GetType() : BuiltInAtomicType.UNTYPED_ATOMIC;
-                            @out.Attribute(attr.GetNodeName(), attType, attr.Value, attr.GetLocation(), attr.GetProperties());
-                        }
-
-                        StackGuard.Probe();   // as the IReceiver overload: only the children recurse
-
-                        // output the children
-                        foreach (NodeInfo child in node.Children())
-                        {
-                            Copy(child, @out, copyOptions, locationId);
-                        }
-
-
-                        // finally the end tag
-                        @out.EndElement();
+                        CopyTree(node, @out, copyOptions, locationId);
                         return;
                     }
 
@@ -804,6 +708,140 @@ namespace OutSmart.DAXon.Trees.Utilities
 
                 default:
                     break;
+            }
+        }
+
+        // A walk, not a recursion per level whose depth is the input document's: copying a snapshot
+        // 1000 levels deep refused on a 256KB thread. Only snapshot nodes copy through here; any other
+        // child copies itself (the tiny and linked trees without recursing).
+        private static void CopyTree(NodeInfo root, IReceiver @out, int copyOptions, ILocation locationId)
+        {
+            StartCopy(root, @out, copyOptions, locationId);
+            var open = new Stack<IEnumerator<NodeInfo>>();
+            open.Push(root.Children().GetEnumerator());
+            while (open.Count > 0)
+            {
+                IEnumerator<NodeInfo> children = open.Peek();
+                if (!children.MoveNext())
+                {
+                    open.Pop().Dispose();
+                    EndCopy(root, open.Count, @out);
+                }
+                else if (children.Current is SnapshotNode child && child.GetNodeKind() == Types.Type.ELEMENT)
+                {
+                    StartCopy(child, @out, copyOptions, locationId);
+                    open.Push(child.Children().GetEnumerator());
+                }
+                else
+                {
+                    children.Current.Copy(@out, copyOptions, locationId);
+                }
+            }
+        }
+
+        private static void StartCopy(NodeInfo node, IReceiver @out, int copyOptions, ILocation locationId)
+        {
+            if (node.GetNodeKind() == Types.Type.DOCUMENT)
+            {
+                @out.StartDocument(CopyOptions.GetStartDocumentProperties(copyOptions));
+                return;
+            }
+
+            ISchemaType annotation = (copyOptions & CopyOptions.TYPE_ANNOTATIONS) != 0 ? node.GetSchemaType() : Untyped.INSTANCE;
+            INodeName elementName = NameOfNode.MakeName(node);
+            NamespaceMap nsMap;
+            if (CopyOptions.Includes(copyOptions, CopyOptions.ALL_NAMESPACES))
+            {
+                nsMap = node.AllNamespaces;
+            }
+            else
+            {
+
+                // Bug #5861 - we need to ensure the namespaces used in element and attribute names are declared
+                if ((elementName.GetPrefix().Length == 0) && elementName.HasURI(NamespaceUri.NULL))
+                {
+                    nsMap = NamespaceMap.EmptyMap(); // Bug 6866
+                }
+                else
+                {
+                    nsMap = NamespaceMap.Of(elementName.GetPrefix(), elementName.GetNamespaceUri());
+                }
+
+                foreach (AttributeInfo att in node.Attributes())
+                {
+                    INodeName attName = att.GetNodeName();
+                    if (!(attName.GetPrefix().Length == 0))
+                    {
+                        nsMap = nsMap.Put(attName.GetPrefix(), attName.GetNamespaceUri());
+                    }
+                }
+            }
+
+            @out.StartElement(elementName, annotation, node.Attributes(), nsMap, locationId, ReceiverOption.BEQUEATH_INHERITED_NAMESPACES_ONLY | ReceiverOption.NAMESPACE_OK);
+        }
+
+        // As the IReceiver walk; this overload copies every element itself, so it walks into all of them.
+        private static void CopyTree(NodeInfo root, Outputter @out, int copyOptions, ILocation locationId)
+        {
+            StartCopy(root, @out, copyOptions, locationId);
+            var open = new Stack<IEnumerator<NodeInfo>>();
+            open.Push(root.Children().GetEnumerator());
+            while (open.Count > 0)
+            {
+                IEnumerator<NodeInfo> children = open.Peek();
+                if (!children.MoveNext())
+                {
+                    open.Pop().Dispose();
+                    EndCopy(root, open.Count, @out);
+                }
+                else if (children.Current.GetNodeKind() == Types.Type.ELEMENT)
+                {
+                    StartCopy(children.Current, @out, copyOptions, locationId);
+                    open.Push(children.Current.Children().GetEnumerator());
+                }
+                else
+                {
+                    Copy(children.Current, @out, copyOptions, locationId);
+                }
+            }
+        }
+
+        private static void StartCopy(NodeInfo node, Outputter @out, int copyOptions, ILocation locationId)
+        {
+            if (node.GetNodeKind() == Types.Type.DOCUMENT)
+            {
+                @out.StartDocument(CopyOptions.GetStartDocumentProperties(copyOptions));
+                return;
+            }
+
+            bool keepTypes = (copyOptions & CopyOptions.TYPE_ANNOTATIONS) != 0;
+            ISchemaType annotation = keepTypes ? node.GetSchemaType() : Untyped.INSTANCE;
+            @out.StartElement(NameOfNode.MakeName(node), annotation, locationId, ReceiverOption.DISINHERIT_NAMESPACES | ReceiverOption.NAMESPACE_OK);
+            if ((copyOptions & CopyOptions.ALL_NAMESPACES) != 0)
+            {
+                foreach (NamespaceBinding ns in node.AllNamespaces)
+                {
+                    @out.Namespace(ns.GetPrefix(), ns.GetNamespaceUri(), ReceiverOption.NONE);
+                }
+            }
+
+            foreach (AttributeInfo attr in node.Attributes())
+            {
+                ISimpleType attType = keepTypes ? attr.GetType() : BuiltInAtomicType.UNTYPED_ATOMIC;
+                @out.Attribute(attr.GetNodeName(), attType, attr.Value, attr.GetLocation(), attr.GetProperties());
+            }
+        }
+
+        // The end event of the node whose children ran out; only the outermost can be a document.
+        private static void EndCopy(NodeInfo root, int stillOpen, IReceiver @out)
+        {
+            if (stillOpen == 0 && root.GetNodeKind() == Types.Type.DOCUMENT)
+            {
+                @out.EndDocument();
+            }
+            else
+            {
+                @out.EndElement();
             }
         }
 

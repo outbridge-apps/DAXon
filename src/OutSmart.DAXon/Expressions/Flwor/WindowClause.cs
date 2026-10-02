@@ -7,6 +7,7 @@
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions;
+using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Transformation;
@@ -75,6 +76,14 @@ namespace OutSmart.DAXon.Expressions.Flwor
                 endConditionOp.SetChildExpression(value);
             }
         }
+
+        // Tested per item of the windowed sequence: elaborated once, not on every test.
+        private CachedEvaluator<IBooleanEvaluator> startEvaluator;
+        private CachedEvaluator<IBooleanEvaluator> endEvaluator;
+
+        internal IBooleanEvaluator StartConditionEvaluator => CachedEvaluator<IBooleanEvaluator>.Get(ref startEvaluator, StartCondition, e => e.ElaborateForBoolean());
+
+        internal IBooleanEvaluator EndConditionEvaluator => CachedEvaluator<IBooleanEvaluator>.Get(ref endEvaluator, EndCondition, e => e.ElaborateForBoolean());
 
         public ItemTypeCheckingFunction ItemTypeChecker => itemTypeChecker;
 
@@ -294,7 +303,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                 context.SetLocalVariable(binding.LocalSlotNumber, MakeValue(previous));
             }
 
-            return clause.StartCondition.EffectiveBooleanValue(context);
+            return clause.StartConditionEvaluator(context);
         }
 
         protected internal bool MatchesEnd(Window window, IItem previous, IItem current, IItem next, int position, IXPathContext context)
@@ -349,7 +358,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                 context.SetLocalVariable(binding.LocalSlotNumber, MakeValue(previous));
             }
 
-            return clause.EndCondition.EffectiveBooleanValue(context);
+            return clause.EndConditionEvaluator(context);
         }
 
         protected internal static ISequence MakeValue(IItem item)

@@ -82,52 +82,77 @@ namespace OutSmart.DAXon.Expressions.Accumulators
      * Diagnostic output of the entire data structure
      */
         //    }
-        private ISequence VisitFn(NodeInfo node, ISequence value, IXPathContext context, ITraceListener listener)
+        // Walks the document without recursing per level: its depth is the input's, and a deep one
+        // overflowed here and was reported as a cyclic accumulator (XTDE3400).
+        private ISequence VisitFn(NodeInfo root, ISequence value, IXPathContext context, ITraceListener listener)
         {
             try
             {
-                // Recursion depth here is the input tree depth (per-child descent below).
+                // Rules can build another accumulator's index, so walks nest through here.
                 StackGuard.Probe();
-                if (listener != null)
+                var open = new Stack<KeyValuePair<NodeInfo, IEnumerator<NodeInfo>>>();
+                value = Enter(root, value, context, listener);
+                open.Push(new KeyValuePair<NodeInfo, IEnumerator<NodeInfo>>(root, root.Children().GetEnumerator()));
+                while (open.Count > 0)
                 {
-                    listener.StartCurrentItem(node);
-                }
-
-                ((ManualIterator)context.GetCurrentIterator()).SetContextItem(node);
-                Rule rule = accumulator.PreDescentRules.GetRule(node, context);
-                if (rule != null)
-                {
-                    value = ProcessRule(rule, node, false, value, context);
-                    LogChange(node, value, context, " BEFORE ");
-                }
-
-                foreach (NodeInfo kid in node.Children())
-                {
-                    value = VisitFn(kid, value, context, listener);
-                }
-
-                ((ManualIterator)context.GetCurrentIterator()).SetContextItem(node);
-                rule = accumulator.PostDescentRules.GetRule(node, context);
-                if (rule != null)
-                {
-                    value = ProcessRule(rule, node, true, value, context);
-                    LogChange(node, value, context, " AFTER ");
-                }
-
-                if (listener != null)
-                {
-                    listener.EndCurrentItem(node);
+                    KeyValuePair<NodeInfo, IEnumerator<NodeInfo>> top = open.Peek();
+                    if (top.Value.MoveNext())
+                    {
+                        NodeInfo kid = top.Value.Current;
+                        value = Enter(kid, value, context, listener);
+                        open.Push(new KeyValuePair<NodeInfo, IEnumerator<NodeInfo>>(kid, kid.Children().GetEnumerator()));
+                    }
+                    else
+                    {
+                        open.Pop();
+                        value = Leave(top.Key, value, context, listener);
+                    }
                 }
 
                 return value;
             }
             catch (RecursionDepthError e) when (!e.Described)
             {
-                // Filtered: accumulator evaluation recurses through this frame, so one such catch
-                // exists per level. XTDE3400 stays uncatchable by xsl:try exactly as before - it
-                // used to be an XPathException.StackOverflow, which TryCatch already refused.
+                // Filtered: nested walks each have this catch and the innermost describes. XTDE3400 stays
+                // uncatchable by xsl:try, as when it was an XPathException.StackOverflow.
                 throw e.Describe("Too many nested accumulator evaluations. The accumulator definition may have cyclic dependencies", "XTDE3400", accumulator);
             }
+        }
+
+        private ISequence Enter(NodeInfo node, ISequence value, IXPathContext context, ITraceListener listener)
+        {
+            if (listener != null)
+            {
+                listener.StartCurrentItem(node);
+            }
+
+            ((ManualIterator)context.GetCurrentIterator()).SetContextItem(node);
+            Rule rule = accumulator.PreDescentRules.GetRule(node, context);
+            if (rule != null)
+            {
+                value = ProcessRule(rule, node, false, value, context);
+                LogChange(node, value, context, " BEFORE ");
+            }
+
+            return value;
+        }
+
+        private ISequence Leave(NodeInfo node, ISequence value, IXPathContext context, ITraceListener listener)
+        {
+            ((ManualIterator)context.GetCurrentIterator()).SetContextItem(node);
+            Rule rule = accumulator.PostDescentRules.GetRule(node, context);
+            if (rule != null)
+            {
+                value = ProcessRule(rule, node, true, value, context);
+                LogChange(node, value, context, " AFTER ");
+            }
+
+            if (listener != null)
+            {
+                listener.EndCurrentItem(node);
+            }
+
+            return value;
         }
 
         /*
@@ -148,7 +173,6 @@ namespace OutSmart.DAXon.Expressions.Accumulators
         private ISequence ProcessRule(Rule rule, NodeInfo node, bool isPostDescent, ISequence value, IXPathContext context)
         {
             AccumulatorRule target = (AccumulatorRule)rule.GetAction();
-            Expression delta = target.NewValueExpression;
             XPathContextMajor c2 = context.NewCleanContext();
             Controller controller = c2.GetController();
             ManualIterator initialNode = new ManualIterator(node);
@@ -157,7 +181,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             c2.SetLocalVariable(0, value);
             c2.SetCurrentComponent(accumulator.DeclaringComponent);
             c2.TemporaryOutputState = StandardNames.XSL_ACCUMULATOR_RULE;
-            value = ExpressionTool.EagerEvaluate(delta, c2);
+            value = target.NewValueEvaluator.Evaluate(c2).Materialize();
 
             if (node.GetParent() == null && !isPostDescent && values.Count == 1)
             {

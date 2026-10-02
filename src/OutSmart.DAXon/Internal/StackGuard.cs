@@ -7,6 +7,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using OutSmart.DAXon.Api;
 
 namespace OutSmart.DAXon.Internal
 {
@@ -102,11 +103,60 @@ namespace OutSmart.DAXon.Internal
             }
         }
 
+        /// <summary>
+        /// As <see cref="Probe()"/>, at a level of nesting in the stylesheet rather than of recursion.
+        /// The recursion site that reports the error cannot tell the two apart, so it names both.
+        /// Its own test: Probe stays exactly as calibrated.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static void ProbeNesting(ILocation location)
+        {
+            ulong low = stackLow;
+            if (low == 0)
+            {
+                ReadBounds();
+                if (noApi)
+                {
+                    FallbackProbeNesting(location);
+                    return;
+                }
+
+                low = stackLow;
+            }
+
+            unsafe
+            {
+                byte probe;
+                if ((ulong)&probe - low < Margin)
+                {
+                    if (Dbg)
+                    {
+                        Console.Error.WriteLine("[SG] THREW at nesting");
+                    }
+
+                    throw RecursionDepthError.AtNesting(location);
+                }
+            }
+        }
+
         // Once-per-thread init plus the pre-Windows-8 route (noApi leaves stackLow at 0, so
         // those threads land here on every probe, as before). Holds the EH that must not sit
         // in the inlined hot body.
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void ProbeSlow(ulong extraMargin)
+        {
+            ReadBounds();
+            if (noApi)
+            {
+                FallbackProbe();
+                return;
+            }
+
+            Probe(extraMargin);
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void ReadBounds()
         {
             if (!noApi)
             {
@@ -124,14 +174,18 @@ namespace OutSmart.DAXon.Internal
                     noApi = true;   // no kernel32 at all: the .NET builds also run on Linux and macOS
                 }
             }
+        }
 
-            if (noApi)
+        private static void FallbackProbeNesting(ILocation location)
+        {
+            try
             {
-                FallbackProbe();
-                return;
+                RuntimeHelpers.EnsureSufficientExecutionStack();
             }
-
-            Probe(extraMargin);
+            catch (InsufficientExecutionStackException)
+            {
+                throw RecursionDepthError.AtNesting(location);
+            }
         }
 
         // Pre-Windows-8 and non-Windows fallback: the BCL probe (conservative — 512 KB on 64-bit Framework, 128 KB on .NET).

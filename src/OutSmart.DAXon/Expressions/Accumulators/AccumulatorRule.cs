@@ -5,6 +5,7 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Expressions;
+using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Api;
@@ -27,6 +28,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
     internal sealed class AccumulatorRule : IRuleTarget, ITraceableComponent
     {
         private Expression newValueExpression;
+        private CachedEvaluator<ISequenceEvaluator> newValueEvaluator;
         private readonly SlotManager stackFrameMap;
         private readonly bool postDescent;
         private bool capturing;
@@ -34,6 +36,9 @@ namespace OutSmart.DAXon.Expressions.Accumulators
         private StructuredQName accumulatorName;
 
         public Expression NewValueExpression => newValueExpression;
+
+        // Evaluated once per matching node: elaborated on first use, not on every firing.
+        internal ISequenceEvaluator NewValueEvaluator => CachedEvaluator<ISequenceEvaluator>.Get(ref newValueEvaluator, newValueExpression, e => e.Eagerly());
 
         public string TracingTag => "xsl:accumulator-rule";
         public AccumulatorRule(Expression newValueExpression, SlotManager stackFrameMap, bool postDescent)

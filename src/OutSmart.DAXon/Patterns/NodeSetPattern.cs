@@ -11,6 +11,7 @@
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Expressions;
+using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
@@ -33,6 +34,7 @@ namespace OutSmart.DAXon.Patterns
     {
         private readonly Operand selectionOp;
         private ItemType itemType;
+        private CachedEvaluator<IPullEvaluator> selectionEvaluator;   // matching runs per node tested
 
         public virtual Expression SelectionExpression => selectionOp.GetChildExpression();
 
@@ -107,7 +109,7 @@ namespace OutSmart.DAXon.Patterns
                     }
                     else
                     {
-                        ISequenceIterator iter = exp.Iterate(context);
+                        ISequenceIterator iter = CachedEvaluator<IPullEvaluator>.Get(ref selectionEvaluator, exp, e => e.ElaborateForPull())(context);
                         return SingletonIntersectExpression.ContainsNode(iter, (NodeInfo)item);
                     }
                 }
