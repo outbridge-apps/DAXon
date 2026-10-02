@@ -263,7 +263,8 @@ namespace OutSmart.DAXon.Functions
                 UniStringCollector builder = new UniStringCollector();
                 UnicodeWriterResult result = new UnicodeWriterResult(builder, null);
                 SerializerFactory sf = context.GetConfiguration().SerializerFactory;
-                PipelineConfiguration pipe = context.GetConfiguration().MakePipelineConfiguration();
+                // The run's pipeline (upstream: the configuration's), so copying a large node honours its deadline.
+                PipelineConfiguration pipe = context.GetController()?.MakePipelineConfiguration() ?? context.GetConfiguration().MakePipelineConfiguration();
                 SerializationProperties sprops = elementSprops ?? (__mapCharMaps != null ? new SerializationProperties(props, __mapCharMaps) : new SerializationProperties(props));
                 // Inline sequence-copy (real SequenceCopier.cs uses a newer 0-arg Append() this IReceiver lacks):
                 // Open -> Append(item) per item -> Close.

@@ -199,14 +199,16 @@ namespace OutSmart.DAXon.Trees.Linked
         {
             // A walk of the subtree, as the tiny tree's copy: recursing per level made the depth the
             // input document's, and 1000 levels refused on a 256KB thread.
-            Func<NodeInfo, Object> informee = @out.GetPipelineConfiguration().CopyInformee;
+            PipelineConfiguration pipe = @out.GetPipelineConfiguration();
+            Func<NodeInfo, Object> informee = pipe.CopyInformee;
+            Controller run = pipe.GetController();   // its own deadline: the thread slot may hold an earlier run's
             Stack<ILocation> outer = null;   // the open ancestors' locations, when an informee rewrites them
             ElementImpl element = this;
             location = StartCopy(@out, copyOptions, location, informee);
             NodeImpl next = GetFirstChild();
             while (true)
             {
-                Controller.CheckActiveTimeout();   // a copy is as long as its input: per node, as the parser
+                run?.CheckTimeout();   // a copy is as long as its input: per node, as the parser
                 if (next == null)
                 {
                     @out.EndElement();

@@ -114,6 +114,7 @@ namespace OutSmart.DAXon.Core
             internal bool hasDeadline;
             internal long deadlineTimestamp;
             internal TimeSpan setting;
+            internal string activity;   // what the limit stopped when not a transformation: "Compilation", "Parsing", ...
 
             // TWO independent clock-sampling throttles, one per class of call site. Reading the
             // clock costs ~25ns, far too much to do on every item of a hot iterator, so each class
@@ -167,11 +168,20 @@ namespace OutSmart.DAXon.Core
                 long now = System.Diagnostics.Stopwatch.GetTimestamp();
                 if (now >= deadlineTimestamp)
                 {
-                    throw new XPathException(
-                        "Transformation exceeded its time limit of " + setting.TotalSeconds + "s", DAXonErrorCode.SXTO0001);
+                    throw Exceeded();
                 }
 
                 t.Retune(now);
+            }
+
+            // The limit is the Processor's TransformTimeout, which also bounds compiling and parsing:
+            // "Transformation exceeded" for a compile sent hosts looking at the wrong thing.
+            private XPathException Exceeded()
+            {
+                string limit = setting.TotalSeconds + "s";
+                return new XPathException(activity == null
+                    ? "Transformation exceeded its time limit of " + limit
+                    : activity + " exceeded the time limit of " + limit + " (ProcessorOptions.TransformTimeout)", DAXonErrorCode.SXTO0001);
             }
 
             // One class's sampling rate. Kept off the token so the two cannot be confused, and out
@@ -223,8 +233,7 @@ namespace OutSmart.DAXon.Core
             {
                 if (hasDeadline && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp)
                 {
-                    throw new XPathException(
-                        "Transformation exceeded its time limit of " + setting.TotalSeconds + "s", DAXonErrorCode.SXTO0001);
+                    throw Exceeded();
                 }
             }
         }
@@ -297,7 +306,13 @@ namespace OutSmart.DAXon.Core
         /// </summary>
         public virtual void SetTimeout(TimeSpan timeout)
         {
-            var token = new DeadlineToken();
+            SetTimeout(timeout, null);
+        }
+
+        // activity names what the limit stops when it is not a transformation ("Compilation", "Parsing", ...).
+        internal void SetTimeout(TimeSpan timeout, string activity)
+        {
+            var token = new DeadlineToken { activity = activity };
             activeOnThread = token;   // this run now owns the deadline slot on the running thread
             hasDeadline = false;
 
@@ -355,7 +370,7 @@ namespace OutSmart.DAXon.Core
         /// </summary>
         public void InheritDeadlineFrom(Controller parent)
         {
-            var token = new DeadlineToken();
+            var token = new DeadlineToken { activity = parent?.deadlineToken?.activity };
             activeOnThread = token;   // the nested run now owns the deadline slot on the running thread
             if (parent == null || !parent.hasDeadline)
             {
@@ -378,12 +393,12 @@ namespace OutSmart.DAXon.Core
         /// restore (try/finally): a compile nested inside a running transformation (fn:transform)
         /// hands the slot back to that run's deadline on exit.
         /// </summary>
-        internal static DeadlineToken ArmThreadDeadline(Configuration config)
+        internal static DeadlineToken ArmThreadDeadline(Configuration config, string activity)
         {
             DeadlineToken previous = activeOnThread;
             if (config.GetProcessor() is OutSmart.DAXon.Api.Processor p)
             {
-                new Controller(config).SetTimeout(p.TransformTimeout);
+                new Controller(config).SetTimeout(p.TransformTimeout, activity);
             }
             else
             {

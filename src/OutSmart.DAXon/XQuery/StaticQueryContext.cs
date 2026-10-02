@@ -342,7 +342,7 @@ namespace OutSmart.DAXon.XQuery
             using RunResources run = RunResources.Enter();
             // Compile under the Processor's deadline: constant folding of hostile query text is
             // otherwise unbounded work before any run-time deadline exists (see ArmThreadDeadline).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config);
+            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Compilation");
             try
             {
                 QueryModule mainModule = new QueryModule(this);

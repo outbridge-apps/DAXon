@@ -496,7 +496,7 @@ namespace OutSmart.DAXon.XQuery
             // fn:load-xquery-module overrides this by inheriting the caller's deadline (see there).
             if (executable.GetConfiguration().GetProcessor() is OutSmart.DAXon.Api.Processor p)
             {
-                controller.SetTimeout(p.TransformTimeout);
+                controller.SetTimeout(p.TransformTimeout, "Query");
             }
 
             return controller;

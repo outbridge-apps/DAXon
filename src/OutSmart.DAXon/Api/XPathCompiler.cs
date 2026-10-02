@@ -378,7 +378,7 @@ namespace OutSmart.DAXon.Api
 
             // Compile under the Processor's deadline: constant folding of hostile expression text is
             // otherwise unbounded work before any run-time deadline exists (see ArmThreadDeadline).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(processor.UnderlyingConfiguration);
+            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(processor.UnderlyingConfiguration, "Compilation");
             try
             {
                 XPathExpression cexp = eval.CreateExpression(source);
@@ -468,7 +468,7 @@ namespace OutSmart.DAXon.Api
             }
 
             // Compile under the Processor's deadline (see InternalCompile).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(processor.UnderlyingConfiguration);
+            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(processor.UnderlyingConfiguration, "Compilation");
             try
             {
                 string @base = BaseURI == null ? null : BaseURI.ToString();

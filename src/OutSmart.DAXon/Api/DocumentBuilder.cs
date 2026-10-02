@@ -267,7 +267,7 @@ namespace OutSmart.DAXon.Api
             // A standalone build runs outside any transformation, but the parse loop honours the
             // thread's active deadline and a spent token from an earlier run may still sit in the
             // slot. Claim a fresh full budget for the parse scope (same pattern as the compilers).
-            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(config);
+            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(config, "Parsing");
             try
             {
                 using (System.Xml.XmlReader reader = makeReader())

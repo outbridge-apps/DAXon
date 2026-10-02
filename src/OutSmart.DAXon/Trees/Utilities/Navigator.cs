@@ -716,12 +716,13 @@ namespace OutSmart.DAXon.Trees.Utilities
         // child copies itself (the tiny and linked trees without recursing).
         private static void CopyTree(NodeInfo root, IReceiver @out, int copyOptions, ILocation locationId)
         {
+            Controller run = @out.GetPipelineConfiguration().GetController();   // its own deadline, not the thread slot
             StartCopy(root, @out, copyOptions, locationId);
             var open = new Stack<IEnumerator<NodeInfo>>();
             open.Push(root.Children().GetEnumerator());
             while (open.Count > 0)
             {
-                Controller.CheckActiveTimeout();   // a copy is as long as its input: per node, as the parser
+                run?.CheckTimeout();   // a copy is as long as its input: per node, as the parser
                 IEnumerator<NodeInfo> children = open.Peek();
                 if (!children.MoveNext())
                 {
@@ -784,12 +785,13 @@ namespace OutSmart.DAXon.Trees.Utilities
         // As the IReceiver walk; this overload copies every element itself, so it walks into all of them.
         private static void CopyTree(NodeInfo root, Outputter @out, int copyOptions, ILocation locationId)
         {
+            Controller run = @out.GetPipelineConfiguration().GetController();
             StartCopy(root, @out, copyOptions, locationId);
             var open = new Stack<IEnumerator<NodeInfo>>();
             open.Push(root.Children().GetEnumerator());
             while (open.Count > 0)
             {
-                Controller.CheckActiveTimeout();
+                run?.CheckTimeout();
                 IEnumerator<NodeInfo> children = open.Peek();
                 if (!children.MoveNext())
                 {

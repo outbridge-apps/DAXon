@@ -48,7 +48,7 @@ namespace OutSmart.DAXon.Api
             // A standalone parse runs outside any transformation, so it must claim the Processor's
             // budget for itself - every other API entry does (see Controller.ArmThreadDeadline).
             // Without this the JSON path was the one entry point with no time limit at all.
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config);
+            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Parsing");
             try
             {
                 IXPathContext context = new Controller(config).NewXPathContext();
@@ -82,7 +82,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual XdmValue ParseJson(string json)
         {
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config);
+            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Parsing");
             try
             {
                 IXPathContext context = new Controller(config).NewXPathContext();

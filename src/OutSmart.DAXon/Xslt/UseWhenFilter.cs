@@ -778,7 +778,7 @@ namespace OutSmart.DAXon.Xslt
             // left by a previous (finished) run on this thread cannot spuriously abort the compile.
             if (GetConfiguration().GetProcessor() is OutSmart.DAXon.Api.Processor p)
             {
-                controller.SetTimeout(p.TransformTimeout);
+                controller.SetTimeout(p.TransformTimeout, "Compilation");
             }
             else
             {

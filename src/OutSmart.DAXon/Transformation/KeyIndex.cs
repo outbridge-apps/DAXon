@@ -123,6 +123,7 @@ namespace OutSmart.DAXon.Transformation
 
         private void ProcessNode(NodeInfo node, KeyDefinition keydef, IXPathContext xc, bool isFirst)
         {
+            xc.GetController()?.CheckTimeout();   // an index is as long as the document, as a copy
 
             // Make the node we are testing the context node,
             // with context position and context size set to 1

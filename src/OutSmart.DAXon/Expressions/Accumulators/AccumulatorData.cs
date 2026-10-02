@@ -90,11 +90,13 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             {
                 // Rules can build another accumulator's index, so walks nest through here.
                 StackGuard.Probe();
+                Controller run = context.GetController();
                 var open = new Stack<KeyValuePair<NodeInfo, IEnumerator<NodeInfo>>>();
                 value = Enter(root, value, context, listener);
                 open.Push(new KeyValuePair<NodeInfo, IEnumerator<NodeInfo>>(root, root.Children().GetEnumerator()));
                 while (open.Count > 0)
                 {
+                    run?.CheckTimeout();   // the walk is as long as the document, as a copy
                     KeyValuePair<NodeInfo, IEnumerator<NodeInfo>> top = open.Peek();
                     if (top.Value.MoveNext())
                     {

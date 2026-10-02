@@ -263,7 +263,7 @@ namespace OutSmart.DAXon.Api
         public virtual XsltPackage CompilePackage(ResolvedResource source)
         {
             // Compile under the Processor's deadline (see Compile(ResolvedResource)).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config);
+            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Compilation");
             try
             {
                 Compilation compilation = null;
@@ -474,7 +474,7 @@ namespace OutSmart.DAXon.Api
                 throw new NullReferenceException();
             // Compile under the Processor's deadline: constant folding of hostile stylesheet text is
             // otherwise unbounded work before any run-time deadline exists (see ArmThreadDeadline).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config);
+            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Compilation");
             try
             {
                 CompilerInfo ci2 = new CompilerInfo(compilerInfo);
@@ -539,7 +539,7 @@ namespace OutSmart.DAXon.Api
         {
             System.Xml.XmlResolver resolver = new ResourceResolverXmlResolver(config.GetResourceResolver(), config, null);
             // Compile under the Processor's deadline (see Compile(ResolvedResource)).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config);
+            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Compilation");
             try
             {
                 charStream = InputSizeLimit.Apply(charStream, MaxInput, systemId, "FODC0002");

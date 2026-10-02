@@ -73,7 +73,7 @@ namespace OutSmart.DAXon.XPath
         {
             if (executable.GetConfiguration().GetProcessor() is OutSmart.DAXon.Api.Processor p)
             {
-                context.GetController().SetTimeout(p.TransformTimeout);
+                context.GetController().SetTimeout(p.TransformTimeout, "XPath evaluation");
             }
             else
             {

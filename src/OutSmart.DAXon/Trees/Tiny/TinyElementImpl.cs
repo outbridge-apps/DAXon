@@ -178,7 +178,9 @@ namespace OutSmart.DAXon.Trees.Tiny
             Configuration config = tree.GetConfiguration();
             NamePool pool = config.GetNamePool();
             int next = nodeNr;
-            Func<NodeInfo, Object> informee = receiver.GetPipelineConfiguration().CopyInformee;
+            PipelineConfiguration pipe = receiver.GetPipelineConfiguration();
+            Func<NodeInfo, Object> informee = pipe.CopyInformee;
+            Controller run = pipe.GetController();   // its own deadline: the thread slot may hold an earlier run's
             // The instruction location can be a live stylesheet tree node whose GetLineNumber is a
             // line-map search - resolve it once, not per copied element (it only changes below).
             int locationLine = location.GetLineNumber();
@@ -186,7 +188,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             ISimpleType attributeType = BuiltInAtomicType.UNTYPED_ATOMIC;
             do
             {
-                Controller.CheckActiveTimeout();   // a copy is as long as its input: per node, as the parser
+                run?.CheckTimeout();   // a copy is as long as its input: per node, as the parser
 
                 // determine node depth
                 short nodeLevel = tree.depth[next];
