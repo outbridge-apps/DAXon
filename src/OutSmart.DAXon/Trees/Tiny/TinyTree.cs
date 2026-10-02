@@ -30,6 +30,10 @@ namespace OutSmart.DAXon.Trees.Tiny
     internal sealed class TinyTree : GenericTreeInfo, INodeVectorTree
     {
         private static readonly string[] EMPTY_STRING_ARRAY = new string[0];
+        // A tree starts no larger than this and takes the size learned from recent trees when it first
+        // grows; reserving that size at once (upstream) made the ten trees after a large one all large.
+        private const int InitialCapacity = 4096;
+        private int nodeHint, attributeHint, namespaceHint;
         public LargeTextBuffer textBuffer;
         public UnicodeString commentBuffer = null; // created when needed
         public int numberOfNodes = 0; // excluding attributes and namespaces
@@ -189,9 +193,12 @@ namespace OutSmart.DAXon.Trees.Tiny
         }
         public TinyTree(Configuration config, Statistics statistics) : base(config)
         {
-            int nodes = statistics.AverageNodes + 1;
-            int attributes = statistics.AverageAttributes + 1;
-            int namespaces = statistics.AverageNamespaces + 1;
+            nodeHint = statistics.AverageNodes + 1;
+            attributeHint = statistics.AverageAttributes + 1;
+            namespaceHint = statistics.AverageNamespaces + 1;
+            int nodes = Math.Min(nodeHint, InitialCapacity);
+            int attributes = Math.Min(attributeHint, InitialCapacity);
+            int namespaces = Math.Min(namespaceHint, InitialCapacity);
             int characters = Math.Min(statistics.AverageCharacters + 10, 65536);
             nodeKind = new byte[nodes];
             depth = new short[nodes];
@@ -220,7 +227,8 @@ namespace OutSmart.DAXon.Trees.Tiny
             if (nodeKind.Length < numberOfNodes + needed)
             {
 
-                int k = kind == Types.Type.STOPPER ? numberOfNodes + 1 : Math.Max(numberOfNodes * 2, numberOfNodes + needed);
+                int k = kind == Types.Type.STOPPER ? numberOfNodes + 1 : Math.Max(Math.Max(numberOfNodes * 2, numberOfNodes + needed), nodeHint);
+                nodeHint = 0;
                 Array.Resize(ref nodeKind, k);
                 Array.Resize(ref next, k);
                 Array.Resize(ref depth, k);
@@ -249,7 +257,8 @@ namespace OutSmart.DAXon.Trees.Tiny
         {
             if (attParent.Length < numberOfAttributes + needed)
             {
-                int k = Math.Max(numberOfAttributes + needed, numberOfAttributes * 2);
+                int k = Math.Max(Math.Max(numberOfAttributes + needed, numberOfAttributes * 2), attributeHint);
+                attributeHint = 0;
                 if (k == 0)
                 {
                     k = 10 + needed;
@@ -274,7 +283,8 @@ namespace OutSmart.DAXon.Trees.Tiny
         {
             if (namespaceMaps.Length < numberOfNamespaces + needed)
             {
-                int k = Math.Max(numberOfNamespaces * 2, numberOfNamespaces + needed);
+                int k = Math.Max(Math.Max(numberOfNamespaces * 2, numberOfNamespaces + needed), namespaceHint);
+                namespaceHint = 0;
                 if (k == 0)
                 {
                     k = 10;
