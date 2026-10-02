@@ -177,6 +177,12 @@ namespace OutSmart.DAXon.Api
                 {
                     throw new DAXonApiException(e.ToXPathException());
                 }
+                catch (System.Xml.XmlException e)
+                {
+                    DAXonApiException err = DAXonApiException.FromXmlParser(e, systemId);
+                    GetErrorReporter().Report(new XmlProcessingException((XPathException)err.InnerException));
+                    throw err;
+                }
                 finally
                 {
                     controller.CloseTraceEpisode();

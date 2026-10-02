@@ -254,6 +254,10 @@ namespace OutSmart.DAXon.Api
             {
                 throw new DAXonApiException(e.ToXPathException());
             }
+            catch (System.Xml.XmlException e)
+            {
+                throw DAXonApiException.FromXmlParser(e, source.SystemId);
+            }
         }
 
         public virtual XsltPackage CompilePackage(ResolvedResource source)
@@ -303,6 +307,10 @@ namespace OutSmart.DAXon.Api
             catch (XmlProcessingAbort e)
             {
                 throw new DAXonApiException(e);
+            }
+            catch (System.Xml.XmlException e)
+            {
+                throw DAXonApiException.FromXmlParser(e, source.SystemId);
             }
             finally
             {
@@ -489,6 +497,10 @@ namespace OutSmart.DAXon.Api
             {
                 throw new DAXonApiException(e);
             }
+            catch (System.Xml.XmlException e)
+            {
+                throw DAXonApiException.FromXmlParser(e, source.SystemId);
+            }
             finally
             {
                 Controller.RestoreThreadDeadline(prevDeadline);
@@ -554,6 +566,10 @@ namespace OutSmart.DAXon.Api
             catch (XmlProcessingAbort e)
             {
                 throw new DAXonApiException(e);
+            }
+            catch (System.Xml.XmlException e)
+            {
+                throw DAXonApiException.FromXmlParser(e, systemId);
             }
             finally
             {

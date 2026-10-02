@@ -38,6 +38,16 @@ namespace OutSmart.DAXon.Api
         {
         }
 
+        // .NET's XmlReader reports malformed input as a raw XmlException; Java's parser surfaced it as
+        // SXXP0003 inside the API exception. The XmlException stays reachable as the inner cause.
+        internal static DAXonApiException FromXmlParser(System.Xml.XmlException e, string systemId)
+        {
+            XPathException err = new XPathException("Error reported by XML parser: " + e.Message, e)
+                .WithErrorCode(DAXonErrorCode.SXXP0003)
+                .WithLocation(new Expressions.Parsing.Loc(string.IsNullOrEmpty(e.SourceUri) ? systemId : e.SourceUri, e.LineNumber, e.LinePosition));
+            return new DAXonApiException(err);
+        }
+
         public string GetMessage()
         {
             return InnerException.Message;

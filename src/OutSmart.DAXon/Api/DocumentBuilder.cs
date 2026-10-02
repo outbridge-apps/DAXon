@@ -114,6 +114,10 @@ namespace OutSmart.DAXon.Api
             {
                 throw new DAXonApiException(e.ToXPathException());
             }
+            catch (System.Xml.XmlException e)
+            {
+                throw DAXonApiException.FromXmlParser(e, source.SystemId);
+            }
         }
 
         // Source-independent parse options (whitespace policy, DTD/schema validation, tree model, line
@@ -280,6 +284,10 @@ namespace OutSmart.DAXon.Api
             {
                 throw new DAXonApiException(e.ToXPathException());
             }
+            catch (System.Xml.XmlException e)
+            {
+                throw DAXonApiException.FromXmlParser(e, systemId);
+            }
             finally
             {
                 OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
@@ -393,6 +401,10 @@ namespace OutSmart.DAXon.Api
             catch (RecursionDepthError e)
             {
                 throw new DAXonApiException(e.ToXPathException());
+            }
+            catch (System.Xml.XmlException e)
+            {
+                throw DAXonApiException.FromXmlParser(e, file);
             }
         }
     }
