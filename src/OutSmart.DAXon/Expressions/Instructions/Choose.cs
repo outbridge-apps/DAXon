@@ -55,7 +55,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override string StreamerName => "Choose";
 
-        public virtual IBooleanEvaluator[] ConditionEvaluators => ((ChooseExprElaborator)MakeElaborator()).MakeConditionEvaluators(this);
+        public virtual IBooleanEvaluator[] ConditionEvaluators => ((ChooseExprElaborator)StackProbingElaborator.Unwrap(MakeElaborator())).MakeConditionEvaluators(this);
         public Choose(Expression[] conditions, Expression[] actions)
         {
             conditionOps = new Operand[conditions.Length];

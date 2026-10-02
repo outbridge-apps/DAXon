@@ -191,7 +191,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public override ISequenceIterator Iterate(IXPathContext context)
         {
             Elaborator elaborator = MakeElaborator();
-            if (elaborator is FallbackElaborator)
+            if (StackProbingElaborator.Unwrap(elaborator) is FallbackElaborator)
             {
                 if ((ImplementationMethod & PROCESS_METHOD) != 0)
                 {

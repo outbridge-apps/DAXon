@@ -493,19 +493,36 @@ namespace OutSmart.DAXon.Expressions
 
         internal sealed class AtomicSequenceConverterElaborator : PullElaborator
         {
-            public override IPullEvaluator ElaborateForPull()
+            // The generic form is built only where it is used: the node forms below elaborate the node
+            // expression themselves, and elaborating it here as well doubled the work per nested level.
+            private IPullEvaluator GenericPull(AtomicSequenceConverter expr)
             {
-                AtomicSequenceConverter expr = (AtomicSequenceConverter)GetExpression();
                 IPullEvaluator baseEval = expr.BaseExpression.MakeElaborator().ElaborateForPull();
-                IPullEvaluator generic = (context) =>
+                return (context) =>
                 {
                     ISequenceIterator @base = baseEval.Iterate(context);
                     return expr.GetConvertingIterator(context, @base);
                 };
+            }
+
+            private IItemEvaluator GenericItem(AtomicSequenceConverter expr)
+            {
+                IItemEvaluator baseEval = expr.BaseExpression.MakeElaborator().ElaborateForItem();
+                return (context) =>
+                {
+                    AtomicValue @base = (AtomicValue)baseEval.Eval(context);
+                    return expr.ConvertItem(@base, context);
+                };
+            }
+
+            public override IPullEvaluator ElaborateForPull()
+            {
+                AtomicSequenceConverter expr = (AtomicSequenceConverter)GetExpression();
                 // Fused string(child::NAME) sequence: skip the axis/atomize/convert iterator stack on a
                 // Tiny untyped tree; off the fast path defer to the generic converting iterator.
                 if (Elaboration.FusedChildAtomizer.Match(expr, out int fp))
                 {
+                    IPullEvaluator generic = GenericPull(expr);
                     return (context) => Elaboration.FusedChildAtomizer.CanFuse(context)
                         ? new Elaboration.FusedChildAtomizer.ChildStringIterator((Trees.Tiny.TinyParentNodeImpl)context.GetContextItem(), fp)
                         : generic(context);
@@ -537,21 +554,16 @@ namespace OutSmart.DAXon.Expressions
                     return (context) => new Elaboration.FusedChildAtomizer.NodeToStringIterator(nodesEval.Iterate(context));
                 }
 
-                return generic;
+                return GenericPull(expr);
             }
 
             public override IItemEvaluator ElaborateForItem()
             {
                 AtomicSequenceConverter expr = (AtomicSequenceConverter)GetExpression();
-                IItemEvaluator baseEval = expr.BaseExpression.MakeElaborator().ElaborateForItem();
-                IItemEvaluator generic = (context) =>
-                {
-                    AtomicValue @base = (AtomicValue)baseEval.Eval(context);
-                    return expr.ConvertItem(@base, context);
-                };
                 // Fused string(child::NAME) head read (upper-case(X) etc.): direct TinyTree read.
                 if (Elaboration.FusedChildAtomizer.Match(expr, out int fp))
                 {
+                    IItemEvaluator generic = GenericItem(expr);
                     return (context) =>
                     {
                         Values.StringValue s = Elaboration.FusedChildAtomizer.ReadFirstChildString(context, fp);
@@ -573,7 +585,7 @@ namespace OutSmart.DAXon.Expressions
                     };
                 }
 
-                return generic;
+                return GenericItem(expr);
             }
         }
     }

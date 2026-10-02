@@ -815,6 +815,8 @@ namespace OutSmart.DAXon.Expressions
         //
         public void ComputeStaticProperties()
         {
+            // Recurses into the operands' properties; after a reset the first query can come at run time.
+            StackGuard.Probe();
             staticProperties = ComputeDependencies() | ComputeCardinality() | ComputeSpecialProperties();
         }
 
@@ -1196,19 +1198,46 @@ namespace OutSmart.DAXon.Expressions
         //
         public Elaborator MakeElaborator()
         {
+            Elaborator elab;
             lock (syncLock)
             {
                 if (elaborator == null)
                 {
-                    Elaborator elab = GetElaborator();
-                    elab.SetExpression(this);
-                    return elaborator = elab;
+                    elaborator = GetElaborator();
+                    elaborator.SetExpression(this);
                 }
-                else
-                {
-                    return elaborator;
-                }
+
+                elab = elaborator;
             }
+
+            // Judged on use, not once: while compiling, the parent chain above may still be growing.
+            // A shallow verdict holds while the root it reached is still a root.
+            object verdict = elab.ProbeVerdict;
+            if (verdict is StackProbingElaborator probing)
+            {
+                return probing;
+            }
+
+            if (verdict is Expression root && root.ParentExpression == null)
+            {
+                return elab;
+            }
+
+            Expression top = this;
+            for (int depth = 0; top.ParentExpression != null; depth++)
+            {
+                if (depth >= StackProbingElaborator.ProbeFreeDepth)
+                {
+                    StackProbingElaborator wrapper = new StackProbingElaborator(elab);
+                    elab.ProbeVerdict = wrapper;
+                    return wrapper;
+                }
+
+                top = top.ParentExpression;
+            }
+
+            elab.ProbeVerdict = top;
+            return elab;
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===

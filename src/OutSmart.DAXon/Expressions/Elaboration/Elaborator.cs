@@ -23,6 +23,10 @@ namespace OutSmart.DAXon.Expressions.Elaboration
     public abstract class Elaborator
     {
         private Expression expression;
+
+        // Expression.MakeElaborator's stack-probe verdict: the probing wrapper once the expression is
+        // known to be deep, else the root found when it was last judged shallow.
+        internal object ProbeVerdict;
         public Elaborator()
         {
         }
