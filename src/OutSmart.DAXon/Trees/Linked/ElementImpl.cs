@@ -206,6 +206,7 @@ namespace OutSmart.DAXon.Trees.Linked
             NodeImpl next = GetFirstChild();
             while (true)
             {
+                Controller.CheckActiveTimeout();   // a copy is as long as its input: per node, as the parser
                 if (next == null)
                 {
                     @out.EndElement();

@@ -186,6 +186,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             ISimpleType attributeType = BuiltInAtomicType.UNTYPED_ATOMIC;
             do
             {
+                Controller.CheckActiveTimeout();   // a copy is as long as its input: per node, as the parser
 
                 // determine node depth
                 short nodeLevel = tree.depth[next];

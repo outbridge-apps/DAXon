@@ -721,6 +721,7 @@ namespace OutSmart.DAXon.Trees.Utilities
             open.Push(root.Children().GetEnumerator());
             while (open.Count > 0)
             {
+                Controller.CheckActiveTimeout();   // a copy is as long as its input: per node, as the parser
                 IEnumerator<NodeInfo> children = open.Peek();
                 if (!children.MoveNext())
                 {
@@ -788,6 +789,7 @@ namespace OutSmart.DAXon.Trees.Utilities
             open.Push(root.Children().GetEnumerator());
             while (open.Count > 0)
             {
+                Controller.CheckActiveTimeout();
                 IEnumerator<NodeInfo> children = open.Peek();
                 if (!children.MoveNext())
                 {
