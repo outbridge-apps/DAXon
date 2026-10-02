@@ -44,7 +44,7 @@ namespace OutSmart.DAXon.Xslt
             return true;
         }
 
-        public override bool IsWithinDeclaredStreamableConstruct()
+        protected override bool? DeclaredStreamability()
         {
             return true;
         }

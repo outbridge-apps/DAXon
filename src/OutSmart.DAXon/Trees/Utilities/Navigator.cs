@@ -68,83 +68,142 @@ namespace OutSmart.DAXon.Trees.Utilities
 
         public static string GetBaseURI(NodeInfo node)
         {
-            return GetBaseURI(node, (n) =>
-            {
-                NodeInfo parent = n.GetParent();
-                return parent == null || !parent.GetSystemId().Equals(n.GetSystemId());
-            });
+            return GetBaseURI(node, IsTopByDefault);
+        }
+
+        internal static bool IsTopByDefault(NodeInfo n)
+        {
+            NodeInfo parent = n.GetParent();
+            return parent == null || !parent.GetSystemId().Equals(n.GetSystemId());
+        }
+
+        // A level whose base URI is its parent's, re-resolved against a relative xml:base when it has one.
+        private struct BaseUriStep
+        {
+            public NodeInfo Node;
+            public string XmlBase;
+            public URI Relative;
         }
 
         public static string GetBaseURI(NodeInfo node, Func<NodeInfo, bool> isTopElementWithinEntity)
         {
-            string xmlBase = node is TinyElementImpl ? ((TinyElementImpl)node).GetAttributeValue(StandardNames.XML_BASE) : node.GetAttributeValue(NamespaceUri.XML, "base");
-            if (xmlBase != null)
+            // Climbs while the answer is the parent's base URI, then resolves back down: recursing once per
+            // level overflowed the stack on deep input (base-uri(), document(@href)) and in deep stylesheets.
+            List<BaseUriStep> chain = null;
+            NodeInfo n = node;
+            IInheritedBaseUri peer = null;   // null for the start node, which uses the caller's predicate
+            string result;
+            while (true)
             {
-                URI baseURI;
-                try
+                NodeInfo parent;
+                string xmlBase = n is TinyElementImpl tiny ? tiny.GetAttributeValue(StandardNames.XML_BASE) : n.GetAttributeValue(NamespaceUri.XML, "base");
+                URI relative = null;
+                if (xmlBase != null)
                 {
-                    baseURI = new URI(xmlBase);
-                    if (baseURI.IsAbsolute())
+                    try
                     {
-                        return xmlBase;
-                    }
-                    else
-                    {
-                        NodeInfo parentNode = node.GetParent();
-                        if (parentNode == null)
+                        relative = new URI(xmlBase);
+                        if (relative.IsAbsolute())
                         {
+                            result = xmlBase;
+                            break;
+                        }
 
+                        parent = n.GetParent();
+                        if (parent == null)
+                        {
                             // We have a parentless element with a relative xml:base attribute.
                             // See for example test XQTS fn-@base-uri-10 and @base-uri-27
-                            URI base2 = new URI(node.GetSystemId());
-                            URI resolved = (xmlBase.Length == 0) ? base2 : base2.Resolve(baseURI);
-                            return resolved.ToString();
+                            URI base2 = new URI(n.GetSystemId());
+                            result = ((xmlBase.Length == 0) ? base2 : base2.Resolve(relative)).ToString();
+                            break;
                         }
 
-                        string startSysId = node.GetSystemId();
+                        string startSysId = n.GetSystemId();
                         if (startSysId == null)
                         {
-                            return null;
+                            result = null;
+                            break;
                         }
 
-                        URI @base = new URI(isTopElementWithinEntity(node) ? startSysId : parentNode.GetBaseURI());
-
-                        //URI @base = new URI(parent.getBaseURI());  //bug 3530
-                        baseURI = (xmlBase.Length == 0) ? @base : @base.Resolve(baseURI);
+                        if (peer == null ? isTopElementWithinEntity(n) : peer.IsTopWithinEntity())
+                        {
+                            URI @base = new URI(startSysId);
+                            result = ((xmlBase.Length == 0) ? @base : @base.Resolve(relative)).ToString();
+                            break;
+                        }
+                    }
+                    catch (Exception e) when (e is URISyntaxException || e is ArgumentException)
+                    {
+                        // xml:base is an invalid URI. Just return it as is: the operation that needs the base URI
+                        // will probably fail as a result. (ArgumentException: System.Uri reads a resolved base
+                        // over 65519 chars as relative, and resolving against it throws.)
+                        result = xmlBase;
+                        break;
                     }
                 }
-                catch (URISyntaxException e)
+                else
                 {
+                    string startSystemId = n.GetSystemId();
+                    if (startSystemId == null)
+                    {
+                        result = null;
+                        break;
+                    }
 
-                    // xml:base is an invalid URI. Just return it as is: the operation that needs the base URI
-                    // will probably fail as a result.     \
-                    return xmlBase;
+                    parent = n.GetParent();
+                    if (parent == null)
+                    {
+                        result = startSystemId;
+                        break;
+                    }
+
+                    string parentSystemId = parent.GetSystemId();
+                    if (!startSystemId.Equals(parentSystemId) && parentSystemId.Length != 0)
+                    {
+                        result = startSystemId;
+                        break;
+                    }
                 }
 
-                return baseURI.ToString();
+                (chain ??= new List<BaseUriStep>()).Add(new BaseUriStep { Node = n, XmlBase = xmlBase, Relative = relative });
+                peer = parent as IInheritedBaseUri;
+                string known = peer?.KnownBaseUri;
+                if (peer == null || known != null)
+                {
+                    result = peer == null ? parent.GetBaseURI() : known;
+                    break;
+                }
+
+                n = parent;
             }
 
-            string startSystemId = node.GetSystemId();
-            if (startSystemId == null)
+            if (chain != null)
             {
-                return null;
+                for (int i = chain.Count - 1; i >= 0; i--)
+                {
+                    BaseUriStep step = chain[i];
+                    if (step.XmlBase != null)
+                    {
+                        try
+                        {
+                            URI @base = new URI(result);
+                            result = ((step.XmlBase.Length == 0) ? @base : @base.Resolve(step.Relative)).ToString();
+                        }
+                        catch (Exception e) when (e is URISyntaxException || e is ArgumentException)
+                        {
+                            result = step.XmlBase;
+                        }
+                    }
+
+                    if (i > 0)
+                    {
+                        ((IInheritedBaseUri)step.Node).RememberBaseUri(result);
+                    }
+                }
             }
 
-            NodeInfo parent = node.GetParent();
-            if (parent == null)
-            {
-                return startSystemId;
-            }
-
-            string parentSystemId = parent.GetSystemId();
-            if (startSystemId.Equals(parentSystemId) || (parentSystemId.Length == 0))
-            {
-                return parent.GetBaseURI();
-            }
-            else
-            {
-                return startSystemId;
-            }
+            return result;
         }
 
         public static string GetPath(NodeInfo node)

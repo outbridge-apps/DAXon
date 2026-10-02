@@ -73,6 +73,7 @@ namespace OutSmart.DAXon.Xslt
                 }
                 else
                 {
+                    StyleElement.ResolveAncestorsFirst((StyleElement)element.GetParent(), s => s.GetStaticContext().retainedStaticContext == null, s => s.GetStaticContext().MakeRetainedStaticContext());
                     retainedStaticContext = ((StyleElement)element.GetParent()).GetStaticContext().MakeRetainedStaticContext();
                 }
             }

@@ -26,7 +26,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Trees.Tiny
 {
-    internal class TinyElementImpl : TinyParentNodeImpl
+    internal class TinyElementImpl : TinyParentNodeImpl, IInheritedBaseUri
     {
 
         public override NamespaceMap AllNamespaces => tree.namespaceMaps[tree.beta[nodeNr]];
@@ -61,6 +61,37 @@ namespace OutSmart.DAXon.Trees.Tiny
                 }
 
                 return uri;
+            }
+        }
+
+        bool IInheritedBaseUri.IsTopWithinEntity() => tree.IsTopWithinEntity(nodeNr);
+
+        string IInheritedBaseUri.KnownBaseUri
+        {
+            get
+            {
+                if (tree.UniformBaseUri != null)
+                {
+                    return tree.UniformBaseUri;
+                }
+
+                lock (tree.syncLock)
+                {
+                    return tree.knownBaseUris?[nodeNr];
+                }
+            }
+        }
+
+        void IInheritedBaseUri.RememberBaseUri(string uri)
+        {
+            lock (tree.syncLock)
+            {
+                if (tree.knownBaseUris == null)
+                {
+                    tree.knownBaseUris = new IntHashMap<string>();
+                }
+
+                tree.knownBaseUris.Put(nodeNr, uri);
             }
         }
 

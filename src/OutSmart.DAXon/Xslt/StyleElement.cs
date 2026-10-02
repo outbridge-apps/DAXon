@@ -156,6 +156,26 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
+        // Inherited properties are cached per element but resolved through the parent, and the first lookup can
+        // come from the deepest element of a deep stylesheet: one frame per level then overflowed below the
+        // stack guard. Resolving the uncached ancestors root-first leaves every lookup one level deep.
+        internal static void ResolveAncestorsFirst(StyleElement from, Func<StyleElement, bool> unresolved, Action<StyleElement> resolve)
+        {
+            List<StyleElement> chain = null;
+            for (NodeInfo p = from; p is StyleElement s && unresolved(s); p = s.GetParent())
+            {
+                (chain ??= new List<StyleElement>()).Add(s);
+            }
+
+            if (chain != null)
+            {
+                for (int i = chain.Count - 1; i >= 0; i--)
+                {
+                    resolve(chain[i]);
+                }
+            }
+        }
+
         public virtual int EffectiveVersion
         {
             get
@@ -165,6 +185,7 @@ namespace OutSmart.DAXon.Xslt
                     NodeInfo node = GetParent();
                     if (node is StyleElement)
                     {
+                        ResolveAncestorsFirst((StyleElement)node, s => s.version == -1, s => _ = s.EffectiveVersion);
                         version = ((StyleElement)node).EffectiveVersion;
                     }
                     else
@@ -195,6 +216,7 @@ namespace OutSmart.DAXon.Xslt
                         }
                         else if (p is StyleElement)
                         {
+                            ResolveAncestorsFirst((StyleElement)p, s => s.defaultMode == null, s => _ = s.DefaultMode);
                             return defaultMode = ((StyleElement)p).DefaultMode;
                         }
                         else
@@ -313,6 +335,13 @@ namespace OutSmart.DAXon.Xslt
             }
 
             return baseURI;
+        }
+
+        internal override string KnownBaseUri => baseURI;
+
+        internal override void RememberBaseUri(string uri)
+        {
+            baseURI = uri;
         }
 
         public virtual ExpressionVisitor MakeExpressionVisitor()
@@ -1617,7 +1646,23 @@ namespace OutSmart.DAXon.Xslt
             return null;
         }
 
+        // A loop over the ancestors rather than a call per level: it is asked from the deepest instruction.
         public virtual bool IsWithinDeclaredStreamableConstruct()
+        {
+            for (NodeInfo e = this; e is StyleElement s; e = s.GetParent())
+            {
+                bool? declared = s.DeclaredStreamability();
+                if (declared.HasValue)
+                {
+                    return declared.Value;
+                }
+            }
+
+            return false;
+        }
+
+        // Whether this element itself settles streamability; null leaves it to the parent.
+        protected virtual bool? DeclaredStreamability()
         {
             if (IsInXsltNamespace())
             {
@@ -1628,8 +1673,7 @@ namespace OutSmart.DAXon.Xslt
                 }
             }
 
-            NodeInfo parent = GetParent();
-            return parent is StyleElement && ((StyleElement)parent).IsWithinDeclaredStreamableConstruct();
+            return null;
         }
 
         protected virtual string GenerateId()

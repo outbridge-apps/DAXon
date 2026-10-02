@@ -28,7 +28,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Trees.Linked
 {
-    public class ElementImpl : ParentNodeImpl, INamespaceResolver
+    public class ElementImpl : ParentNodeImpl, INamespaceResolver, IInheritedBaseUri
     {
         private INodeName nodeName;
         private ISchemaType type = Untyped.INSTANCE;
@@ -105,6 +105,19 @@ namespace OutSmart.DAXon.Trees.Linked
         public override string GetBaseURI()
         {
             return Navigator.GetBaseURI(this, (n) => PhysicalRoot.IsTopWithinEntity((ElementImpl)n));
+        }
+
+        bool IInheritedBaseUri.IsTopWithinEntity() => PhysicalRoot.IsTopWithinEntity(this);
+
+        string IInheritedBaseUri.KnownBaseUri => KnownBaseUri;
+
+        void IInheritedBaseUri.RememberBaseUri(string uri) => RememberBaseUri(uri);
+
+        // A linked element keeps no base URI cache; StyleElement does.
+        internal virtual string KnownBaseUri => null;
+
+        internal virtual void RememberBaseUri(string uri)
+        {
         }
 
         public override bool IsNilled()
