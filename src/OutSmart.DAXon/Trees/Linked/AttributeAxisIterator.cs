@@ -5,18 +5,65 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Model;
+using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Trees.Iterators;
-using System;
 
 namespace OutSmart.DAXon.Trees.Linked
 {
-    // Implement IAxisIterator interface so assignment to IAxisIterator works.
-    internal sealed class AttributeAxisIterator : IAxisIterator
+    /// <summary>
+    /// The attribute axis of an element whose attributes are an ordinary attribute map; each
+    /// attribute node is created on demand, keyed by its position in the map.
+    /// </summary>
+    internal sealed class AttributeAxisIterator : IAxisIterator, ILookaheadIterator
     {
-        public AttributeAxisIterator(object node, object test) { }
-        public NodeInfo Next() => null;
-        IItem ISequenceIterator.Next() => null;
-        void ISequenceIterator.Dispose() { }
-        void IDisposable.Dispose() { }
+        private readonly ElementImpl element;
+        private readonly INodePredicate nodeTest;
+        private readonly int length;
+        private NodeInfo next;
+        private int index;
+
+        public AttributeAxisIterator(ElementImpl node, INodePredicate nodeTest)
+        {
+            element = node;
+            this.nodeTest = nodeTest;
+            length = node.Attributes().Size();
+            Advance();
+        }
+
+        public bool HasNext => next != null;
+
+        public bool SupportsHasNext()
+        {
+            return true;
+        }
+
+        private void Advance()
+        {
+            while (index < length)
+            {
+                NodeInfo candidate = new AttributeImpl(element, index++);
+                if (nodeTest == null || nodeTest.Test(candidate))
+                {
+                    next = candidate;
+                    return;
+                }
+            }
+
+            next = null;
+        }
+
+        public NodeInfo Next()
+        {
+            NodeInfo current = next;
+            if (current != null)
+            {
+                Advance();
+            }
+
+            return current;
+        }
+
+        IItem ISequenceIterator.Next() => Next();
+        public void Dispose() { }
     }
 }

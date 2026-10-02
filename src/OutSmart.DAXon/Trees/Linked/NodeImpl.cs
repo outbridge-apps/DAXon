@@ -51,6 +51,9 @@ namespace OutSmart.DAXon.Trees.Linked
         private ParentNodeImpl parent;
         private int index; // Set to -1 when the node is deleted
 
+        // Cached PhysicalRoot; re-parenting (a graft, Delete) clears it for the moved subtree.
+        private DocumentImpl document;
+
         public virtual int Fingerprint
         {
             get
@@ -108,15 +111,20 @@ namespace OutSmart.DAXon.Trees.Linked
         {
             get
             {
-                NodeInfo parent = GetParent();
-                if (parent == null)
+                DocumentImpl doc = PhysicalRoot;
+                if (doc != null && !doc.IsImaginary())
                 {
-                    return this;
+                    return doc;
                 }
-                else
+
+                // Under an imaginary document the root is the topmost element, found by a loop.
+                NodeImpl top = this;
+                for (NodeImpl up = GetParent(); up != null; up = up.GetParent())
                 {
-                    return parent.Root;
+                    top = up;
                 }
+
+                return top;
             }
         }
 
@@ -126,13 +134,31 @@ namespace OutSmart.DAXon.Trees.Linked
         {
             get
             {
-                ParentNodeImpl up = parent;
-                while (up != null && !(up is DocumentImpl))
+                if (document != null)
                 {
-                    up = up.GetRawParent();
+                    return document;
                 }
 
-                return (DocumentImpl)up;
+                // Climb to the document or the first ancestor that knows it, then cache it on the way.
+                DocumentImpl doc = null;
+                for (NodeImpl up = parent; up != null; up = up.parent)
+                {
+                    doc = up as DocumentImpl ?? up.document;
+                    if (doc != null)
+                    {
+                        break;
+                    }
+                }
+
+                if (doc != null)
+                {
+                    for (NodeImpl n = this; n != null && n.document == null && !(n is DocumentImpl); n = n.parent)
+                    {
+                        n.document = doc;
+                    }
+                }
+
+                return doc;
             }
         }
 
@@ -406,7 +432,22 @@ namespace OutSmart.DAXon.Trees.Linked
         //    }
         public void SetRawParent(ParentNodeImpl parent)
         {
+            if (this.parent != null && this.parent != parent)
+            {
+                ForgetDocument();
+            }
+
             this.parent = parent;
+            document = null;
+        }
+
+        // A subtree moved under another parent (grafted, deleted) may now hang under another document.
+        private void ForgetDocument()
+        {
+            for (NodeImpl n = this; n != null; n = n.GetNextInDocument(this))
+            {
+                n.document = null;
+            }
         }
 
         //
@@ -501,7 +542,7 @@ namespace OutSmart.DAXon.Trees.Linked
                     }
                     else if (HasChildNodes())
                     {
-                        return (IAxisIterator)new DescendantAxisIterator(this, false, nodeTest);
+                        return new DescendantAxisIterator(this, false, nodeTest);
                     }
                     else
                     {
@@ -509,7 +550,7 @@ namespace OutSmart.DAXon.Trees.Linked
                     }
 
                 case AxisInfo.DESCENDANT_OR_SELF:
-                    return (IAxisIterator)new DescendantAxisIterator(this, true, nodeTest);
+                    return new DescendantAxisIterator(this, true, nodeTest);
                 case AxisInfo.FOLLOWING:
                     return new FollowingEnumeration(this, nodeTest);
                 case AxisInfo.FOLLOWING_SIBLING:
@@ -646,6 +687,7 @@ namespace OutSmart.DAXon.Trees.Linked
                 newRoot.SetConfiguration(GetConfiguration());
                 newRoot.SetImaginary(true);
                 parent = newRoot;
+                ForgetDocument();
             }
 
             index = -1;

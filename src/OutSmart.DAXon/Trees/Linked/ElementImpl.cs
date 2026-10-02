@@ -35,25 +35,6 @@ namespace OutSmart.DAXon.Trees.Linked
         private IAttributeMap attributeMap; // this excludes namespace attributes
         private NamespaceMap namespaceMap = NamespaceMap.EmptyMap();
 
-        /// <summary>
-        /// Get the root node
-        /// </summary>
-        public override NodeInfo Root
-        {
-            get
-            {
-                ParentNodeImpl up = GetRawParent();
-                if (up == null || (up is DocumentImpl && ((DocumentImpl)up).IsImaginary()))
-                {
-                    return this;
-                }
-                else
-                {
-                    return up.Root;
-                }
-            }
-        }
-
         public override NamespaceMap AllNamespaces => namespaceMap;
         public ElementImpl()
         {
@@ -113,11 +94,12 @@ namespace OutSmart.DAXon.Trees.Linked
 
         void IInheritedBaseUri.RememberBaseUri(string uri) => RememberBaseUri(uri);
 
-        // A linked element keeps no base URI cache; StyleElement does.
-        internal virtual string KnownBaseUri => null;
+        // The document caches resolved base URIs, as the tiny tree does; StyleElement keeps its own.
+        internal virtual string KnownBaseUri => PhysicalRoot?.GetKnownBaseUri(this);
 
         internal virtual void RememberBaseUri(string uri)
         {
+            PhysicalRoot?.SetKnownBaseUri(this, uri);
         }
 
         public override bool IsNilled()
@@ -205,7 +187,7 @@ namespace OutSmart.DAXon.Trees.Linked
             {
 
                 // this case needs special care because of the possibility of deleted attribute nodes
-                return new AxisFilter(((AttributeMapWithIdentity)attributeMap).IterateAttributes(this), test);
+                return new Navigator.AxisFilter(((AttributeMapWithIdentity)attributeMap).IterateAttributes(this), test);
             }
             else
             {
@@ -239,7 +221,9 @@ namespace OutSmart.DAXon.Trees.Linked
             }
             else
             {
-                nsMap = NamespaceMap.Of(GetPrefix(), GetNamespaceUri());
+                // As the tiny tree (Saxon bugs 5616, 6866): no xmlns="" for a no-namespace element, which
+                // would show as a "" in-scope prefix once copied under a default namespace.
+                nsMap = GetNamespaceUri().IsEmpty() ? NamespaceMap.EmptyMap() : NamespaceMap.Of(GetPrefix(), GetNamespaceUri());
                 gatherAttributeNamespaces = true;
             }
 

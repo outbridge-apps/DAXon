@@ -188,10 +188,9 @@ namespace OutSmart.DAXon.Trees.Linked
                 suppliedAttributes = suppliedAttributes.Put(new AttributeInfo(xmlId.GetNodeName(), xmlId.GetType(), Whitespace.Trim(xmlId.Value), xmlId.GetLocation(), xmlId.GetProperties()));
             }
 
-            if (location.GetSystemId() == null)
+            if (location.GetSystemId() == null || (!useEventLocation && GetSystemId() != null))
             {
-
-                // Bug 5800
+                // Bug 5800. A constructed node takes the builder's URI (the static base URI), as in the tiny tree.
                 location = new Loc(GetSystemId(), location.GetLineNumber(), location.GetColumnNumber());
             }
 
@@ -269,14 +268,20 @@ namespace OutSmart.DAXon.Trees.Linked
         {
             ProcInstImpl pi = new ProcInstImpl(name, remainder.Tidy());
             currentNode.AddChild(pi, size[depth]++);
-            pi.SetLocation(locationId.GetSystemId(), locationId.GetLineNumber(), locationId.GetColumnNumber());
+            pi.SetLocation(LeafSystemId(locationId), locationId.GetLineNumber(), locationId.GetColumnNumber());
         }
 
         public override void Comment(UnicodeString chars, ILocation locationId, int properties)
         {
             CommentImpl comment = new CommentImpl(chars.Tidy());
             currentNode.AddChild(comment, size[depth]++);
-            comment.SetLocation(locationId.GetSystemId(), locationId.GetLineNumber(), locationId.GetColumnNumber());
+            comment.SetLocation(LeafSystemId(locationId), locationId.GetLineNumber(), locationId.GetColumnNumber());
+        }
+
+        // As for elements (and in the tiny tree): a constructed node has the builder's URI, not the instruction's.
+        private string LeafSystemId(ILocation locationId)
+        {
+            return !useEventLocation && GetSystemId() != null ? GetSystemId() : locationId.GetSystemId();
         }
 
         public void GraftElement(ElementImpl element)

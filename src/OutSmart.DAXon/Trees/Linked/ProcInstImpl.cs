@@ -5,32 +5,87 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using System;
-using System.Collections.Generic;
-using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Api;
+using OutSmart.DAXon.Events;
+using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Text;
+using OutSmart.DAXon.Trees.Utilities;
+using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Trees.Linked
 {
-    // Was a fully hollow shell (target and data dropped on construction, kind/copy/string-value
-    // all NIE): a processing-instruction in a linked tree crashed on first real use.
     internal sealed class ProcInstImpl : NodeImpl
     {
-        private string target = "";
-        private UnicodeString content = EmptyUnicodeString.GetInstance();
-        public ProcInstImpl(object target, object data)
-        {
-            this.target = target?.ToString() ?? "";
-            content = data as UnicodeString ?? BMPString.Of(data?.ToString() ?? "");
-        }
-        public void SetLocation(string systemId, int line, int column) { } /* location tracking not kept for linked-tree PIs */
+        private string name;
+        private UnicodeString content;
+        private string systemId;
+        private int lineNumber = -1;
+        private int columnNumber = -1;
 
-        public override string GetLocalPart() => target;
+        public ProcInstImpl(string name, UnicodeString content)
+        {
+            this.name = name;
+            this.content = content;
+        }
+
+        public override INodeName GetNodeName()
+        {
+            return new NoNamespaceName(name);
+        }
+
         public override UnicodeString UnicodeStringValue => content;
-        public override int GetNodeKind() => Types.Type.PROCESSING_INSTRUCTION;
-        public override void ReplaceStringValue(UnicodeString value) => content = value;
-        public override void Copy(IReceiver @out, int copyOptions, ILocation locationId) => @out.ProcessingInstruction(target, content, locationId, 0);
+
+        public override IAtomicSequence Atomize()
+        {
+            return new StringValue(content);
+        }
+
+        public override int GetNodeKind()
+        {
+            return Types.Type.PROCESSING_INSTRUCTION;
+        }
+
+        public void SetLocation(string uri, int lineNumber, int columnNumber)
+        {
+            systemId = uri;
+            this.lineNumber = lineNumber;
+            this.columnNumber = columnNumber;
+        }
+
+        public override string GetSystemId()
+        {
+            return systemId;
+        }
+
+        // A PI from an external entity has that entity's base URI, as in the tiny tree.
+        public override string GetBaseURI()
+        {
+            return Navigator.GetBaseURI(this);
+        }
+
+        public override int GetLineNumber()
+        {
+            return lineNumber;
+        }
+
+        public override int GetColumnNumber()
+        {
+            return columnNumber;
+        }
+
+        public override void Copy(IReceiver @out, int copyOptions, ILocation locationId)
+        {
+            @out.ProcessingInstruction(name, content, locationId, ReceiverOption.NONE);
+        }
+
+        public override void Rename(INodeName newNameCode, bool inherit)
+        {
+            name = newNameCode.GetLocalPart();
+        }
+
+        public override void ReplaceStringValue(UnicodeString stringValue)
+        {
+            content = stringValue;
+        }
     }
 }

@@ -44,6 +44,10 @@ namespace OutSmart.DAXon.Trees.Linked
         private Durability durability;
         private ISpaceStrippingRule spaceStrippingRule = NoElementsSpaceStrippingRule.GetInstance();
 
+        // Base URIs resolved for inner elements; shared by threads reading the tree, so locked.
+        private Dictionary<ElementImpl, string> knownBaseUris;
+        private readonly object baseUriLock = new object();
+
         public ElementImpl DocumentElement { get => documentElement; set => documentElement = value; }
 
         public override NodeInfo Root => this;
@@ -263,6 +267,22 @@ namespace OutSmart.DAXon.Trees.Linked
         public bool IsTopWithinEntity(ElementImpl element)
         {
             return topWithinEntityElements != null && topWithinEntityElements.Contains(element);
+        }
+
+        internal string GetKnownBaseUri(ElementImpl element)
+        {
+            lock (baseUriLock)
+            {
+                return knownBaseUris != null && knownBaseUris.TryGetValue(element, out string uri) ? uri : null;
+            }
+        }
+
+        internal void SetKnownBaseUri(ElementImpl element, string uri)
+        {
+            lock (baseUriLock)
+            {
+                (knownBaseUris ??= new Dictionary<ElementImpl, string>())[element] = uri;
+            }
         }
 
         public override int GetLineNumber()
