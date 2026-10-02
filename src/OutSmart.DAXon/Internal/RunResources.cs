@@ -18,7 +18,8 @@ namespace OutSmart.DAXon.Internal
 
         private readonly RunResources outer;
         private readonly bool entered;
-        private List<IDisposable> open;
+        private HashSet<WeakReference<IDisposable>> open;
+        private int sweepAt = 64;
 
         private RunResources(RunResources outer, bool entered)
         {
@@ -51,31 +52,45 @@ namespace OutSmart.DAXon.Internal
         }
 
         // Called by the opener; null when no API call is on the stack (nothing to close it then).
-        public static RunResources Track(IDisposable resource)
+        // The scope holds the resource weakly: one it abandons part-way through a long call must
+        // stay collectable, or a loop of head(unparsed-text-lines(..)) holds every file to the end.
+        public static RunResources Track(IDisposable resource, out WeakReference<IDisposable> ticket)
         {
             RunResources scope = current;
+            ticket = null;
             if (scope != null)
             {
+                ticket = new WeakReference<IDisposable>(resource, trackResurrection: true);   // also one awaiting its finalizer
                 lock (scope)
                 {
-                    (scope.open ?? (scope.open = new List<IDisposable>())).Add(resource);
+                    if (scope.open == null)
+                    {
+                        scope.open = new HashSet<WeakReference<IDisposable>>();
+                    }
+                    else if (scope.open.Count >= scope.sweepAt)
+                    {
+                        scope.open.RemoveWhere(w => !w.TryGetTarget(out _));
+                        scope.sweepAt = Math.Max(64, scope.open.Count * 2);
+                    }
+
+                    scope.open.Add(ticket);
                 }
             }
 
             return scope;
         }
 
-        public void Untrack(IDisposable resource)
+        public void Untrack(WeakReference<IDisposable> ticket)
         {
             lock (this)
             {
-                open?.Remove(resource);
+                open?.Remove(ticket);
             }
         }
 
         public void CloseAll()
         {
-            List<IDisposable> left;
+            HashSet<WeakReference<IDisposable>> left;
             lock (this)
             {
                 left = open;
@@ -87,8 +102,13 @@ namespace OutSmart.DAXon.Internal
                 return;
             }
 
-            foreach (IDisposable resource in left)
+            foreach (WeakReference<IDisposable> ticket in left)
             {
+                if (!ticket.TryGetTarget(out IDisposable resource))
+                {
+                    continue;
+                }
+
                 try
                 {
                     resource.Dispose();

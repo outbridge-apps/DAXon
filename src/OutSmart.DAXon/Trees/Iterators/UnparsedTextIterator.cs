@@ -32,6 +32,7 @@ namespace OutSmart.DAXon.Trees.Iterators
     {
         private TextReader reader;
         private readonly RunResources scope;   // the API call that closes the reader if this iterator does not
+        private readonly WeakReference<IDisposable> ticket;
         private readonly IIntPredicateProxy checker;
         private readonly URI uri;
         private int position = 0;   // lines delivered so far; -1 after end
@@ -66,7 +67,7 @@ namespace OutSmart.DAXon.Trees.Iterators
             }
 
             this.reader = r;
-            this.scope = RunResources.Track(this);
+            this.scope = RunResources.Track(this, out ticket);
             this.uri = absoluteURI;
             this.checker = config.ValidCharacterChecker;
         }
@@ -172,7 +173,7 @@ namespace OutSmart.DAXon.Trees.Iterators
             {
                 reader.Dispose();
                 reader = null;
-                scope?.Untrack(this);
+                scope?.Untrack(ticket);
             }
 
             GC.SuppressFinalize(this);
