@@ -215,8 +215,12 @@ namespace OutSmart.DAXon.Functions
 
             public IItem Next()
             {
+                // a clock read per member: only XML members met the deadline inside their parse, so
+                // 20k text or metadata members ran 5 s past a 2 s limit
+                Core.Controller.CheckActiveTimeoutNow();
                 while (sources.MoveNext())
                 {
+                    Core.Controller.CheckActiveTimeoutNow();
                     IResource r = sources.Current;
                     if (r == null)
                     {
