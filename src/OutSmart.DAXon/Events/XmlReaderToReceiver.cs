@@ -790,6 +790,11 @@ namespace OutSmart.DAXon.Events
         {
             private readonly Configuration config;
             private readonly Uri principal;
+            private bool measurePrincipal;
+
+            // Of the document the parser opened by system id - its first fetch, before anything it
+            // references - read from the open handle, so a tree can be sized from it; else -1.
+            internal long PrincipalLength { get; private set; } = -1;
 
             public FileOnlyXmlResolver()
                 : this(null, null)
@@ -802,6 +807,7 @@ namespace OutSmart.DAXon.Events
             public FileOnlyXmlResolver(Configuration config, string principalSystemId)
             {
                 this.config = config;
+                measurePrincipal = !string.IsNullOrEmpty(principalSystemId);
                 if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config) && !string.IsNullOrEmpty(principalSystemId))
                 {
                     try
@@ -828,7 +834,14 @@ namespace OutSmart.DAXon.Events
                         }
                     }
 
-                    return base.GetEntity(absoluteUri, role, ofObjectToReturn);
+                    object entity = base.GetEntity(absoluteUri, role, ofObjectToReturn);
+                    if (measurePrincipal)
+                    {
+                        measurePrincipal = false;
+                        PrincipalLength = OutSmart.DAXon.Resources.ActiveStreamSource.RemainingLength(entity as Stream);
+                    }
+
+                    return entity;
                 }
 
                 // IOException, not XmlException: an unfetchable URI is an I/O failure — callers map it

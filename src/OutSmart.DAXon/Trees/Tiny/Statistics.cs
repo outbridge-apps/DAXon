@@ -31,6 +31,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         // than their maximum. So we're generally allocating more space than we need, but not by too much.
         // The algorithm works best when all the trees have similar sizes.
         private int treesCreated = 0;
+        private int nextSlot = 0;
         private readonly int[] last10Nodes = new int[10];
         private readonly int[] last10Attributes = new int[10];
         private readonly int[] last10Namespaces = new int[10];
@@ -117,17 +118,17 @@ namespace OutSmart.DAXon.Trees.Tiny
 
             lock (syncLock)
             {
-
-                int n0 = treesCreated;
-                if (n0 < 1000000)
+                // Upstream stopped here after a million trees, freezing whatever the last ten were for good
+                // on a long-lived Processor. The ring keeps turning; only the count saturates.
+                int n = nextSlot;
+                nextSlot = n == 9 ? 0 : n + 1;
+                last10Nodes[n] = numberOfNodes;
+                last10Attributes[n] = numberOfAttributes;
+                last10Namespaces[n] = numberOfNamespaces;
+                last10Characters[n] = Math.Max(textBuffer.Length(), 65536);
+                if (treesCreated < int.MaxValue)
                 {
-
-                    // it should have stabilized by then, and we don't want to overflow
-                    int n = treesCreated++ % 10;
-                    last10Nodes[n] = numberOfNodes;
-                    last10Attributes[n] = numberOfAttributes;
-                    last10Namespaces[n] = numberOfNamespaces;
-                    last10Characters[n] = Math.Max(textBuffer.Length(), 65536);
+                    treesCreated++;
                 }
             }
         }
