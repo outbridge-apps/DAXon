@@ -74,14 +74,26 @@ namespace OutSmart.DAXon.Resources
             }
 
             // Anything else is a ZIP archive when its URI says so, and otherwise a catalog of URIs.
-            string zipPattern = context.GetConfiguration().GetConfigurationProperty(Feature<string>.ZIP_URI_PATTERN)
-                ?? "^jar:|\\.jar$|\\.zip$|\\.docx$|\\.xlsx$";
-            if (Regex.ARegularExpression.Compile(zipPattern, "").ContainsMatch(Text.StringView.Of(collectionURI).Tidy()))
+            if (IsZipURI(collectionURI, context.GetConfiguration().GetConfigurationProperty(Feature<string>.ZIP_URI_PATTERN)))
             {
                 return new JarCollection(context, collectionURI, @params);
             }
 
             return new CatalogCollection(context.GetConfiguration(), collectionURI, @params);
+        }
+
+        // The default pattern "^jar:|\.jar$|\.zip$|\.docx$|\.xlsx$" as plain tests: compiling it per call
+        // cost a regex and, near the stack limit, reported a regex error for a sheet that has none.
+        private static bool IsZipURI(string uri, string pattern)
+        {
+            if (pattern == null)
+            {
+                return uri.StartsWith("jar:", StringComparison.Ordinal) || uri.EndsWith(".jar", StringComparison.Ordinal)
+                    || uri.EndsWith(".zip", StringComparison.Ordinal) || uri.EndsWith(".docx", StringComparison.Ordinal)
+                    || uri.EndsWith(".xlsx", StringComparison.Ordinal);
+            }
+
+            return Regex.ARegularExpression.Compile(pattern, "").ContainsMatch(Text.StringView.Of(uri).Tidy());
         }
     }
 }
