@@ -217,8 +217,9 @@ namespace OutSmart.DAXon.Api
             if (input == null)
                 throw new NullReferenceException("input");
             bool ws = StripsIgnorableWhitespace();
+            long length = OutSmart.DAXon.Resources.ActiveStreamSource.RemainingLength(input);
             return BuildFromXmlReader(() => XmlReaderToReceiver.CreateXmlReader(
-                null, InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), systemId, null, ws, ws, config), systemId);
+                null, InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), systemId, null, ws, ws, config), systemId, length);
         }
 
         public virtual XdmNode Build(System.IO.TextReader input, string systemId)
@@ -226,8 +227,9 @@ namespace OutSmart.DAXon.Api
             if (input == null)
                 throw new NullReferenceException("input");
             bool ws = StripsIgnorableWhitespace();
+            long length = OutSmart.DAXon.Resources.ActiveStreamSource.RemainingLength(input);
             return BuildFromXmlReader(() => XmlReaderToReceiver.CreateXmlReader(
-                InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), null, systemId, null, ws, ws, config), systemId);
+                InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), null, systemId, null, ws, ws, config), systemId, length);
         }
 
         // Round B1: MaxInputBytes reads as a Processor-wide cap, but only resolver-routed fetches
@@ -261,7 +263,8 @@ namespace OutSmart.DAXon.Api
         // The reader is built by a factory rather than passed in: creating it already reads from
         // the input (encoding sniff, prolog), so the input cap can fire there - inside the guard
         // that turns an engine XPathException into the API's own exception type.
-        private XdmNode BuildFromXmlReader(Func<System.Xml.XmlReader> makeReader, string systemId)
+        // inputLength: of the input, when known (sizes the tree), else -1.
+        private XdmNode BuildFromXmlReader(Func<System.Xml.XmlReader> makeReader, string systemId, long inputLength = -1)
         {
             ParseOptions options = GetParseOptions();
             // A standalone build runs outside any transformation, but the parse loop honours the
@@ -272,7 +275,7 @@ namespace OutSmart.DAXon.Api
             {
                 using (System.Xml.XmlReader reader = makeReader())
                 {
-                    ITreeInfo doc = config.BuildDocumentTree(reader, systemId, options);
+                    ITreeInfo doc = config.BuildDocumentTree(reader, systemId, options, inputLength);
                     return new XdmNode(doc.GetRootNode());
                 }
             }
@@ -298,6 +301,7 @@ namespace OutSmart.DAXon.Api
         {
             // P5: build via the native XmlReader path (a bare systemId opens through XmlReader.Create), no JAXP Source.
             bool ws = StripsIgnorableWhitespace();
+            // No size from the path: asking the file system costs ~165 us here, more than parsing a small file.
             return BuildFromXmlReader(() => XmlReaderToReceiver.CreateXmlReader(null, null, file, null, ws, ws, config), file);
         }
 

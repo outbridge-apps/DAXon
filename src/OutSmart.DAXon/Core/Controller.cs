@@ -1129,6 +1129,7 @@ namespace OutSmart.DAXon.Core
             if (sourceBuilder is TinyBuilder)
             {
                 ((TinyBuilder)sourceBuilder).SetStatistics(config.GetTreeStatistics().SOURCE_DOCUMENT_STATISTICS);
+                ((TinyBuilder)sourceBuilder).SetInputLength((source as ActiveStreamSource)?.InputLength ?? -1);
             }
 
             IReceiver r = sourceBuilder;
@@ -1167,11 +1168,18 @@ namespace OutSmart.DAXon.Core
         // stripping rule, so Sender's own wrapping does not strip a second time.
         public virtual NodeInfo MakeSourceTree(System.Xml.XmlReader reader, string systemId, int validationMode)
         {
+            return MakeSourceTree(reader, systemId, validationMode, -1);
+        }
+
+        // inputLength: of what the reader parses, when known (sizes a tiny tree), else -1.
+        internal NodeInfo MakeSourceTree(System.Xml.XmlReader reader, string systemId, int validationMode, long inputLength)
+        {
             Builder sourceBuilder = MakeBuilder();
             sourceBuilder.SetUseEventLocation(true);
             if (sourceBuilder is TinyBuilder)
             {
                 ((TinyBuilder)sourceBuilder).SetStatistics(config.GetTreeStatistics().SOURCE_DOCUMENT_STATISTICS);
+                ((TinyBuilder)sourceBuilder).SetInputLength(inputLength);
             }
 
             IReceiver r = sourceBuilder;

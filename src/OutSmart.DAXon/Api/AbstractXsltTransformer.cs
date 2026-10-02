@@ -205,11 +205,17 @@ namespace OutSmart.DAXon.Api
         // same result over the full tree, so this path always builds the tree — no JAXP Source is constructed.
         protected virtual void ApplyTemplatesToXmlReader(System.Xml.XmlReader reader, string systemId, IReceiver @out)
         {
+            ApplyTemplatesToXmlReader(reader, systemId, @out, -1);
+        }
+
+        // inputLength: of what the reader parses, when known (sizes the source tree), else -1.
+        internal void ApplyTemplatesToXmlReader(System.Xml.XmlReader reader, string systemId, IReceiver @out, long inputLength)
+        {
             if (reader == null)
                 throw new NullReferenceException();
             if (@out == null)
                 throw new NullReferenceException();
-            NodeInfo node = controller.MakeSourceTree(reader, systemId, controller.SchemaValidationMode);
+            NodeInfo node = controller.MakeSourceTree(reader, systemId, controller.SchemaValidationMode, inputLength);
             controller.ApplyTemplates(node, @out);
         }
 

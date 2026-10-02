@@ -39,6 +39,38 @@ namespace OutSmart.DAXon.Resources
             this.systemId = systemId;
         }
 
+        // What is left to parse when the input knows it (a file, a buffer, a string), else -1: the tree is
+        // sized from it.
+        internal long InputLength => byteStream != null ? RemainingLength(byteStream) : RemainingLength(charStream);
+
+        internal static long RemainingLength(Stream stream)
+        {
+            try
+            {
+                return stream != null && stream.CanSeek ? stream.Length - stream.Position : -1;
+            }
+            catch (System.NotSupportedException)
+            {
+                return -1;
+            }
+        }
+
+        // StringReader keeps its length to itself, and it is how hosts pass a document they hold as text
+        // (the D365 one does). Both runtimes name its fields _s and _pos; without them, no length.
+        private static readonly System.Reflection.FieldInfo StringReaderText = typeof(StringReader).GetField("_s", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        private static readonly System.Reflection.FieldInfo StringReaderPosition = typeof(StringReader).GetField("_pos", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        internal static long RemainingLength(TextReader reader)
+        {
+            if (reader is StringReader && StringReaderText != null && StringReaderPosition != null
+                && StringReaderText.GetValue(reader) is string text && StringReaderPosition.GetValue(reader) is int position)
+            {
+                return text.Length - position;
+            }
+
+            return -1;
+        }
+
         public void SetSystemId(string systemId)
         {
             this.systemId = systemId;

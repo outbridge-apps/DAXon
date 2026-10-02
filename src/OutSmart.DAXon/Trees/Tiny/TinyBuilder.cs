@@ -34,6 +34,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         private bool ended = false;
         private bool noNewNamespaces = true;
         private Statistics statistics;
+        private long inputLength = -1;
         private bool markDefaultedAttributes = false;
         private Eligibility textualElementEligibilityState = Eligibility.INELIGIBLE;
         private UnicodeBuilder commentBuilder = new UnicodeBuilder();
@@ -54,6 +55,12 @@ namespace OutSmart.DAXon.Trees.Tiny
             statistics = stats;
         }
 
+        // The length of the input about to be parsed into the next tree (bytes, or chars for a string).
+        internal void SetInputLength(long length)
+        {
+            inputLength = length;
+        }
+
         /// <summary>
         /// Open the event stream
         /// </summary>
@@ -69,7 +76,8 @@ namespace OutSmart.DAXon.Trees.Tiny
 
             if (tree == null)
             {
-                tree = new TinyTree(config, statistics);
+                tree = new TinyTree(config, statistics, inputLength);
+                inputLength = -1;
                 currentDepth = 0;
                 if (lineNumbering)
                 {
@@ -158,6 +166,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             ended = false;
             lastElementSystemId = null;
             statistics = config.GetTreeStatistics().TEMPORARY_TREE_STATISTICS;
+            inputLength = -1;
         }
 
         public override void Close()

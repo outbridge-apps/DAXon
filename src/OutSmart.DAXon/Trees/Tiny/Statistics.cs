@@ -36,6 +36,12 @@ namespace OutSmart.DAXon.Trees.Tiny
         private readonly int[] last10Namespaces = new int[10];
         private readonly int[] last10Characters = new int[10];
 
+        // Nodes and attributes per 64 KB of input by the input's size (its bit count), from the latest tree of
+        // that size whose input length was known; nodes 0 = none yet. Documents of one size tend to be of one
+        // kind, and a density learned from another kind mis-sizes a tree.
+        private readonly int[] nodesPer64KB = new int[64];
+        private readonly int[] attributesPer64KB = new int[64];
+
         public virtual int AverageNodes => GetUpperBound(last10Nodes);
 
         public virtual int AverageAttributes => GetUpperBound(last10Attributes);
@@ -66,8 +72,49 @@ namespace OutSmart.DAXon.Trees.Tiny
             return bits;
         }
 
+        // Array sizes for a tree whose input is length bytes (or chars) long, at the density of the latest tree
+        // of its size (else of a neighbouring power of two) plus 10%, and never above one node per 12 bytes or
+        // attribute per 16, so the input's own size bounds them. -1 when no tree of about that size was seen.
+        internal void SizesFromInput(long length, out int nodes, out int attributes)
+        {
+            nodes = -1;
+            attributes = -1;
+            int b = Bucket(length);
+            int k = nodesPer64KB[b] > 0 ? b : b < 63 && nodesPer64KB[b + 1] > 0 ? b + 1 : b > 0 && nodesPer64KB[b - 1] > 0 ? b - 1 : -1;
+            if (k >= 0)
+            {
+                nodes = (int)Math.Min(Math.Min(length * nodesPer64KB[k] / 65536 * 11 / 10, length / 12) + 64, int.MaxValue / 2);
+                attributes = (int)Math.Min(Math.Min(length * attributesPer64KB[k] / 65536 * 11 / 10, length / 16) + 16, int.MaxValue / 2);
+            }
+        }
+
+        private static int Bucket(long length)
+        {
+            int bits = 0;
+            while (length > 0)
+            {
+                length >>= 1;
+                bits++;
+            }
+
+            return bits;
+        }
+
         public virtual void UpdateStatistics(int numberOfNodes, int numberOfAttributes, int numberOfNamespaces, LargeTextBuffer textBuffer)
         {
+            UpdateStatistics(numberOfNodes, numberOfAttributes, numberOfNamespaces, textBuffer, -1);
+        }
+
+        internal void UpdateStatistics(int numberOfNodes, int numberOfAttributes, int numberOfNamespaces, LargeTextBuffer textBuffer, long inputLength)
+        {
+            if (inputLength >= 256)
+            {
+                // ints, so a concurrent reader sees whole values; a stale pair only mis-sizes one tree
+                int b = Bucket(inputLength);
+                attributesPer64KB[b] = (int)Math.Min(numberOfAttributes * 65536L / inputLength + (numberOfAttributes > 0 ? 1 : 0), int.MaxValue);
+                nodesPer64KB[b] = (int)Math.Min(numberOfNodes * 65536L / inputLength + 1, int.MaxValue);
+            }
+
             lock (syncLock)
             {
 

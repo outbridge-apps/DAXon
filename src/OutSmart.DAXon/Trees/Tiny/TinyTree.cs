@@ -34,6 +34,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         // grows; reserving that size at once (upstream) made the ten trees after a large one all large.
         private const int InitialCapacity = 4096;
         private int nodeHint, attributeHint, namespaceHint;
+        private readonly long inputLength;   // of the parsed input, when known: sizes this tree and teaches the next
         public LargeTextBuffer textBuffer;
         public UnicodeString commentBuffer = null; // created when needed
         public int numberOfNodes = 0; // excluding attributes and namespaces
@@ -191,13 +192,39 @@ namespace OutSmart.DAXon.Trees.Tiny
                 }
             }
         }
-        public TinyTree(Configuration config, Statistics statistics) : base(config)
+        public TinyTree(Configuration config, Statistics statistics) : this(config, statistics, -1)
         {
+        }
+
+        // inputLength: bytes (chars for a string) of the input being parsed, or -1. With it the arrays are
+        // sized from this input at the latest such tree's density; growing from a small start cost a
+        // large document after small ones +23% allocation.
+        internal TinyTree(Configuration config, Statistics statistics, long inputLength) : base(config)
+        {
+            this.inputLength = inputLength;
             nodeHint = statistics.AverageNodes + 1;
             attributeHint = statistics.AverageAttributes + 1;
             namespaceHint = statistics.AverageNamespaces + 1;
             int nodes = Math.Min(nodeHint, InitialCapacity);
             int attributes = Math.Min(attributeHint, InitialCapacity);
+            if (inputLength > 0)
+            {
+                // Small after small keeps the last ten's size, exact for them. Otherwise recent trees about
+                // this input's estimate give their size (exact for a repeated document); the estimate has a margin.
+                statistics.SizesFromInput(inputLength, out int fromNodes, out int fromAttributes);
+                if (fromNodes > 0 && (fromNodes > InitialCapacity || nodeHint > InitialCapacity))
+                {
+                    nodes = nodeHint >= fromNodes - fromNodes / 6 && nodeHint <= fromNodes ? nodeHint : fromNodes;
+                    nodeHint = 0;
+                }
+
+                if (fromAttributes > 0 && (fromAttributes > InitialCapacity || attributeHint > InitialCapacity))
+                {
+                    attributes = attributeHint >= fromAttributes - fromAttributes / 6 && attributeHint <= fromAttributes ? attributeHint : fromAttributes;
+                    attributeHint = 0;
+                }
+            }
+
             int namespaces = Math.Min(namespaceHint, InitialCapacity);
             int characters = Math.Min(statistics.AverageCharacters + 10, 65536);
             nodeKind = new byte[nodes];
@@ -362,8 +389,9 @@ namespace OutSmart.DAXon.Trees.Tiny
         public void Condense(Statistics statistics)
         {
 
-            //int unused = Math.round(((nodeKind.length - numberOfNodes) * 100) / nodeKind.length);
-            if (numberOfNodes * 3 < nodeKind.Length || (nodeKind.Length - numberOfNodes > 20000))
+            // Up to an eighth unused stays (upstream: 20000 nodes, 1000 attributes): a size estimated from the
+            // input runs up to 10% over, and trimming that would copy the arrays a second time.
+            if (numberOfNodes * 3 < nodeKind.Length || (nodeKind.Length - numberOfNodes > Math.Max(20000, nodeKind.Length / 8)))
             {
 
                 Array.Resize(ref nodeKind, numberOfNodes);
@@ -384,7 +412,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                 }
             }
 
-            if ((numberOfAttributes * 3 < attParent.Length) || (attParent.Length - numberOfAttributes > 1000))
+            if ((numberOfAttributes * 3 < attParent.Length) || (attParent.Length - numberOfAttributes > Math.Max(1000, attParent.Length / 8)))
             {
                 int k = numberOfAttributes;
 
@@ -414,7 +442,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             }
 
             prefixPool.Condense();
-            statistics.UpdateStatistics(numberOfNodes, numberOfAttributes, numberOfNamespaces, textBuffer); //        System.Console.Error.println("STATS: " + averageNodes + ", " + averageAttributes + ", "
+            statistics.UpdateStatistics(numberOfNodes, numberOfAttributes, numberOfNamespaces, textBuffer, inputLength); //        System.Console.Error.println("STATS: " + averageNodes + ", " + averageAttributes + ", "
             //                + averageNamespaces + ", " + averageCharacters);
             //        if (charBufferLength * 3 < charBuffer.length ||
             //                charBuffer.length - charBufferLength > 10000) {

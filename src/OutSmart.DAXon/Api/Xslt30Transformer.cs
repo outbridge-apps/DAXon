@@ -156,9 +156,10 @@ namespace OutSmart.DAXon.Api
                 try
                 {
                     IReceiver sOut = GetDestinationReceiver(controller, destination);
+                    long length = Resources.ActiveStreamSource.RemainingLength(input);
                     using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(null, input, systemId, null, false, false, processor.UnderlyingConfiguration))
                     {
-                        ApplyTemplatesToXmlReader(reader, systemId, sOut);
+                        ApplyTemplatesToXmlReader(reader, systemId, sOut, length);
                     }
 
                     destination.CloseAndNotify();

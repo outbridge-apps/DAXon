@@ -2041,6 +2041,11 @@ namespace OutSmart.DAXon.Core
             builder.SetLineNumbering(lineNumbering);
             builder.SetPipelineConfiguration(pipe);
             builder.SetSystemId(src2.GetSystemId());
+            if (builder is TinyBuilder tiny && src2 is ActiveStreamSource stream)
+            {
+                tiny.SetInputLength(stream.InputLength);
+            }
+
             Sender.Send(src2, builder, options);
 
             // Get the constructed document
@@ -2064,6 +2069,12 @@ namespace OutSmart.DAXon.Core
         // never constructs a JAXP Source.
         public virtual ITreeInfo BuildDocumentTree(System.Xml.XmlReader reader, string systemId, ParseOptions parseOptions)
         {
+            return BuildDocumentTree(reader, systemId, parseOptions, -1);
+        }
+
+        // inputLength: of what the reader parses, when known (sizes a tiny tree), else -1.
+        internal ITreeInfo BuildDocumentTree(System.Xml.XmlReader reader, string systemId, ParseOptions parseOptions, long inputLength)
+        {
             ParseOptions options = (parseOptions ?? defaultParseOptions).ApplyDefaults(this);
             TreeModel treeModel = options.Model;
             bool lineNumbering = options.IsLineNumbering();
@@ -2074,6 +2085,7 @@ namespace OutSmart.DAXon.Core
             builder.SetLineNumbering(lineNumbering);
             builder.SetPipelineConfiguration(pipe);
             builder.SetSystemId(systemId);
+            (builder as TinyBuilder)?.SetInputLength(inputLength);
             Sender.Send(reader, systemId, builder, options);
             NodeInfo newdoc = builder.CurrentRoot;
             if (newdoc.GetNodeKind() != Types.Type.DOCUMENT)

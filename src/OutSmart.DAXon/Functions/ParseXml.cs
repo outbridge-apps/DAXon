@@ -71,6 +71,7 @@ namespace OutSmart.DAXon.Functions
 
                 StringReader sr = new StringReader(inputXml);
                 Builder b = TreeModel.TINY_TREE.MakeBuilder(controller.MakePipelineConfiguration());
+                (b as TinyBuilder)?.SetInputLength(inputXml.Length);
                 IReceiver s = b;
                 ParseOptions options = config.GetParseOptions();
                 options = options.WithDTDValidationMode(Validation.SKIP);
@@ -141,6 +142,7 @@ namespace OutSmart.DAXon.Functions
                 StringReader sr = new StringReader(inputXml);
                 IActiveSource pullSource = new OutSmart.DAXon.Resources.ActiveStreamSource(null, sr, baseURI);
                 Builder b = TreeModel.TINY_TREE.MakeBuilder(controller.MakePipelineConfiguration());
+                (b as TinyBuilder)?.SetInputLength(inputXml.Length);
                 IReceiver s = b;
                 ParseOptions options = config.GetParseOptions();
                 options = options.WithDTDValidationMode(Validation.SKIP);
