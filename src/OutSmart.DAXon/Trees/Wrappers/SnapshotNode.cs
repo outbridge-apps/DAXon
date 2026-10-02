@@ -13,6 +13,8 @@ using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Trees.Utilities;
 using OutSmart.DAXon.Values;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace OutSmart.DAXon.Trees.Wrappers
 {
@@ -22,13 +24,14 @@ namespace OutSmart.DAXon.Trees.Wrappers
     internal sealed class SnapshotNode : VirtualCopy
     {
         protected internal NodeInfo pivot; // a node in the source tree
+        private readonly PivotPath path;   // shared by every node of one snapshot
 
         // The string value for a node above the pivot is the string value of the pivot.
         public override UnicodeString UnicodeStringValue
         {
             get
             {
-                if (Navigator.IsAncestorOrSelf(original, pivot))
+                if (original.IsSameNodeInfo(pivot) || path.IndexOf(original) >= 0)
                 {
                     return pivot.UnicodeStringValue;
                 }
@@ -45,39 +48,33 @@ namespace OutSmart.DAXon.Trees.Wrappers
         {
             get
             {
+                int index = path.IndexOf(original);
+                if (index < 0 || index >= path.PivotIndex)
+                {
+                    throw new System.InvalidOperationException("pivot is not a descendant of this node");
+                }
+
                 int pivotKind = pivot.GetNodeKind();
-                SnapshotNode p = (SnapshotNode)Wrap(pivot);
-                if ((pivotKind == OutSmart.DAXon.Types.Type.ATTRIBUTE || pivotKind == OutSmart.DAXon.Types.Type.NAMESPACE) && p.GetParent().IsSameNodeInfo(this))
+                if ((pivotKind == OutSmart.DAXon.Types.Type.ATTRIBUTE || pivotKind == OutSmart.DAXon.Types.Type.NAMESPACE) && index + 1 == path.PivotIndex)
                 {
                     return null;
                 }
 
-                while (true)
-                {
-                    SnapshotNode q = (SnapshotNode)p.GetParent();
-                    if (q == null)
-                    {
-                        throw new System.InvalidOperationException("pivot is not a descendant of this node");
-                    }
-
-                    if (q.IsSameNodeInfo(this))
-                    {
-                        return p;
-                    }
-
-                    p = q;
-                }
+                VirtualCopy child = Wrap(path.At(index + 1));
+                child.parent = this;
+                return child;
             }
         }
 
-        protected SnapshotNode(NodeInfo @base, NodeInfo pivot) : base(@base, pivot.Root)
+        private SnapshotNode(NodeInfo @base, PivotPath path) : base(@base, path.Root)
         {
-            this.pivot = pivot;
+            this.pivot = path.Pivot;
+            this.path = path;
         }
 
         public static SnapshotNode MakeSnapshot(NodeInfo original)
         {
-            SnapshotNode vc = new SnapshotNode(original, original);
+            SnapshotNode vc = new SnapshotNode(original, new PivotPath(original));
             Configuration config = original.GetConfiguration();
             VirtualTreeInfo doc = new VirtualTreeInfo(config);
             long docNr = config.DocumentNumberAllocator.AllocateDocumentNumber();
@@ -90,7 +87,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
 
         protected override VirtualCopy Wrap(NodeInfo node)
         {
-            SnapshotNode vc = new SnapshotNode(node, pivot);
+            SnapshotNode vc = new SnapshotNode(node, path);
             vc.tree = tree;
             return vc;
         }
@@ -127,7 +124,8 @@ namespace OutSmart.DAXon.Trees.Wrappers
                 case OutSmart.DAXon.Types.Type.NAMESPACE:
                     return original.Atomize();
                 default:
-                    if (Navigator.IsAncestorOrSelf(pivot, original))
+                    // At or below the pivot: the pivot itself, or a node off its path that lies under it.
+                    if (original.IsSameNodeInfo(pivot) || (path.IndexOf(original) < 0 && Navigator.IsAncestorOrSelf(pivot, original)))
                     {
                         return original.Atomize();
                     }
@@ -147,7 +145,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
 
         public override IAxisIterator IterateAxis(int axisNumber, INodePredicate nodeTest)
         {
-            if (!original.IsSameNodeInfo(pivot) && Navigator.IsAncestorOrSelf(original, pivot))
+            if (!original.IsSameNodeInfo(pivot) && path.IndexOf(original) >= 0)
             {
                 // We're on a node above the pivot node
                 switch (axisNumber)
@@ -189,7 +187,68 @@ namespace OutSmart.DAXon.Trees.Wrappers
                 case OutSmart.DAXon.Types.Type.NAMESPACE:
                     return IsIncludedInCopy(sourceNode.GetParent());
                 default:
-                    return Navigator.IsAncestorOrSelf(pivot, sourceNode) || Navigator.IsAncestorOrSelf(sourceNode, pivot);
+                    return path.IndexOf(sourceNode) >= 0 || Navigator.IsAncestorOrSelf(pivot, sourceNode);
+            }
+        }
+
+        // The pivot's ancestors-or-self in the source tree, root first. Upstream answers "is this node
+        // above the pivot" and "which child leads to it" by walking up from the pivot for every node, so
+        // copying or descending a deep snapshot was quadratic (4000 levels 2.8 s).
+        private sealed class PivotPath
+        {
+            internal readonly NodeInfo Pivot;
+            internal readonly NodeInfo Root;
+            private Chain chain;   // built on first use, published whole
+
+            internal PivotPath(NodeInfo pivot)
+            {
+                Pivot = pivot;
+                Root = pivot.Root;
+            }
+
+            internal int PivotIndex => Built().Nodes.Length - 1;
+
+            internal NodeInfo At(int index) => Built().Nodes[index];
+
+            // The node's position on the path (0 is the root), or -1 if it is not an ancestor-or-self of the pivot.
+            internal int IndexOf(NodeInfo node)
+            {
+                return Built().Index.TryGetValue(node, out int index) ? index : -1;
+            }
+
+            private Chain Built()
+            {
+                Chain c = Volatile.Read(ref chain);
+                if (c == null)
+                {
+                    c = new Chain(Pivot);
+                    Volatile.Write(ref chain, c);
+                }
+
+                return c;
+            }
+
+            private sealed class Chain
+            {
+                internal readonly NodeInfo[] Nodes;
+                internal readonly Dictionary<NodeInfo, int> Index;
+
+                internal Chain(NodeInfo pivot)
+                {
+                    var up = new List<NodeInfo>();
+                    for (NodeInfo n = pivot; n != null; n = n.GetParent())
+                    {
+                        up.Add(n);
+                    }
+
+                    up.Reverse();
+                    Nodes = up.ToArray();
+                    Index = new Dictionary<NodeInfo, int>(Nodes.Length);
+                    for (int i = 0; i < Nodes.Length; i++)
+                    {
+                        Index[Nodes[i]] = i;
+                    }
+                }
             }
         }
     }
