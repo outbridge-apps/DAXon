@@ -52,7 +52,10 @@ namespace OutSmart.DAXon.Json
             TextReader reader;
             try
             {
-                reader = context.GetController().UnparsedTextURIResolver.Resolve(absoluteURI, encoding, config);
+                // Through the resolver chain when the resolver declines, as unparsed-text() reads: a catalog can map
+                // the URI, and a file that cannot be read says why rather than "Unable to resolve".
+                reader = context.GetController().UnparsedTextURIResolver.Resolve(absoluteURI, encoding, config)
+                    ?? UnparsedTextFunction.ReadDeclined(absoluteURI, encoding, config, "json-doc()");
             }
             catch (XPathException err)
             {
@@ -66,11 +69,6 @@ namespace OutSmart.DAXon.Json
 
                 err.MaybeSetErrorCode("FOUT1170");
                 throw;
-            }
-
-            if (reader == null)
-            {
-                throw new XPathException("Unable to resolve json-doc() URI " + absoluteURI, "FOUT1170");
             }
 
             string content;

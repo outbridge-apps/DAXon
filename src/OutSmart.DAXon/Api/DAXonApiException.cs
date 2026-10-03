@@ -57,7 +57,15 @@ namespace OutSmart.DAXon.Api
 
         internal static bool IsIO(Exception e)
         {
-            return e is System.IO.IOException || e is UnauthorizedAccessException;
+            return e is System.IO.IOException || e is UnauthorizedAccessException || IsPathRefused(e);
+        }
+
+        // .NET Framework refusing a path by its form ("Illegal characters in path.", "The given path's format is not
+        // supported.") from System.IO or its FileIOPermission check: a file that cannot be read, not a defect.
+        private static bool IsPathRefused(Exception e)
+        {
+            string thrower = e is ArgumentException || e is NotSupportedException ? e.TargetSite?.DeclaringType?.FullName : null;
+            return thrower != null && (thrower.StartsWith("System.IO.", StringComparison.Ordinal) || thrower == "System.Security.Permissions.FileIOPermission");
         }
 
         public string GetMessage()

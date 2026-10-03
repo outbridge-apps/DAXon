@@ -126,7 +126,7 @@ namespace OutSmart.DAXon.Lib
         // 2026-06-10: real UnparsedTextFunction.ReadFile falls back to this static when the resolver returns
         // null (ResourceRequest -> DirectResourceResolver -> StreamSource). Materializes via StringReader
         // (Java -1 EOF semantics), honoring whichever of reader/stream/systemId the source carries.
-        public static TextReader GetReaderFromResolvedResource(ResolvedResource src, string encoding, Configuration config, bool isXml)
+        public static TextReader GetReaderFromResolvedResource(ResolvedResource src, string encoding, Configuration config, bool isXml, string function = "unparsed-text()")
         {
             try
             {
@@ -160,9 +160,9 @@ namespace OutSmart.DAXon.Lib
             // UnparsedTextFunction.ReadFile call site sits OUTSIDE its IOException try - so translate all
             // native failures here: missing/unreadable resource -> FOUT1170, unknown encoding -> FOUT1190.
             catch (XPathException) { throw; }
-            catch (ArgumentException e) { throw new XPathException("unparsed-text(): unknown encoding " + encoding + " (" + e.Message + ")", "FOUT1190"); }
-            catch (Exception e) { throw new XPathException("unparsed-text(): cannot read " + (src.SystemId ?? "(anonymous source)") + ": " + e.Message, "FOUT1170"); }
-            throw new XPathException("unparsed-text(): resource has no reader, stream or system ID", "FOUT1170");
+            catch (ArgumentException e) when (!OutSmart.DAXon.Api.DAXonApiException.IsIO(e)) { throw new XPathException(function + ": unknown encoding " + encoding + " (" + e.Message + ")", "FOUT1190"); }
+            catch (Exception e) { throw new XPathException(function + ": cannot read " + (src.SystemId ?? "(anonymous source)") + ": " + e.Message, e).WithErrorCode("FOUT1170"); }
+            throw new XPathException(function + ": resource has no reader, stream or system ID", "FOUT1170");
         }
 
         // The policy path of a remote fetch: redirects followed by ResourceLoader, hop by hop. Same

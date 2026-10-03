@@ -539,13 +539,14 @@ namespace OutSmart.DAXon.Functions
                 return xsltCompiler.Compile(rr.TextReader, sysId);
             }
 
-            if (rr.Stream == null)
+            if (rr.Stream == null && rr.SystemId == null)
             {
-                // Resolution produced an empty resource (e.g. nonexistent stylesheet-location).
-                throw new XPathException("Failed to read stylesheet " + (sysId ?? rr.SystemId), "FOXT0002");
+                throw new XPathException("Failed to read stylesheet " + sysId, "FOXT0002");
             }
 
-            return xsltCompiler.Compile(rr.Stream, sysId);
+            // Only a system id when the resolver could not open it (missing, in use, a directory): the parser opens
+            // it, as Java compiles the resolved source, and its I/O error says why.
+            return rr.Stream == null ? xsltCompiler.Compile(rr) : xsltCompiler.Compile(rr.Stream, sysId);
         }
 
         private XsltExecutable ReportCompileError(DAXonApiException e, List<IXmlProcessingError> compileErrors)

@@ -54,16 +54,7 @@ namespace OutSmart.DAXon.Trees.Iterators
 
             if (r == null)
             {
-                ResourceRequest request = new ResourceRequest();
-                request.uri = absoluteURI.ToString();
-                request.nature = ResourceRequest.TEXT_NATURE;
-                ResolvedResource src = request.Resolve(config.GetResourceResolver(), new DirectResourceResolver(config));
-                if (src == null)
-                {
-                    throw new XPathException("unparsed-text-lines(): resolver returned no resource", "FOUT1170");
-                }
-
-                r = StandardUnparsedTextResolver.GetReaderFromResolvedResource(src, encoding, config, false);
+                r = UnparsedTextFunction.ReadDeclined(absoluteURI, encoding, config, "unparsed-text-lines()");
             }
 
             this.reader = r;

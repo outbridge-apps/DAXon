@@ -59,18 +59,7 @@ namespace OutSmart.DAXon.Functions
 
             if (reader == null)
             {
-                ResourceRequest request = new ResourceRequest();
-                request.uri = absoluteURI.ToString();
-                request.nature = ResourceRequest.TEXT_NATURE;
-                ResolvedResource src = request.Resolve(config.GetResourceResolver(), new DirectResourceResolver(config));
-                if (src != null)
-                {
-                    reader = StandardUnparsedTextResolver.GetReaderFromResolvedResource(src, encoding, config, false);
-                }
-                else
-                {
-                    throw new XPathException("unparsed-text(): resolver returned no resource");
-                }
+                reader = ReadDeclined(absoluteURI, encoding, config, "unparsed-text()");
             }
 
             try
@@ -86,6 +75,22 @@ namespace OutSmart.DAXon.Functions
 
                 throw HandleIOError(absoluteURI, ioErr);
             }
+        }
+
+        // The unparsed-text resolver gives null for anything it cannot read itself: the configuration's resolver chain
+        // may still supply the resource, and reading what it returns says why a file could not be read.
+        internal static TextReader ReadDeclined(URI absoluteURI, string encoding, Configuration config, string function)
+        {
+            ResourceRequest request = new ResourceRequest();
+            request.uri = absoluteURI.ToString();
+            request.nature = ResourceRequest.TEXT_NATURE;
+            ResolvedResource src = request.Resolve(config.GetResourceResolver(), new DirectResourceResolver(config));
+            if (src == null)
+            {
+                throw new XPathException(function + ": resolver returned no resource", "FOUT1170");
+            }
+
+            return StandardUnparsedTextResolver.GetReaderFromResolvedResource(src, encoding, config, false, function);
         }
 
         public static URI GetAbsoluteURI(string href, string baseURI, IXPathContext context)
