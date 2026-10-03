@@ -416,7 +416,16 @@ namespace OutSmart.DAXon.Core
             DeadlineToken previous = activeOnThread;
             if (config.GetProcessor() is OutSmart.DAXon.Api.Processor p)
             {
-                new Controller(config).SetTimeout(p.TransformTimeout, activity);
+                // The token alone, as SetTimeout arms it for a fresh Controller: building one to arm it cost
+                // ~2.8 KB and ~3 us on every API call.
+                var token = new DeadlineToken { activity = activity };
+                TimeSpan timeout = p.TransformTimeout;
+                if (timeout > TimeSpan.Zero)
+                {
+                    token.Arm(System.Diagnostics.Stopwatch.GetTimestamp() + (long)(timeout.TotalSeconds * System.Diagnostics.Stopwatch.Frequency), timeout);
+                }
+
+                activeOnThread = token;
             }
             else
             {
