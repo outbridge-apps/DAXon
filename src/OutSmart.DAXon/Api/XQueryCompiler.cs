@@ -360,6 +360,8 @@ namespace OutSmart.DAXon.Api
         {
             try
             {
+                // A query the host passes is input like a stylesheet: capped as XsltCompiler caps one (round B1 missed it).
+                query = InputSizeLimit.Apply(query, InputSizeLimit.MaxFor(processor.UnderlyingConfiguration), staticQueryContext.BaseURI ?? "urn:query", "FODC0002");
                 return new XQueryExecutable(processor, staticQueryContext.CompileQuery(query, encoding));
             }
             catch (UncheckedXPathException e)
@@ -384,6 +386,7 @@ namespace OutSmart.DAXon.Api
         {
             try
             {
+                query = InputSizeLimit.Apply(query, InputSizeLimit.MaxFor(processor.UnderlyingConfiguration), staticQueryContext.BaseURI ?? "urn:query", "FODC0002");
                 return new XQueryExecutable(processor, staticQueryContext.CompileQuery(query));
             }
             catch (UncheckedXPathException e)
