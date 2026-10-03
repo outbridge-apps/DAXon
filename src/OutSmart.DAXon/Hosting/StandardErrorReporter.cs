@@ -331,43 +331,43 @@ namespace OutSmart.DAXon.Lib
 
         public string FormatNestedMessages(IXmlProcessingError err, string message)
         {
-            if (err.GetCause() == null)
+            StringBuilder sb = new StringBuilder(message);
+            Exception e = err.GetCause();
+            for (int depth = 0; e != null && depth < 16; depth++)
             {
-                return message;
-            }
-            else
-            {
-                StringBuilder sb = new StringBuilder(message);
-                Exception e = err.GetCause();
-                while (e != null)
+                // Frames only for a defect, as Java prints them for a RuntimeException alone; a cause the message
+                // already names (an I/O failure, a parser error) adds nothing.
+                string next = e.Message;
+                bool defect = IsDefect(e);
+                if (defect || (next != null && !message.Contains(next)))
                 {
-                    if (e is Exception)
+                    sb.Append(sb.Length > 0 && sb[sb.Length - 1] == '.' ? " Caused by " : ". Caused by ").Append(e.GetType().FullName).Append(": ").Append(next);
+                    if (defect)
                     {
-                        StringWriter sw = new StringWriter();
-                        AppendStackTrace(e, sw);
-                        sb.Append('\n').Append(sw);
+                        sb.Append('\n').Append(e.StackTrace);
                     }
-                    else if (!message.Contains(e.Message))
-                    {
-                        sb.Append(". Caused by ").Append(e.GetType().FullName);
-                    }
-
-                    string next = e.Message;
-                    if (next != null)
-                    {
-                        sb.Append(": ").Append(next);
-                    }
-
-                    e = e.InnerException as Exception ?? (e.InnerException == null ? null : new Exception(e.InnerException.Message)); // message-only wrap: keeping the inner exception loops forever (wrap.GetCause()==cause)
                 }
 
-                return sb.ToString();
+                e = e.InnerException;
             }
+
+            return sb.ToString();
         }
 
-        private void AppendStackTrace(Exception e, StringWriter sw)
+        // The .NET counterparts of Java's RuntimeException: a fault in code rather than in the input or the
+        // environment (WebException is an InvalidOperationException, a decoding failure or a refused path an
+        // ArgumentException; NotSupportedException is left out, an unknown URI scheme raises it too).
+        private static bool IsDefect(Exception e)
         {
-            sw.WriteLine(e.ToString()); sw.WriteLine(e.StackTrace);
+            if (DAXonApiException.IsIO(e))
+            {
+                return false;
+            }
+
+            return e is NullReferenceException || e is InvalidCastException || e is IndexOutOfRangeException
+                || e is KeyNotFoundException || e is NotImplementedException || e is ArithmeticException
+                || (e is InvalidOperationException && !(e is System.Net.WebException))
+                || (e is ArgumentException && !(e is DecoderFallbackException) && !(e is EncoderFallbackException));
         }
 
 
