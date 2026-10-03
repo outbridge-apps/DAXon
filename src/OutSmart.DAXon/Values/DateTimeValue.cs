@@ -184,11 +184,40 @@ namespace OutSmart.DAXon.Values
 
         public static DateTimeValue Now()
         {
-            DateTimeOffset now = DateTimeOffset.Now;
+            DateTimeOffset now = PreciseNow();
             long subSecondTicks = now.Ticks % TimeSpan.TicksPerSecond; // 1 tick = 100 ns
             return new DateTimeValue(now.Year, (byte)now.Month, (byte)now.Day, (byte)now.Hour, (byte)now.Minute, (byte)now.Second,
                 (int)(subSecondTicks * 100), false, (int)now.Offset.TotalMinutes, BuiltInAtomicType.DATE_TIME_STAMP);
         }
+
+#if NET
+        private static DateTimeOffset PreciseNow() => DateTimeOffset.Now;   // the precise system clock already
+#else
+        // .NET Framework's clock reads GetSystemTimeAsFileTime, which moves in timer ticks (15.6 ms here): two runs
+        // a few ms apart shared current-dateTime() and the seed of random-number-generator(). Read the precise one.
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+        private static extern void GetSystemTimePreciseAsFileTime(out long fileTime);
+
+        private static volatile bool noPreciseClock;   // Windows 8 / Server 2012 and later only
+
+        private static DateTimeOffset PreciseNow()
+        {
+            if (!noPreciseClock)
+            {
+                try
+                {
+                    GetSystemTimePreciseAsFileTime(out long fileTime);
+                    return DateTimeOffset.FromFileTime(fileTime);
+                }
+                catch (Exception e) when (e is EntryPointNotFoundException || e is DllNotFoundException)
+                {
+                    noPreciseClock = true;
+                }
+            }
+
+            return DateTimeOffset.Now;
+        }
+#endif
 
         public static DateTimeValue FromJavaTime(long time)
         {
