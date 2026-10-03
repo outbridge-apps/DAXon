@@ -49,7 +49,10 @@ Arguments are corpus roots; naming both runs them as one pool. Anything after th
 sets by name, so `QT3Test.exe qt3tests fn-substring` runs a single set while you work on it.
 
 Each test set runs in a child process, so one hanging or stack-exhausting case cannot take the whole
-sweep down with it. `QT3_FAILDUMP=<file>` writes every failure as `set/case :: reason`, which is what
+sweep down with it: the parent kills a child past its set's limit and survives one that dies, and the sets
+after it go to a fresh child. A worker's child takes set after set (starting one costs about as much as
+hundreds of cases) and is replaced after 64; the slow sets get a child per slice, and `QT3_SERVE=0` gives
+every set its own. `QT3_FAILDUMP=<file>` writes every failure as `set/case :: reason`, which is what
 you want for triage and for comparing runs; the file is rewritten on every run.
 
 ## Reading the result

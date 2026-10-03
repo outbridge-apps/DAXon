@@ -22,6 +22,7 @@
 //         QT3Test --q "<expr>"              evaluate one expression (debug)
 //
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -67,6 +68,8 @@ namespace OutSmart.DAXon.ConformanceTests
             string vd = Environment.GetEnvironmentVariable("QT3_VERDICTDUMP");
             if (!string.IsNullOrEmpty(vd) && _verdicts.Count > 0)
                 File.AppendAllLines(vd, _verdicts, new UTF8Encoding(false));
+            // A served child writes set after set: what is written must not be written again.
+            _verdicts.Clear();
         }
         static readonly Dictionary<string, int> _skipReasons = new Dictionary<string, int>();
 
@@ -324,6 +327,249 @@ namespace OutSmart.DAXon.ConformanceTests
             "<xsl:template match=\"/\"><xsl:value-of select=\"{0}\"/></xsl:template>" +
             "<xsl:template name=\"main\"><xsl:value-of select=\"{0}\"/></xsl:template></xsl:stylesheet>";
 
+        // Ends each set a served child runs; SETRESULT and the rest precede it.
+        const string JobEnd = "QT3-JOBEND";
+
+        // Sets a served child runs before the parent replaces it: what a long-lived process accumulates stays bounded.
+        const int ServeJobs = 64;
+
+        // A child running the test-sets it is sent, one per stdin line, each ended by JobEnd on stdout.
+        sealed class ServedChild
+        {
+            readonly Process process;
+            readonly BlockingCollection<string> lines = new BlockingCollection<string>();
+            public readonly LinkedList<string> ErrTail = new LinkedList<string>();
+            public int Jobs;
+            // Gone before it took the set (its stdin refused the line): nothing ran.
+            public bool Lost;
+
+            public ServedChild(string exe)
+            {
+                var psi = new ProcessStartInfo(exe, "--serve")
+                {
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                };
+                process = Process.Start(psi);
+                process.OutputDataReceived += (s, e) =>
+                {
+                    if (e.Data == null)
+                    {
+                        lines.CompleteAdding();
+                    }
+                    else
+                    {
+                        lines.Add(e.Data);
+                    }
+                };
+                process.ErrorDataReceived += (s, e) =>
+                {
+                    if (e.Data != null)
+                    {
+                        lock (ErrTail)
+                        {
+                            ErrTail.AddLast(e.Data);
+                            if (ErrTail.Count > 8)
+                            {
+                                ErrTail.RemoveFirst();
+                            }
+                        }
+                    }
+                };
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+            }
+
+            // "ok", "HANG" (past the limit; the caller kills the child) or "CRASH 0x<exit code>" (the child died).
+            public string Run(string job, int timeoutMs, StringBuilder output)
+            {
+                try
+                {
+                    process.StandardInput.WriteLine(job);
+                    process.StandardInput.Flush();
+                }
+                catch (IOException)
+                {
+                    Lost = true;
+                    return "CRASH lost";
+                }
+
+                Jobs++;
+                var clock = Stopwatch.StartNew();
+                while (true)
+                {
+                    int left = timeoutMs - (int)clock.ElapsedMilliseconds;
+                    if (left <= 0)
+                    {
+                        return "HANG";
+                    }
+
+                    if (lines.TryTake(out string line, left))
+                    {
+                        if (line == JobEnd)
+                        {
+                            return "ok";
+                        }
+
+                        output.AppendLine(line);
+                    }
+                    else if (lines.IsCompleted)
+                    {
+                        process.WaitForExit();
+                        return "CRASH 0x" + ((uint)process.ExitCode).ToString("X8");
+                    }
+                }
+            }
+
+            public void Close()
+            {
+                try
+                {
+                    process.StandardInput.Close();
+                    if (!process.WaitForExit(10000))
+                    {
+                        Kill();
+                        return;
+                    }
+                }
+                catch (Exception)
+                {
+                    Kill();
+                    return;
+                }
+
+                process.Dispose();
+            }
+
+            public void Kill()
+            {
+                try
+                {
+                    process.Kill();
+                    process.WaitForExit(3000);
+                }
+                catch (Exception)
+                {
+                }
+
+                process.Dispose();
+            }
+        }
+
+        // One XSLT30 test-set: the lines the parent parses.
+        static string RunXsetChild(string root, string setFile)
+        {
+            _corpusRoot = root;
+            RunXsltTestSet(setFile);
+            string xfaildump = Environment.GetEnvironmentVariable("QT3_FAILDUMP");
+            if (!string.IsNullOrEmpty(xfaildump) && _failures.Count > 0)
+            {
+                // net472 File.AppendAllLines uses UTF8 with throwOnInvalidBytes — a failure line carrying a
+                // lone surrogate (astral got-output from xsl:number pictures) crashed the whole child (the
+                // corpus 'number CRASH'). Write with replacement fallback instead.
+                File.AppendAllLines(xfaildump, _failures, new UTF8Encoding(false));
+            }
+
+            WriteVerdicts();
+            return SetResult();
+        }
+
+        // The global environments of each catalog, parsed once per process.
+        static readonly Dictionary<string, Dictionary<string, XElement>> _catalogEnvironments = new Dictionary<string, Dictionary<string, XElement>>(StringComparer.Ordinal);
+
+        // One QT3 test-set: the lines the parent parses.
+        static string RunSetChild(string root, string setFile)
+        {
+            _corpusRoot = root;
+            if (!_catalogEnvironments.TryGetValue(root, out var genv))
+            {
+                var cat = XDocument.Load(Path.Combine(root, "catalog.xml"));
+                genv = cat.Root.Elements(C + "environment").Where(e => e.Attribute("name") != null)
+                    .ToDictionary(e => (string)e.Attribute("name"), e => e, StringComparer.Ordinal);
+                _catalogEnvironments[root] = genv;
+            }
+
+            RunTestSet(setFile, genv);
+            // Optional triage aid: when QT3_FAILDUMP names a file, append this set's per-case failure
+            // lines ("<set>/<case> :: <reason>") to it. The parallel parent hands each set its OWN
+            // part-file and concatenates at the end, so appends never race.
+            string faildump = Environment.GetEnvironmentVariable("QT3_FAILDUMP");
+            if (!string.IsNullOrEmpty(faildump) && _failures.Count > 0)
+            {
+                // Replacement-fallback UTF8: a lone surrogate in a failure line must not crash the child.
+                File.AppendAllLines(faildump, _failures, new UTF8Encoding(false));
+            }
+
+            WriteVerdicts();
+            return SetResult();
+        }
+
+        static string SetResult()
+        {
+            var sb = new StringBuilder();
+            sb.Append("SETRESULT\t").Append(_pass).Append('\t').Append(_fail).Append('\t').Append(_skip).Append('\n');
+            foreach (var kv in _skipReasons)
+            {
+                sb.Append("SKIPR\t").Append(kv.Value).Append('\t').Append(kv.Key).Append('\n');
+            }
+
+            var cats = new Dictionary<string, int>();
+            foreach (var f in _failures)
+            {
+                var c = FailCategory(f);
+                cats.TryGetValue(c, out int n);
+                cats[c] = n + 1;
+            }
+
+            foreach (var kv in cats)
+            {
+                sb.Append("FAILC\t").Append(kv.Value).Append('\t').Append(kv.Key).Append('\n');
+            }
+
+            return sb.ToString();
+        }
+
+        // A served child runs set after set: each starts as it would in a fresh process, but for the shared
+        // Processor and the parsed catalogs. The per-case statics reset themselves per case.
+        static void ResetForSet()
+        {
+            _pass = _fail = _skip = 0;
+            _failures.Clear();
+            _verdicts.Clear();
+            _skipReasons.Clear();
+            _curId = null;
+            _curSetName = null;
+            _dumpArmed = false;
+            _pendSheet = _pendInv = _pendCtx = null;
+            _resources.Clear();
+            _svParams.Clear();
+            _svParamQNames.Clear();
+            _envNs.Clear();
+            _modules.Clear();
+            _baseUri = DefaultBaseUri;
+            _setFileUri = null;
+            _extraNs = "";
+            _extraDecimalFormats = "";
+            _defaultCollation = null;
+            _xqMode = false;
+            _xqError = null;
+            _xqExe = null;
+            _bcMode = false;
+            _sliceIdx = 0;
+            _sliceMod = 1;
+            _sliceCounter = 0;
+            _xMessages.Clear();
+            _xResultDocs.Clear();
+            _xBaseOutputUri = null;
+            _xTsUri = null;
+            _xWarnings = 0;
+            _xRawResult = null;
+            _xErrorCodes.Clear();
+        }
+
         static int Main(string[] args)
         {
             // Run everything on a 64MB-stack thread: the engine's recursion guards adapt to the thread's
@@ -481,28 +727,34 @@ namespace OutSmart.DAXon.ConformanceTests
                 return 0;
             }
 
+            if (args.Length >= 1 && args[0] == "--serve")   // CHILD: run the test-sets the parent sends, one per line
+            {
+                if (Environment.GetEnvironmentVariable("QTDBG") == null)
+                {
+                    Console.SetError(TextWriter.Null);
+                }
+
+                string job;
+                while ((job = Console.In.ReadLine()) != null)
+                {
+                    // child flag, corpus root, set file, slice, faildump part, verdict part ("-" for none)
+                    string[] j = job.Split('\t');
+                    Environment.SetEnvironmentVariable("QT3_SLICE", j[3] == "-" ? null : j[3]);
+                    Environment.SetEnvironmentVariable("QT3_FAILDUMP", j[4] == "-" ? null : j[4]);
+                    Environment.SetEnvironmentVariable("QT3_VERDICTDUMP", j[5] == "-" ? null : j[5]);
+                    ResetForSet();
+                    Console.Out.Write(j[0] == "--xset" ? RunXsetChild(j[1], j[2]) : RunSetChild(j[1], j[2]));
+                    Console.Out.Write(JobEnd + "\n");
+                    Console.Out.Flush();
+                }
+
+                return 0;
+            }
+
             if (args.Length >= 3 && args[0] == "--xset")   // CHILD: run ONE XSLT30 test-set (xslt-test-catalog ns)
             {
                 if (Environment.GetEnvironmentVariable("QTDBG") == null) Console.SetError(TextWriter.Null);
-                _corpusRoot = args[1];
-                RunXsltTestSet(args[2]);
-                string xfaildump = Environment.GetEnvironmentVariable("QT3_FAILDUMP");
-                if (!string.IsNullOrEmpty(xfaildump) && _failures.Count > 0)
-                {
-                    // net472 File.AppendAllLines uses UTF8 with throwOnInvalidBytes — a failure line carrying a
-                    // lone surrogate (astral got-output from xsl:number pictures) crashed the whole child (the
-                    // corpus 'number CRASH'). Write with replacement fallback instead.
-                    File.AppendAllLines(xfaildump, _failures, new UTF8Encoding(false));
-                }
-                WriteVerdicts();
-
-                var xsb = new StringBuilder();
-                xsb.Append("SETRESULT\t").Append(_pass).Append('\t').Append(_fail).Append('\t').Append(_skip).Append('\n');
-                foreach (var kv in _skipReasons) xsb.Append("SKIPR\t").Append(kv.Value).Append('\t').Append(kv.Key).Append('\n');
-                var xcats = new Dictionary<string, int>();
-                foreach (var f in _failures) { var c = FailCategory(f); xcats.TryGetValue(c, out int n); xcats[c] = n + 1; }
-                foreach (var kv in xcats) xsb.Append("FAILC\t").Append(kv.Value).Append('\t').Append(kv.Key).Append('\n');
-                Console.Out.Write(xsb.ToString());
+                Console.Out.Write(RunXsetChild(args[1], args[2]));
                 Console.Out.Flush();
                 return 0;
             }
@@ -510,29 +762,7 @@ namespace OutSmart.DAXon.ConformanceTests
             if (args.Length >= 3 && args[0] == "--set")   // CHILD: run ONE test-set, print machine-readable results
             {
                 if (Environment.GetEnvironmentVariable("QTDBG") == null) Console.SetError(TextWriter.Null);
-                _corpusRoot = args[1];
-                var cat = XDocument.Load(Path.Combine(args[1], "catalog.xml"));
-                var genv = cat.Root.Elements(C + "environment").Where(e => e.Attribute("name") != null)
-                    .ToDictionary(e => (string)e.Attribute("name"), e => e, StringComparer.Ordinal);
-                RunTestSet(args[2], genv);
-                // Optional triage aid: when QT3_FAILDUMP names a file, append this set's per-case failure
-                // lines ("<set>/<case> :: <reason>") to it. The parallel parent hands each child its OWN
-                // part-file and concatenates at the end, so appends never race.
-                string faildump = Environment.GetEnvironmentVariable("QT3_FAILDUMP");
-                if (!string.IsNullOrEmpty(faildump) && _failures.Count > 0)
-                {
-                    // Replacement-fallback UTF8: a lone surrogate in a failure line must not crash the child.
-                    File.AppendAllLines(faildump, _failures, new UTF8Encoding(false));
-                }
-                WriteVerdicts();
-
-                var sb = new StringBuilder();
-                sb.Append("SETRESULT\t").Append(_pass).Append('\t').Append(_fail).Append('\t').Append(_skip).Append('\n');
-                foreach (var kv in _skipReasons) sb.Append("SKIPR\t").Append(kv.Value).Append('\t').Append(kv.Key).Append('\n');
-                var cats = new Dictionary<string, int>();
-                foreach (var f in _failures) { var c = FailCategory(f); cats.TryGetValue(c, out int n); cats[c] = n + 1; }
-                foreach (var kv in cats) sb.Append("FAILC\t").Append(kv.Value).Append('\t').Append(kv.Key).Append('\n');
-                Console.Out.Write(sb.ToString());
+                Console.Out.Write(RunSetChild(args[1], args[2]));
                 Console.Out.Flush();
                 return 0;
             }
@@ -574,9 +804,10 @@ namespace OutSmart.DAXon.ConformanceTests
             }
             Console.WriteLine(filters.Count > 0 ? "filters: " + string.Join(",", filters) : "(ALL test-sets)");
 
-            // PARENT: run each test-set in its own child process so a case that hangs (infinite loop) or crashes
-            // the runtime (StackOverflow) is contained — the parent kills a hung child and survives a crashed one.
-            // Sets run on QT3_PAR worker threads (default min(8, cores-1); QT3_PAR=1 restores sequential).
+            // PARENT: run the test-sets in child processes so a case that hangs (infinite loop) or crashes
+            // the runtime (StackOverflow) is contained — the parent kills a hung child and survives a crashed one,
+            // and the sets after it go to a fresh child.
+            // Sets run on QT3_PAR worker threads (default: the core count; QT3_PAR=1 restores sequential).
             // Slow sets are scheduled first so they overlap the rest instead of extending the tail. Each child
             // gets its own faildump part-file (parallel appends to one file would collide on the write lock);
             // the parent concatenates the parts in set order at the end, so faildump diffs stay stable.
@@ -627,64 +858,127 @@ namespace OutSmart.DAXon.ConformanceTests
             object agg = new object();
             Console.WriteLine($"parallel workers: {par}   jobs: {jobs} ({sets} sets)");
 
+            // Normal sets go to served children (QT3_SERVE=0 restores a child per set): one takes set after set, so
+            // a run starts a child per worker and per ServeJobs sets rather than per set - ~2 s of start-up each on
+            // net472 (runtime, Processor, JIT) against ~3 ms a case. A slow set keeps a child of its own.
+            bool serve = Environment.GetEnvironmentVariable("QT3_SERVE") != "0";
+
             ThreadStart worker = () =>
             {
+                ServedChild served = null;
                 while (true)
                 {
                     int oi = Interlocked.Increment(ref cursor);
-                    if (oi >= jobs) return;
+                    if (oi >= jobs)
+                    {
+                        served?.Close();
+                        return;
+                    }
+
                     int i = schedule[oi].set;
                     string jobName = matching[i].name + (schedule[oi].slices > 1 ? $"[{schedule[oi].slice + 1}/{schedule[oi].slices}]" : "");
                     var swSet = System.Diagnostics.Stopwatch.StartNew();
-                    var psi = new ProcessStartInfo(selfExe, $"{matching[i].childFlag} \"{matching[i].root}\" \"{matching[i].path}\"")
-                    { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
-                    if (schedule[oi].slices > 1) psi.EnvironmentVariables["QT3_SLICE"] = $"{schedule[oi].slice}/{schedule[oi].slices}";
+                    string slice = schedule[oi].slices > 1 ? $"{schedule[oi].slice}/{schedule[oi].slices}" : null;
                     if (!string.IsNullOrEmpty(faildumpBase))
                     {
                         partFiles[oi] = faildumpBase + ".part" + oi;
                         try { File.Delete(partFiles[oi]); } catch { }
-                        psi.EnvironmentVariables["QT3_FAILDUMP"] = partFiles[oi];
                     }
-                    // Per-child verdict part-file (must ALWAYS override the inherited env, else children race
+                    // Per-set verdict part-file (must ALWAYS override the inherited env, else children race
                     // to append to one shared file); parent concatenates in set order below.
                     if (!string.IsNullOrEmpty(vdumpBase))
                     {
                         vpartFiles[oi] = vdumpBase + ".vpart" + oi;
                         try { File.Delete(vpartFiles[oi]); } catch { }
-                        psi.EnvironmentVariables["QT3_VERDICTDUMP"] = vpartFiles[oi];
                     }
+                    // 120 s: fn-count's XQuery stress cases legitimately take ~70 s. unicode-90 (119 MB
+                    // source docs), regex-classes (whole-Unicode sweeps; the catalog itself marks it
+                    // "because very slow") and misc/catalog (its cases read every stylesheet the
+                    // catalog names, ~10 500) get 30 min.
+                    int setTimeoutMs = isSlow(matching[i].path) ? 1800000 : 120000;
                     var sbOut = new StringBuilder();
                     // last stderr lines: on CRASH this is the CLR fatal-error text (StackOverflow, AccessViolation, …)
                     var errTail = new LinkedList<string>();
                     string status = "ok";
-                    try
+                    if (serve && slice == null && !isSlow(matching[i].path))
                     {
-                        using (var p = Process.Start(psi))
+                        string job = string.Join("\t", matching[i].childFlag, matching[i].root, matching[i].path, "-", partFiles[oi] ?? "-", vpartFiles[oi] ?? "-");
+                        // A child that died between sets never took this one: a fresh child runs it once more.
+                        for (int attempt = 0; attempt < 2; attempt++)
                         {
-                            p.OutputDataReceived += (s, e) => { if (e.Data != null) lock (sbOut) sbOut.AppendLine(e.Data); };
-                            p.ErrorDataReceived += (s, e) => { if (e.Data != null) lock (errTail) { errTail.AddLast(e.Data); if (errTail.Count > 8) errTail.RemoveFirst(); } };
-                            p.BeginOutputReadLine();
-                            p.BeginErrorReadLine();
-                            // 120 s: fn-count's XQuery stress cases legitimately take ~70 s. unicode-90 (119 MB
-                            // source docs), regex-classes (whole-Unicode sweeps; the catalog itself marks it
-                            // "because very slow") and misc/catalog (its cases read every stylesheet the
-                            // catalog names, ~10 500) get 30 min.
-                            int setTimeoutMs = isSlow(matching[i].path) ? 1800000 : 120000;
-                            if (!p.WaitForExit(setTimeoutMs)) { try { p.Kill(); } catch { } p.WaitForExit(3000); status = "HANG"; }
-                            else
+                            try
                             {
-                                // The timeout overload returns as soon as the PROCESS exits; only the
-                                // parameterless overload waits for the async stdout/stderr readers to drain.
-                                // Without it, SETRESULT is sometimes still in flight -> spurious CRASH.
-                                p.WaitForExit();
-                                lock (sbOut)
+                                served = served ?? new ServedChild(selfExe);
+                                status = served.Run(job, setTimeoutMs, sbOut);
+                            }
+                            catch (Exception)
+                            {
+                                status = "CRASH start-failed";
+                            }
+
+                            if (status == "ok" || served == null || !served.Lost)
+                            {
+                                break;
+                            }
+
+                            served.Kill();
+                            served = null;
+                        }
+
+                        if (status != "ok")
+                        {
+                            if (served != null)
+                            {
+                                lock (served.ErrTail)
                                 {
-                                    if (!sbOut.ToString().Contains("SETRESULT")) status = "CRASH 0x" + ((uint)p.ExitCode).ToString("X8");
+                                    foreach (var l in served.ErrTail)
+                                    {
+                                        errTail.AddLast(l);
+                                    }
+                                }
+
+                                served.Kill();
+                            }
+
+                            served = null;
+                        }
+                        else if (served.Jobs >= ServeJobs)
+                        {
+                            served.Close();
+                            served = null;
+                        }
+                    }
+                    else
+                    {
+                        var psi = new ProcessStartInfo(selfExe, $"{matching[i].childFlag} \"{matching[i].root}\" \"{matching[i].path}\"")
+                        { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true };
+                        if (slice != null) psi.EnvironmentVariables["QT3_SLICE"] = slice;
+                        if (partFiles[oi] != null) psi.EnvironmentVariables["QT3_FAILDUMP"] = partFiles[oi];
+                        if (vpartFiles[oi] != null) psi.EnvironmentVariables["QT3_VERDICTDUMP"] = vpartFiles[oi];
+                        try
+                        {
+                            using (var p = Process.Start(psi))
+                            {
+                                p.OutputDataReceived += (s, e) => { if (e.Data != null) lock (sbOut) sbOut.AppendLine(e.Data); };
+                                p.ErrorDataReceived += (s, e) => { if (e.Data != null) lock (errTail) { errTail.AddLast(e.Data); if (errTail.Count > 8) errTail.RemoveFirst(); } };
+                                p.BeginOutputReadLine();
+                                p.BeginErrorReadLine();
+                                if (!p.WaitForExit(setTimeoutMs)) { try { p.Kill(); } catch { } p.WaitForExit(3000); status = "HANG"; }
+                                else
+                                {
+                                    // The timeout overload returns as soon as the PROCESS exits; only the
+                                    // parameterless overload waits for the async stdout/stderr readers to drain.
+                                    // Without it, SETRESULT is sometimes still in flight -> spurious CRASH.
+                                    p.WaitForExit();
+                                    lock (sbOut)
+                                    {
+                                        if (!sbOut.ToString().Contains("SETRESULT")) status = "CRASH 0x" + ((uint)p.ExitCode).ToString("X8");
+                                    }
                                 }
                             }
                         }
+                        catch { status = "CRASH start-failed"; }
                     }
-                    catch { status = "CRASH start-failed"; }
 
                     lock (agg)
                     {
