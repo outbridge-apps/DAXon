@@ -60,7 +60,7 @@ namespace OutSmart.DAXon.Lib
 
         public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
         {
-            object entity = Fetch(absoluteUri);
+            object entity = Fetch(absoluteUri, principalPending);
             if (principalPending)
             {
                 // The input the host asked for by system id: capped as a stream it passes would be.
@@ -71,7 +71,7 @@ namespace OutSmart.DAXon.Lib
             return entity;
         }
 
-        private object Fetch(Uri absoluteUri)
+        private object Fetch(Uri absoluteUri, bool isPrincipal)
         {
             ResourceRequest request = new ResourceRequest();
             request.uri = absoluteUri?.ToString();
@@ -91,7 +91,9 @@ namespace OutSmart.DAXon.Lib
                     }
                 }
 
-                if (absoluteUri != null && absoluteUri.IsFile && File.Exists(absoluteUri.LocalPath))
+                // The document itself is opened even when it is not there, so the failure says why (missing, a
+                // directory) instead of "Cannot resolve"; an entity is probed, as System.Xml tries a PUBLIC id first.
+                if (absoluteUri != null && absoluteUri.IsFile && (isPrincipal || File.Exists(absoluteUri.LocalPath)))
                 {
                     return File.OpenRead(absoluteUri.LocalPath);
                 }

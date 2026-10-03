@@ -52,8 +52,7 @@ namespace OutSmart.DAXon.Api
         // (ActiveStreamSource) reports it, not a raw IOException. The I/O exception stays reachable as the inner cause.
         internal static DAXonApiException FromIO(Exception e, string systemId)
         {
-            return new DAXonApiException(new XPathException("I/O error reported by XML parser processing " + systemId + ": " + e.Message, e)
-                .WithErrorCode(DAXonErrorCode.SXXP0003));
+            return new DAXonApiException(Resources.ActiveStreamSource.IOFailure(e, systemId));
         }
 
         internal static bool IsIO(Exception e)
