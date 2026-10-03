@@ -773,17 +773,10 @@ namespace OutSmart.DAXon.Xslt
         private IXPathContext MakeDynamicContext(UseWhenStaticContext staticContext)
         {
             Controller controller = new Controller(GetConfiguration());
-            // Compile-time [xsl]use-when evaluation runs on its own controller. Arm the Processor
-            // deadline - which also claims the thread's active-deadline slot, so a stale deadline
-            // left by a previous (finished) run on this thread cannot spuriously abort the compile.
-            if (GetConfiguration().GetProcessor() is OutSmart.DAXon.Api.Processor p)
-            {
-                controller.SetTimeout(p.TransformTimeout, "Compilation");
-            }
-            else
-            {
-                controller.SetTimeout(System.TimeSpan.Zero);
-            }
+            // Compile-time [xsl]use-when evaluation runs on its own controller, under the deadline its
+            // compile armed: re-arming the Processor's limit here gave every static expression a fresh
+            // budget (six static params of 250 ms compiled for 1.2 s under a 400 ms limit).
+            controller.AdoptThreadDeadline();
             controller.GetExecutable().FunctionLibrary = (FunctionLibraryList)staticContext.GetFunctionLibrary();
             if (staticContext.GetXPathVersion() < 30)
             {

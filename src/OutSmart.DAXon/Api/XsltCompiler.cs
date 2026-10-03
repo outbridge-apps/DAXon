@@ -450,6 +450,9 @@ namespace OutSmart.DAXon.Api
                 throw new DAXonApiException("No package with alias " + alias + " found in package library");
             }
 
+            // The library may compile the package from source here: under the Processor's deadline, as
+            // every compile entry is, so its static expressions share one budget (see Compile(ResolvedResource)).
+            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Compilation");
             try
             {
                 IList<VersionedPackageName> packageNames = new List<VersionedPackageName>();
@@ -463,6 +466,10 @@ namespace OutSmart.DAXon.Api
             catch (RecursionDepthError e)
             {
                 throw new DAXonApiException(e.ToXPathException());
+            }
+            finally
+            {
+                Controller.RestoreThreadDeadline(prevDeadline);
             }
         }
 

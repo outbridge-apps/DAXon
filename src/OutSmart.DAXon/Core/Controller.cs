@@ -386,6 +386,24 @@ namespace OutSmart.DAXon.Core
         }
 
         /// <summary>
+        /// Share the deadline the enclosing scope armed on this thread - the compile's own, every
+        /// compile entry arms one - without claiming the slot. For evaluation inside a compile
+        /// ([xsl:]use-when, static variables): a fresh budget per expression multiplied the
+        /// compile's limit by their number. Nothing armed (no limit) leaves this one unlimited.
+        /// </summary>
+        internal void AdoptThreadDeadline()
+        {
+            DeadlineToken token = activeOnThread;
+            if (token != null && token.hasDeadline)
+            {
+                deadlineTimestamp = token.deadlineTimestamp;
+                timeoutSetting = token.setting;
+                hasDeadline = true;
+                deadlineToken = token;
+            }
+        }
+
+        /// <summary>
         /// Claim the current thread's active-deadline slot for a COMPILE scope: constant folding
         /// can evaluate attacker-sized work (sum(1 to 2000000000)) before any transformation - and
         /// so any run-time deadline - exists. Arms the Processor's limit when the configuration has
