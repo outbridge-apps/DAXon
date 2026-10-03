@@ -551,7 +551,10 @@ namespace OutSmart.DAXon.Api
         // stylesheet entities / DTD resolve through the config ResourceResolver, wrapped as a native XmlResolver.
         private XsltExecutable CompileFromXmlReader(System.IO.TextReader charStream, System.IO.Stream byteStream, string systemId)
         {
-            System.Xml.XmlResolver resolver = new ResourceResolverXmlResolver(config.GetResourceResolver(), config, null);
+            // Opened by system id (Compile(path)), the stylesheet itself is the resolver's first fetch: the host's
+            // input, capped like a stream and not gated as an external entity - as Build(path) treats a document.
+            string principal = charStream == null && byteStream == null ? systemId : null;
+            System.Xml.XmlResolver resolver = new ResourceResolverXmlResolver(config.GetResourceResolver(), config, principal);
             // Compile under the Processor's deadline (see Compile(ResolvedResource)).
             Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Compilation");
             try

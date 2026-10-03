@@ -81,6 +81,24 @@ namespace OutSmart.DAXon.Internal.Streams
             return new CappedStream(stream, max, uri, errorCode);
         }
 
+        // As above, for a stream whose remaining length the caller has measured (-1: unknown). On a file that
+        // measure is a system call, ~3 us here, so it is not taken twice.
+        public static System.IO.Stream Apply(System.IO.Stream stream, long length, long max, string uri, string errorCode)
+        {
+            if (length < 0)
+            {
+                return Apply(stream, max, uri, errorCode);
+            }
+
+            if (length > max)
+            {
+                stream.Dispose();
+                throw Oversized(length, max, uri, errorCode);
+            }
+
+            return stream;
+        }
+
         internal static XPathException Oversized(long size, long max, string uri, string errorCode)
         {
             string sizePart = size >= 0 ? " (" + size + " bytes)" : "";

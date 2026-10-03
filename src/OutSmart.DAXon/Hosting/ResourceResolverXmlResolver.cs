@@ -30,6 +30,7 @@ namespace OutSmart.DAXon.Lib
 
         private readonly OutSmart.DAXon.Core.Configuration config;
         private readonly Uri principal;
+        private bool principalPending;   // the parser opens the document itself first, before anything it references
 
         public ResourceResolverXmlResolver(IResourceResolver resolver)
             : this(resolver, null, null)
@@ -43,6 +44,7 @@ namespace OutSmart.DAXon.Lib
         {
             this.resolver = resolver;
             this.config = config;
+            principalPending = !string.IsNullOrEmpty(principalSystemId);
             if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config) && !string.IsNullOrEmpty(principalSystemId))
             {
                 try
@@ -62,6 +64,19 @@ namespace OutSmart.DAXon.Lib
         }
 
         public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
+        {
+            object entity = Fetch(absoluteUri);
+            if (principalPending)
+            {
+                // The input the host asked for by system id: capped as a stream it passes would be.
+                principalPending = false;
+                entity = OutSmart.DAXon.Internal.Streams.InputSizeLimit.Apply(entity as Stream, OutSmart.DAXon.Internal.Streams.InputSizeLimit.MaxFor(config), absoluteUri?.OriginalString, "FODC0002") ?? entity;
+            }
+
+            return entity;
+        }
+
+        private object Fetch(Uri absoluteUri)
         {
             ResourceRequest request = new ResourceRequest();
             request.uri = absoluteUri?.ToString();
