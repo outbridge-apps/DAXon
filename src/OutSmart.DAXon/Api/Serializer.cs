@@ -254,6 +254,9 @@ namespace OutSmart.DAXon.Api
 
         public virtual void Serialize(ResolvedResource source)
         {
+            // Parses the source: claims the deadline slot as DocumentBuilder does, or a spent token from an earlier
+            // run on this thread failed it at once.
+            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(processor.UnderlyingConfiguration, "Parsing");
             try
             {
                 SerializerFactory sf = processor.UnderlyingConfiguration.SerializerFactory;
@@ -269,10 +272,16 @@ namespace OutSmart.DAXon.Api
             {
                 throw new DAXonApiException(e.ToXPathException());
             }
+            finally
+            {
+                OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
+            }
         }
 
         public virtual string SerializeToString(ResolvedResource source)
         {
+            // Parses the source: claims the deadline slot (see Serialize(ResolvedResource)).
+            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(processor.UnderlyingConfiguration, "Parsing");
             try
             {
                 SerializerFactory sf = processor.UnderlyingConfiguration.SerializerFactory;
@@ -289,6 +298,10 @@ namespace OutSmart.DAXon.Api
             catch (RecursionDepthError e)
             {
                 throw new DAXonApiException(e.ToXPathException());
+            }
+            finally
+            {
+                OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
             }
         }
 

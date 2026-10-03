@@ -242,6 +242,9 @@ namespace OutSmart.DAXon.Api
 
         public virtual ResolvedResource GetAssociatedStylesheet(ResolvedResource source, string media, string title, string charset)
         {
+            // Parses the source to its first element: claims the deadline slot as DocumentBuilder does, or a spent
+            // token from an earlier run on this thread failed the search at once ("Failed while looking for ...").
+            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Parsing");
             try
             {
                 return StylesheetModule.GetAssociatedStylesheet(config, compilerInfo.ResourceResolver, source, media, title, charset);
@@ -257,6 +260,10 @@ namespace OutSmart.DAXon.Api
             catch (System.Xml.XmlException e)
             {
                 throw DAXonApiException.FromXmlParser(e, source.SystemId);
+            }
+            finally
+            {
+                Controller.RestoreThreadDeadline(prevDeadline);
             }
         }
 

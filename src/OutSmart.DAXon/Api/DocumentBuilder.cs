@@ -101,6 +101,9 @@ namespace OutSmart.DAXon.Api
             if (source == null)
                 throw new NullReferenceException("source");
             ParseOptions options = GetParseOptions(source);
+            // Claims the deadline slot as BuildFromXmlReader does: a spent token from an earlier run on this thread
+            // failed the parse at once.
+            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(config, "Parsing");
             try
             {
                 ITreeInfo doc = config.BuildDocumentTree(source, options);
@@ -117,6 +120,10 @@ namespace OutSmart.DAXon.Api
             catch (System.Xml.XmlException e)
             {
                 throw DAXonApiException.FromXmlParser(e, source.SystemId);
+            }
+            finally
+            {
+                OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
             }
         }
 
@@ -372,6 +379,8 @@ namespace OutSmart.DAXon.Api
 
         public virtual void Parse(ResolvedResource source, IDestination destination)
         {
+            // Claims the deadline slot as BuildFromXmlReader does.
+            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(config, "Parsing");
             try
             {
                 ParseOptions options = GetParseOptions(source);
@@ -386,11 +395,17 @@ namespace OutSmart.DAXon.Api
             {
                 throw new DAXonApiException(e.ToXPathException());
             }
+            finally
+            {
+                OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
+            }
         }
 
         public virtual void Parse(string file, IDestination destination)
         {
             // P5: parse via the native XmlReader path (no JAXP StreamSource); mirrors Parse(Source).
+            // Claims the deadline slot as BuildFromXmlReader does.
+            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(config, "Parsing");
             try
             {
                 ParseOptions options = GetParseOptions();
@@ -411,6 +426,10 @@ namespace OutSmart.DAXon.Api
             catch (System.Xml.XmlException e)
             {
                 throw DAXonApiException.FromXmlParser(e, file);
+            }
+            finally
+            {
+                OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
             }
         }
     }
