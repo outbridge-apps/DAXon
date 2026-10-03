@@ -299,6 +299,10 @@ namespace OutSmart.DAXon.Api
             {
                 throw DAXonApiException.FromXmlParser(e, systemId);
             }
+            catch (Exception e) when (DAXonApiException.IsIO(e))
+            {
+                throw DAXonApiException.FromIO(e, systemId);
+            }
             finally
             {
                 OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
@@ -426,6 +430,10 @@ namespace OutSmart.DAXon.Api
             catch (System.Xml.XmlException e)
             {
                 throw DAXonApiException.FromXmlParser(e, file);
+            }
+            catch (Exception e) when (DAXonApiException.IsIO(e))
+            {
+                throw DAXonApiException.FromIO(e, file);
             }
             finally
             {

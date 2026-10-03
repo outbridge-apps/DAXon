@@ -108,9 +108,10 @@ namespace OutSmart.DAXon.Resources
             {
                 throw uxpe.GetXPathException();
             }
-            catch (System.IO.IOException err)
+            catch (System.Exception err) when (err is System.IO.IOException || err is System.UnauthorizedAccessException)
             {
-                // An I/O failure (e.g. missing file) becomes SXXP0003, which doc-available() turns into false.
+                // An I/O failure (a missing file, a locked one, a directory) becomes SXXP0003, which doc-available()
+                // turns into false.
                 // A malformed-document XmlException is NOT caught here -- it propagates unchanged.
                 throw new XPathException("I/O error reported by XML parser processing " + url, err).WithErrorCode(DAXonErrorCode.SXXP0003);
             }

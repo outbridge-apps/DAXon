@@ -48,6 +48,19 @@ namespace OutSmart.DAXon.Api
             return new DAXonApiException(err);
         }
 
+        // An input the reader could not open or read - missing, locked, a directory: SXXP0003, as the resolver path
+        // (ActiveStreamSource) reports it, not a raw IOException. The I/O exception stays reachable as the inner cause.
+        internal static DAXonApiException FromIO(Exception e, string systemId)
+        {
+            return new DAXonApiException(new XPathException("I/O error reported by XML parser processing " + systemId + ": " + e.Message, e)
+                .WithErrorCode(DAXonErrorCode.SXXP0003));
+        }
+
+        internal static bool IsIO(Exception e)
+        {
+            return e is System.IO.IOException || e is UnauthorizedAccessException;
+        }
+
         public string GetMessage()
         {
             return InnerException.Message;

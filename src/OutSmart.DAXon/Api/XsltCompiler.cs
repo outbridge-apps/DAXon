@@ -588,6 +588,10 @@ namespace OutSmart.DAXon.Api
             {
                 throw DAXonApiException.FromXmlParser(e, systemId);
             }
+            catch (Exception e) when (DAXonApiException.IsIO(e))
+            {
+                throw DAXonApiException.FromIO(e, systemId);
+            }
             finally
             {
                 Controller.RestoreThreadDeadline(prevDeadline);
