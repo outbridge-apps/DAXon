@@ -58,11 +58,6 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
-        public override Uri ResolveUri(Uri baseUri, string relativeUri)
-        {
-            return baseUri != null ? base.ResolveUri(baseUri, relativeUri) : new Uri(relativeUri, UriKind.RelativeOrAbsolute);
-        }
-
         public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
         {
             object entity = Fetch(absoluteUri);
