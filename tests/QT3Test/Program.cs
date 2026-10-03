@@ -607,7 +607,8 @@ namespace OutSmart.DAXon.ConformanceTests
                 }
             }
             Func<string, bool> isSlow = p => p.IndexOf("unicode-90", StringComparison.OrdinalIgnoreCase) >= 0
-                || p.IndexOf("regex-classes", StringComparison.OrdinalIgnoreCase) >= 0;
+                || p.IndexOf("regex-classes", StringComparison.OrdinalIgnoreCase) >= 0
+                || p.IndexOf("_catalog-test-set", StringComparison.OrdinalIgnoreCase) >= 0;
             // Slow sets are SLICED across all workers (child runs every par-th case, QT3_SLICE=i/K):
             // one sequential unicode-90 child would be the wall-clock tail of the whole run; K slices
             // are complementary partitions, so pass/fail/skip totals add up exactly. Everything is
@@ -665,8 +666,9 @@ namespace OutSmart.DAXon.ConformanceTests
                             p.BeginOutputReadLine();
                             p.BeginErrorReadLine();
                             // 120 s: fn-count's XQuery stress cases legitimately take ~70 s. unicode-90 (119 MB
-                            // source docs) and regex-classes (whole-Unicode sweeps; the catalog itself marks it
-                            // "because very slow") get 30 min.
+                            // source docs), regex-classes (whole-Unicode sweeps; the catalog itself marks it
+                            // "because very slow") and misc/catalog (its cases read every stylesheet the
+                            // catalog names, ~10 500) get 30 min.
                             int setTimeoutMs = isSlow(matching[i].path) ? 1800000 : 120000;
                             if (!p.WaitForExit(setTimeoutMs)) { try { p.Kill(); } catch { } p.WaitForExit(3000); status = "HANG"; }
                             else
