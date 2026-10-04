@@ -35,12 +35,13 @@ namespace OutSmart.DAXon.Functions
         // int.MaxValue overflowed the picture builder's min+1 pre-size into a negative array.
         internal const int MAX_WIDTH = 100_000_000;
 
+        // Ordinal order for the binary search (Saxon 12.9 lists AME before AM, so AM was never found)
         static readonly string[] knownCalendars = new[]
         {
             "AD",
             "AH",
-            "AME",
             "AM",
+            "AME",
             "AP",
             "AS",
             "BE",
@@ -124,7 +125,7 @@ namespace OutSmart.DAXon.Functions
                 if (calLocal.Equals("AD") || calLocal.Equals("ISO"))
                 {
                 }
-                else if (Array.BinarySearch(knownCalendars, calLocal) >= 0)
+                else if (Array.BinarySearch(knownCalendars, calLocal, StringComparer.Ordinal) >= 0)
                 {
                     result = "[Calendar: AD]" + result;
                 }
@@ -216,7 +217,7 @@ namespace OutSmart.DAXon.Functions
                 }
                 else
                 {
-                    int close = i < format.Length ? format.IndexOf("]", i) : -1;
+                    int close = i < format.Length ? format.IndexOf(']', i) : -1;
                     if (close == -1)
                     {
                         throw new XPathException("Date format contains a '[' with no matching ']'").WithErrorCode("FOFD1340").WithXPathContext(context);

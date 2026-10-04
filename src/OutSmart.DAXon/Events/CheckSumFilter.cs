@@ -171,7 +171,7 @@ namespace OutSmart.DAXon.Events
                 names[index++] = key;
             }
 
-            Array.Sort(names);
+            Array.Sort(names, StringComparer.Ordinal);
             foreach (string key in names)
             {
                 INodeName name = namemap.GetOrDefault(key);

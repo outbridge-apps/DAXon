@@ -50,8 +50,9 @@ namespace OutSmart.DAXon.Internal.Regex
             _patternString = pattern;
             _flags = flags;
             var opts = RegexOptions.None;
+            // Invariant: the thread's culture must not decide what matches (tr-TR folds I to dotless i)
             if ((flags & CASE_INSENSITIVE) != 0)
-                opts |= RegexOptions.IgnoreCase;
+                opts |= RegexOptions.IgnoreCase | RegexOptions.CultureInvariant;
             if ((flags & MULTILINE) != 0)
                 opts |= RegexOptions.Multiline;
             if ((flags & DOTALL) != 0)

@@ -264,7 +264,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public bool ThereMightBeAnArrowAhead()
         {
-            return input.IndexOf("->", currentTokenStartOffset) >= 0 || input.IndexOf("-＞", currentTokenStartOffset) >= 0;
+            return input.IndexOf("->", currentTokenStartOffset, StringComparison.Ordinal) >= 0 || input.IndexOf("-＞", currentTokenStartOffset, StringComparison.Ordinal) >= 0;
         }
 
         private void HandleNextToken(int oldPrecedingToken)

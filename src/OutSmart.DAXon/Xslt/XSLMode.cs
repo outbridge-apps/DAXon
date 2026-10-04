@@ -317,7 +317,7 @@ namespace OutSmart.DAXon.Xslt
                         names[i++] = acc.AccumulatorName.EQName;
                     }
 
-                    Array.Sort(names);
+                    Array.Sort(names, StringComparer.Ordinal);
                     StringBuilder allNames = new StringBuilder();
                     bool first = true;
                     foreach (string name in names)

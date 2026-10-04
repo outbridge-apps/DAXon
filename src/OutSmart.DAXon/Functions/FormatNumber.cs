@@ -309,7 +309,7 @@ namespace OutSmart.DAXon.Functions
             }
             else
             {
-                i = s.IndexOf(nines);
+                i = s.IndexOf(nines, StringComparison.Ordinal);
                 if (i >= 0)
                 {
                     if (i == start)

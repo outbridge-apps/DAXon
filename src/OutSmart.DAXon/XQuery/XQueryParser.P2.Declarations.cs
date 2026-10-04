@@ -58,7 +58,7 @@ namespace OutSmart.DAXon.XQuery
                     "3.1",
                     "4.0"
                 };
-                if (Array.BinarySearch(allowedVersions, queryVersion) < 0)
+                if (Array.BinarySearch(allowedVersions, queryVersion, StringComparer.Ordinal) < 0)
                 {
                     Grumble("Invalid XQuery version " + queryVersion, "XQST0031");
                 }

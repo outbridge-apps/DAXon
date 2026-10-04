@@ -157,7 +157,7 @@ namespace OutSmart.DAXon.Serialization
             foreach (AttributeInfo att in element.Attributes())
             {
                 INodeName name = att.GetNodeName();
-                if (name.HasURI(NamespaceUri.NULL) && Array.BinarySearch(allowedNames, name.GetLocalPart()) < 0)
+                if (name.HasURI(NamespaceUri.NULL) && Array.BinarySearch(allowedNames, name.GetLocalPart(), StringComparer.Ordinal) < 0)
                 {
                     throw new XPathException("In serialization parameters, attribute @" + name.GetLocalPart() + " must not appear on element " + element.DisplayName, "SEPM0017");
                 }

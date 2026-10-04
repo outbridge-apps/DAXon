@@ -572,10 +572,10 @@ namespace OutSmart.DAXon.XQuery
                     throw e;
                 }
 
-                i0 = avt.IndexOf("{", last);
-                i1 = avt.IndexOf("{{", last);
-                i8 = avt.IndexOf("}", last);
-                i9 = avt.IndexOf("}}", last);
+                i0 = avt.IndexOf('{', last);
+                i1 = avt.IndexOf("{{", last, StringComparison.Ordinal);
+                i8 = avt.IndexOf('}', last);
+                i9 = avt.IndexOf("}}", last, StringComparison.Ordinal);
                 if ((i0 < 0 || i2 < i0) && (i8 < 0 || i2 < i8))
                 {
 

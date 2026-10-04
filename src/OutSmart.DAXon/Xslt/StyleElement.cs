@@ -693,7 +693,7 @@ namespace OutSmart.DAXon.Xslt
                 return;
             }
 
-            if (Array.BinarySearch(allowed, value) < 0)
+            if (Array.BinarySearch(allowed, value, StringComparer.Ordinal) < 0)
             {
                 StringBuilder sb = new StringBuilder(64);
                 sb.Append("Invalid value for ");

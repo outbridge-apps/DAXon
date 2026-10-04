@@ -319,7 +319,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         }
         public static bool IsReservedFunctionName(string name, int version)
         {
-            int x = Array.BinarySearch(version >= 40 ? reservedFunctionNames40 : reservedFunctionNames31, name);
+            int x = Array.BinarySearch(version >= 40 ? reservedFunctionNames40 : reservedFunctionNames31, name, StringComparer.Ordinal);
             return x >= 0;
         }
 
