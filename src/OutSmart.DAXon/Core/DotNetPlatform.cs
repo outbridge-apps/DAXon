@@ -4,10 +4,8 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // A minimal .NET IPlatform so Configuration/Processor can construct. The real
-// JavaPlatform (1075 lines, heavy deps) is excluded; this provides sane values for the construction path
-// and throws a clearly-labelled NotImplementedException for transform-time services not yet wired (each
-// throw localizes the next runtime un-stub target). Usings mirror Platform.cs so the IPlatform method
-// signatures bind to the same types.
+// JavaPlatform (1075 lines, heavy deps) is excluded; this provides sane values for the construction path.
+// Usings mirror Platform.cs so the IPlatform method signatures bind to the same types.
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Expressions.Sorting;
@@ -41,8 +39,7 @@ namespace OutSmart.DAXon.Core
                 catch { return "US"; }
             }
         }
-        public IIDynamicLoader DefaultDynamicLoader => null;
-        private static NotImplementedException NI(string m) => new NotImplementedException("DotNetPlatform." + m + " not yet wired (runtime un-stub target)");
+        public IIDynamicLoader DefaultDynamicLoader => NoDynamicLoader.Instance;
 
         // ---- construction path: sane values / no-ops ----
         public void Initialize(Configuration config)
@@ -294,7 +291,11 @@ namespace OutSmart.DAXon.Core
             }
             return new ARegularExpression(regex, f, hostLanguage, warnings, config);
         }
-        public ExternalObjectType GetExternalObjectType(Configuration config, NamespaceUri uri, string localName) => throw NI("GetExternalObjectType");
+        // A type named in the .NET-type namespace: classes are not loaded by name here, so it is an unknown type.
+        public ExternalObjectType GetExternalObjectType(Configuration config, NamespaceUri uri, string localName)
+        {
+            throw new XPathException("Unknown type Q{" + uri + "}" + localName + ": external object types are not available on this platform", "XPST0051").AsStaticError();
+        }
 
         // IComparer<string> backed by a .NET CompareInfo + CompareOptions. This is the .NET analogue of
         // java.text.Collator that SimpleCollation wraps. The CompareInfo/Options are exposed so the

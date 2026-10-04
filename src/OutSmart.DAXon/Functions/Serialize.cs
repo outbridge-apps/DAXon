@@ -129,7 +129,7 @@ namespace OutSmart.DAXon.Functions
                     }
                     if (__k == "method")
                     {
-                        props.SetProperty("method", __v.UnicodeStringValue.ToString());
+                        props.SetProperty("method", CheckedMethod(__v.UnicodeStringValue.ToString(), context));
                     }
                     else if (__k == "indent")
                     {
@@ -285,6 +285,21 @@ namespace OutSmart.DAXon.Functions
             catch (XPathException e)
             {
                 e.MaybeSetErrorCode("SENR0001");
+                throw;
+            }
+        }
+
+        // A value that names no method (a typo such as 'XML') is SEPM0016 here; unchecked, it was taken for
+        // the class name of a user-defined method.
+        private static string CheckedMethod(string value, IXPathContext context)
+        {
+            try
+            {
+                return context.GetConfiguration().SerializerFactory.CheckOutputProperty("method", value);
+            }
+            catch (XPathException e)
+            {
+                e.MaybeSetErrorCode("SEPM0016");
                 throw;
             }
         }

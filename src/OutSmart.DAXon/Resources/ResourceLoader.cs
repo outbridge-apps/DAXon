@@ -151,8 +151,8 @@ namespace OutSmart.DAXon.Resources
                     path = url.Substring(10);
                 }
 
-                // DynamicLoader has no default implementation; without one, classpath: URIs are unresolvable.
-                if (config.DynamicLoader == null)
+                // Without a host loader, classpath: URIs are unresolvable.
+                if (config.DynamicLoader is NoDynamicLoader)
                 {
                     throw new IOException("Cannot resolve classpath: URI (no dynamic loader configured): " + url);
                 }

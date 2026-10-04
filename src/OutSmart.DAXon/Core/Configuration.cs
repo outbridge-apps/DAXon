@@ -164,7 +164,7 @@ namespace OutSmart.DAXon.Core
         {
             get => dynamicLoader; set
             {
-                this.dynamicLoader = value;
+                this.dynamicLoader = value ?? NoDynamicLoader.Instance;
             }
         }
 
