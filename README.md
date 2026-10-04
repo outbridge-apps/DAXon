@@ -112,6 +112,9 @@ var proc = new Processor(new ProcessorOptions
   `fn:transform` / `xsl:evaluate` inherit it. For decisions of your own, derive from
   `ResourceAccessPolicy` and override `PermitsRead`, `PermitsWrite` or
   `PermitsEnvironmentVariable` (and `DescribeDenial` for the message).
+- Entity expansion in any XML the engine parses stops at 10,000,000 characters per document,
+  under every policy and on every host. .NET sets this limit itself only for applications that
+  target .NET Framework 4.5.2 or later; the engine sets it for the rest too.
 
 ## Status
 

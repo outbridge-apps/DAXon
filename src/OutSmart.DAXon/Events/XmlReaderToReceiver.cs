@@ -37,6 +37,9 @@ namespace OutSmart.DAXon.Events
         // The XML declaration is ASCII in every byte-oriented XML encoding, so matching the first bytes
         // directly finds version="1.1" regardless of the real encoding (UTF-16 is not peeked, as before).
         private const int XmlDeclPeekBytes = 256;
+        // .NET's own default since 4.5.2, set explicitly: in .NET Framework's legacy XML mode (an IIS app whose httpRuntime
+        // targetFramework is below 4.5.2) the reader has no limit: a billion-laughs DTD expands until time or memory runs out.
+        private const long MaxEntityCharacters = 10_000_000;
         // JAXP disable/enable-output-escaping PI targets (javax.xml.transform.Result.PI_*).
         private const string PI_DISABLE_OUTPUT_ESCAPING = "javax.xml.transform.disable-output-escaping";
         private const string PI_ENABLE_OUTPUT_ESCAPING = "javax.xml.transform.enable-output-escaping";
@@ -141,7 +144,9 @@ namespace OutSmart.DAXon.Events
 
         // config: the configuration whose resource policy gates the default resolver's file reads
         // (external DTD subsets and entities); null for the engine's own embedded resources.
-        public static XmlReader CreateXmlReader(TextReader charStream, Stream byteStream, string systemId, XmlResolver resolver, bool dtdValidate, bool suppressValidationErrors = false, Configuration config = null)
+        // inputInEntity: characters of the input itself that arrive as an external entity (parse-xml-fragment),
+        // which the reader would otherwise count against the expansion limit.
+        public static XmlReader CreateXmlReader(TextReader charStream, Stream byteStream, string systemId, XmlResolver resolver, bool dtdValidate, bool suppressValidationErrors = false, Configuration config = null, long inputInEntity = 0)
         {
             var settings = new XmlReaderSettings
             {
@@ -149,6 +154,7 @@ namespace OutSmart.DAXon.Events
                 // is processed for entity expansion. When a resolver is supplied, external entities/DTD
                 // resolve through it instead.
                 DtdProcessing = DtdProcessing.Parse,
+                MaxCharactersFromEntities = MaxEntityCharacters + inputInEntity,
                 XmlResolver = resolver ?? new FileOnlyXmlResolver(config, charStream == null && byteStream == null ? systemId : null),
                 ValidationType = dtdValidate ? ValidationType.DTD : ValidationType.None,
                 IgnoreComments = false,
