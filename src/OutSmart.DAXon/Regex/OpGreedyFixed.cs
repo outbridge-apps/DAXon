@@ -54,6 +54,13 @@ namespace OutSmart.DAXon.Regex
 
         public override IIntIterator IterateMatches(REMatcher matcher, int position)
         {
+            if (len == 0)
+            {
+                // A zero-length repetition ends where it began, so one match stands for any count. Saxon
+                // 12.9 counted on to max (2^31 for *) unchecked, then repeated the position forever.
+                return op.IterateMatches(matcher, position).MoveNext() || min == 0 ? new IntStepIterator(position, -1, position) : EmptyIntIterator.GetInstance();
+            }
+
             int guard = matcher.search.Length32();
             if (max < int.MaxValue)
             {

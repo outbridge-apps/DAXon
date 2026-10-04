@@ -71,7 +71,8 @@ namespace OutSmart.DAXon.Regex
                         if (child.MoveNext())
                         {
                             pos = child.Current;
-                            count++;
+                            // zero-length operand: one match stands for any count (see OpGreedyFixed)
+                            count = parent.len == 0 ? min : count + 1;
                         }
                         else
                         {
@@ -82,7 +83,7 @@ namespace OutSmart.DAXon.Regex
                     return true;
                 }
 
-                if (count < max)
+                if (count < max && (parent.len > 0 || count == 0))
                 {
                     matcher.ClearCapturedGroupsBeyond(pos);
                     IIntIterator child = op.IterateMatches(matcher, pos);
