@@ -17,6 +17,7 @@
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Api;
+using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
 
@@ -25,6 +26,41 @@ namespace OutSmart.DAXon.Api
     // Axis.GetAxisNumber() — Java enum had this method.
     public static class AxisEnumExtensions
     {
-        public static int GetAxisNumber(this Axis axis) => (int)axis;
+        // The enum keeps its declaration order (hosts are compiled against it); AxisInfo numbers
+        // NAMESPACE before PARENT, so the last five differ.
+        public static int GetAxisNumber(this Axis axis)
+        {
+            switch (axis)
+            {
+                case Axis.ANCESTOR:
+                    return AxisInfo.ANCESTOR;
+                case Axis.ANCESTOR_OR_SELF:
+                    return AxisInfo.ANCESTOR_OR_SELF;
+                case Axis.ATTRIBUTE:
+                    return AxisInfo.ATTRIBUTE;
+                case Axis.CHILD:
+                    return AxisInfo.CHILD;
+                case Axis.DESCENDANT:
+                    return AxisInfo.DESCENDANT;
+                case Axis.DESCENDANT_OR_SELF:
+                    return AxisInfo.DESCENDANT_OR_SELF;
+                case Axis.FOLLOWING:
+                    return AxisInfo.FOLLOWING;
+                case Axis.FOLLOWING_SIBLING:
+                    return AxisInfo.FOLLOWING_SIBLING;
+                case Axis.PARENT:
+                    return AxisInfo.PARENT;
+                case Axis.PRECEDING:
+                    return AxisInfo.PRECEDING;
+                case Axis.PRECEDING_SIBLING:
+                    return AxisInfo.PRECEDING_SIBLING;
+                case Axis.SELF:
+                    return AxisInfo.SELF;
+                case Axis.NAMESPACE:
+                    return AxisInfo.NAMESPACE;
+                default:
+                    throw new System.ArgumentOutOfRangeException(nameof(axis));
+            }
+        }
     }
 }
