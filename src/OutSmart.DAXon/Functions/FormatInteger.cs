@@ -95,10 +95,12 @@ namespace OutSmart.DAXon.Functions
             }
 
             Configuration config = visitor.GetConfiguration();
-            string language = arguments.Length == 3 ? ((StringLiteral)arguments[2]).GroundedValue.GetStringValue() : config.GetDefaultLanguage();
+            // A literal () for the language is no StringLiteral: it asks for the default language, as at run time.
+            IGroundedValue languageValue = arguments.Length == 3 ? ((Literal)arguments[2]).GroundedValue : null;
+            string language = languageValue == null || languageValue.GetLength() == 0 ? config.GetDefaultLanguage() : languageValue.GetStringValue();
             INumberer numb = config.MakeNumberer(language, null);
             bool allow40 = visitor.StaticContext.GetPackageData().HostLanguageVersion >= 40;
-            formatter = MakeFormatter(numb, ((StringLiteral)arguments[1]).GroundedValue.GetStringValue(), allow40);
+            formatter = MakeFormatter(numb, ((Literal)arguments[1]).GroundedValue.GetStringValue(), allow40);
             return base.MakeOptimizedFunctionCall(visitor, contextInfo, arguments);
         }
 
