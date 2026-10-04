@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Lib
         public StandardUnparsedTextResolver() { }
         // Phase C 2026-06-09: real resolver (was => null, which made json-doc()/unparsed-text() fail with
         // "Unable to resolve URI"). Opens an absolute file:// or http(s):// URI and returns a Reader over its
-        // content (the real StandardUnparsedTextResolver.cs is excluded). Errors -> null -> caller's FOUT1170.
+        // content (the real StandardUnparsedTextResolver.cs is excluded). A failed read names its reason.
         // Open a file as text honouring the F&O unparsed-text encoding rules: an explicit encoding wins;
         // otherwise a byte-order mark; otherwise, for a resource carrying an XML declaration, the encoding it
         // names; otherwise UTF-8. STREAMS the content (F1): the encoding is sniffed from the first 256 bytes
@@ -80,6 +80,13 @@ namespace OutSmart.DAXon.Lib
 
         public TextReader Resolve(URI absoluteURI, string encoding, Configuration config)
         {
+            return Read(absoluteURI, encoding, config, "unparsed-text()");
+        }
+
+        // The engine's own read of a text resource, once the resolvers declined it, and the one the resource policy
+        // guards: a file or an http(s) URL, null for another scheme. A failure is final and names the reason.
+        internal static TextReader Read(URI absoluteURI, string encoding, Configuration config, string function)
+        {
             // Before FileInfo or any fetch, so a denied existing file and a missing one look the same.
             string denied = OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config)
                 ? OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, absoluteURI?.ToString(), OutSmart.DAXon.Api.ResourceKind.Text)
@@ -89,9 +96,14 @@ namespace OutSmart.DAXon.Lib
                 throw new OutSmart.DAXon.Internal.ResourceDeniedException(denied, "FOUT1170");
             }
 
+            if (!Uri.TryCreate(absoluteURI.ToString(), UriKind.Absolute, out Uri sysUri)
+                || !(sysUri.IsFile || sysUri.Scheme == Uri.UriSchemeHttp || sysUri.Scheme == Uri.UriSchemeHttps))
+            {
+                return null;
+            }
+
             try
             {
-                var sysUri = new Uri(absoluteURI.ToString());
                 // The Processor's input-size cap applies here too (the http branch reads the whole
                 // resource into memory; the file branch checks the on-disk length and then streams).
                 long maxInput = OutSmart.DAXon.Internal.Streams.InputSizeLimit.MaxFor(config);
@@ -120,12 +132,13 @@ namespace OutSmart.DAXon.Lib
                 }
                 return new StringReader(text);
             }
-            catch (XPathException) { throw; }   // the cap error must not degrade into null -> generic FOUT1170
-            catch (Exception) { return null; }
+            catch (Exception e) when (!(e is XPathException))
+            {
+                throw Unreadable(e, function, absoluteURI.ToString(), encoding);
+            }
         }
-        // 2026-06-10: real UnparsedTextFunction.ReadFile falls back to this static when the resolver returns
-        // null (ResourceRequest -> DirectResourceResolver -> StreamSource). Materializes via StringReader
-        // (Java -1 EOF semantics), honoring whichever of reader/stream/systemId the source carries.
+        // What a resolver returned (UnparsedTextFunction.OpenText), or the DirectResourceResolver for a scheme Read leaves
+        // alone: materialized via StringReader (Java -1 EOF semantics), from whichever of reader/stream/systemId it carries.
         public static TextReader GetReaderFromResolvedResource(ResolvedResource src, string encoding, Configuration config, bool isXml, string function = "unparsed-text()")
         {
             try
@@ -159,10 +172,23 @@ namespace OutSmart.DAXon.Lib
             // Upstream contract is `throws XPathException` (StandardUnparsedTextResolver.java:157) and the
             // UnparsedTextFunction.ReadFile call site sits OUTSIDE its IOException try - so translate all
             // native failures here: missing/unreadable resource -> FOUT1170, unknown encoding -> FOUT1190.
-            catch (XPathException) { throw; }
-            catch (ArgumentException e) when (!OutSmart.DAXon.Api.DAXonApiException.IsIO(e)) { throw new XPathException(function + ": unknown encoding " + encoding + " (" + e.Message + ")", "FOUT1190"); }
-            catch (Exception e) { throw new XPathException(function + ": cannot read " + (src.SystemId ?? "(anonymous source)") + ": " + e.Message, e).WithErrorCode("FOUT1170"); }
+            catch (Exception e) when (!(e is XPathException))
+            {
+                throw Unreadable(e, function, src.SystemId ?? "(anonymous source)", encoding);
+            }
+
             throw new XPathException(function + ": resource has no reader, stream or system ID", "FOUT1170");
+        }
+
+        // An argument the file system did not refuse is the encoding's: an unknown name.
+        private static XPathException Unreadable(Exception e, string function, string systemId, string encoding)
+        {
+            if (e is ArgumentException && !OutSmart.DAXon.Api.DAXonApiException.IsIO(e))
+            {
+                return new XPathException(function + ": unknown encoding " + encoding + " (" + e.Message + ")", "FOUT1190");
+            }
+
+            return new XPathException(function + ": cannot read " + systemId + ": " + e.Message, e).WithErrorCode("FOUT1170");
         }
 
         // The policy path of a remote fetch: redirects followed by ResourceLoader, hop by hop. Same

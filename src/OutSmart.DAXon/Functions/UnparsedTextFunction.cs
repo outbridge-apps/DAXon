@@ -45,23 +45,7 @@ namespace OutSmart.DAXon.Functions
             Configuration config = context.GetConfiguration();
             IIntPredicateProxy checker = config.ValidCharacterChecker;
 
-            // Use the URI machinery to validate and resolve the URIs
-            TextReader reader;
-            try
-            {
-                reader = context.GetController().UnparsedTextURIResolver.Resolve(absoluteURI, encoding, config);
-            }
-            catch (XPathException err)
-            {
-                err.MaybeSetErrorCode("FOUT1170");
-                throw;
-            }
-
-            if (reader == null)
-            {
-                reader = ReadDeclined(absoluteURI, encoding, config, "unparsed-text()");
-            }
-
+            TextReader reader = OpenText(absoluteURI, encoding, context, "unparsed-text()");
             try
             {
                 ReadFile(checker, reader, output);
@@ -77,20 +61,47 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        // The unparsed-text resolver gives null for anything it cannot read itself: the configuration's resolver chain
-        // may still supply the resource, and reading what it returns says why a file could not be read.
-        internal static TextReader ReadDeclined(URI absoluteURI, string encoding, Configuration config, string function)
+        // A host's text resolver, the run's and the configuration's resolvers as doc() asks them (Saxon 12 routes text
+        // through them too), then the engine's own read, which alone the policy guards: one attempt, failing with why.
+        internal static TextReader OpenText(URI absoluteURI, string encoding, IXPathContext context, string function)
         {
-            ResourceRequest request = new ResourceRequest();
-            request.uri = absoluteURI.ToString();
-            request.nature = ResourceRequest.TEXT_NATURE;
-            ResolvedResource src = request.Resolve(config.GetResourceResolver(), new DirectResourceResolver(config));
-            if (src == null)
+            Configuration config = context.GetConfiguration();
+            try
             {
-                throw new XPathException(function + ": resolver returned no resource", "FOUT1170");
-            }
+                IUnparsedTextURIResolver textResolver = context.GetController().UnparsedTextURIResolver;
+                TextReader reader = textResolver == null || textResolver is StandardUnparsedTextResolver ? null : textResolver.Resolve(absoluteURI, encoding, config);
+                if (reader != null)
+                {
+                    return reader;
+                }
 
-            return StandardUnparsedTextResolver.GetReaderFromResolvedResource(src, encoding, config, false, function);
+                ResourceRequest request = new ResourceRequest();
+                request.uri = absoluteURI.ToString();
+                request.nature = ResourceRequest.TEXT_NATURE;
+                ResolvedResource src = request.Resolve(context.GetResourceResolver(), config.GetResourceResolver());
+                if (src == null)
+                {
+                    reader = StandardUnparsedTextResolver.Read(absoluteURI, encoding, config, function);
+                    if (reader != null)
+                    {
+                        return reader;
+                    }
+
+                    // A scheme the engine does not read itself (classpath: through the host's loader, ...)
+                    src = request.Resolve(new DirectResourceResolver(config));
+                    if (src == null)
+                    {
+                        throw new XPathException(function + ": resolver returned no resource", "FOUT1170");
+                    }
+                }
+
+                return StandardUnparsedTextResolver.GetReaderFromResolvedResource(src, encoding, config, false, function);
+            }
+            catch (XPathException err)
+            {
+                err.MaybeSetErrorCode("FOUT1170");
+                throw;
+            }
         }
 
         public static URI GetAbsoluteURI(string href, string baseURI, IXPathContext context)

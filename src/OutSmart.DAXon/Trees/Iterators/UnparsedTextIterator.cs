@@ -41,22 +41,7 @@ namespace OutSmart.DAXon.Trees.Iterators
         public UnparsedTextIterator(URI absoluteURI, IXPathContext context, string encoding)
         {
             Configuration config = context.GetConfiguration();
-            TextReader r;
-            try
-            {
-                r = context.GetController().UnparsedTextURIResolver.Resolve(absoluteURI, encoding, config);
-            }
-            catch (XPathException err)
-            {
-                err.MaybeSetErrorCode("FOUT1170");
-                throw;
-            }
-
-            if (r == null)
-            {
-                r = UnparsedTextFunction.ReadDeclined(absoluteURI, encoding, config, "unparsed-text-lines()");
-            }
-
+            TextReader r = UnparsedTextFunction.OpenText(absoluteURI, encoding, context, "unparsed-text-lines()");
             this.reader = r;
             this.scope = RunResources.Track(this, out ticket);
             this.uri = absoluteURI;
