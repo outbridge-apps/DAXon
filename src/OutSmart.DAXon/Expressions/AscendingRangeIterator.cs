@@ -146,7 +146,7 @@ namespace OutSmart.DAXon.Expressions
 
         public int GetLength()
         {
-            return (int)((limit - start) + 1);
+            return (int)((limit - start) / step + 1);
         }
 
         public IAtomicIterator GetReverseIterator()
@@ -159,9 +159,10 @@ namespace OutSmart.DAXon.Expressions
             return new IntegerRange(start, step, limit);
         }
 
+        // The items not read yet: currentValue is the last one delivered (start - step before the first)
         public override IGroundedValue GetResidue()
         {
-            return new IntegerRange(currentValue, step, limit);
+            return HasNext ? new IntegerRange(currentValue + step, step, limit) : EmptySequence.GetInstance();
         }
         AtomicValue IAtomicIterator.Next() => Next();
         ISequenceIterator IReversibleIterator.GetReverseIterator() => GetReverseIterator();

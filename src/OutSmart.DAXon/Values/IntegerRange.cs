@@ -65,7 +65,7 @@ namespace OutSmart.DAXon.Values
 
             this.start = start;
             this.step = step;
-            this.end = start + step * (end - start) / step;
+            this.end = start + (end - start) / step * step;
         }
 
         public long GetStep()
@@ -142,21 +142,17 @@ namespace OutSmart.DAXon.Values
                 return EmptySequence.GetInstance();
             }
 
-            long newStart = this.start + Math.Max(start, 0);
-            long newEnd = newStart + ((long)length * step) - 1;
-            if (newEnd > end)
-            {
-                newEnd = end;
-            }
-
-            if (newEnd >= newStart)
-            {
-                return new IntegerRange(newStart, step, newEnd);
-            }
-            else
+            // Counted in items, not values: Saxon 12.9's value arithmetic held only for step 1, so
+            // tail(reverse(1 to 10)) was empty
+            long from = Math.Max(start, 0);
+            long count = Math.Min(length, GetLength() - from);
+            if (count <= 0)
             {
                 return EmptySequence.GetInstance();
             }
+
+            long newStart = this.start + from * step;
+            return new IntegerRange(newStart, step, newStart + (count - 1) * step);
         }
 
         public int GetLength()

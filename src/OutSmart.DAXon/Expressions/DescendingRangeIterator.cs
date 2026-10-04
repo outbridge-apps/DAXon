@@ -67,9 +67,10 @@ namespace OutSmart.DAXon.Expressions
             return new IntegerRange(start, -step, limit);
         }
 
+        // The items not read yet: currentValue is the last one delivered (start + step before the first)
         public override IGroundedValue GetResidue()
         {
-            return new IntegerRange(currentValue, -step, limit);
+            return HasNext ? new IntegerRange(currentValue - step, -step, limit) : EmptySequence.GetInstance();
         }
 
         public override IntegerValue GetLast()
@@ -116,12 +117,13 @@ namespace OutSmart.DAXon.Expressions
 
         public int GetLength()
         {
-            return (int)((start - limit) + 1);
+            return (int)((start - limit) / step + 1);
         }
 
+        // Saxon 12.9 passed (start, step, limit): an ascending range from the top, so empty, of length 2 - n
         public IAtomicIterator GetReverseIterator()
         {
-            return new AscendingRangeIterator(start, step, limit);
+            return new AscendingRangeIterator(limit, step, start);
         }
         AtomicValue IAtomicIterator.Next() => Next();
         ISequenceIterator IReversibleIterator.GetReverseIterator() => GetReverseIterator();
