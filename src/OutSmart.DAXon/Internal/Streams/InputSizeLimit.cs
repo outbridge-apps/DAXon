@@ -99,6 +99,34 @@ namespace OutSmart.DAXon.Internal.Streams
             return stream;
         }
 
+        // A resource the host passes with its own stream or reader: capped as either would be when passed
+        // directly. A copy carries the wrapper; the host's object is left as it was.
+        public static OutSmart.DAXon.Lib.ResolvedResource Apply(OutSmart.DAXon.Lib.ResolvedResource source, long max, string errorCode)
+        {
+            if (source == null || max == long.MaxValue || (source.Stream == null && source.TextReader == null))
+            {
+                return source;
+            }
+
+            System.IO.Stream stream = Apply(source.Stream, max, source.SystemId, errorCode);
+            System.IO.TextReader reader = Apply(source.TextReader, max, source.SystemId, errorCode);
+            if (ReferenceEquals(stream, source.Stream) && ReferenceEquals(reader, source.TextReader))
+            {
+                return source;
+            }
+
+            return new OutSmart.DAXon.Lib.ResolvedResource
+            {
+                Stream = stream,
+                TextReader = reader,
+                Node = source.Node,
+                SystemId = source.SystemId,
+                ContentType = source.ContentType,
+                PleaseCloseAfterUse = source.PleaseCloseAfterUse,
+                Filters = source.Filters
+            };
+        }
+
         internal static XPathException Oversized(long size, long max, string uri, string errorCode)
         {
             string sizePart = size >= 0 ? " (" + size + " bytes)" : "";

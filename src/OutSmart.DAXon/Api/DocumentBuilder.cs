@@ -106,7 +106,7 @@ namespace OutSmart.DAXon.Api
             OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(config, "Parsing");
             try
             {
-                ITreeInfo doc = config.BuildDocumentTree(source, options);
+                ITreeInfo doc = config.BuildDocumentTree(InputSizeLimit.Apply(source, MaxInput, "FODC0002"), options);
                 return new XdmNode(doc.GetRootNode());
             }
             catch (XPathException e)
@@ -389,7 +389,7 @@ namespace OutSmart.DAXon.Api
             {
                 ParseOptions options = GetParseOptions(source);
                 PipelineConfiguration pipe = config.MakePipelineConfiguration();
-                Sender.Send(source, destination.GetReceiver(pipe, new SerializationProperties()), options);
+                Sender.Send(InputSizeLimit.Apply(source, MaxInput, "FODC0002"), destination.GetReceiver(pipe, new SerializationProperties()), options);
             }
             catch (XPathException e)
             {

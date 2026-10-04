@@ -289,7 +289,7 @@ namespace OutSmart.DAXon.Api
                 }
 
                 compilation.SetLibraryPackage(true);
-                XsltPackage pack = new XsltPackage(this, compilation.CompilePackage(source).GetStylesheetPackage());
+                XsltPackage pack = new XsltPackage(this, compilation.CompilePackage(InputSizeLimit.Apply(source, MaxInput, "FODC0002")).GetStylesheetPackage());
                 int errors = compilation.ErrorCount;
                 if (errors > 0)
                 {
@@ -492,7 +492,7 @@ namespace OutSmart.DAXon.Api
             try
             {
                 CompilerInfo ci2 = new CompilerInfo(compilerInfo);
-                PreparedStylesheet pss = Compilation.CompileSingletonPackage(config, ci2, source);
+                PreparedStylesheet pss = Compilation.CompileSingletonPackage(config, ci2, InputSizeLimit.Apply(source, MaxInput, "FODC0002"));
                 return new XsltExecutable(processor, pss);
             }
             catch (UncheckedXPathException e)

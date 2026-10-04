@@ -261,7 +261,7 @@ namespace OutSmart.DAXon.Api
             {
                 SerializerFactory sf = processor.UnderlyingConfiguration.SerializerFactory;
                 IReceiver tr = sf.GetReceiver(result, new SerializationProperties(LocallyDefinedProperties));
-                Sender.Send(source, tr, processor.UnderlyingConfiguration.GetParseOptions());
+                Sender.Send(InputSizeLimit.Apply(source, InputSizeLimit.MaxFor(processor.UnderlyingConfiguration), "FODC0002"), tr, processor.UnderlyingConfiguration.GetParseOptions());
                 CloseAndNotify();
             }
             catch (XPathException e)
@@ -287,7 +287,7 @@ namespace OutSmart.DAXon.Api
                 SerializerFactory sf = processor.UnderlyingConfiguration.SerializerFactory;
                 StringWriter sw = new StringWriter();
                 IReceiver tr = sf.GetReceiver(new StreamResult((TextWriter)sw), new SerializationProperties(LocallyDefinedProperties));
-                Sender.Send(source, tr, processor.UnderlyingConfiguration.GetParseOptions());
+                Sender.Send(InputSizeLimit.Apply(source, InputSizeLimit.MaxFor(processor.UnderlyingConfiguration), "FODC0002"), tr, processor.UnderlyingConfiguration.GetParseOptions());
                 CloseAndNotify();
                 return sw.ToString();
             }
