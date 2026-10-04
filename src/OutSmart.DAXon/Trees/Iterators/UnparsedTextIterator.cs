@@ -6,6 +6,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using System;
 using System.IO;
+using System.Threading;
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Expressions;
@@ -143,12 +144,14 @@ namespace OutSmart.DAXon.Trees.Iterators
             }
         }
 
+        // The scope's long weak ticket still reaches an iterator that awaits its finalizer, so CloseAll and the
+        // finalizer can close it at once; whoever takes the reader closes it - two Disposes of a StreamReader race.
         public void Dispose()
         {
-            if (reader != null)
+            TextReader r = Interlocked.Exchange(ref reader, null);
+            if (r != null)
             {
-                reader.Dispose();
-                reader = null;
+                r.Dispose();
                 scope?.Untrack(ticket);
             }
 
@@ -157,7 +160,7 @@ namespace OutSmart.DAXon.Trees.Iterators
 
         ~UnparsedTextIterator()
         {
-            reader?.Dispose();
+            Interlocked.Exchange(ref reader, null)?.Dispose();
         }
     }
 }
