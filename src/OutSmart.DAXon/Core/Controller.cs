@@ -319,8 +319,7 @@ namespace OutSmart.DAXon.Core
             if (timeout > TimeSpan.Zero)
             {
                 timeoutSetting = timeout;
-                long ticksFromNow = (long)(timeout.TotalSeconds * System.Diagnostics.Stopwatch.Frequency);
-                deadlineTimestamp = System.Diagnostics.Stopwatch.GetTimestamp() + ticksFromNow;
+                deadlineTimestamp = DeadlineFromNow(timeout);
                 hasDeadline = true;
             }
 
@@ -422,7 +421,7 @@ namespace OutSmart.DAXon.Core
                 TimeSpan timeout = p.TransformTimeout;
                 if (timeout > TimeSpan.Zero)
                 {
-                    token.Arm(System.Diagnostics.Stopwatch.GetTimestamp() + (long)(timeout.TotalSeconds * System.Diagnostics.Stopwatch.Frequency), timeout);
+                    token.Arm(DeadlineFromNow(timeout), timeout);
                 }
 
                 activeOnThread = token;
@@ -438,6 +437,14 @@ namespace OutSmart.DAXon.Core
         internal static void RestoreThreadDeadline(DeadlineToken previous)
         {
             activeOnThread = previous;
+        }
+
+        // Saturates: TimeSpan.MaxValue in Stopwatch ticks overflows a long, and the wrapped deadline
+        // was already past, so every call failed at once. Thousands of years stand in for "never".
+        private static long DeadlineFromNow(TimeSpan timeout)
+        {
+            double ticks = timeout.TotalSeconds * System.Diagnostics.Stopwatch.Frequency;
+            return ticks >= long.MaxValue / 2 ? long.MaxValue : System.Diagnostics.Stopwatch.GetTimestamp() + (long)ticks;
         }
 
         public virtual string BaseOutputURI
