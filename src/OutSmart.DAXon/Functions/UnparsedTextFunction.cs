@@ -178,7 +178,8 @@ namespace OutSmart.DAXon.Functions
         public static string ReadFileToString(TextReader reader)
         {
             StringBuilder sb = new StringBuilder();
-            char[] buffer = new char[8192];
+            // Small first, as most JSON texts are; a read that fills it moves to 8192.
+            char[] buffer = new char[512];
             bool first = true;
             while (true)
             {
@@ -198,6 +199,8 @@ namespace OutSmart.DAXon.Functions
                     break;
                 }
 
+                // A host's reader may trickle, each read slow: the clock costs nothing beside a read.
+                Controller.CheckActiveTimeoutNow();
                 int start = 0;
                 if (first)
                 {
@@ -210,6 +213,10 @@ namespace OutSmart.DAXon.Functions
                 }
 
                 sb.Append(buffer, start, actual - start);
+                if (actual == buffer.Length && buffer.Length < 8192)
+                {
+                    buffer = new char[8192];
+                }
             }
 
             reader.Dispose();
@@ -241,6 +248,8 @@ namespace OutSmart.DAXon.Functions
                 {
                     break;
                 }
+
+                Controller.CheckActiveTimeoutNow();   // as in ReadFileToString: a resolver's reader may trickle
 
                 for (int c = 0; c < actual;)
                 {

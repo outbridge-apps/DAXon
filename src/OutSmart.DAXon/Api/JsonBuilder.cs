@@ -51,16 +51,10 @@ namespace OutSmart.DAXon.Api
             Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Parsing");
             try
             {
-                IXPathContext context = new Controller(config).NewXPathContext();
-                IIntPredicateProxy checker = IntSetPredicate.ALWAYS_TRUE;
-                UnicodeString content = UnparsedTextFunction.ReadFile(checker, jsonReader);
-                Dictionary<string, IGroundedValue> options = new Dictionary<string, IGroundedValue>();
-                options["liberal"] = BooleanValue.Get(liberal);
-                options["escape"] = BooleanValue.TRUE;
-                string json = content.ToString();
-                InputSizeLimit.CheckString(json, InputSizeLimit.MaxFor(config), "urn:json-input", "FODC0002");
-                IItem result = ParseJsonFn.Parse(json, options, context);
-                return XdmValue.Wrap(result);
+                // Capped as it is read: an oversized reader stops at the limit, not after a full read. Read
+                // as json-doc() reads, without the XML character test ParseJson(string) never applied either.
+                TextReader capped = InputSizeLimit.Apply(jsonReader, InputSizeLimit.MaxFor(config), "urn:json-input", "FODC0002");
+                return Parse(UnparsedTextFunction.ReadFileToString(capped));
             }
             catch (XPathException e)
             {
@@ -85,19 +79,30 @@ namespace OutSmart.DAXon.Api
             Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Parsing");
             try
             {
-                IXPathContext context = new Controller(config).NewXPathContext();
-                Dictionary<string, IGroundedValue> options = new Dictionary<string, IGroundedValue>();
-                options["liberal"] = BooleanValue.Get(liberal);
-                options["escape"] = BooleanValue.TRUE;
                 InputSizeLimit.CheckString(json, InputSizeLimit.MaxFor(config), "urn:json-input", "FODC0002");
-                return XdmValue.Wrap(ParseJsonFn.Parse(json, options, context));
+                return Parse(json);
             }
-            catch (XPathException e) { throw new DAXonApiException(e); }
-            catch (RecursionDepthError e) { throw new DAXonApiException(e.ToXPathException()); }
+            catch (XPathException e)
+            {
+                throw new DAXonApiException(e);
+            }
+            catch (RecursionDepthError e)
+            {
+                throw new DAXonApiException(e.ToXPathException());
+            }
             finally
             {
                 Controller.RestoreThreadDeadline(prevDeadline);
             }
+        }
+
+        private XdmValue Parse(string json)
+        {
+            Dictionary<string, IGroundedValue> options = new Dictionary<string, IGroundedValue>();
+            options["liberal"] = BooleanValue.Get(liberal);
+            options["escape"] = BooleanValue.TRUE;
+            // With no fallback or number-parser option the parse reads only the configuration: no Controller.
+            return XdmValue.Wrap(ParseJsonFn.Parse(json, options, new EarlyEvaluationContext(config)));
         }
 
         // Consumer-compat alias: a JSON document is always one item (map/array/atomic).

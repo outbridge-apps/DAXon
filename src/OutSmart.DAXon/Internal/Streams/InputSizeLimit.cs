@@ -205,9 +205,35 @@ namespace OutSmart.DAXon.Internal.Streams
             public override int Read(char[] buffer, int index, int count)
             {
                 int n = inner.Read(buffer, index, count);
-                for (int i = 0; i < n; i++)
+                int i = index;
+                int end = index + n;
+                while (i < end)
                 {
-                    Charge(buffer[index + i]);
+                    // An ASCII run costs a byte a char and is charged at once: char by char it took a third
+                    // of a big JSON read.
+                    int run = i;
+                    if (!pendingHighSurrogate)
+                    {
+                        while (run < end && buffer[run] < 0x80)
+                        {
+                            run++;
+                        }
+                    }
+
+                    if (run == i)
+                    {
+                        Charge(buffer[i++]);
+                        continue;
+                    }
+
+                    if (run - i > max - this.count)
+                    {
+                        this.count = max + 1;   // where the char by char count crossed
+                        Verify();
+                    }
+
+                    this.count += run - i;
+                    i = run;
                 }
 
                 return n;
