@@ -26,8 +26,21 @@ namespace OutSmart.DAXon.Core
         // Engine-base version, NOT this distribution's: tracks the Saxon-HE 12.9 base for the SEF
         // guard, the fn:transform version match, xsl:product-version and the trace header.
         public static string ProductVersion => "12.9";
-        // THIS distribution's own version and release date (the engine base above stays 12.9).
-        public static string DistributionVersion => "1.0";
+        // THIS distribution's own version (the engine base above stays 12.9): the project's <Version>, read
+        // from the informational version it stamps on the assembly, so the two cannot drift apart.
+        public static string DistributionVersion => distributionVersion;
+        private static readonly string distributionVersion = ReadDistributionVersion();
+
+        private static string ReadDistributionVersion()
+        {
+            System.Reflection.Assembly assembly = typeof(Version).Assembly;
+            var stamped = (System.Reflection.AssemblyInformationalVersionAttribute)Attribute.GetCustomAttribute(assembly, typeof(System.Reflection.AssemblyInformationalVersionAttribute));
+            string text = stamped?.InformationalVersion ?? "";
+            int end = text.IndexOfAny(new[] { ' ', '+' });
+            text = end < 0 ? text : text.Substring(0, end);
+            return text.Length > 0 ? text : assembly.GetName().Version.ToString(3);
+        }
+
         public static string SoftwarePlatform => ".NET";
         // xsl:vendor-url. Points at THIS distribution's site (OutSmart), not the Saxon base's.
         public static string WebSiteAddress => "https://outsmartteam.com/";
