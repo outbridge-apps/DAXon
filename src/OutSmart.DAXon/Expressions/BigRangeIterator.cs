@@ -45,9 +45,11 @@ namespace OutSmart.DAXon.Expressions
             descending = step.Sign < 0;
         }
 
+        // The items not read yet. Saxon 12.9 returned SequenceExtent.MakeResidue(this), which asks this
+        // grounded iterator for its residue again: a stack overflow (no caller reaches it today).
         public override IGroundedValue GetResidue()
         {
-            return SequenceExtent.MakeResidue(this);
+            return Ground(currentValue + step);
         }
 
         public override IntegerValue GetLast()
@@ -125,8 +127,13 @@ namespace OutSmart.DAXon.Expressions
         // range crashed. IntegerRange is long-only, so build a SequenceExtent (GetLength already caps at 2^31).
         public override IGroundedValue Materialize()
         {
+            return Ground(start);
+        }
+
+        private IGroundedValue Ground(BigInteger from)
+        {
             List<IItem> list = new List<IItem>();
-            BigInteger v = start;
+            BigInteger v = from;
             while (Test(v))
             {
                 // Same per-item check as Next(): grounding is the one path that walks the whole

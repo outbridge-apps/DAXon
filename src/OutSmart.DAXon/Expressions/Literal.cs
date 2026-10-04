@@ -54,12 +54,13 @@ namespace OutSmart.DAXon.Expressions
                     (IntegerValue)value
                     };
                 }
-                else if (value is IntegerRange)
+                else if (value is IntegerRange range)
                 {
+                    // lowest first: a range that counts down starts at its highest
                     return new IntegerValue[]
                     {
-                    Int64Value.MakeIntegerValue(((IntegerRange)value).Start),
-                    Int64Value.MakeIntegerValue(((IntegerRange)value).End)
+                    Int64Value.MakeIntegerValue(Math.Min(range.Start, range.End)),
+                    Int64Value.MakeIntegerValue(Math.Max(range.Start, range.End))
                     };
                 }
                 else

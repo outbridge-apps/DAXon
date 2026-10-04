@@ -207,8 +207,9 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
 
 
-            // Rewrite (1 to 1000) ! (. + $N) as ($N to 1000 + $N)
-            if (Select is Literal && ((Literal)Select).GroundedValue is IntegerRange && IsSimpleArithmeticShift(GetAction()) && SeparatorExpression == null)
+            // Rewrite (1 to 1000) ! (. + $N) as ($N to 1000 + $N); only for step 1: a range counting down
+            // (a materialized reverse()) would become start + $N to end + $N, which is empty
+            if (Select is Literal && ((Literal)Select).GroundedValue is IntegerRange && ((IntegerRange)((Literal)Select).GroundedValue).GetStep() == 1 && IsSimpleArithmeticShift(GetAction()) && SeparatorExpression == null)
             {
                 ArithmeticExpression arith = (ArithmeticExpression)GetAction();
                 IntegerRange range = (IntegerRange)((Literal)Select).GroundedValue;
