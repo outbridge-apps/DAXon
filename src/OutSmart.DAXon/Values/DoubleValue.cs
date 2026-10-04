@@ -75,7 +75,7 @@ namespace OutSmart.DAXon.Values
 
         public override long LongValue()
         {
-            return (long)value;
+            return JavaMath.ToLong(value);
         }
 
         public override int GetHashCode()

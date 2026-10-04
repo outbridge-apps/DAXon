@@ -104,7 +104,8 @@ namespace OutSmart.DAXon.Values
                 return err;
             }
 
-            if (value > long.MaxValue || value < long.MinValue)
+            // 2^63 itself is out of range (see Converter.DoubleToIntegerValue)
+            if (value >= 9223372036854775808.0d || value < -9223372036854775808.0d)
             {
                 if (value == Math.Floor(value))
                 {

@@ -66,7 +66,8 @@ namespace OutSmart.DAXon.Types
         // truncates the fractional part toward zero, matching the cast-to-integer rule (Saxon: DoubleValue).
         internal static OutSmart.DAXon.Values.IntegerValue DoubleToIntegerValue(double d)
         {
-            if (d > long.MaxValue || d < long.MinValue)
+            // 2^63 itself is out of range: long.MaxValue as a double is 2^63, so '>' let it through to the cast.
+            if (d >= 9223372036854775808.0d || d < -9223372036854775808.0d)
                 return new OutSmart.DAXon.Values.BigIntegerValue(new OutSmart.DAXon.Internal.Numerics.BigDecimal(d).ToBigInteger());
             return new Int64Value((long)d);
         }

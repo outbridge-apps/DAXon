@@ -82,7 +82,7 @@ namespace OutSmart.DAXon.Values
 
         public override long LongValue()
         {
-            return (long)value;
+            return JavaMath.ToLong(value);
         }
 
         public override int GetHashCode()
@@ -210,7 +210,7 @@ namespace OutSmart.DAXon.Values
         //    }
         public override int AsSubscript()
         {
-            if (IsWholeNumber() && value > 0 && value <= int.MaxValue)
+            if (IsWholeNumber() && value > 0 && value < 2147483648f)   // int.MaxValue as a float is 2^31, one past the range
             {
                 return (int)value;
             }

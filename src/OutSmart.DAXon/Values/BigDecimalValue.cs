@@ -426,7 +426,7 @@ namespace OutSmart.DAXon.Values
 
         public override long LongValue()
         {
-            return (long)value.DoubleValue();
+            return JavaMath.ToLong(value.DoubleValue());
         }
 
         public override BigDecimal GetDecimalValue()

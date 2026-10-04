@@ -113,7 +113,7 @@ namespace OutSmart.DAXon.Api
                 else if (av is StringValue)
                 {
                     StringToDouble converter = StringToDouble.GetInstance();
-                    return (long)converter.StringToNumber(av.UnicodeStringValue.Tidy());
+                    return JavaMath.ToLong(converter.StringToNumber(av.UnicodeStringValue.Tidy()));
                 }
                 else
                 {

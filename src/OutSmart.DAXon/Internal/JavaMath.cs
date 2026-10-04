@@ -55,6 +55,25 @@ namespace OutSmart.DAXon.Internal
             return (long)f;
         }
 
+        // Java's (long) cast of a double: toward zero, saturating, NaN -> 0. The C# cast of an out-of-range
+        // double depends on the runtime (long.MinValue on .NET Framework and .NET 8, saturated since .NET 9).
+        public static long ToLong(double a)
+        {
+            if (double.IsNaN(a))
+            {
+                return 0L;
+            }
+            if (a >= 9223372036854775808.0d)   // >= 2^63 (incl. +Infinity)
+            {
+                return long.MaxValue;
+            }
+            if (a <= -9223372036854775808.0d)  // <= -2^63 (incl. -Infinity)
+            {
+                return long.MinValue;
+            }
+            return (long)a;
+        }
+
         // Java Math.round(float) -> int, same floor/diff form (JDK 7+ fixed the +0.5f
         // addition defect for float too: round(0.49999997f) == 0).
         public static int Round(float a)
