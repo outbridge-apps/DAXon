@@ -284,7 +284,8 @@ namespace OutSmart.DAXon.Functions
 
                     if (ch32 < 0x20)
                     {
-                        if (ch32 != 0x9 && ch32 != 0xA && ch32 != 0xD)
+                        // The checker decides the rest: XML 1.1 allows #x1-#x1F
+                        if (ch32 != 0x9 && ch32 != 0xA && ch32 != 0xD && !checker.Test(ch32))
                         {
                             throw new XPathException("The text file contains a character that is illegal in XML (line=" + line + " column=" + column + " value=hex " + (ch32).ToString("x") + ')').WithErrorCode("FOUT1190");
                         }
