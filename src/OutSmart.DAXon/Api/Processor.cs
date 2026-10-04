@@ -543,7 +543,14 @@ namespace OutSmart.DAXon.Api
                     }
                     catch (DAXonApiException e)
                     {
-                        throw new XPathException(e?.Message);
+                        // The host's error as it built it, its code for xsl:try included; otherwise with the host's
+                        // exception as the cause (Java: new XPathException(e)), not its message alone.
+                        if (e.InnerException is XPathException xe)
+                        {
+                            throw xe;
+                        }
+
+                        throw new XPathException(e.Message, e);
                     }
                 }
             }
