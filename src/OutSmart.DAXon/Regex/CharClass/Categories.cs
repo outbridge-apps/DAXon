@@ -47,7 +47,16 @@ namespace OutSmart.DAXon.Regex.CharClass
         private readonly Dictionary<string, Category> CATEGORIES = new Dictionary<string, Category>(30);
         private Categories()
         {
-            Build();
+            // Runs inside a type initializer: see Controller.SuspendThreadDeadline
+            Controller.DeadlineToken outer = Controller.SuspendThreadDeadline();
+            try
+            {
+                Build();
+            }
+            finally
+            {
+                Controller.RestoreThreadDeadline(outer);
+            }
         }
 
         private static Categories GetInstance()

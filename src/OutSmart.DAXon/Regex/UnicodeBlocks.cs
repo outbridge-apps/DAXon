@@ -31,7 +31,16 @@ namespace OutSmart.DAXon.Regex
         private readonly Dictionary<string, IntSet> blocks = new Dictionary<string, IntSet>(250);
         private UnicodeBlocks()
         {
-            Build();
+            // Runs inside a type initializer: see Controller.SuspendThreadDeadline
+            Controller.DeadlineToken outer = Controller.SuspendThreadDeadline();
+            try
+            {
+                Build();
+            }
+            finally
+            {
+                Controller.RestoreThreadDeadline(outer);
+            }
         }
 
         private static UnicodeBlocks GetInstance()

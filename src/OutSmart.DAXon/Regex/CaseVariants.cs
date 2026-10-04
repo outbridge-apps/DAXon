@@ -43,7 +43,16 @@ namespace OutSmart.DAXon.Regex
         private readonly IntHashMap<int[]> polyVariants = new IntHashMap<int[]>(100);
         private CaseVariants()
         {
-            Build();
+            // Runs inside a type initializer: see Controller.SuspendThreadDeadline
+            Controller.DeadlineToken outer = Controller.SuspendThreadDeadline();
+            try
+            {
+                Build();
+            }
+            finally
+            {
+                Controller.RestoreThreadDeadline(outer);
+            }
         }
 
         private static CaseVariants GetInstance()

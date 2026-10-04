@@ -439,6 +439,19 @@ namespace OutSmart.DAXon.Core
             activeOnThread = previous;
         }
 
+        /// <summary>
+        /// Release the thread from its deadline for one-time initialization (the regex tables a type
+        /// initializer loads). The runtime caches a type initializer's exception for the life of the
+        /// process, so a limit firing there broke regex and format-date for every later Processor.
+        /// Returns the previous owner, which the caller MUST restore (try/finally).
+        /// </summary>
+        internal static DeadlineToken SuspendThreadDeadline()
+        {
+            DeadlineToken previous = activeOnThread;
+            activeOnThread = null;
+            return previous;
+        }
+
         // Saturates: TimeSpan.MaxValue in Stopwatch ticks overflows a long, and the wrapped deadline
         // was already past, so every call failed at once. Thousands of years stand in for "never".
         private static long DeadlineFromNow(TimeSpan timeout)
