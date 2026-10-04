@@ -13,6 +13,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -74,14 +75,14 @@ namespace OutSmart.DAXon.Events
 
         public override void EndDocument()
         {
-            Trace("Σ ::= " + (checksum).ToString("x"));
+            Trace("Σ ::= " + (checksum).ToString("x", CultureInfo.InvariantCulture));
             nextReceiver.EndDocument();
         }
 
         public override void Append(IItem item, ILocation locationId, int copyNamespaces)
         {
             checksum ^= Hash(item.ToString(), sequence++);
-            Trace("After append: " + (checksum).ToString("x"));
+            Trace("After append: " + (checksum).ToString("x", CultureInfo.InvariantCulture));
             base.Append(item, locationId, copyNamespaces);
         }
 
@@ -93,7 +94,7 @@ namespace OutSmart.DAXon.Events
             if (!Whitespace.IsAllWhite(chars))
             {
                 checksum ^= Hash(chars.ToString(), sequence++);
-                Trace("After characters " + chars + ": " + (checksum).ToString("x"));
+                Trace("After characters " + chars + ": " + (checksum).ToString("x", CultureInfo.InvariantCulture));
             }
 
             base.Characters(chars, locationId, properties);
@@ -130,14 +131,14 @@ namespace OutSmart.DAXon.Events
 
                     try
                     {
-                        int majorVersion = int.Parse(version);
+                        int majorVersion = int.Parse(version, CultureInfo.InvariantCulture);
                         if (majorVersion > 12)
                         {
                             requireDigest = true;
                         }
                         else if (majorVersion == 12)
                         {
-                            requireDigest = int.Parse(minorVersion) >= 5;
+                            requireDigest = int.Parse(minorVersion, CultureInfo.InvariantCulture) >= 5;
                         }
                     }
                     catch (FormatException e)

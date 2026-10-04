@@ -11,6 +11,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -41,7 +42,7 @@ namespace OutSmart.DAXon.Functions
                 long next = nextInt.LongValue();
                 if (next < 0 || next > int.MaxValue || !checker.Test((int)next))
                 {
-                    throw new XPathException("codepoints-to-string(): invalid XML character [x" + ((int)next).ToString("x") + ']', "FOCH0001");
+                    throw new XPathException("codepoints-to-string(): invalid XML character [x" + ((int)next).ToString("x", CultureInfo.InvariantCulture) + ']', "FOCH0001");
                 }
 
                 sb.Append((int)next);

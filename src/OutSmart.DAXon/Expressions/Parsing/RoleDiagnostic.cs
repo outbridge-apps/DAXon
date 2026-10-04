@@ -11,6 +11,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -241,9 +242,9 @@ namespace OutSmart.DAXon.Expressions.Parsing
         public static RoleDiagnostic Reconstruct(string @in)
         {
             int v = @in.IndexOf('|');
-            int kind = int.Parse(@in.Substring(0, v));
+            int kind = int.Parse(@in.Substring(0, v), CultureInfo.InvariantCulture);
             int w = @in.IndexOf('|', v + 1);
-            int operand = int.Parse(@in.Substring(v + 1, w - v - 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/);
+            int operand = int.Parse(@in.Substring(v + 1, w - v - 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/, CultureInfo.InvariantCulture);
             int x = @in.IndexOf('|', w + 1);
             string errorCode = @in.Substring(w + 1, x - w - 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
             string operation = @in.Substring(x + 1);

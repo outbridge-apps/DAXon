@@ -12,6 +12,7 @@ using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Trees.Utilities;
 using OutSmart.DAXon.Types;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -572,7 +573,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         {
             if (value < 0)
             {
-                buffer.Append(value);   // never happens for document/node numbers; keep the old path
+                buffer.Append(value.ToString(CultureInfo.InvariantCulture));   // never happens for document/node numbers; keep the old path
                 return;
             }
 

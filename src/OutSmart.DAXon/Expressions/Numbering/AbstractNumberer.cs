@@ -8,6 +8,7 @@ using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -165,23 +166,23 @@ namespace OutSmart.DAXon.Expressions.Numbering
             int[] digits = westernDigits;
             if (letterValue != null && letterValue.StartsWith("x", StringComparison.Ordinal))
             {
-                int radix = int.Parse(letterValue.Substring(1));
+                int radix = int.Parse(letterValue.Substring(1), CultureInfo.InvariantCulture);
                 digits = ArrayTools.CopyOf(lowerCaseAlphabet, radix);
             }
             else if (letterValue != null && letterValue.StartsWith("X", StringComparison.Ordinal))
             {
-                int radix = int.Parse(letterValue.Substring(1));
+                int radix = int.Parse(letterValue.Substring(1), CultureInfo.InvariantCulture);
                 digits = ArrayTools.CopyOf(upperCaseAlphabet, radix);
             }
 
             if (number < 0)
             {
-                return "" + number;
+                return number.ToString(CultureInfo.InvariantCulture);
             }
 
             if (picture == null || picture.Length() == 0)
             {
-                return "" + number;
+                return number.ToString(CultureInfo.InvariantCulture);
             }
 
             int pictureLength = picture.Length32();
@@ -302,7 +303,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
 
                     if (number > 50)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     return "" + (char)(0x2460 + number - 1);
@@ -311,7 +312,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                     // parenthesized digits
                     if (number == 0 || number > 20)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     return "" + (char)(0x2474 + number - 1);
@@ -325,7 +326,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
 
                     if (number > 20)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     return "" + (char)(0x2488 + number - 1);
@@ -344,7 +345,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
 
                     if (number > 20)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     return "" + (char)(0x2776 + number - 1);
@@ -358,7 +359,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
 
                     if (number > 10)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     return "" + (char)(0x2780 + number - 1);
@@ -367,7 +368,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                     // double circled digits
                     if (number == 0 || number > 10)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     return "" + (char)(0x24F5 + number - 1);
@@ -381,7 +382,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
 
                     if (number > 10)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     return "" + (char)(0x278A + number - 1);
@@ -390,7 +391,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                     // parenthesized ideograph
                     if (number == 0 || number > 10)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     return "" + (char)(0x3220 + number - 1);
@@ -399,7 +400,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                     // circled ideograph
                     if (number == 0 || number > 10)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     return "" + (char)(0x3280 + number - 1);
@@ -408,7 +409,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                     // aegean number
                     if (number == 0 || number > 10)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     fsb.AppendCodePoint(65799 + (int)number - 1);
@@ -418,7 +419,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                     // rumi digit
                     if (number == 0 || number > 10)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     fsb.AppendCodePoint(69216 + (int)number - 1);
@@ -428,7 +429,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                     // brahmi digit
                     if (number == 0 || number > 10)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     fsb.AppendCodePoint(69714 + (int)number - 1);
@@ -438,7 +439,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                     // counting rod unit digit
                     if (number == 0 || number >= 10)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     fsb.AppendCodePoint(119648 + (int)number - 1);
@@ -454,7 +455,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
 
                     if (number >= 10)
                     {
-                        return "" + number;
+                        return number.ToString(CultureInfo.InvariantCulture);
                     }
 
                     fsb.AppendCodePoint(127234 + (int)number - 1);
@@ -588,7 +589,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
         {
             if (number <= 0)
             {
-                return "" + number;
+                return number.ToString(CultureInfo.InvariantCulture);
             }
 
             int range = max - min + 1;
@@ -617,7 +618,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
         {
             if (number <= 0)
             {
-                return "" + number;
+                return number.ToString(CultureInfo.InvariantCulture);
             }
 
             // Iterative, for the same stack-overflow reason as ToAlpha: a one-character alphabet
@@ -695,7 +696,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
         {
             if (n <= 0 || n > 9999)
             {
-                return "" + n;
+                return n.ToString(CultureInfo.InvariantCulture);
             }
 
             return romanThousands[(int)n / 1000] + romanHundreds[((int)n / 100) % 10] + romanTens[((int)n / 10) % 10] + romanUnits[(int)n % 10];
@@ -714,7 +715,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
             }
             else
             {
-                fsb.Append("" + number);
+                fsb.Append(number.ToString(CultureInfo.InvariantCulture));
             }
 
             return fsb.ToString();

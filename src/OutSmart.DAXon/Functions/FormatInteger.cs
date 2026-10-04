@@ -179,7 +179,7 @@ namespace OutSmart.DAXon.Functions
             if (allow40 && pic.MatchesRegex("^([2-9]|[12][0-9]|3[0-6])\\^.*[xX].*$"))
             {
                 int hat = pic.IndexOf('^');
-                radix = int.Parse(pic.Substring(0, hat));
+                radix = int.Parse(pic.Substring(0, hat), CultureInfo.InvariantCulture);
                 hasExplicitRadix = true;
                 pic = pic.Substring(hat + 1);
             }

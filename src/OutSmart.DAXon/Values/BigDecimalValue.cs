@@ -13,6 +13,7 @@ using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Internal.Numerics;
 using OutSmart.DAXon.Internal.Regex;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -544,7 +545,7 @@ namespace OutSmart.DAXon.Values
             }
             else if (scale < 0)
             {
-                string s = value.Abs().UnscaledValue().ToString();
+                string s = value.Abs().UnscaledValue().ToString(CultureInfo.InvariantCulture);
                 if (s.Equals("0"))
                 {
                     fsb.Append('0');
@@ -568,7 +569,7 @@ namespace OutSmart.DAXon.Values
             }
             else
             {
-                string s = value.Abs().UnscaledValue().ToString();
+                string s = value.Abs().UnscaledValue().ToString(CultureInfo.InvariantCulture);
                 if (s.Equals("0"))
                 {
                     fsb.Append('0');

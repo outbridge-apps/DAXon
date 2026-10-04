@@ -5,6 +5,7 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using System;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using OutSmart.DAXon.Core;
@@ -139,7 +140,7 @@ namespace OutSmart.DAXon.Trees.Iterators
                 if (!checker.Test(ch32))
                 {
                     Dispose();
-                    throw new XPathException("The unparsed-text file contains a character that is illegal in XML (line=" + position + " column=" + (c + 1) + " value=hex " + (ch32).ToString("x") + ')').WithErrorCode("FOUT1190");
+                    throw new XPathException("The unparsed-text file contains a character that is illegal in XML (line=" + position + " column=" + (c + 1) + " value=hex " + (ch32).ToString("x", CultureInfo.InvariantCulture) + ')').WithErrorCode("FOUT1190");
                 }
             }
         }

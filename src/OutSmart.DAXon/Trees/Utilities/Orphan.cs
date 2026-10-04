@@ -13,6 +13,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Values;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -330,7 +331,7 @@ namespace OutSmart.DAXon.Trees.Utilities
         public void GenerateId(StringBuilder buffer)
         {
             buffer.Append('Q');
-            buffer.Append(GetHashCode());
+            buffer.Append(GetHashCode().ToString(CultureInfo.InvariantCulture));
         }
 
         public NamespaceBinding[] GetDeclaredNamespaces(NamespaceBinding[] buffer)

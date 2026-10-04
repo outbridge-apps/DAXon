@@ -17,6 +17,7 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -120,7 +121,7 @@ namespace OutSmart.DAXon.Serialization
                         string prev = map.Put(code, str);
                         if (prev != null)
                         {
-                            throw new XPathException("In the serialization parameters, the character map contains two entries for the character \\u" + (65536 + code).ToString("x").Substring(1), "SEPM0018");
+                            throw new XPathException("In the serialization parameters, the character map contains two entries for the character \\u" + (65536 + code).ToString("x", CultureInfo.InvariantCulture).Substring(1), "SEPM0018");
                         }
                     }
 

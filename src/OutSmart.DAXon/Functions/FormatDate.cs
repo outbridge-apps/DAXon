@@ -712,8 +712,8 @@ namespace OutSmart.DAXon.Functions
             if (!digitsOrOptionalDigitsPattern.Matches(primary))
             {
                 UnicodeString reverseFormat = Reverse(format);
-                UnicodeString reverseValue = Reverse(BMPString.Of("" + value));
-                UnicodeString reverseResult = FormatNumber(STR_s, int.Parse(reverseValue.ToString()), reverseFormat, false, numberer, context);
+                UnicodeString reverseValue = Reverse(BMPString.Of(value.ToString(CultureInfo.InvariantCulture)));
+                UnicodeString reverseResult = FormatNumber(STR_s, int.Parse(reverseValue.ToString(), CultureInfo.InvariantCulture), reverseFormat, false, numberer, context);
                 UnicodeString correctedResult = Reverse(reverseResult);
                 if (correctedResult.Length() > max)
                 {
@@ -775,7 +775,7 @@ namespace OutSmart.DAXon.Functions
                     digits[z] = zeroDigit + z;
                 }
 
-                long n = long.Parse(str.ToString());
+                long n = long.Parse(str.ToString(), CultureInfo.InvariantCulture);
                 int requiredLength = str.Length32();
                 str = StringView.Tidy(AbstractNumberer.ConvertDigitSystem(n, digits, requiredLength));
             }
@@ -887,7 +887,7 @@ namespace OutSmart.DAXon.Functions
                         }
                         else
                         {
-                            min = int.Parse(smin.ToString());
+                            min = int.Parse(smin.ToString(), CultureInfo.InvariantCulture);
                         }
 
                         UnicodeString smax = widthIter.GetRegexGroup(3);
@@ -897,7 +897,7 @@ namespace OutSmart.DAXon.Functions
                         }
                         else
                         {
-                            max = int.Parse(smax.ToString());
+                            max = int.Parse(smax.ToString(), CultureInfo.InvariantCulture);
                         }
 
                         if (min < 1)

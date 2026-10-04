@@ -15,6 +15,7 @@ using OutSmart.DAXon.Trees.Utilities;
 using OutSmart.DAXon.Trees.Wrappers;
 using OutSmart.DAXon.Values;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -309,7 +310,7 @@ namespace OutSmart.DAXon.Trees.Linked
             {
                 PhysicalRoot.GenerateId(buffer);
                 buffer.Append(NODE_LETTER[GetNodeKind()]);
-                buffer.Append(seq + "h" + GetHashCode());
+                buffer.Append(seq.ToString(CultureInfo.InvariantCulture)).Append('h').Append(GetHashCode().ToString(CultureInfo.InvariantCulture));
             }
             else
             {

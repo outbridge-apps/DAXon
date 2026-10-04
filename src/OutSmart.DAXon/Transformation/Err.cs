@@ -15,6 +15,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -84,7 +85,7 @@ namespace OutSmart.DAXon.Transformation
                         if (c < 32)
                         {
                             sb.Append("\\x");
-                            sb.Append((c).ToString("x"));
+                            sb.Append((c).ToString("x", CultureInfo.InvariantCulture));
                         }
                         else
                         {
@@ -233,7 +234,7 @@ namespace OutSmart.DAXon.Transformation
 
         public static string DepictCodepoint(int cp)
         {
-            string hexCode = "#x" + (cp).ToString("x");
+            string hexCode = "#x" + (cp).ToString("x", CultureInfo.InvariantCulture);
             if (cp >= 20 && cp < UTF16CharacterSet.SURROGATE1_MIN)
             {
                 return "'" + (char)cp + "'(" + hexCode + ")";

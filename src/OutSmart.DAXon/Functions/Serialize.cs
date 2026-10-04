@@ -6,6 +6,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal.Collections;
@@ -50,7 +51,7 @@ namespace OutSmart.DAXon.Functions
                 if (prev != null)
                 {
                     throw new XPathException("In the serialization parameters, the character map contains two entries for the character \\u" +
-                        (65536 + code).ToString("x").Substring(1), "SEPM0018");
+                        (65536 + code).ToString("x", CultureInfo.InvariantCulture).Substring(1), "SEPM0018");
                 }
             }
             StructuredQName name = new StructuredQName("output", NamespaceUri.OUTPUT, "serialization-parameters");

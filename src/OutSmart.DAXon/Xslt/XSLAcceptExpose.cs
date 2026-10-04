@@ -10,6 +10,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -158,7 +159,7 @@ namespace OutSmart.DAXon.Xslt
                         int arity = 0;
                         try
                         {
-                            arity = int.Parse(tok.Substring(hash + 1));
+                            arity = int.Parse(tok.Substring(hash + 1), CultureInfo.InvariantCulture);
                         }
                         catch (FormatException err)
                         {

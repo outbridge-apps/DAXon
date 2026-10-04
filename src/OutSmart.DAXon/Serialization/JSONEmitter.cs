@@ -13,6 +13,7 @@ using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -73,7 +74,7 @@ namespace OutSmart.DAXon.Serialization
                 {
                     try
                     {
-                        maxLineLength = int.Parse(max);
+                        maxLineLength = int.Parse(max, CultureInfo.InvariantCulture);
                     }
                     catch (FormatException err)
                     {
@@ -85,7 +86,7 @@ namespace OutSmart.DAXon.Serialization
                 {
                     try
                     {
-                        indentSpaces = int.Parse(spaces);
+                        indentSpaces = int.Parse(spaces, CultureInfo.InvariantCulture);
                     }
                     catch (FormatException err)
                     {

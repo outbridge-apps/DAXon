@@ -14,6 +14,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal.Regex;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -93,7 +94,7 @@ namespace OutSmart.DAXon.Serialization
                 int badchar = TestCharacters(chars);
                 if (badchar != 0)
                 {
-                    throw new XPathException("Output character not available in this encoding (x" + (badchar).ToString("x") + ")", "SERE0008");
+                    throw new XPathException("Output character not available in this encoding (x" + (badchar).ToString("x", CultureInfo.InvariantCulture) + ")", "SERE0008");
                 }
             }
 

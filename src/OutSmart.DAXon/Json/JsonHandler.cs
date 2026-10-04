@@ -14,6 +14,7 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -178,7 +179,7 @@ namespace OutSmart.DAXon.Json
             for (int j = 0; j < count; j++)
             {
                 escaped.Append("\\u");
-                StringBuilder hex = new StringBuilder(((int)(buffer[offset + j])).ToString("x"));
+                StringBuilder hex = new StringBuilder(((int)(buffer[offset + j])).ToString("x", CultureInfo.InvariantCulture));
                 while (hex.Length < 4)
                 {
                     hex.Insert(0, "0");

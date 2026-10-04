@@ -30,6 +30,7 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Net;
 using OutSmart.DAXon.Internal.Caching;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -2715,7 +2716,7 @@ namespace OutSmart.DAXon.Core
             {
                 try
                 {
-                    return int.Parse((string)value);
+                    return int.Parse((string)value, CultureInfo.InvariantCulture);
                 }
                 catch (FormatException nfe)
                 {

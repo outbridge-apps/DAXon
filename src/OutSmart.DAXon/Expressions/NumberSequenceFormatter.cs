@@ -18,6 +18,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Internal.Numerics;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -210,7 +211,7 @@ namespace OutSmart.DAXon.Expressions
             {
                 try
                 {
-                    int n = int.Parse(tok);
+                    int n = int.Parse(tok, CultureInfo.InvariantCulture);
                     list.Add(n);
                 }
                 catch (FormatException err)
@@ -422,7 +423,7 @@ namespace OutSmart.DAXon.Expressions
                         string g = groupSizeEvaluator.Eval(context);
                         try
                         {
-                            gpsize = int.Parse(g);
+                            gpsize = int.Parse(g, CultureInfo.InvariantCulture);
                         }
                         catch (FormatException err)
                         {

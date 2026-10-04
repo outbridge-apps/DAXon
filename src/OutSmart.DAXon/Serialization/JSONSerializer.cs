@@ -16,6 +16,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -80,7 +81,7 @@ namespace OutSmart.DAXon.Serialization
             {
                 try
                 {
-                    maxLineLength = int.Parse(max);
+                    maxLineLength = int.Parse(max, CultureInfo.InvariantCulture);
                 }
                 catch (FormatException err)
                 {

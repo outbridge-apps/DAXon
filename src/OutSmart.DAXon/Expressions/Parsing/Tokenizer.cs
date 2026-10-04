@@ -9,6 +9,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -1151,7 +1152,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     default:
                         if (c < 0x80 && !char.IsLetter(c))
                         {
-                            throw new XPathException("Invalid character '" + c + "' (x" + ((int)c).ToString("x") + ") in expression");
+                            throw new XPathException("Invalid character '" + c + "' (x" + ((int)c).ToString("x", CultureInfo.InvariantCulture) + ") in expression");
                         }
 
                         goto case '_';

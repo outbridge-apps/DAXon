@@ -13,6 +13,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal.Numerics;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -32,7 +33,7 @@ namespace OutSmart.DAXon.Values
         public static readonly BigInteger MAX_UNSIGNED_LONG = BigIntegers.FromString("18446744073709551615");
         private readonly BigInteger value;
 
-        public override UnicodeString PrimitiveStringValue => BMPString.Of(value.ToString());
+        public override UnicodeString PrimitiveStringValue => BMPString.Of(value.ToString(CultureInfo.InvariantCulture));
         public BigIntegerValue(BigInteger value) : base(BuiltInAtomicType.INTEGER)
         {
             this.value = value;

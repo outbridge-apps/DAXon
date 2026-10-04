@@ -16,6 +16,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -460,7 +461,7 @@ namespace OutSmart.DAXon.Tracing
                 if (receiver is CheckSumFilter)
                 {
                     int c = ((CheckSumFilter)receiver).Checksum;
-                    cco.ProcessingInstruction(CheckSumFilter.SIGMA, BMPString.Of(((int)(c)).ToString("x")), Loc.NONE, ReceiverOption.NONE);
+                    cco.ProcessingInstruction(CheckSumFilter.SIGMA, BMPString.Of(((int)(c)).ToString("x", CultureInfo.InvariantCulture)), Loc.NONE, ReceiverOption.NONE);
                     string digest = ((CheckSumFilter)receiver).Digest;
                     cco.ProcessingInstruction(CheckSumFilter.SIGMA2, BMPString.Of(digest), Loc.NONE, ReceiverOption.NONE);
                 }
@@ -525,7 +526,7 @@ namespace OutSmart.DAXon.Tracing
                         if (c < 32 || (c > 127 && c < 160) || c > UTF16CharacterSet.SURROGATE1_MIN)
                         {
                             @out.Append("\\u");
-                            StringBuilder hex = new StringBuilder(((int)(c)).ToString("x").ToUpperInvariant());
+                            StringBuilder hex = new StringBuilder(((int)(c)).ToString("x", CultureInfo.InvariantCulture).ToUpperInvariant());
                             while (hex.Length < 4)
                             {
                                 hex.Insert(0, "0");

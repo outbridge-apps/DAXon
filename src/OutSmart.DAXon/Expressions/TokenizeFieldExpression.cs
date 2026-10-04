@@ -4,6 +4,7 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+using System.Globalization;
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Functions;
@@ -88,8 +89,8 @@ namespace OutSmart.DAXon.Expressions
         public override void Export(ExpressionPresenter destination)
         {
             destination.StartElement("tokenizeField", this);
-            destination.EmitAttribute("sep", separator.ToString());
-            destination.EmitAttribute("field", field.ToString());
+            destination.EmitAttribute("sep", separator.ToString(CultureInfo.InvariantCulture));
+            destination.EmitAttribute("field", field.ToString(CultureInfo.InvariantCulture));
             BaseExpression.Export(destination);
             destination.EndElement();
         }

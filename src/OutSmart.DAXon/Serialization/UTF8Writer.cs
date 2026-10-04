@@ -8,6 +8,7 @@ using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -1202,7 +1203,7 @@ namespace OutSmart.DAXon.Serialization
             // Ok, then, is the second part valid?
             if (secondPart < SURR2_FIRST || secondPart > SURR2_LAST)
             {
-                throw new IOException("Broken surrogate pair: first char 0x" + (firstPart).ToString("x") + ", second 0x" + (secondPart).ToString("x") + "; illegal combination");
+                throw new IOException("Broken surrogate pair: first char 0x" + (firstPart).ToString("x", CultureInfo.InvariantCulture) + ", second 0x" + (secondPart).ToString("x", CultureInfo.InvariantCulture) + "; illegal combination");
             }
 
             return 0x10000 + ((firstPart - SURR1_FIRST) << 10) + (secondPart - SURR2_FIRST);
@@ -1251,7 +1252,7 @@ namespace OutSmart.DAXon.Serialization
             {
 
                 // over max?
-                throw new IOException("Illegal character point (0x" + (code).ToString("x") + ") to output; max is 0x10FFFF as per RFC 3629");
+                throw new IOException("Illegal character point (0x" + (code).ToString("x", CultureInfo.InvariantCulture) + ") to output; max is 0x10FFFF as per RFC 3629");
             }
 
             if (code >= SURR1_FIRST)
@@ -1260,15 +1261,15 @@ namespace OutSmart.DAXon.Serialization
                 {
 
                     // Unmatched first part (closing without second part?)
-                    throw new IOException("Unmatched first part of surrogate pair (0x" + (code).ToString("x") + ")");
+                    throw new IOException("Unmatched first part of surrogate pair (0x" + (code).ToString("x", CultureInfo.InvariantCulture) + ")");
                 }
 
-                throw new IOException("Unmatched second part of surrogate pair (0x" + (code).ToString("x") + ")");
+                throw new IOException("Unmatched second part of surrogate pair (0x" + (code).ToString("x", CultureInfo.InvariantCulture) + ")");
             }
 
 
             // should we ever get this?
-            throw new IOException("Illegal character point (0x" + (code).ToString("x") + ") to output");
+            throw new IOException("Illegal character point (0x" + (code).ToString("x", CultureInfo.InvariantCulture) + ") to output");
         }
     }
 }

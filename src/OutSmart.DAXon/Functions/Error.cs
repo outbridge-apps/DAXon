@@ -13,6 +13,7 @@ using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -73,7 +74,7 @@ namespace OutSmart.DAXon.Functions
                             int line;
                             try
                             {
-                                line = lineVal == null ? -1 : int.Parse(lineVal);
+                                line = lineVal == null ? -1 : int.Parse(lineVal, CultureInfo.InvariantCulture);
                             }
                             catch (FormatException ex)
                             {
@@ -84,7 +85,7 @@ namespace OutSmart.DAXon.Functions
                             int col;
                             try
                             {
-                                col = columnVal == null ? -1 : int.Parse(columnVal);
+                                col = columnVal == null ? -1 : int.Parse(columnVal, CultureInfo.InvariantCulture);
                             }
                             catch (FormatException ex)
                             {

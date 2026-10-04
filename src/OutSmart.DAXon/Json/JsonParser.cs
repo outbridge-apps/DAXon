@@ -13,6 +13,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -459,7 +460,7 @@ namespace OutSmart.DAXon.Json
                             else
                             {
                                 char next = literal[i];
-                                string xx = next < 256 ? next + "" : "x" + ((int)(next)).ToString("x");
+                                string xx = next < 256 ? next + "" : "x" + ((int)(next)).ToString("x", CultureInfo.InvariantCulture);
                                 throw new XPathException("Unknown escape sequence \\" + xx, errorCode);
                             }
 
@@ -693,7 +694,7 @@ namespace OutSmart.DAXon.Json
                             char c = input[position++];
                             if (c < 32)
                             {
-                                InvalidJSON("Unescaped control character (x" + ((int)(c)).ToString("x") + ")", ERR_GRAMMAR, lineNumber);
+                                InvalidJSON("Unescaped control character (x" + ((int)(c)).ToString("x", CultureInfo.InvariantCulture) + ")", ERR_GRAMMAR, lineNumber);
                             }
 
                             if (afterBackslash && c == 'u')
@@ -800,7 +801,7 @@ namespace OutSmart.DAXon.Json
                             {
                                 char c = input[--position];
                                 string s = UTF16CharacterSet.IsSurrogate(c) ? "" : " '" + c + "'";
-                                InvalidJSON("Unexpected character" + s + " (\\u" + ((int)(c)).ToString("x") + ") at position " + position, ERR_GRAMMAR, lineNumber);
+                                InvalidJSON("Unexpected character" + s + " (\\u" + ((int)(c)).ToString("x", CultureInfo.InvariantCulture) + ") at position " + position, ERR_GRAMMAR, lineNumber);
                                 return JsonToken.EOF;
                             }
                         }

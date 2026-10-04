@@ -19,6 +19,7 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -560,7 +561,7 @@ namespace OutSmart.DAXon.Lib
                 if (ch > threshold)
                 {
                     fsb.Append("[x");
-                    fsb.Append((ch).ToString("x"));
+                    fsb.Append((ch).ToString("x", CultureInfo.InvariantCulture));
                     fsb.Append(']');
                 }
             }

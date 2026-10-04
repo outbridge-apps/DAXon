@@ -15,6 +15,7 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -961,7 +962,7 @@ namespace OutSmart.DAXon.Serialization
                 {
                     if (c > 127 && !characterSet.InCharset(c))
                     {
-                        throw new XPathException("Character " + c + " (x" + (c).ToString("x") + ") is not available in the chosen encoding").WithErrorCode("SERE0008");
+                        throw new XPathException("Character " + c + " (x" + (c).ToString("x", CultureInfo.InvariantCulture) + ") is not available in the chosen encoding").WithErrorCode("SERE0008");
                     }
 
                     WriteCodePoint(c);

@@ -9,6 +9,7 @@ using OutSmart.DAXon.Functions;
 
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -73,7 +74,7 @@ namespace OutSmart.DAXon.Values
             {
                 for (int i = 0; i < parts.Length; i++)
                 {
-                    valuei[i] = int.Parse(parts[i]);
+                    valuei[i] = int.Parse(parts[i], CultureInfo.InvariantCulture);
                 }
             }
             catch (FormatException exc)

@@ -11,6 +11,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -305,7 +306,7 @@ namespace OutSmart.DAXon.Functions
                     BadDate("Day number exceeds two digits", input);
                 }
 
-                day = (byte)int.Parse(currentToken);
+                day = (byte)int.Parse(currentToken, CultureInfo.InvariantCulture);
                 currentToken = tokens[++i];
                 if (currentToken != " ")
                 {
@@ -337,7 +338,7 @@ namespace OutSmart.DAXon.Functions
                     BadDate("First number in string expected to be day in two digits", input);
                 }
 
-                day = (byte)int.Parse(currentToken);
+                day = (byte)int.Parse(currentToken, CultureInfo.InvariantCulture);
                 i = RequireDSep(tokens, ++i, input);
                 currentToken = tokens[i];
                 if (!IsMonthName(currentToken))
@@ -402,11 +403,11 @@ namespace OutSmart.DAXon.Functions
             int year;
             if (currentToken.Length == 4)
             {
-                year = int.Parse(currentToken);
+                year = int.Parse(currentToken, CultureInfo.InvariantCulture);
             }
             else if (currentToken.Length == 2)
             {
-                year = int.Parse(currentToken) + 1900;
+                year = int.Parse(currentToken, CultureInfo.InvariantCulture) + 1900;
             }
             else
             {
@@ -441,7 +442,7 @@ namespace OutSmart.DAXon.Functions
                 BadDate("Hour number exceeds two digits", input);
             }
 
-            hour = (byte)int.Parse(currentToken.ToString());
+            hour = (byte)int.Parse(currentToken.ToString(), CultureInfo.InvariantCulture);
             currentToken = new StringBuilder(tokens[++i]);
             if (currentToken.ToString() != ":")
             {
@@ -459,7 +460,7 @@ namespace OutSmart.DAXon.Functions
                 BadDate("Minutes must be exactly two digits", input);
             }
 
-            minute = (byte)int.Parse(currentToken.ToString());
+            minute = (byte)int.Parse(currentToken.ToString(), CultureInfo.InvariantCulture);
             currentToken = new StringBuilder(tokens[++i]);
             bool finished = false;
             if (currentToken.ToString().Equals(EOF))
@@ -481,7 +482,7 @@ namespace OutSmart.DAXon.Functions
                     BadDate("Seconds number must have exactly two digits (before decimal point)", input);
                 }
 
-                second = (byte)int.Parse(currentToken.ToString());
+                second = (byte)int.Parse(currentToken.ToString(), CultureInfo.InvariantCulture);
                 currentToken = new StringBuilder(tokens[++i]);
                 if (currentToken.ToString().Equals(EOF))
                 {
@@ -504,7 +505,7 @@ namespace OutSmart.DAXon.Functions
                         currentToken.Append('0');
                     }
 
-                    microsecond = int.Parse(currentToken.ToString());
+                    microsecond = int.Parse(currentToken.ToString(), CultureInfo.InvariantCulture);
                     if (i < tokens.Count - 1)
                     {
                         currentToken = new StringBuilder(tokens[++i]);
@@ -556,13 +557,13 @@ namespace OutSmart.DAXon.Functions
                         }
                         else if (tLength >= 3)
                         {
-                            tzOffsetHours = int.Parse(currentToken.ToString(0, (tLength - 2) - (0)));
-                            tzOffsetMinutes = int.Parse(currentToken.ToString(tLength - 2, (tLength) - (tLength - 2)));
+                            tzOffsetHours = int.Parse(currentToken.ToString(0, (tLength - 2) - (0)), CultureInfo.InvariantCulture);
+                            tzOffsetMinutes = int.Parse(currentToken.ToString(tLength - 2, (tLength) - (tLength - 2)), CultureInfo.InvariantCulture);
                             currentToken = new StringBuilder(tokens[++i]);
                         }
                         else
                         {
-                            tzOffsetHours = int.Parse(currentToken.ToString());
+                            tzOffsetHours = int.Parse(currentToken.ToString(), CultureInfo.InvariantCulture);
                             currentToken = new StringBuilder(tokens[++i]);
                             if (currentToken.ToString() == ":")
                             {
@@ -575,7 +576,7 @@ namespace OutSmart.DAXon.Functions
                                     }
                                     else
                                     {
-                                        tzOffsetMinutes = int.Parse(currentToken.ToString());
+                                        tzOffsetMinutes = int.Parse(currentToken.ToString(), CultureInfo.InvariantCulture);
                                     }
 
                                     currentToken = new StringBuilder(tokens[++i]);

@@ -31,6 +31,7 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -187,7 +188,7 @@ namespace OutSmart.DAXon.Regex
 
             try
             {
-                bracketMin = int.Parse(number.ToString());
+                bracketMin = int.Parse(number.ToString(), CultureInfo.InvariantCulture);
             }
             catch (Exception e) when (e is FormatException || e is OverflowException)
             {
@@ -252,7 +253,7 @@ namespace OutSmart.DAXon.Regex
 
             try
             {
-                bracketMax = int.Parse(number.ToString());
+                bracketMax = int.Parse(number.ToString(), CultureInfo.InvariantCulture);
             }
             catch (Exception e) when (e is FormatException || e is OverflowException)
             {

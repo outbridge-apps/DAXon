@@ -13,6 +13,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal.Numerics;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -222,7 +223,7 @@ namespace OutSmart.DAXon.Values
             // strings per field. Semantics unchanged: the last `size` decimal digits, zero-padded.
             if (value < 0)
             {
-                string s = "000000000" + value;
+                string s = "000000000" + value.ToString(CultureInfo.InvariantCulture);
                 sb.Append(s.Substring(s.Length - size));
                 return;
             }

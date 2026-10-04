@@ -17,6 +17,7 @@ using OutSmart.DAXon.Transformation.Packages;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal.Net;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -765,7 +766,7 @@ namespace OutSmart.DAXon.Transformation
                 {
                     try
                     {
-                        details.priority = int.Parse(priority);
+                        details.priority = int.Parse(priority, CultureInfo.InvariantCulture);
                     }
                     catch (FormatException err)
                     {

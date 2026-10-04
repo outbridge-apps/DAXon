@@ -854,7 +854,7 @@ namespace OutSmart.DAXon.Internal.Numerics
             int ns = _scale - n;
             return ns >= 0 ? new BigDecimal(Unscaled, ns) : new BigDecimal(Unscaled * Pow10(-ns), 0);
         }
-        public int Precision() => Unscaled == SysBigInt.Zero ? 1 : SysBigInt.Abs(Unscaled).ToString().Length;
+        public int Precision() => Unscaled == SysBigInt.Zero ? 1 : SysBigInt.Abs(Unscaled).ToString(CultureInfo.InvariantCulture).Length;
         // Java toBigInteger(): truncates toward zero. Returns System.Numerics.BigInteger directly (the compat
         // wrapper struct OutSmart.DAXon.Internal.Numerics.BigInteger was retired; the engine is idiomatic
         // System.Numerics.BigInteger, with Java-semantics helpers in BigIntegers).

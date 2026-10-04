@@ -15,6 +15,7 @@ using OutSmart.DAXon.Internal.Net;
 using OutSmart.DAXon.Internal.Collections;
 using OutSmart.DAXon.Internal.Regex;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -1092,7 +1093,7 @@ namespace OutSmart.DAXon.Lib
         {
             try
             {
-                int n = int.Parse(value);
+                int n = int.Parse(value, CultureInfo.InvariantCulture);
                 if (n < 0)
                 {
                     throw new XPathException("Value of " + Err.Wrap(key) + " must be a non-negative integer", "SEPM0016");

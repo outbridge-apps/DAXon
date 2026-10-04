@@ -14,6 +14,7 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -603,7 +604,7 @@ namespace OutSmart.DAXon.Json
 
         private static string Hex4(int c)
         {
-            return c.ToString("X4"); // uppercase, zero-padded to 4 — same as the old pad loop
+            return c.ToString("X4", CultureInfo.InvariantCulture); // uppercase, zero-padded to 4 — same as the old pad loop
         }
         public void Characters(UnicodeString chars, ILocation locationId, int properties)
         {
@@ -737,7 +738,7 @@ namespace OutSmart.DAXon.Json
                             break;
                         default:
                             int next = literal[i];
-                            string xx = next < 256 ? next + "" : "x" + (next).ToString("x");
+                            string xx = next < 256 ? next + "" : "x" + (next).ToString("x", CultureInfo.InvariantCulture);
                             throw new XPathException("Unknown escape sequence \\" + xx, "FOJS0007");
                     }
                 }

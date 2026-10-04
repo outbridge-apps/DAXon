@@ -12,6 +12,7 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Core;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -304,7 +305,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             // We use integer comparison if both sides are simple integers, or double comparison otherwise
             if (simple && decimalPoints == 0 && wholePartLength <= 15 && a1 is Int64Value)
             {
-                long l0 = long.Parse(cs.ToString());
+                long l0 = long.Parse(cs.ToString(), CultureInfo.InvariantCulture);
                 return l0.CompareTo(a1.LongValue());
             }
             else

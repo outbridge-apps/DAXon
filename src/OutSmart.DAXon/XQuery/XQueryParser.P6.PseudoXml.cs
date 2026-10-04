@@ -21,6 +21,7 @@ using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal.Net;
 using OutSmart.DAXon.Internal.Regex;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -1509,7 +1510,7 @@ namespace OutSmart.DAXon.XQuery
 
                 if (!characterChecker.Test(value))
                 {
-                    throw new XPathException("Invalid XML character reference x" + (value).ToString("x"), "XQST0090");
+                    throw new XPathException("Invalid XML character reference x" + (value).ToString("x", CultureInfo.InvariantCulture), "XQST0090");
                 }
 
 

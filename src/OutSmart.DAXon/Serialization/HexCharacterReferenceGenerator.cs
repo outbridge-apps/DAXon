@@ -6,6 +6,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Text;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -27,7 +28,7 @@ namespace OutSmart.DAXon.Serialization
             writer.WriteCodePoint('&');
             writer.WriteCodePoint('#');
             writer.WriteCodePoint('x');
-            writer.Write((charval).ToString("x"));
+            writer.Write((charval).ToString("x", CultureInfo.InvariantCulture));
             writer.WriteCodePoint(';');
         }
     }

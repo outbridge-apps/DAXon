@@ -13,6 +13,7 @@ using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal.Net;
 using OutSmart.DAXon.Internal.Charsets;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -287,7 +288,7 @@ namespace OutSmart.DAXon.Functions
                         // The checker decides the rest: XML 1.1 allows #x1-#x1F
                         if (ch32 != 0x9 && ch32 != 0xA && ch32 != 0xD && !checker.Test(ch32))
                         {
-                            throw new XPathException("The text file contains a character that is illegal in XML (line=" + line + " column=" + column + " value=hex " + (ch32).ToString("x") + ')').WithErrorCode("FOUT1190");
+                            throw new XPathException("The text file contains a character that is illegal in XML (line=" + line + " column=" + column + " value=hex " + (ch32).ToString("x", CultureInfo.InvariantCulture) + ')').WithErrorCode("FOUT1190");
                         }
 
                         continue;
@@ -308,7 +309,7 @@ namespace OutSmart.DAXon.Functions
                                 // The resource ENDS with the high surrogate: the low-surrogate fetch
                                 // below used to read past the array. (Only a custom resolver's reader
                                 // can deliver a lone surrogate - the platform decoders emit U+FFFD.)
-                                throw new XPathException("The text file contains an unpaired surrogate (line=" + line + " column=" + column + " value=hex " + (ch32).ToString("x") + ')').WithErrorCode("FOUT1190");
+                                throw new XPathException("The text file contains an unpaired surrogate (line=" + line + " column=" + column + " value=hex " + (ch32).ToString("x", CultureInfo.InvariantCulture) + ')').WithErrorCode("FOUT1190");
                             }
 
                             char[] buffer3 = new char[actual + actual2];
@@ -323,7 +324,7 @@ namespace OutSmart.DAXon.Functions
                         {
                             // Unpaired high surrogate mid-stream: CombinePair would swallow the next
                             // character into a garbage astral codepoint and the checker would pass it.
-                            throw new XPathException("The text file contains an unpaired surrogate (line=" + line + " column=" + column + " value=hex " + (ch32).ToString("x") + ')').WithErrorCode("FOUT1190");
+                            throw new XPathException("The text file contains an unpaired surrogate (line=" + line + " column=" + column + " value=hex " + (ch32).ToString("x", CultureInfo.InvariantCulture) + ')').WithErrorCode("FOUT1190");
                         }
 
                         ch32 = UTF16CharacterSet.CombinePair((char)ch32, low);
@@ -332,7 +333,7 @@ namespace OutSmart.DAXon.Functions
 
                     if (!checker.Test(ch32))
                     {
-                        throw new XPathException("The text file contains a character that is illegal in XML (line=" + line + " column=" + column + " value=hex " + (ch32).ToString("x") + ')').WithErrorCode("FOUT1190");
+                        throw new XPathException("The text file contains a character that is illegal in XML (line=" + line + " column=" + column + " value=hex " + (ch32).ToString("x", CultureInfo.InvariantCulture) + ')').WithErrorCode("FOUT1190");
                     }
                 }
 

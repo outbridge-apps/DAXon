@@ -8,6 +8,7 @@ using OutSmart.DAXon.Functions;
 
 using OutSmart.DAXon.Internal.Charsets;
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -38,7 +39,7 @@ namespace OutSmart.DAXon.Lib
                     StringBuilder sb = new StringBuilder(64);
                     foreach (byte b in digest.Hash)
                     {
-                        sb.Append(b.ToString("x2"));
+                        sb.Append(b.ToString("x2", CultureInfo.InvariantCulture));
                     }
                     hexDigest = sb.ToString();
                 }
@@ -49,7 +50,7 @@ namespace OutSmart.DAXon.Lib
 
         public void Update(int value)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes(Convert.ToString(value));
+            byte[] bytes = Encoding.UTF8.GetBytes(Convert.ToString(value, CultureInfo.InvariantCulture));
             digest.TransformBlock(bytes, 0, bytes.Length, null, 0);
         }
 
