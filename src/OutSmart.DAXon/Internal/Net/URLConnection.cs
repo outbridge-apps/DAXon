@@ -37,12 +37,18 @@ namespace OutSmart.DAXon.Internal.Net
                     // otherwise hold this thread long past the run's time limit (round AW).
                     return NetworkDeadline.Guard(Response().GetResponseStream());
                 }
-                catch (System.IO.IOException) { throw; }
+                catch (System.IO.IOException)
+                {
+                    throw;
+                }
                 // Native I/O failures (FileNotFoundException/DirectoryNotFoundException) ARE subtypes of
                 // System.IO.IOException, so the catch above propagates them to the resource-resolution
                 // consumers (ResourceLoader/DirectResourceResolver) which "carry on" per the Java IOException
                 // contract (unparsed-text-available false / FOUT1170). Non-IO failures wrap into IOException.
-                catch (Exception e) { throw new System.IO.IOException(e.Message); }
+                catch (Exception e)
+                {
+                    throw new System.IO.IOException(e.Message, e);
+                }
             }
         }
         public virtual string ContentType { get { try { return _url == null || IsFile ? null : Response().ContentType; } catch { return null; } } }
