@@ -7,6 +7,7 @@
 using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Regex;
+using OutSmart.DAXon.Regex.CharClass;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Core;
@@ -59,8 +60,8 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 bool numeric2 = iter2.IsMatching();
                 if (numeric1 && numeric2)
                 {
-                    BigInteger n1 = BigIntegers.FromString(sv1.GetStringValue());
-                    BigInteger n2 = BigIntegers.FromString(sv2.GetStringValue());
+                    BigInteger n1 = ParseDigits(sv1.GetStringValue());
+                    BigInteger n2 = ParseDigits(sv2.GetStringValue());
                     int c = n1.CompareTo(n2);
                     if (c != 0)
                     {
@@ -102,7 +103,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 {
 
                     // numeric part
-                    BigInteger n = BigIntegers.FromString(sv.GetStringValue());
+                    BigInteger n = ParseDigits(sv.GetStringValue());
                     byte[] bin = n.ToByteArray();
                     int len = bin.Length;
 
@@ -120,6 +121,52 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
 
             return new Base64BinaryValue(baos.ToArray());
+        }
+
+        // The pattern takes every Unicode decimal digit, as Java's BigInteger reads them; the ASCII-only parse threw on the rest.
+        private static BigInteger ParseDigits(string digits)
+        {
+            int i = 0;
+            while (i < digits.Length && digits[i] <= '9')
+            {
+                i++;
+            }
+
+            if (i == digits.Length)
+            {
+                return BigIntegers.FromString(digits);
+            }
+
+            BigInteger value = BigInteger.Zero;
+            for (i = 0; i < digits.Length; i++)
+            {
+                int codePoint = digits[i];
+                if (char.IsHighSurrogate(digits[i]) && i + 1 < digits.Length)
+                {
+                    codePoint = char.ConvertToUtf32(digits[i], digits[++i]);
+                }
+
+                value = value * 10 + DigitValue(codePoint);
+            }
+
+            return value;
+        }
+
+        // Decimal digits are encoded in runs of ten, zero first: the value is the offset into the run.
+        internal static int DigitValue(int codePoint)
+        {
+            if (codePoint <= '9')
+            {
+                return codePoint - '0';
+            }
+
+            int start = codePoint;
+            while (Categories.ESCAPE_d.Test(start - 1))
+            {
+                start--;
+            }
+
+            return (codePoint - start) % 10;
         }
 
         // Inlined faithful copy of functions/CollationKeyFn.GetCollationKey (that class is <Compile Remove>'d).
