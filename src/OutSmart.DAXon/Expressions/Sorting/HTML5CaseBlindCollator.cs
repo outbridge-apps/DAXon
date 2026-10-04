@@ -92,14 +92,16 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return CompareCS(s1, s2) == 0;
         }
 
+        // The elaborated call comes without the function's own screens: an empty or over-long second string arrives here.
         public bool Contains(UnicodeString s1, UnicodeString s2)
         {
-            return Normalize(s1).IndexOf(Normalize(s2), 0) >= 0;
+            return s2.IsEmpty() || Normalize(s1).IndexOf(Normalize(s2), 0) >= 0;
         }
 
         public bool EndsWith(UnicodeString s1, UnicodeString s2)
         {
-            return Normalize(s1).HasSubstring(Normalize(s2), s1.Length() - s2.Length());
+            long offset = s1.Length() - s2.Length();
+            return offset >= 0 && Normalize(s1).HasSubstring(Normalize(s2), offset);
         }
 
         public bool StartsWith(UnicodeString s1, UnicodeString s2)

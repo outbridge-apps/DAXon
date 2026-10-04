@@ -93,6 +93,11 @@ namespace OutSmart.DAXon.Functions
                 else
                 {
                     lstart = JavaMath.Round(start.GetDoubleValue());
+                    if (lstart < 1)
+                    {
+                        // 0 < start < 0.5 rounds to 0: every position is at or after it
+                        return sv;
+                    }
                 }
             }
 
