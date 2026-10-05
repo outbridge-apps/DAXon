@@ -28,6 +28,7 @@ namespace OutSmart.DAXon.Api
     {
         private Configuration config;
         private bool liberal;
+        private bool escaped;
         public JsonBuilder(Configuration config)
         {
             this.config = config;
@@ -41,6 +42,18 @@ namespace OutSmart.DAXon.Api
         public virtual bool IsLiberal()
         {
             return liberal;
+        }
+
+        // By default a JSON escape is the character it stands for, as fn:parse-json has it. true keeps the backslash and
+        // what XML cannot hold as JSON escapes - all this builder did before 1.4, and what Saxon's does.
+        public virtual void SetEscaped(bool escaped)
+        {
+            this.escaped = escaped;
+        }
+
+        public virtual bool IsEscaped()
+        {
+            return escaped;
         }
 
         public virtual XdmValue ParseJson(TextReader jsonReader)
@@ -100,7 +113,7 @@ namespace OutSmart.DAXon.Api
         {
             Dictionary<string, IGroundedValue> options = new Dictionary<string, IGroundedValue>();
             options["liberal"] = BooleanValue.Get(liberal);
-            options["escape"] = BooleanValue.TRUE;
+            options["escape"] = BooleanValue.Get(escaped);
             // With no fallback or number-parser option the parse reads only the configuration: no Controller.
             return XdmValue.Wrap(ParseJsonFn.Parse(json, options, new EarlyEvaluationContext(config)));
         }
