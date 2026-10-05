@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Lib
         // unparsed-text (bytes + string + engine buffers). The consumer owns and closes the reader.
         private static TextReader OpenTextFile(string path, string encoding)
         {
-            var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 65536);
+            var fs = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(path, 65536);
             try
             {
                 Encoding enc;

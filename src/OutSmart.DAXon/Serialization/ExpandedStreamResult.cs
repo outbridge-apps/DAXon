@@ -131,7 +131,7 @@ namespace OutSmart.DAXon.Serialization
             {
                 string file = MakeWritableOutputFile(uriString);
                 mustCloseAfterUse = true;
-                outputStream = new FileStream(file, FileMode.Create, FileAccess.Write);
+                outputStream = OutSmart.DAXon.Internal.Streams.FileNames.Create(file);
 
                 // Publish the opened stream back to the StreamResult this was expanded from, so a
                 // failure-path Dispose can actually reach it. The normal close (pipeline completes)
@@ -160,7 +160,9 @@ namespace OutSmart.DAXon.Serialization
             URI uri = new URI(uriString);
             if (!uri.IsAbsolute())
             {
-                // A name the file system refuses fails here, with the reason (the caller reports it)
+                // A name the file system refuses fails here, with the reason (the caller reports it). A device first,
+                // by what it is: its full path, \\.\NUL, is no URI, and the reason given was that of the URI.
+                OutSmart.DAXon.Internal.Streams.FileNames.Check(uriString);
                 uri = new Uri(Path.GetFullPath(uriString)).AbsoluteUri;
             }
 
@@ -183,7 +185,7 @@ namespace OutSmart.DAXon.Serialization
                         Directory.CreateDirectory(directory);
                     }
 
-                    using (File.Create(file)) { }
+                    using (OutSmart.DAXon.Internal.Streams.FileNames.Create(file)) { }
                 }
 
                 if (Directory.Exists(file))

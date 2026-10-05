@@ -94,7 +94,7 @@ namespace OutSmart.DAXon.Api
             try
             {
                 XQuery.Query.CreateFileIfNecessary(file);
-                ExpressionPresenter presenter = GetProcessor().UnderlyingConfiguration.NewExpressionExporter(target, new FileStream(file, FileMode.Create, FileAccess.Write), stylesheetPackage);
+                ExpressionPresenter presenter = GetProcessor().UnderlyingConfiguration.NewExpressionExporter(target, OutSmart.DAXon.Internal.Streams.FileNames.Create(file), stylesheetPackage);
                 presenter.GetOptions().relocatable = stylesheetPackage.IsRelocatable();
                 stylesheetPackage.Export(presenter);
             }

@@ -124,7 +124,7 @@ namespace OutSmart.DAXon.Lib
                 // directory) instead of "Cannot resolve"; an entity is probed, as System.Xml tries a PUBLIC id first.
                 if (absoluteUri != null && absoluteUri.IsFile && (isPrincipal || File.Exists(absoluteUri.LocalPath)))
                 {
-                    return File.OpenRead(absoluteUri.LocalPath);
+                    return OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(absoluteUri.LocalPath);
                 }
                 return null;
             }

@@ -73,7 +73,7 @@ namespace OutSmart.DAXon.Api
                 var key = Key.ForFile(full.ToUpperInvariant(), info.LastWriteTimeUtc.Ticks, info.Length);
                 return cache.GetOrAdd(key, _ =>
                 {
-                    using (var s = File.OpenRead(full))
+                    using (var s = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(full))
                     {
                         return processor.NewDocumentBuilder().Build(s, new Uri(full).AbsoluteUri);
                     }

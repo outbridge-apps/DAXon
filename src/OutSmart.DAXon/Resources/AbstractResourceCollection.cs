@@ -181,7 +181,7 @@ namespace OutSmart.DAXon.Resources
                     if (uri.Scheme == "file")
                     {
                         string file = new Uri(uri.ToString()).LocalPath;
-                        stream = new FileStream(file, FileMode.Open, FileAccess.Read);
+                        stream = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(file);
                         // kept only within the policy's input cap: the members read these bytes as content
                         if (new FileInfo(file).Length <= Math.Min(1024, InputSizeLimit.MaxFor(config)))
                         {

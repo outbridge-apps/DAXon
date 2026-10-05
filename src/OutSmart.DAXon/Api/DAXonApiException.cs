@@ -66,7 +66,7 @@ namespace OutSmart.DAXon.Api
         private static bool IsPathRefused(Exception e)
         {
             string thrower = e is ArgumentException || e is NotSupportedException ? e.TargetSite?.DeclaringType?.FullName : null;
-            return thrower != null && (thrower.StartsWith("System.IO.", StringComparison.Ordinal) || thrower == "System.Security.Permissions.FileIOPermission");
+            return thrower != null && (thrower.StartsWith("System.IO.", StringComparison.Ordinal) || thrower.StartsWith("Microsoft.Win32.", StringComparison.Ordinal) || thrower == "System.Security.Permissions.FileIOPermission");
         }
 
         public string GetMessage()

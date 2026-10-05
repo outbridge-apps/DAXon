@@ -1076,7 +1076,10 @@ namespace OutSmart.DAXon.Events
 
                     if (abs.IsFile && System.IO.File.Exists(abs.LocalPath))
                     {
-                        text = System.IO.File.ReadAllText(abs.LocalPath);
+                        using (var dtd = new StreamReader(OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(abs.LocalPath)))
+                        {
+                            text = dtd.ReadToEnd();
+                        }
                     }
                 }
 
@@ -1628,7 +1631,10 @@ namespace OutSmart.DAXon.Events
                         }
                     }
 
-                    object entity = base.GetEntity(absoluteUri, role, ofObjectToReturn);
+                    // Opened as System.Xml opens it, by the engine: a name that is no file's is refused first.
+                    object entity = ofObjectToReturn == null || ofObjectToReturn == typeof(Stream) || ofObjectToReturn == typeof(object)
+                        ? OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(absoluteUri.LocalPath, 1)
+                        : base.GetEntity(absoluteUri, role, ofObjectToReturn);
                     if (principalPending)
                     {
                         // The input the host asked for by path: capped as a stream it passes would be.

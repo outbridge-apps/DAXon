@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.XQuery
                 {
                     Directory.CreateDirectory(directory);
                 }
-                using (File.Create(file)) { }
+                using (OutSmart.DAXon.Internal.Streams.FileNames.Create(file)) { }
             }
         }
     }

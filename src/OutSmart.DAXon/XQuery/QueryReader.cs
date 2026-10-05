@@ -46,7 +46,7 @@ namespace OutSmart.DAXon.XQuery
                     Uri u = new Uri(ss.SystemId);
                     if (u.IsFile)
                     {
-                        stream = File.OpenRead(u.LocalPath);
+                        stream = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(u.LocalPath);
                     }
                 }
                 catch (Exception e)
