@@ -15,15 +15,13 @@ using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Api
 {
-    public class DAXonApiUncheckedException : Exception
+    // An error met while a result is read item by item: Java needed a second, unchecked type for what an iterator
+    // throws. A DAXonApiException since 1.4, so one catch takes both and the error code is read the same way;
+    // before, an Exception apart whose Message was the cause's whole ToString(), stack trace included.
+    public class DAXonApiUncheckedException : DAXonApiException
     {
-        public DAXonApiUncheckedException(Exception err) : base((err).ToString(), err)
+        public DAXonApiUncheckedException(Exception err) : base(err)
         {
-        }
-
-        public string GetMessage()
-        {
-            return InnerException.Message;
         }
     }
 }

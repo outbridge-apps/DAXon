@@ -118,7 +118,8 @@ namespace OutSmart.DAXon.Api
             return XdmValue.Wrap(ParseJsonFn.Parse(json, options, new EarlyEvaluationContext(config)));
         }
 
-        // Consumer-compat alias: a JSON document is always one item (map/array/atomic).
-        public virtual XdmItem Build(string json) => (XdmItem)ParseJson(json);
+        // Consumer-compat alias: a JSON text is one item - a map, an array, an atomic value - or null, which is no
+        // item and comes back as null.
+        public virtual XdmItem Build(string json) => ParseJson(json) as XdmItem;
     }
 }

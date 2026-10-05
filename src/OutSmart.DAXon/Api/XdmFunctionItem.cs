@@ -11,9 +11,10 @@ using OutSmart.DAXon.Model;
 
 namespace OutSmart.DAXon.Api
 {
-    // XdmFunctionItem and XdmArray stubs (excluded from compile but referenced from JPConverter).
     public class XdmFunctionItem : XdmItem
     {
+        // Public as it was in 1.3, for the hosts built against it. s9api keeps it for its subclasses.
+        [Obsolete("A function item made this way holds no function, and any use of it fails: take one from an expression.")]
         public XdmFunctionItem() : base(null) { }
         public XdmFunctionItem(OutSmart.DAXon.Model.IItem function) : base(function) { }
         public override bool IsAtomicValue() => false;

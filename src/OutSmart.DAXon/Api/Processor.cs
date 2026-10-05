@@ -300,7 +300,14 @@ namespace OutSmart.DAXon.Api
         {
             PipelineConfiguration pipe = UnderlyingConfiguration.MakePipelineConfiguration();
             SerializationProperties props = new SerializationProperties();
-            return (IPush)(new PushToReceiver(destination.GetReceiver(pipe, props)));
+            try
+            {
+                return new PushToReceiver(destination.GetReceiver(pipe, props), destination);
+            }
+            catch (XPathException e)
+            {
+                throw new DAXonApiException(e);
+            }
         }
 
         public virtual void RegisterExtensionFunction(IExtensionFunction function)
@@ -537,8 +544,9 @@ namespace OutSmart.DAXon.Api
 
                     try
                     {
+                        // null is how a .NET method says it has nothing: the empty sequence
                         XdmValue result = parent.function.Call(args);
-                        return (ISequence)result.UnderlyingValue;
+                        return result?.UnderlyingValue as ISequence ?? EmptySequence.GetInstance();
                     }
                     catch (DAXonApiException e)
                     {

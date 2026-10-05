@@ -14,7 +14,8 @@ namespace OutSmart.DAXon.Api
 {
     public class XdmArray : XdmFunctionItem
     {
-        public XdmArray() : base() { }
+        // The empty array.
+        public XdmArray() : base(SimpleArrayItem.EMPTY_ARRAY) { }
         public XdmArray(IItem array) : base(array) { }
 
         // upstream s9api XdmArray(XdmItem[]): each member becomes one array member.

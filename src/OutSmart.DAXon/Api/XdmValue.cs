@@ -9,6 +9,12 @@ using System;
 using System.Collections.Generic;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Values;
+using OutSmart.DAXon.Core;
+using OutSmart.DAXon.Internal;
+using OutSmart.DAXon.Lib;
+using OutSmart.DAXon.Serialization;
+using OutSmart.DAXon.Transformation;
+using OutSmart.DAXon.XQuery;
 using System.Linq;
 
 namespace OutSmart.DAXon.Api
@@ -22,8 +28,45 @@ namespace OutSmart.DAXon.Api
         // Xslt30Transformer.ApplyTemplates passed a null source into XsltController -> NRE at source.Iterate().
         private readonly object _value;
         public virtual object UnderlyingValue => _value;
-        public XdmValue() { }
+        // The empty sequence.
+        public XdmValue() { _value = EmptySequence.GetInstance(); }
         public XdmValue(object value) { _value = value; }
+
+        private static readonly Lazy<Configuration> printing = new Lazy<Configuration>(() => new Configuration());
+
+        // The value as the adaptive output method writes it, indented: markup for a node, map{...} for a map, the items
+        // of a sequence one to a line. As in s9api, where a node has no ToString of its own either.
+        public override string ToString()
+        {
+            if (!(_value is ISequence sequence))
+            {
+                return base.ToString();
+            }
+
+            try
+            {
+                Configuration config = null;
+                ISequenceIterator items = sequence.Iterate();
+                for (IItem item; config == null && (item = items.Next()) != null;)
+                {
+                    config = (item as NodeInfo)?.GetConfiguration();
+                }
+
+                var properties = new SerializationProperties();
+                properties.SetProperty(DAXonOutputKeys.METHOD, "adaptive");
+                properties.SetProperty(DAXonOutputKeys.INDENT, "yes");
+                properties.SetProperty(DAXonOutputKeys.OMIT_XML_DECLARATION, "yes");
+                var written = new System.IO.StringWriter();
+                QueryResult.SerializeSequence(sequence.Iterate(), config ?? printing.Value, new StreamResult(written), properties);
+                return written.ToString().TrimEnd('\n');
+            }
+            catch (Exception e) when (!(e is OutOfMemoryException))
+            {
+                // A log line or a debugger calls this: a value that cannot be written - too deep for the stack,
+                // holding half a surrogate pair - is named by its class, as every value was before 1.4.
+                return base.ToString();
+            }
+        }
         // Type-dispatching Wrap: a NodeInfo must wrap as XdmNode (MessageInstr.MakeMessage casts
         // (XdmNode)XdmNode.Wrap(content)); AtomicValue -> XdmAtomicValue.
         public static XdmValue Wrap(object value)

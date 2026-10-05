@@ -17,7 +17,8 @@ namespace OutSmart.DAXon.Api
     // XdmValue.Wrap's singleton dispatch contract (callers cast Wrap(item) to XdmItem)
     public class XdmMap : XdmFunctionItem
     {
-        public XdmMap() { }
+        // The empty map.
+        public XdmMap() : base(new HashTrieMap()) { }
         public XdmMap(OutSmart.DAXon.Model.IItem map) : base(map) { }
 
         // A copy of the entries: changing it leaves the map as it was.

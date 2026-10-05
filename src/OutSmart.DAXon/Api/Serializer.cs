@@ -53,7 +53,8 @@ namespace OutSmart.DAXon.Api
             Property[] propertyValues = (Property[])Enum.GetValues(typeof(Property));
             foreach (Property p in propertyValues)
             {
-                standardProperties[p.ToString()] = p;
+                // by the parameter's name in Clark notation, which is what GetProperty(QName) looks up
+                standardProperties[p.GetPropertyName()] = p;
             }
         }
 
