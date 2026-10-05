@@ -68,6 +68,12 @@ namespace OutSmart.DAXon.Functions
             foreach (OutSmart.DAXon.Values.Maps.KeyValuePair pair in charMap.KeyValuePairs())
             {
                 UnicodeString ch = pair.key.UnicodeStringValue;
+                if (pair.value.GetLength() == 0)
+                {
+                    // a character mapped to no string: Head() of it was null
+                    throw new XPathException("use-character-maps must be a map(xs:string, xs:string)", "XPTY0004").AsTypeError();
+                }
+
                 string str = pair.value.Head().GetStringValue();
                 if (ch.Length() != 1)
                 {

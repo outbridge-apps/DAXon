@@ -90,8 +90,11 @@ namespace OutSmart.DAXon.Functions
             op.AddAllowedOption("initial-function", singleQName);
             op.AddAllowedOption("function-params", ArrayItemType.SINGLE_ARRAY);
             op.AddAllowedOption("requested-properties", singleMap);
-            // function(xs:string, item()*) as item()* — function-type Matches is permissive in this port
-            op.AddAllowedOption("post-process", SequenceType.ANY_SEQUENCE);
+            // As any item it was called as it came: one that is no function was left out, one of another arity failed
+            // in the call with an exception that is no error of XPath.
+            op.AddAllowedOption("post-process", SequenceType.MakeSequenceType(
+                new SpecificFunctionType(new SequenceType[] { SequenceType.SINGLE_STRING, SequenceType.ANY_SEQUENCE }, SequenceType.ANY_SEQUENCE),
+                StaticProperty.EXACTLY_ONE));
             return op;
         }
 
@@ -469,7 +472,8 @@ namespace OutSmart.DAXon.Functions
                 case "package-name":
                     {
                         string packageName = styleOptionItem.GetStringValue().Trim();
-                        string packageVersion = null;
+                        // any version, the default of the option: with none the range of versions was null
+                        string packageVersion = "*";
                         if (options.GetOrDefault("package-version") != null)
                         {
                             packageVersion = options.GetOrDefault("package-version").Head().GetStringValue();
@@ -1052,6 +1056,7 @@ namespace OutSmart.DAXon.Functions
                 Serializer serializer = processor.NewSerializer();
                 if (serializationParamsMap != null)
                 {
+                    SerializerFactory factory = processor.UnderlyingConfiguration.SerializerFactory;
                     foreach (OutSmart.DAXon.Values.Maps.KeyValuePair entry in serializationParamsMap.KeyValuePairs())
                     {
                         AtomicValue param = entry.key;
@@ -1062,6 +1067,12 @@ namespace OutSmart.DAXon.Functions
                         }
                         else if (param is StringValue)
                         {
+                            if (!NameChecker.IsValidNCName(param.GetStringValue()))
+                            {
+                                // no parameter has such a name, and QName refuses one with a colon (an ArgumentException)
+                                continue;
+                            }
+
                             paramName = new QName(param.GetStringValue());
                         }
                         else
@@ -1099,7 +1110,7 @@ namespace OutSmart.DAXon.Functions
                                     charMapIndex.PutCharacterMap(charMap.Name, charMap);
                                     serializer.SetCharacterMap(charMapIndex);
                                     string existingCm = serializer.GetOutputProperty(paramName);
-                                    serializer.SetOutputProperty(paramName,
+                                    SetParameter(serializer, factory, paramName,
                                         existingCm == null ? charMap.Name.EQName : existingCm + " " + charMap.Name.EQName);
                                     continue;
                                 }
@@ -1128,11 +1139,11 @@ namespace OutSmart.DAXon.Functions
                                 || paramName.ClarkName.Equals(DAXonOutputKeys.SUPPRESS_INDENTATION))
                             {
                                 string existing = serializer.GetOutputProperty(paramName);
-                                serializer.SetOutputProperty(paramName, existing == null ? paramValue : existing + paramValue);
+                                SetParameter(serializer, factory, paramName, existing == null ? paramValue : existing + paramValue);
                             }
                             else
                             {
-                                serializer.SetOutputProperty(paramName, paramValue);
+                                SetParameter(serializer, factory, paramName, paramValue);
                             }
                         }
                     }
@@ -1141,11 +1152,39 @@ namespace OutSmart.DAXon.Functions
                 return serializer;
             }
 
+            // A parameter the serializer does not know is not looked at, as in fn:serialize; a value it refuses is
+            // SEPM0016. Serializer tells a host of both with an ArgumentException, which no xsl:try catches.
+            private static void SetParameter(Serializer serializer, SerializerFactory factory, QName name, string value)
+            {
+                NamespaceUri uri = name.GetNamespaceUri();
+                if (uri.IsEmpty() || uri.Equals(NamespaceUri.SAXON))
+                {
+                    try
+                    {
+                        factory.CheckOutputProperty(name.ClarkName, value);
+                    }
+                    catch (XPathException e)
+                    {
+                        if (e.HasErrorCode("XQST0109"))
+                        {
+                            return;
+                        }
+
+                        e.MaybeSetErrorCode("SEPM0016");
+                        throw;
+                    }
+                }
+
+                serializer.SetOutputProperty(name, value);
+            }
+
             public IGroundedValue PostProcess(string uri, ISequence result)
             {
                 if (postProcessor != null)
                 {
-                    result = postProcessor.Call(context.NewCleanContext(), new ISequence[] { new StringValue(uri), result });
+                    // The principal result of a call that names no place for it, in an expression with no static base
+                    // URI either, goes by its key in the map returned: with no URI at all this was a NullReferenceException.
+                    result = postProcessor.Call(context.NewCleanContext(), new ISequence[] { new StringValue(uri ?? principalResultKey), result });
                 }
 
                 return result.Materialize();
