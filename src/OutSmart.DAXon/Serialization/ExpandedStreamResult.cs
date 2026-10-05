@@ -215,10 +215,10 @@ namespace OutSmart.DAXon.Serialization
         }
 
         // The byte order mark of UTF-16 and UTF-32 bytes is what byte-order-mark says: yes is a mark, no is none. When
-        // it says nothing they have one, as .NET writes one for each of them and as they always had here (XSLT's own
-        // default has one for UTF-16 alone). UTF-8 under another of its names has one when the parameter says yes, as
-        // UTF-8 has. The StreamWriter writes the mark, at the start of a stream and nowhere else, so that no emitter
-        // need add it: with one of its own as well, UTF-16LE with "yes" began with two and did not parse.
+        // it says nothing they have one, as .NET writes one for each of them - but for UTF-16LE and UTF-16BE, which
+        // have none, as in Saxon: the name says the order. UTF-8 under another of its names has one when the parameter
+        // says yes, as UTF-8 has. The StreamWriter writes the mark, at the start of a stream and nowhere else, so that
+        // no emitter need add it: with one of its own as well, UTF-16LE with "yes" began with two and did not parse.
         private Encoding Marked(Encoding platform)
         {
             string mark = outputProperties.GetProperty(DAXonOutputKeys.BYTE_ORDER_MARK);
@@ -227,7 +227,7 @@ namespace OutSmart.DAXon.Serialization
                 case 1200:
                 case 1201:
                     marksItself = true;
-                    return new UnicodeEncoding(platform.CodePage == 1201, mark != "no");
+                    return new UnicodeEncoding(platform.CodePage == 1201, mark == "yes" || (mark != "no" && !NamesItsOrder()));
                 case 12000:
                 case 12001:
                     marksItself = true;
@@ -238,6 +238,13 @@ namespace OutSmart.DAXon.Serialization
                 default:
                     return platform;
             }
+        }
+
+        // Asked of the name the output properties give: the platform knows UTF-16LE and UTF-16 as one encoding.
+        private bool NamesItsOrder()
+        {
+            string name = outputProperties.GetProperty(DAXonOutputKeys.ENCODING);
+            return "UTF-16LE".Equals(name, StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(name, StringComparison.OrdinalIgnoreCase);
         }
 
         private TextWriter MakeWriterFromOutputStream(System.IO.Stream stream)
