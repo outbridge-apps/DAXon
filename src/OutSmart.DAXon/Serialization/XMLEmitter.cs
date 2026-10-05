@@ -58,6 +58,10 @@ namespace OutSmart.DAXon.Serialization
         private bool requireWellFormed = false;
         protected ICharacterReferenceGenerator characterReferenceGenerator = HexCharacterReferenceGenerator.THE_INSTANCE;
 
+        // True while the value being written carries the character map expander's marks: only there does U+0000
+        // switch escaping off and on. In any other value it came with the data, and is left out.
+        private protected bool marked;
+
         Func<int, bool> isSpecialInText;
         Func<int, bool> isSpecialInAttribute;
         static XMLEmitter()
@@ -663,7 +667,9 @@ namespace OutSmart.DAXon.Serialization
                     writer.WriteCodePoint('=');
                     char delim = value.IndexOf('"') >= 0 && value.IndexOf('\'') < 0 ? '\'' : delimiter;
                     writer.WriteCodePoint(delim);
+                    marked = true;
                     WriteEscape(StringView.Tidy(value), true);
+                    marked = false;
                     writer.WriteCodePoint(delim);
                 }
                 else
@@ -787,7 +793,9 @@ namespace OutSmart.DAXon.Serialization
                 }
                 else if (!ReceiverOption.Contains(properties, ReceiverOption.DISABLE_ESCAPING))
                 {
+                    marked = ReceiverOption.Contains(properties, ReceiverOption.USE_NULL_MARKERS);
                     WriteEscape(chars, false);
+                    marked = false;
                 }
                 else
                 {
@@ -955,8 +963,11 @@ namespace OutSmart.DAXon.Serialization
                 if (c == 0)
                 {
 
-                    // used to switch escaping on and off
-                    disabled = !disabled;
+                    // the expander's mark switches escaping on and off; U+0000 of the data is left out
+                    if (marked)
+                    {
+                        disabled = !disabled;
+                    }
                 }
                 else if (disabled)
                 {

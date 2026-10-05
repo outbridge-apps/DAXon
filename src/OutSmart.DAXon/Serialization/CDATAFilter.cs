@@ -134,7 +134,7 @@ namespace OutSmart.DAXon.Serialization
 
                 if (NextReceiver is UnicodeNormalizer)
                 {
-                    UnicodeString normal = ((UnicodeNormalizer)NextReceiver).Normalize(buffer.ToUnicodeString(), true);
+                    UnicodeString normal = ((UnicodeNormalizer)NextReceiver).Normalize(buffer.ToUnicodeString(), false);
                     buffer = new UnicodeBuilder();
                     buffer.Accept(normal);
                     end = (int)buffer.Length();

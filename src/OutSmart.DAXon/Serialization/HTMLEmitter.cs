@@ -255,8 +255,11 @@ namespace OutSmart.DAXon.Serialization
                 if (ch == 0)
                 {
 
-                    // used to switch escaping on and off
-                    disabled = !disabled;
+                    // the expander's mark switches escaping on and off; U+0000 of the data is left out
+                    if (marked)
+                    {
+                        disabled = !disabled;
+                    }
                 }
                 else if (disabled)
                 {

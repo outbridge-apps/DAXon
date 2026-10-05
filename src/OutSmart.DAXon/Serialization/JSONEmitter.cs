@@ -401,33 +401,57 @@ namespace OutSmart.DAXon.Serialization
 
         private string Escape(string cs)
         {
-            if (characterMap != null)
-            {
-                StringBuilder @out = new StringBuilder(cs.Length);
-                string s = characterMap.IMap(StringView.Of(cs).Tidy(), true).ToString();
-                int prev = 0;
-                while (true)
-                {
-                    int start = s.IndexOf((char)0, prev);
-                    if (start >= 0)
-                    {
-                        @out.Append(SimpleEscape(s.Substring(prev, start - prev) /*Java substring(begin,END) -> C# (start,LENGTH)*/));
-                        int end = s.IndexOf((char)0, start + 1);
-                        // Java append(s, begin, END-exclusive) -> C# Append(s, start, LENGTH): passing `end`
-                        // as the third arg appended the closing NUL marker into the output (keys like "AAA<NUL>").
-                        @out.Append(s, start + 1, end - start - 1);
-                        prev = end + 1;
-                    }
-                    else
-                    {
-                        @out.Append(SimpleEscape(s.Substring(prev)));
-                        return @out.ToString();
-                    }
-                }
-            }
-            else
+            if (characterMap == null)
             {
                 return SimpleEscape(cs);
+            }
+
+            // U+0000 of the data is escaped apart, unless the map has a replacement for it: in what the map
+            // returns, U+0000 marks the replacements.
+            int nul = characterMap.Map[0] == null ? cs.IndexOf((char)0) : -1;
+            if (nul < 0)
+            {
+                return EscapeMapped(cs);
+            }
+
+            StringBuilder @out = new StringBuilder(cs.Length + 16);
+            int from = 0;
+            while (nul >= 0)
+            {
+                @out.Append(EscapeMapped(cs.Substring(from, nul - from))).Append(SimpleEscape("\0"));
+                from = nul + 1;
+                nul = cs.IndexOf((char)0, from);
+            }
+
+            return @out.Append(EscapeMapped(cs.Substring(from))).ToString();
+        }
+
+        // The character map applied: its replacements as they are, the rest escaped.
+        private string EscapeMapped(string cs)
+        {
+            UnicodeString text = StringView.Of(cs).Tidy();
+            UnicodeString mapped = characterMap.IMap(text, true);
+            if (mapped == text)
+            {
+                return SimpleEscape(cs);
+            }
+
+            string s = mapped.ToString();
+            StringBuilder @out = new StringBuilder(s.Length);
+            int prev = 0;
+            while (true)
+            {
+                int start = s.IndexOf((char)0, prev);
+                if (start < 0)
+                {
+                    @out.Append(SimpleEscape(s.Substring(prev)));
+                    return @out.ToString();
+                }
+
+                @out.Append(SimpleEscape(s.Substring(prev, start - prev)));
+                int end = s.IndexOf((char)0, start + 1);
+                @out.Append(s, start + 1, end - start - 1);
+                prev = end + 1;
             }
         }
 
