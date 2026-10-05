@@ -39,46 +39,26 @@ namespace OutSmart.DAXon.Expressions
         {
 
             // This method does its own atomization so that it can distinguish between atomization
-            // failures and casting failures
+            // failures and casting failures: a node gives its typed value and an array its members; a
+            // map or a function has no atoms and fails the expression (FOTY0013), as for an atomic type
             int count = 0;
             for (IItem item; (item = iter.Next()) != null;)
             {
-                if (item is NodeInfo)
+                IAtomicSequence atomizedValue = item.Atomize();
+                int length = atomizedValue.GetLength();
+                count += length;
+                if (count > 1)
                 {
-                    IAtomicSequence atomizedValue = item.Atomize();
-                    int length = SequenceTool.GetLength(atomizedValue);
-                    count += length;
-                    if (count > 1)
-                    {
-                        return false;
-                    }
-
-                    if (length != 0)
-                    {
-                        AtomicValue av = atomizedValue.Head();
-                        if (!Castable(av, context))
-                        {
-                            return false;
-                        }
-                    }
+                    return false;
                 }
-                else if (item is AtomicValue)
-                {
-                    AtomicValue av = (AtomicValue)item;
-                    count++;
-                    if (count > 1)
-                    {
-                        return false;
-                    }
 
+                if (length != 0)
+                {
+                    AtomicValue av = atomizedValue.Head();
                     if (!Castable(av, context))
                     {
                         return false;
                     }
-                }
-                else
-                {
-                    throw new XPathException("Input to 'castable' operator cannot be atomized", "XPTY0004");
                 }
             }
 

@@ -42,16 +42,30 @@ namespace OutSmart.DAXon.Expressions
         // returning a boolean.
         public override ISequence Call(IXPathContext context, ISequence[] args)
         {
+            // The operand arrives as it was written, not atomized: a node is cast by its typed value and an array by
+            // its members; a map or a function has no atoms and fails the expression (FOTY0013), as for an atomic type.
+            AtomicValue val = null;
+            int count = 0;
             ISequenceIterator iter = args[0].Iterate();
-            AtomicValue val = (AtomicValue)iter.Next();
+            for (IItem item; (item = iter.Next()) != null;)
+            {
+                IAtomicSequence atoms = item.Atomize();
+                int length = atoms.GetLength();
+                count += length;
+                if (count > 1)
+                {
+                    return BooleanValue.FALSE;
+                }
+
+                if (length != 0)
+                {
+                    val = atoms.Head();
+                }
+            }
+
             if (val == null)
             {
                 return BooleanValue.Get(allowEmpty);
-            }
-
-            if (iter.Next() != null)
-            {
-                return BooleanValue.FALSE;
             }
 
             if (!(val is StringValue) || val is AnyURIValue)
