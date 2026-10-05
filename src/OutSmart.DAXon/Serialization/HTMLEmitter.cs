@@ -197,7 +197,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException(err?.Message);
+                throw WriteFailure(err);
             }
         }
 
@@ -478,7 +478,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException(err?.Message);
+                throw WriteFailure(err);
             }
         }
     }

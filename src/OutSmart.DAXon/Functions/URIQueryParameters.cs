@@ -187,7 +187,8 @@ namespace OutSmart.DAXon.Functions
 
         private static void CheckXIncludeIsSupported()
         {
-            throw new XPathException("XInclude is not supported on this platform");
+            // FODC0002: the resource the URI asks for - the document with its inclusions made - cannot be had
+            throw new XPathException("XInclude is not supported on this platform", "FODC0002");
         }
 
         public static Func<string, string, bool> MakeGlobFilter(string value)

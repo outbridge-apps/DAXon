@@ -98,7 +98,7 @@ namespace OutSmart.DAXon.Resources
             if (options.IsXIncludeAware())
             {
                 // Asked for one document (saxon:xinclude on xsl:source-document): the .NET parser has none.
-                throw new XPathException("XInclude is not supported on this platform");
+                throw new XPathException("XInclude is not supported on this platform", "FODC0002");
             }
 
             // External entities / an external DTD subset resolve through the config's ResourceResolver. A bare

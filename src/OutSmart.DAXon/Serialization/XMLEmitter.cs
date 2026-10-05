@@ -311,7 +311,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
         }
         protected virtual void WriteDocType(INodeName name, string displayName, string systemId, string publicId)
@@ -386,7 +386,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
         }
 
@@ -408,7 +408,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
 
             base.Close();
@@ -507,7 +507,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
         }
 
@@ -561,7 +561,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
         }
 
@@ -604,7 +604,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
 
             WriteAttribute(elementCode, displayName, value, properties);
@@ -637,7 +637,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
         }
 
@@ -701,7 +701,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
         }
 
@@ -767,7 +767,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
         }
 
@@ -864,7 +864,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
         }
 
@@ -922,7 +922,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
         }
 
@@ -1151,7 +1151,7 @@ namespace OutSmart.DAXon.Serialization
             }
             catch (IOException err)
             {
-                throw new XPathException("Failure writing to " + GetSystemId(), err);
+                throw WriteFailure(err);
             }
         }
 

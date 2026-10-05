@@ -53,6 +53,19 @@ namespace OutSmart.DAXon.Serialization
             this.writer = unicodeWriter;
         }
 
+        // A destination that stopped taking the output - a full disk, a closed pipe, a stream of the host's that
+        // threw: SXRD0004, naming the destination when it has a name and giving the system's own reason.
+        internal static XPathException WriteFailure(IOException err, string systemId)
+        {
+            return new XPathException("Failure writing to " + (string.IsNullOrEmpty(systemId) ? "the output" : systemId) + ": " + err.Message, err)
+                .WithErrorCode(DAXonErrorCode.SXRD0004);
+        }
+
+        private protected XPathException WriteFailure(IOException err)
+        {
+            return WriteFailure(err, GetSystemId());
+        }
+
         // No character of XML, 1.0 or 1.1: U+0000, half a surrogate pair, U+FFFE, U+FFFF.
         internal static bool IsNoCharacter(int c)
         {
@@ -100,7 +113,7 @@ namespace OutSmart.DAXon.Serialization
                 }
                 catch (IOException e)
                 {
-                    throw new XPathException("Failed to close output stream");
+                    throw WriteFailure(e);
                 }
             }
         }

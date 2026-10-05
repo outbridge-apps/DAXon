@@ -102,7 +102,7 @@ namespace OutSmart.DAXon.Lib
                 // This is optimistic: I have yet to discover a URL scheme that it can handle "out of the box".
                 // But it can apparently be achieved using custom-written protocol handlers.
                 // URL-protocol output branch neutered (no compat URLConnection output; stock JVM throws here too):
-                throw new XPathException("Failed to establish connection to non-file output destination: " + absoluteURI.ToASCIIString());
+                throw new XPathException("Failed to establish connection to non-file output destination: " + absoluteURI.ToASCIIString(), DAXonErrorCode.SXRD0004);
             }
         }
 

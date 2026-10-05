@@ -164,6 +164,14 @@ namespace OutSmart.DAXon.Serialization
                 uri = new Uri(Path.GetFullPath(uriString)).AbsoluteUri;
             }
 
+            // Java's File(URI) takes a file: URI and no other. LocalPath gives a path of this machine for any: a name
+            // such as "report:2024.xml" is a URI of the scheme "report" and was written as 2024.xml, and
+            // http://host/out.xml at the root of the current drive.
+            if (!string.Equals(uri.Scheme, "file", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("it is not the name of a file: '" + uri.Scheme + ":' reads as the scheme of a URI");
+            }
+
             string file = new Uri(uri.ToString()).LocalPath;
             try
             {
