@@ -399,7 +399,7 @@ namespace OutSmart.DAXon.Events
                         // external DTD (SYSTEM), fetch it and harvest its ATTLIST declarations too — the FOTS
                         // id/idref and xsl:number id() tests declare ID attributes in an external .dtd
                         // (number-4501, id-035). Best-effort: a missing/complex DTD leaves ID typing as-is.
-                        ParseExternalDtd(reader.GetAttribute("SYSTEM"));
+                        ParseExternalDtd(reader.GetAttribute("SYSTEM"), reader.GetAttribute("PUBLIC"));
                         break;
 
                         // XmlDeclaration, expanded EntityReference: nothing to emit.
@@ -515,9 +515,10 @@ namespace OutSmart.DAXon.Events
 
         // Fetch the external DTD subset (SYSTEM identifier) and harvest its ATTLIST declarations, so that
         // ID/IDREF attributes declared in an external .dtd are typed (fn:id/fn:idref, id() in patterns).
-        // Best-effort and file-only: parameter-entity indirection and includes are not expanded (adequate
-        // for the flat FOTS test DTDs); any failure silently leaves ID typing to the internal subset.
-        private void ParseExternalDtd(string systemId)
+        // Best-effort: parameter-entity indirection and includes are not expanded (adequate for the flat
+        // FOTS test DTDs); any failure silently leaves ID typing to the internal subset. Read as the parser
+        // read it: from the host's resolver if that serves it, else from the file.
+        private void ParseExternalDtd(string systemId, string publicId)
         {
             if (string.IsNullOrEmpty(systemId))
             {
@@ -537,16 +538,30 @@ namespace OutSmart.DAXon.Events
                     return;
                 }
 
-                if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(pipe.GetConfiguration()) && OutSmart.DAXon.Internal.ResourceGate.CheckRead(pipe.GetConfiguration(), abs.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity) != null)
+                string text = null;
+                using (Stream served = ResourceResolverXmlResolver.StreamOf(ResourceResolverXmlResolver.Ask(pipe.GetConfiguration().GetResourceResolver(), abs, publicId)))
                 {
-                    return;
+                    if (served != null)
+                    {
+                        text = new StreamReader(served).ReadToEnd();
+                    }
                 }
 
-                if (abs.IsFile && System.IO.File.Exists(abs.LocalPath))
+                if (text == null)
                 {
-                    ParseDtdAttTypes(System.IO.File.ReadAllText(abs.LocalPath));
-                    ParseDtdUnparsedEntities(System.IO.File.ReadAllText(abs.LocalPath));
+                    if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(pipe.GetConfiguration()) && OutSmart.DAXon.Internal.ResourceGate.CheckRead(pipe.GetConfiguration(), abs.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity) != null)
+                    {
+                        return;
+                    }
+
+                    if (abs.IsFile && System.IO.File.Exists(abs.LocalPath))
+                    {
+                        text = System.IO.File.ReadAllText(abs.LocalPath);
+                    }
                 }
+
+                ParseDtdAttTypes(text);
+                ParseDtdUnparsedEntities(text);
             }
             catch { }
         }
@@ -797,6 +812,7 @@ namespace OutSmart.DAXon.Events
             private readonly Configuration config;
             private readonly Uri principal;
             private bool principalPending;   // the parser opens the document itself first, before anything it references
+            private PublicIdProbe publicIds;
 
             // Of the document the parser opened by system id, read from the open handle, so a tree can be
             // sized from it; else -1.
@@ -827,7 +843,45 @@ namespace OutSmart.DAXon.Events
                 }
             }
 
+            public override Uri ResolveUri(Uri baseUri, string relativeUri)
+            {
+                Uri resolved;
+                try
+                {
+                    resolved = base.ResolveUri(baseUri, relativeUri);
+                }
+                catch (Exception)
+                {
+                    publicIds.NotResolved(relativeUri);
+                    throw;
+                }
+
+                publicIds.Resolved(relativeUri, resolved);
+                return resolved;
+            }
+
             public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
+            {
+                if (principalPending || config == null)
+                {
+                    return Open(absoluteUri, role, ofObjectToReturn);
+                }
+
+                try
+                {
+                    // What a document pulls in - its external DTD, an external entity - is the host's resolver's to
+                    // serve first, as a stylesheet's is: its own answer, neither gated nor capped.
+                    Stream served = ResourceResolverXmlResolver.StreamOf(ResourceResolverXmlResolver.Ask(config.GetResourceResolver(), absoluteUri, publicIds.Take()));
+                    return served ?? Open(absoluteUri, role, ofObjectToReturn);
+                }
+                catch (Exception)
+                {
+                    publicIds.NotOpened(absoluteUri);
+                    throw;
+                }
+            }
+
+            private object Open(Uri absoluteUri, string role, System.Type ofObjectToReturn)
             {
                 if (absoluteUri != null && absoluteUri.IsFile)
                 {

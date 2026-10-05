@@ -398,12 +398,11 @@ namespace OutSmart.DAXon.Api
             config.RegisterCollection(collectionURI, collection);
         }
 
+        // XML catalogs are not read: until 1.4 this call did nothing at all. What a catalog would map - a DTD, an
+        // entity, a document, a stylesheet module - a resource resolver serves (Configuration.SetResourceResolver).
         public virtual void SetCatalogFiles(params string[] fileNames)
         {
-            if (config.GetResourceResolver() is IConfigurableResourceResolver)
-            {
-                CommandLineOptions.SetCatalogFiles(((IConfigurableResourceResolver)config.GetResourceResolver()), fileNames.ToList());
-            }
+            throw new NotSupportedException("XML catalogs are not supported: serve the resources they would map from a resource resolver (Configuration.SetResourceResolver)");
         }
 
         public virtual void WriteXdmValue(XdmValue value, IDestination destination)

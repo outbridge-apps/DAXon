@@ -31,6 +31,7 @@ namespace OutSmart.DAXon.Lib
         private readonly OutSmart.DAXon.Core.Configuration config;
         private readonly Uri principal;
         private bool principalPending;   // the parser opens the document itself first, before anything it references
+        private PublicIdProbe publicIds;
 
         public ResourceResolverXmlResolver(IResourceResolver resolver)
             : this(resolver, null, null)
@@ -58,9 +59,41 @@ namespace OutSmart.DAXon.Lib
             }
         }
 
+        public override Uri ResolveUri(Uri baseUri, string relativeUri)
+        {
+            Uri resolved;
+            try
+            {
+                resolved = base.ResolveUri(baseUri, relativeUri);
+            }
+            catch (Exception)
+            {
+                publicIds.NotResolved(relativeUri);
+                throw;
+            }
+
+            publicIds.Resolved(relativeUri, resolved);
+            return resolved;
+        }
+
         public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
         {
-            object entity = Fetch(absoluteUri, principalPending);
+            object entity;
+            try
+            {
+                entity = Fetch(absoluteUri, principalPending, publicIds.Take());
+            }
+            catch (Exception)
+            {
+                publicIds.NotOpened(absoluteUri);
+                throw;
+            }
+
+            if (entity == null)
+            {
+                publicIds.NotOpened(absoluteUri);
+            }
+
             if (principalPending)
             {
                 // The input the host asked for by system id: capped as a stream it passes would be.
@@ -71,13 +104,9 @@ namespace OutSmart.DAXon.Lib
             return entity;
         }
 
-        private object Fetch(Uri absoluteUri, bool isPrincipal)
+        private object Fetch(Uri absoluteUri, bool isPrincipal, string publicId)
         {
-            ResourceRequest request = new ResourceRequest();
-            request.uri = absoluteUri?.ToString();
-            request.nature = ResourceRequest.EXTERNAL_ENTITY_NATURE;
-            request.purpose = ResourceRequest.ANY_PURPOSE;
-            ResolvedResource resolved = resolver.Resolve(request);
+            ResolvedResource resolved = Ask(resolver, absoluteUri, publicId);
             if (resolved == null)
             {
                 // Java's SAX parser fetches file-relative external DTDs/entities itself when no
@@ -100,20 +129,69 @@ namespace OutSmart.DAXon.Lib
                 return null;
             }
 
-            Stream byteStream = resolved.Stream;
-            if (byteStream != null)
+            return StreamOf(resolved);
+        }
+
+        // The host's resolver asked for an external DTD subset or an external entity. publicId: of its declaration,
+        // when the parser tried that first (see PublicIdProbe).
+        internal static ResolvedResource Ask(IResourceResolver resolver, Uri absoluteUri, string publicId)
+        {
+            ResourceRequest request = new ResourceRequest();
+            request.uri = absoluteUri?.ToString();
+            request.publicId = publicId;
+            request.nature = ResourceRequest.EXTERNAL_ENTITY_NATURE;
+            request.purpose = ResourceRequest.ANY_PURPOSE;
+            return resolver.Resolve(request);
+        }
+
+        // Its answer as the stream System.Xml reads; null when it carries none.
+        internal static Stream StreamOf(ResolvedResource resolved)
+        {
+            if (resolved == null)
             {
-                return byteStream;
+                return null;
             }
 
-            TextReader charStream = resolved.TextReader;
-            if (charStream != null)
+            if (resolved.Stream != null)
             {
-                // XmlReader wants a Stream; entities are small, so materialize the reader.
-                return new MemoryStream(Encoding.UTF8.GetBytes(charStream.ReadToEnd()));
+                return resolved.Stream;
             }
 
-            return null;
+            // XmlReader wants a Stream; entities are small, so materialize the reader.
+            return resolved.TextReader != null ? new MemoryStream(Encoding.UTF8.GetBytes(resolved.TextReader.ReadToEnd())) : null;
+        }
+    }
+
+    // System.Xml tries a PUBLIC identifier as if it were a URI before the SYSTEM one, and gives a resolver one of them at
+    // a time. A fetch that follows one which opened nothing is the SYSTEM one of the same declaration.
+    internal struct PublicIdProbe
+    {
+        private string lastRelative;
+        private Uri lastResolved;
+        private string unopened;
+
+        public void Resolved(string relativeUri, Uri resolved)
+        {
+            lastRelative = relativeUri;
+            lastResolved = resolved;
+        }
+
+        public void NotResolved(string relativeUri)
+        {
+            unopened = relativeUri;
+        }
+
+        public void NotOpened(Uri absoluteUri)
+        {
+            unopened = absoluteUri != null && absoluteUri.Equals(lastResolved) ? lastRelative : null;
+        }
+
+        // The PUBLIC identifier of the declaration being fetched, if the parser tried one first.
+        public string Take()
+        {
+            string publicId = unopened;
+            unopened = null;
+            return publicId;
         }
     }
 }
