@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Core
         // /"Saxonica". saxon: extension functions still resolve (the http://saxon.sf.net/ namespace
         // is kept for interop); stylesheets should feature-detect by capability, not by vendor string.
         public static string ProductName => "OutSmart DAXon";
-        public static string ProductVendor => "OutSmart";
+        public static string ProductVendor => "Outbridge";
         // Engine-base version, NOT this distribution's: tracks the Saxon-HE 12.9 base for the SEF
         // guard, the fn:transform version match, xsl:product-version and the trace header.
         public static string ProductVersion => "12.9";
@@ -42,8 +42,8 @@ namespace OutSmart.DAXon.Core
         }
 
         public static string SoftwarePlatform => ".NET";
-        // xsl:vendor-url. Points at THIS distribution's site (OutSmart), not the Saxon base's.
-        public static string WebSiteAddress => "https://outsmartteam.com/";
+        // xsl:vendor-url. Points at THIS distribution's site (Outbridge), not the Saxon base's.
+        public static string WebSiteAddress => "https://outbridge.app/";
         // Faithful to Java getProductVariantAndVersion(edition) = edition + " " + getProductVersion()
         // (e.g. "HE 12.9"), which backs xsl:product-version -- NOT "Saxon-HE 12.9".
         public static string GetProductVariantAndVersion(string edition) => edition + " " + ProductVersion;
