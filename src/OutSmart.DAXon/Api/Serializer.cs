@@ -126,6 +126,7 @@ namespace OutSmart.DAXon.Api
         public virtual void SetOutputProperty(Property property, string value)
         {
             SerializerFactory sf = processor.UnderlyingConfiguration.SerializerFactory;
+            value = WithoutHalfPairs(value);
             try
             {
                 // Upstream Property.toString() returns the Clark-notation parameter name; the C# enum's
@@ -153,9 +154,17 @@ namespace OutSmart.DAXon.Api
             return properties.GetOrDefault(property.GetQName().GetStructuredQName());
         }
 
+        // A value the host passes - an item separator, a doctype identifier - is text of the output like any other:
+        // half a surrogate pair in it is U+FFFD.
+        private static string WithoutHalfPairs(string value)
+        {
+            return value == null ? null : OutSmart.DAXon.Text.StringTool.WithoutHalfPairs(value);
+        }
+
         public virtual void SetOutputProperty(QName property, string value)
         {
             SerializerFactory sf = processor.UnderlyingConfiguration.SerializerFactory;
+            value = WithoutHalfPairs(value);
             NamespaceUri uri = property.GetNamespaceUri();
             if (uri.IsEmpty() || uri.Equals(NamespaceUri.SAXON))
             {

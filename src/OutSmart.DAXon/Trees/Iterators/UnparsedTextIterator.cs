@@ -133,6 +133,15 @@ namespace OutSmart.DAXon.Trees.Iterators
                 int ch32 = buffer[c++];
                 if (UTF16CharacterSet.IsHighSurrogate(ch32))
                 {
+                    // Half a pair with no other half after it - only a reader of the host's delivers one: the line
+                    // ended there (an index out of range), or the next character was taken for the half and passed
+                    // the test with it. The same error unparsed-text() has for it.
+                    if (c >= buffer.Length || !UTF16CharacterSet.IsLowSurrogate(buffer[c]))
+                    {
+                        Dispose();
+                        throw new XPathException("The unparsed-text file contains an unpaired surrogate (line=" + position + " column=" + c + " value=hex " + (ch32).ToString("x", CultureInfo.InvariantCulture) + ')').WithErrorCode("FOUT1190");
+                    }
+
                     char low = buffer[c++];
                     ch32 = UTF16CharacterSet.CombinePair((char)ch32, low);
                 }

@@ -216,7 +216,11 @@ namespace OutSmart.DAXon.Resources
                 }
                 else
                 {
-                    yield return new Uri(entry.FullName).AbsoluteUri;
+                    // A name on NTFS is any sixteen-bit units, half a surrogate pair among them, and no URI has
+                    // that: System.Uri throws for it when its text is asked for (.NET Framework). U+FFFD stands for
+                    // the half, as in any text from outside; the member is then a file that is not found, which
+                    // on-error decides about.
+                    yield return new Uri(OutSmart.DAXon.Text.StringTool.WithoutHalfPairs(entry.FullName)).AbsoluteUri;
                 }
             }
         }

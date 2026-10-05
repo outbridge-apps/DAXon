@@ -66,14 +66,74 @@ namespace OutSmart.DAXon.Text
             return sb.ToUnicodeString();
         }
 
+        // Half a surrogate pair is no character: U+FFFD stands where one is. A string that has none is returned as it is.
+        public static string WithoutHalfPairs(string s)
+        {
+            int at = HalfPairAt(s, 0);
+            if (at < 0)
+            {
+                return s;
+            }
+
+            char[] chars = s.ToCharArray();
+            while (at >= 0)
+            {
+                chars[at] = (char)0xFFFD;
+                at = HalfPairAt(s, at + 1);
+            }
+
+            return new string(chars);
+        }
+
+        // Where the first surrogate at or after an index is that is not one of a pair, or -1.
+        private static int HalfPairAt(string s, int from)
+        {
+            for (int i = from; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (c >= 0xD800 && c <= 0xDFFF)
+                {
+                    if (c <= 0xDBFF && i + 1 < s.Length && s[i + 1] >= 0xDC00 && s[i + 1] <= 0xDFFF)
+                    {
+                        i++;
+                    }
+                    else
+                    {
+                        return i;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
         public static UnicodeString FromCharSequence(string chars)
         {
+            // One pass tells the string of no surrogate at all - nearly every string - from the rest. Upstream counts
+            // the high ones only and takes whatever follows one for its other half: a string cut through a pair was
+            // an index out of range, or lost the character after it.
+            int surrogates = 0;
+            for (int i = 0; i < chars.Length; i++)
+            {
+                char c = chars[i];
+                if (c >= 0xD800 && c <= 0xDFFF)
+                {
+                    surrogates++;
+                }
+            }
+
+            if (surrogates == 0)
+            {
+                return new BMPString(chars);
+            }
+
+            chars = WithoutHalfPairs(chars);
             int uLength = StringTool.GetStringLength(chars);
             if (uLength == chars.Length)
             {
 
                 // No surrogate pairs
-                return new BMPString(chars.ToString());
+                return new BMPString(chars);
             }
             else
             {

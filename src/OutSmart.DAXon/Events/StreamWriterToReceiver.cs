@@ -39,6 +39,10 @@ namespace OutSmart.DAXon.Events
         private bool pendingAttributeIsNamespaceDecl;
         private readonly StringBuilder attributeValue = new StringBuilder();
 
+        // The first half of a surrogate pair that a piece of text ended with, or zero. Text may come in pieces cut
+        // anywhere - WriteChars by the buffer - and the other half may open the next piece.
+        private char heldHalf;
+
         public virtual IReceiver Receiver => receiver;
 
         public StreamWriterToReceiver(IReceiver receiver)
@@ -55,6 +59,36 @@ namespace OutSmart.DAXon.Events
         public virtual void SetCheckValues(bool check)
         {
             this.isChecking = check;
+        }
+
+        // Text of the host's: half a surrogate pair is U+FFFD, as wherever text comes in - but for one that ends the
+        // piece, which waits for what follows it.
+        private string Paired(string text)
+        {
+            if (heldHalf != '\0')
+            {
+                text = heldHalf + text;
+                heldHalf = '\0';
+            }
+
+            int last = text.Length - 1;
+            if (last >= 0 && char.IsHighSurrogate(text[last]))
+            {
+                heldHalf = text[last];
+                text = text.Substring(0, last);
+            }
+
+            return StringTool.WithoutHalfPairs(text);
+        }
+
+        // Nothing followed the half that was held: it is U+FFFD, in the text it ended.
+        private void ReleaseHalf()
+        {
+            if (heldHalf != '\0')
+            {
+                heldHalf = '\0';
+                receiver.Characters(StringView.Of(((char)0xFFFD).ToString()), Loc.NONE, ReceiverOption.NONE);
+            }
         }
 
         public virtual bool IsCheckValues()
@@ -242,6 +276,7 @@ namespace OutSmart.DAXon.Events
             }
 
             FlushStartTag();
+            ReleaseHalf();
             while (depth > 0)
             {
                 WriteEndElement();
@@ -260,6 +295,7 @@ namespace OutSmart.DAXon.Events
         {
             CheckNonNull(localName);
             FlushStartTag();
+            ReleaseHalf();
             depth++;
             pendingTag = new StartTag();
             pendingTag.elementName.local = localName;
@@ -275,6 +311,7 @@ namespace OutSmart.DAXon.Events
             }
 
             FlushStartTag();
+            ReleaseHalf();
             namespaceStack.Pop();
             receiver.EndElement();
             depth--;
@@ -329,14 +366,16 @@ namespace OutSmart.DAXon.Events
                 throw new InvalidOperationException("WriteEndAttribute with no matching WriteStartAttribute");
             }
 
+            // the pieces of the value are together here: what is half a pair now has no other half
+            string value = StringTool.WithoutHalfPairs(attributeValue.ToString());
             if (pendingAttributeIsNamespaceDecl)
             {
-                pendingAttribute.uri = NamespaceUri.Of(attributeValue.ToString());
+                pendingAttribute.uri = NamespaceUri.Of(value);
                 pendingTag.namespaces.Add(pendingAttribute);
             }
             else
             {
-                pendingAttribute.value = attributeValue.ToString();
+                pendingAttribute.value = value;
                 pendingTag.attributes.Add(pendingAttribute);
             }
 
@@ -353,6 +392,12 @@ namespace OutSmart.DAXon.Events
             }
 
             FlushStartTag();
+            text = Paired(text);
+            if (text.Length == 0)
+            {
+                return;
+            }
+
             UnicodeString uData = StringView.Of(text);
             if (!IsValidChars(uData))
             {
@@ -416,11 +461,8 @@ namespace OutSmart.DAXon.Events
         public override void WriteComment(string text)
         {
             FlushStartTag();
-            if (text == null)
-            {
-                text = "";
-            }
-
+            ReleaseHalf();
+            text = text == null ? "" : StringTool.WithoutHalfPairs(text);
             UnicodeString uData = StringView.Of(text);
             if (!IsValidChars(uData))
             {
@@ -438,12 +480,9 @@ namespace OutSmart.DAXon.Events
         public override void WriteProcessingInstruction(string name, string text)
         {
             CheckNonNull(name);
-            if (text == null)
-            {
-                text = "";
-            }
-
+            text = text == null ? "" : StringTool.WithoutHalfPairs(text);
             FlushStartTag();
+            ReleaseHalf();
             UnicodeString uData = StringView.Of(text);
             if (isChecking)
             {
@@ -496,6 +535,7 @@ namespace OutSmart.DAXon.Events
                 return;
             }
 
+            ReleaseHalf();
             if (depth >= 0)
             {
                 WriteEndDocument();

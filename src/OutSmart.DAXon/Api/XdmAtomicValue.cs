@@ -196,7 +196,7 @@ namespace OutSmart.DAXon.Api
             try
             {
                 StringConverter converter = ((IAtomicType)it).GetStringConverter(type.GetConversionRules());
-                return converter.ConvertString(StringView.Of(lexicalForm).Tidy()).AsAtomic();
+                return converter.ConvertString(StringView.Of(StringTool.WithoutHalfPairs(lexicalForm)).Tidy()).AsAtomic();
             }
             catch (ValidationException e)
             {

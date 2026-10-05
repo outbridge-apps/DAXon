@@ -67,7 +67,15 @@ namespace OutSmart.DAXon.Text
                 return new StringView(_s.Substring((int)start, (int)(end - start)));
             var sb = new System.Text.StringBuilder();
             for (long i = start; i < end; i++)
-                sb.Append(char.ConvertFromUtf32(_cps[i]));
+            {
+                // half a pair that was wrapped as it stood is one code unit here, and stays one
+                int cp = _cps[i];
+                if (cp >= 0xD800 && cp <= 0xDFFF)
+                    sb.Append((char)cp);
+                else
+                    sb.Append(char.ConvertFromUtf32(cp));
+            }
+
             return new StringView(sb.ToString());
         }
         public override UnicodeString Concat(UnicodeString other) => new StringView(_s + other?.ToString());

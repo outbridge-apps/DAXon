@@ -32,6 +32,13 @@ namespace OutSmart.DAXon.Internal.Net
             {
                 throw new URISyntaxException(str, "URI contains more than one '#'");
             }
+
+            // Half a surrogate pair is no character of a URI. System.Uri takes the string and throws
+            // UriFormatException later, from whichever property is read first - past every catch written for this.
+            if (str != null && !ReferenceEquals(OutSmart.DAXon.Text.StringTool.WithoutHalfPairs(str), str))
+            {
+                throw new URISyntaxException(str, "URI contains half a surrogate pair");
+            }
             try { Inner = new Uri(str, UriKind.RelativeOrAbsolute); }
             catch (UriFormatException e) { throw new URISyntaxException(str, e.Message); }
         }

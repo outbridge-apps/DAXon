@@ -74,6 +74,12 @@ namespace OutSmart.DAXon.Events
             return Refused(new DAXonApiException(message));
         }
 
+        // Content the host hands over: a string cut through a surrogate pair has U+FFFD where the half is.
+        private static string Paired(string value)
+        {
+            return StringTool.WithoutHalfPairs(value);
+        }
+
         private string Name(string what, string name)
         {
             if (name == null || !NameChecker.IsValidNCName(name))
@@ -158,7 +164,7 @@ namespace OutSmart.DAXon.Events
 
             public void SetDefaultNamespace(string uri)
             {
-                uri = uri ?? "";
+                uri = Paired(uri ?? "");
                 push.Declares("", NamespaceUri.Of(uri));
                 defaultNamespace = uri;
             }
@@ -204,7 +210,7 @@ namespace OutSmart.DAXon.Events
                 ImplicitClose();
                 if (!string.IsNullOrEmpty(value))
                 {
-                    push.Send(() => push.cco.Characters(StringView.Of(value), Loc.NONE, ReceiverOption.NONE));
+                    push.Send(() => push.cco.Characters(StringView.Of(Paired(value)), Loc.NONE, ReceiverOption.NONE));
                 }
             }
 
@@ -218,7 +224,7 @@ namespace OutSmart.DAXon.Events
                         throw push.Refused("A comment cannot contain '--' or end with '-'");
                     }
 
-                    push.Send(() => push.cco.Comment(StringView.Of(value), Loc.NONE, ReceiverOption.NONE));
+                    push.Send(() => push.cco.Comment(StringView.Of(Paired(value)), Loc.NONE, ReceiverOption.NONE));
                 }
             }
 
@@ -238,7 +244,7 @@ namespace OutSmart.DAXon.Events
                         throw push.Refused("A processing instruction cannot contain '?>'");
                     }
 
-                    push.Send(() => push.cco.ProcessingInstruction(name, StringView.Of(value), Loc.NONE, ReceiverOption.NONE));
+                    push.Send(() => push.cco.ProcessingInstruction(name, StringView.Of(Paired(value)), Loc.NONE, ReceiverOption.NONE));
                 }
             }
 
@@ -396,7 +402,7 @@ namespace OutSmart.DAXon.Events
                 if (value != null)
                 {
                     INodeName nodeName = push.Name("an attribute", name, true);
-                    push.Send(() => push.cco.Attribute(nodeName, BuiltInAtomicType.UNTYPED_ATOMIC, value, Loc.NONE, ReceiverOption.NONE));
+                    push.Send(() => push.cco.Attribute(nodeName, BuiltInAtomicType.UNTYPED_ATOMIC, Paired(value), Loc.NONE, ReceiverOption.NONE));
                 }
 
                 return this;
@@ -408,7 +414,7 @@ namespace OutSmart.DAXon.Events
                 if (value != null)
                 {
                     INodeName nodeName = new NoNamespaceName(push.AttributeName(push.Name("an attribute", name)));
-                    push.Send(() => push.cco.Attribute(nodeName, BuiltInAtomicType.UNTYPED_ATOMIC, value, Loc.NONE, ReceiverOption.NONE));
+                    push.Send(() => push.cco.Attribute(nodeName, BuiltInAtomicType.UNTYPED_ATOMIC, Paired(value), Loc.NONE, ReceiverOption.NONE));
                 }
 
                 return this;
@@ -423,7 +429,7 @@ namespace OutSmart.DAXon.Events
                     push.Name("a namespace prefix", prefix);
                 }
 
-                NamespaceUri bound = NamespaceUri.Of(uri ?? "");
+                NamespaceUri bound = NamespaceUri.Of(Paired(uri ?? ""));
                 if (push.Declares(prefix, bound))
                 {
                     push.Send(() => push.cco.Namespace(prefix, bound, ReceiverOption.NONE));
