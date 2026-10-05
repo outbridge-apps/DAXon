@@ -59,6 +59,10 @@ namespace OutSmart.DAXon.Events
         // node, so a line-numbered parse keeps the Value route to preserve text-node locators.
         private readonly bool chunkValues;
 
+        // The reader does not check character references (an XML 1.1 label has that switched off, a host's own reader
+        // may never do it), so what no XML has is refused here: U+0000 above all, which the serializer reads as its own mark.
+        private bool vetCharacters;
+
         private XmlPullLocation localLocator;
         private readonly Stack<string> entityBaseStack = new Stack<string>();   // reader.BaseURI per open element
         private ILocation lastTextNodeLocator;
@@ -754,6 +758,7 @@ namespace OutSmart.DAXon.Events
             // whitespace is Whitespace, so this stays off and such nodes are preserved. A parse that keeps
             // all whitespace keeps this too, as Saxon's SAX handler does.
             XmlReaderSettings settings = reader.Settings;
+            vetCharacters = settings == null || !settings.CheckCharacters;
             bool dtdWhitespaceClassification = false;
             DtdEvents dtd = null;
             if (settings != null && settings.ValidationType == ValidationType.DTD)
@@ -1045,6 +1050,11 @@ namespace OutSmart.DAXon.Events
             {
                 do
                 {
+                    if (vetCharacters)
+                    {
+                        Vet(new StringUnits(reader.Value));
+                    }
+
                     string aPrefix = reader.Prefix;
                     string aLocal = reader.LocalName;
                     if ((aPrefix.Length == 0 && aLocal == "xmlns") || aPrefix == "xmlns")
@@ -1183,6 +1193,11 @@ namespace OutSmart.DAXon.Events
         {
             if (charsUsed > 0)
             {
+                if (vetCharacters)
+                {
+                    Vet(new CharUnits(buffer, charsUsed));
+                }
+
                 if (directBuilder != null && !escapingDisabled)
                 {
                     directBuilder.CharactersDirect(buffer, charsUsed, compress, lastTextNodeLocator);
@@ -1198,9 +1213,37 @@ namespace OutSmart.DAXon.Events
             }
         }
 
+        // Fails the parse, as the parser itself does for a 1.0 document, on a code unit that no XML has in 1.1 either:
+        // U+0000, half a surrogate pair, U+FFFE, U+FFFF.
+        private void Vet<T>(T units)
+            where T : struct, IUnits
+        {
+            int n = units.Count;
+            for (int i = 0; i < n; i++)
+            {
+                int unit = units[i];
+                if (unit >= 0xD800 && unit <= 0xDBFF && i + 1 < n && units[i + 1] >= 0xDC00 && units[i + 1] <= 0xDFFF)
+                {
+                    i++;
+                }
+                else if (unit == 0 || unit >= 0xFFFE || (unit >= 0xD800 && unit <= 0xDFFF))
+                {
+                    string code = "U+" + unit.ToString("X4");
+                    string what = unit >= 0xD800 && unit <= 0xDFFF ? "half a surrogate pair (" + code + ")" : "the character " + code;
+                    throw new XmlException("XML does not allow " + what + ", as a character reference either.",
+                        null, Math.Max(0, localLocator.GetLineNumber()), Math.Max(0, localLocator.GetColumnNumber()));
+                }
+            }
+        }
+
         private void ProcessingInstruction(string target, string data)
         {
             Flush(true);
+            if (vetCharacters && data != null)
+            {
+                Vet(new StringUnits(data));
+            }
+
             if (allowDisableOutputEscaping)
             {
                 if (target.Equals(PI_DISABLE_OUTPUT_ESCAPING))
@@ -1224,6 +1267,11 @@ namespace OutSmart.DAXon.Events
         private void Comment(string text)
         {
             Flush(true);
+            if (vetCharacters && text != null)
+            {
+                Vet(new StringUnits(text));
+            }
+
             receiver.Comment(StringView.Of(text), localLocator, ReceiverOption.NONE);
         }
 
