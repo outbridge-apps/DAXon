@@ -37,8 +37,8 @@ namespace OutSmart.DAXon.Events
     internal sealed class XmlReaderToReceiver
     {
 
-        // The XML declaration is ASCII in every byte-oriented XML encoding, so matching the first bytes
-        // directly finds version="1.1" regardless of the real encoding (UTF-16 is not peeked, as before).
+        // The head of an input read ahead for its XML declaration: room for one in any encoding the parser tells
+        // by itself, UTF-32 included.
         private const int XmlDeclPeekBytes = 256;
         // .NET's own default since 4.5.2, set explicitly: in .NET Framework's legacy XML mode (an IIS app whose httpRuntime
         // targetFramework is below 4.5.2) the reader has no limit: a billion-laughs DTD expands until time or memory runs out.
@@ -184,7 +184,9 @@ namespace OutSmart.DAXon.Events
         // inputInEntity: characters of the input itself that arrive as an external entity (parse-xml-fragment),
         // which the reader would otherwise count against the expansion limit.
         // reporter: receives the validity errors of a validating parse; the configuration's when null.
-        public static XmlReader CreateXmlReader(TextReader charStream, Stream byteStream, string systemId, XmlResolver resolver, DtdUse dtd, Configuration config = null, long inputInEntity = 0, IErrorReporter reporter = null)
+        // mayBeXml11: false when the caller has seen that the characters it passes are not labelled XML 1.1 (see
+        // Xml11Label), which spares them the read-ahead.
+        public static XmlReader CreateXmlReader(TextReader charStream, Stream byteStream, string systemId, XmlResolver resolver, DtdUse dtd, Configuration config = null, long inputInEntity = 0, IErrorReporter reporter = null, bool mayBeXml11 = true)
         {
             XmlResolver entities = resolver ?? new FileOnlyXmlResolver(config, charStream == null && byteStream == null ? systemId : null);
             var settings = new XmlReaderSettings
@@ -211,8 +213,8 @@ namespace OutSmart.DAXon.Events
             // finalizer holding its file handle or pooled socket. The declaration peek is a real throw
             // site: a guarded network stream raises SXTO0001 from Read when the run's deadline expires.
 
-            // A reader that tells a DTD's whitespace apart validates, which costs every text node its fast lane:
-            // the prolog is read first, and a document that has no DOCTYPE gets the plain reader.
+            // The head of every input is read first: for an XML 1.1 label, which the parser refuses (see Xml11Label), and
+            // for a DOCTYPE - without one the reader need not validate to tell a DTD's whitespace, and keeps its fast lane.
             bool mayHaveDoctype = true;
             string baseUri = systemId ?? string.Empty;
             var use = new DtdSetup { Dtd = dtd, SystemId = baseUri, Reporter = reporter, Config = config };
@@ -220,9 +222,9 @@ namespace OutSmart.DAXon.Events
             {
                 try
                 {
-                    if (dtd == DtdUse.Whitespace)
+                    if (dtd == DtdUse.Whitespace || mayBeXml11)
                     {
-                        charStream = PeekProlog(charStream, out mayHaveDoctype);
+                        charStream = PeekProlog(charStream, settings, dtd == DtdUse.Whitespace, out mayHaveDoctype);
                     }
 
                     return Tracked(XmlReader.Create(charStream, UseDtd(settings, mayHaveDoctype, ref use), baseUri), use.Events);
@@ -236,12 +238,9 @@ namespace OutSmart.DAXon.Events
 
             if (byteStream != null)
             {
-                // XML 1.1: .NET's XmlReader rejects version="1.1". If the declaration announces 1.1, downgrade
-                // it to 1.0 in a pass-through wrapper and relax character checking so the C0 controls that are
-                // well-formed in 1.1 (but not 1.0) pass. A 1.0 / declaration-less document is untouched.
                 try
                 {
-                    byteStream = PeekHead(byteStream, settings, true, dtd == DtdUse.Whitespace, out mayHaveDoctype);
+                    byteStream = PeekHead(byteStream, settings, dtd == DtdUse.Whitespace, out mayHaveDoctype);
                     return Tracked(XmlReader.Create(byteStream, UseDtd(settings, mayHaveDoctype, ref use), baseUri), use.Events);
                 }
                 catch
@@ -255,28 +254,43 @@ namespace OutSmart.DAXon.Events
 
             if (!string.IsNullOrEmpty(systemId))
             {
-                if (dtd == DtdUse.Whitespace && entities is FileOnlyXmlResolver opener)
+                // Opened here the way XmlReader.Create(systemId) opens it, for its head to be read first.
+                Uri uri = entities.ResolveUri(null, systemId);
+                Stream principal = (Stream)entities.GetEntity(uri, string.Empty, typeof(Stream));
+                if (principal == null)
                 {
-                    // Opened here the way XmlReader.Create(systemId) opens it, for the prolog to be read first. A
-                    // version="1.1" declaration is left alone, as it always was for an input given by system id.
-                    Uri uri = opener.ResolveUri(null, systemId);
-                    Stream principal = (Stream)opener.GetEntity(uri, string.Empty, typeof(Stream));
-                    try
-                    {
-                        principal = PeekHead(principal, settings, false, true, out mayHaveDoctype);
-                        return Tracked(XmlReader.Create(principal, UseDtd(settings, mayHaveDoctype, ref use), uri.ToString()), use.Events);
-                    }
-                    catch
-                    {
-                        principal.Dispose();
-                        throw;
-                    }
+                    // Nothing serves it: the parser's own failure for that, in its own words.
+                    settings.XmlResolver = new ServesNothing();
+                    return XmlReader.Create(systemId, settings);
                 }
 
-                return Tracked(XmlReader.Create(systemId, UseDtd(settings, true, ref use)), use.Events);
+                try
+                {
+                    principal = PeekHead(principal, settings, dtd == DtdUse.Whitespace, out mayHaveDoctype);
+                    return Tracked(XmlReader.Create(principal, UseDtd(settings, mayHaveDoctype, ref use), uri.ToString()), use.Events);
+                }
+                catch
+                {
+                    principal.Dispose();
+                    throw;
+                }
             }
 
             throw new XPathException("ActiveStreamSource supplies neither a stream nor a system identifier");
+        }
+
+        // Has the parser say that an input given by system id cannot be resolved.
+        private sealed class ServesNothing : XmlResolver
+        {
+            public override System.Net.ICredentials Credentials
+            {
+                set { }
+            }
+
+            public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
+            {
+                return null;
+            }
         }
 
         // What CreateXmlReader was asked about the DTD, and the events of the reader it then made.
@@ -319,9 +333,9 @@ namespace OutSmart.DAXon.Events
         // DOCTYPE follows, which is right either way and only slower.
         private const int MaxPrologPeek = 64 * 1024;
 
-        // Reads the head of the stream: for a version="1.1" declaration, which it rewrites, and for whether the
-        // prolog has a DOCTYPE. What was read is served again.
-        private static Stream PeekHead(Stream input, XmlReaderSettings settings, bool downgradeXml11, bool findDoctype, out bool mayHaveDoctype)
+        // Reads the head of the stream: for the label of a document that says it is XML 1.1, which it takes off,
+        // and for whether the prolog has a DOCTYPE. What was read is served again.
+        private static Stream PeekHead(Stream input, XmlReaderSettings settings, bool findDoctype, out bool mayHaveDoctype)
         {
             // XmlReader refills its internal buffer in small chunks, so an unbuffered input
             // (File.OpenRead's 4KB default, raw network streams) pays a syscall per refill —
@@ -346,12 +360,13 @@ namespace OutSmart.DAXon.Events
                 n += r;
             }
 
-            int digit = downgradeXml11 ? Xml11VersionDigit(head, n) : -1;
+            ByteUnits units = UnitsOf(head, n);
+            int digit = Xml11Label(units, true);
             if (digit >= 0)
             {
                 settings.CheckCharacters = false;
                 // '1.1' -> '1.0' is length-preserving, so the byte offsets the parser sees are unchanged
-                head[digit] = (byte)'0';
+                head[units.LowByte(digit)] = (byte)'0';
             }
 
             mayHaveDoctype = true;
@@ -390,12 +405,20 @@ namespace OutSmart.DAXon.Events
             return FindDoctype(new StringUnits(xml), true) != Doctype.Absent;
         }
 
+        // Whether a document held as text says it is XML 1.1: one that does not is spared the read-ahead.
+        internal static bool IsLabelledXml11(string xml)
+        {
+            return Xml11Label(new StringUnits(xml), true) >= 0;
+        }
+
         // As PeekHead, for an input that arrives as characters.
-        private static TextReader PeekProlog(TextReader input, out bool mayHaveDoctype)
+        private static TextReader PeekProlog(TextReader input, XmlReaderSettings settings, bool findDoctype, out bool mayHaveDoctype)
         {
             char[] head = new char[XmlDeclPeekBytes];
             int n = 0;
             bool ended = false;
+            int label = LabelNeedsMore;
+            mayHaveDoctype = true;
             while (true)
             {
                 int r = n < head.Length ? input.Read(head, n, head.Length - n) : 0;
@@ -408,10 +431,29 @@ namespace OutSmart.DAXon.Events
                     ended = true;
                 }
 
-                Doctype found = FindDoctype(new CharUnits(head, n), ended);
-                if (found != Doctype.NeedsMore || (n == head.Length && n >= MaxPrologPeek))
+                if (label == LabelNeedsMore)
                 {
-                    mayHaveDoctype = found != Doctype.Absent;
+                    // A declaration that does not end within the first head is not looked at further.
+                    label = Xml11Label(new CharUnits(head, n), ended || n == head.Length);
+                    if (label >= 0)
+                    {
+                        settings.CheckCharacters = false;
+                        head[label] = '0';
+                    }
+                }
+
+                if (findDoctype)
+                {
+                    Doctype found = FindDoctype(new CharUnits(head, n), ended);
+                    if (found != Doctype.NeedsMore || (n == head.Length && n >= MaxPrologPeek))
+                    {
+                        mayHaveDoctype = found != Doctype.Absent;
+                        findDoctype = false;
+                    }
+                }
+
+                if (label != LabelNeedsMore && !findDoctype)
+                {
                     break;
                 }
 
@@ -471,7 +513,7 @@ namespace OutSmart.DAXon.Events
             public int this[int index] => text[index];
         }
 
-        // Bytes of an encoding that keeps ASCII (size 1), or of UTF-16 (size 2).
+        // Bytes of an encoding that keeps ASCII (size 1), of UTF-16 (size 2) or of UTF-32 (size 4).
         private readonly struct ByteUnits : IUnits
         {
             private readonly byte[] bytes;
@@ -484,7 +526,7 @@ namespace OutSmart.DAXon.Events
             {
                 this.bytes = bytes;
                 this.start = start;
-                this.count = (end - start) / size;
+                this.count = end > start ? (end - start) / size : 0;
                 this.size = size;
                 this.bigEndian = bigEndian;
             }
@@ -500,10 +542,49 @@ namespace OutSmart.DAXon.Events
                         return bytes[start + index];
                     }
 
-                    int at = start + 2 * index;
-                    return bigEndian ? (bytes[at] << 8) | bytes[at + 1] : (bytes[at + 1] << 8) | bytes[at];
+                    int at = start + size * index;
+                    if (size == 2)
+                    {
+                        return bigEndian ? (bytes[at] << 8) | bytes[at + 1] : (bytes[at + 1] << 8) | bytes[at];
+                    }
+
+                    return bigEndian
+                        ? (bytes[at] << 24) | (bytes[at + 1] << 16) | (bytes[at + 2] << 8) | bytes[at + 3]
+                        : (bytes[at + 3] << 24) | (bytes[at + 2] << 16) | (bytes[at + 1] << 8) | bytes[at];
                 }
             }
+
+            // Where the low-order byte of a unit lies.
+            public int LowByte(int index)
+            {
+                return start + size * index + (bigEndian ? size - 1 : 0);
+            }
+        }
+
+        // The code units of a document's head, told as the parser tells them: UTF-16 and UTF-32 by a byte order mark or
+        // a first '<', anything else read as an encoding that keeps ASCII. head has room for four bytes whatever n is.
+        private static ByteUnits UnitsOf(byte[] head, int n)
+        {
+            int b0 = head[0], b1 = head[1], b2 = head[2], b3 = head[3];
+            if ((b0 == 0xFF && b1 == 0xFE) || (b0 == 0x3C && b1 == 0))
+            {
+                // Little-endian: UTF-32 begins as UTF-16 does and goes on with two zero bytes.
+                return b2 == 0 && b3 == 0
+                    ? new ByteUnits(head, b0 == 0xFF ? 4 : 0, n, 4, false)
+                    : new ByteUnits(head, b0 == 0xFF ? 2 : 0, n, 2, false);
+            }
+
+            if (b0 == 0 && b1 == 0 && ((b2 == 0xFE && b3 == 0xFF) || (b2 == 0 && b3 == 0x3C)))
+            {
+                return new ByteUnits(head, b2 == 0xFE ? 4 : 0, n, 4, true);
+            }
+
+            if ((b0 == 0xFE && b1 == 0xFF) || (b0 == 0 && b1 == 0x3C))
+            {
+                return new ByteUnits(head, b0 == 0xFE ? 2 : 0, n, 2, true);
+            }
+
+            return new ByteUnits(head, b0 == 0xEF && b1 == 0xBB && b2 == 0xBF ? 3 : 0, n, 1, false);
         }
 
         // complete: there is nothing after these bytes.
@@ -514,19 +595,7 @@ namespace OutSmart.DAXon.Events
                 return complete ? Doctype.Unknown : Doctype.NeedsMore;
             }
 
-            int b0 = head[0], b1 = head[1], b2 = head[2], b3 = head[3];
-            if ((b0 == 0xFF && b1 == 0xFE) || (b0 == 0x3C && b1 == 0))
-            {
-                // UTF-16LE with or without a byte order mark; UTF-32LE begins the same way and is not read here.
-                return b2 == 0 && b3 == 0 ? Doctype.Unknown : FindDoctype(new ByteUnits(head, b0 == 0xFF ? 2 : 0, n, 2, false), complete);
-            }
-
-            if ((b0 == 0xFE && b1 == 0xFF) || (b0 == 0 && b1 == 0x3C))
-            {
-                return FindDoctype(new ByteUnits(head, b0 == 0xFE ? 2 : 0, n, 2, true), complete);
-            }
-
-            return FindDoctype(new ByteUnits(head, b0 == 0xEF && b1 == 0xBB && b2 == 0xBF ? 3 : 0, n, 1, false), complete);
+            return FindDoctype(UnitsOf(head, n), complete);
         }
 
         // Walks the prolog - XML declaration, comments, processing instructions, whitespace - up to the DOCTYPE or
@@ -620,62 +689,58 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        // Offset of the last digit of version="1.1" (or '1.1') in the document's XML declaration, else
-        // -1. Checked on the bytes: decoding the peek to a Latin-1 string cost ~1 KB and 3.6k cycles
-        // per document.
-        private static int Xml11VersionDigit(byte[] head, int n)
+        // The units end before the XML declaration tells its version.
+        private const int LabelNeedsMore = -2;
+
+        // .NET's parser refuses a document labelled XML 1.1. It is read as the 1.0 document it nearly always is: the last
+        // digit of the label - found here, else -1 - becomes 0 in place, and the C0 references 1.1 allows are let through.
+        private static int Xml11Label<T>(T units, bool complete)
+            where T : struct, IUnits
         {
-            int decl = -1;
-            for (int i = 0; i <= 3; i++)   // a BOM may precede the declaration
+            // ' ' is white space, '_' white space that may be absent: a declaration and no other processing
+            // instruction, with the version first, as the grammar has it.
+            const string upToNumber = "<?xml _version_=_";
+            int cut = complete ? -1 : LabelNeedsMore;
+            int n = units.Count;
+            int i = n > 0 && units[0] == 0xFEFF ? 1 : 0;
+            foreach (char expected in upToNumber)
             {
-                if (BytesAt(head, n, i, "<?xml"))
+                if (expected == '_')
                 {
-                    decl = i;
-                    break;
+                    while (i < n && IsSpace(units[i]))
+                    {
+                        i++;
+                    }
+
+                    continue;
                 }
-            }
 
-            if (decl < 0)
-            {
-                return -1;
-            }
+                if (i >= n)
+                {
+                    return cut;
+                }
 
-            for (int i = decl + 5; i < n; i++)
-            {
-                if (BytesAt(head, n, i, "?>"))
+                int unit = units[i++];
+                if (expected == ' ' ? !IsSpace(unit) : unit != expected)
                 {
                     return -1;
                 }
-
-                if (BytesAt(head, n, i, "version=") && i + 12 < n)
-                {
-                    byte quote = head[i + 8];
-                    if ((quote == '"' || quote == '\'') && head[i + 9] == '1' && head[i + 10] == '.' && head[i + 11] == '1' && head[i + 12] == quote)
-                    {
-                        return i + 11;
-                    }
-                }
             }
 
-            return -1;
+            if (i + 5 > n)
+            {
+                return cut;
+            }
+
+            int quote = units[i];
+            return (quote == '"' || quote == '\'') && units[i + 1] == '1' && units[i + 2] == '.' && units[i + 3] == '1' && units[i + 4] == quote
+                ? i + 3
+                : -1;
         }
 
-        private static bool BytesAt(byte[] bytes, int n, int at, string ascii)
+        private static bool IsSpace(int unit)
         {
-            if (at + ascii.Length > n)
-            {
-                return false;
-            }
-
-            for (int k = 0; k < ascii.Length; k++)
-            {
-                if (bytes[at + k] != ascii[k])
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            return unit == ' ' || unit == '\t' || unit == '\r' || unit == '\n';
         }
 
         public void Parse()

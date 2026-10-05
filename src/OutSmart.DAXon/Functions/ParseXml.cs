@@ -97,7 +97,7 @@ namespace OutSmart.DAXon.Functions
                 XmlReaderToReceiver.DtdUse dtd = XmlReaderToReceiver.LeavesOutIgnorable(b.GetPipelineConfiguration().GetParseOptions()) && XmlReaderToReceiver.MayHaveDoctype(inputXml)
                     ? XmlReaderToReceiver.DtdUse.Whitespace
                     : XmlReaderToReceiver.DtdUse.None;
-                using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(sr, null, baseURI, null, dtd, config))
+                using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(sr, null, baseURI, null, dtd, config, mayBeXml11: XmlReaderToReceiver.IsLabelledXml11(inputXml)))
                 {
                     Sender.Send(reader, baseURI, s, options);
                 }
