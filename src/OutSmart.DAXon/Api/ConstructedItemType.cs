@@ -7,17 +7,38 @@
 
 using System;
 using System.Collections.Generic;
+using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Types;
 
 namespace OutSmart.DAXon.Api
 {
-    // ConstructedItemType extends ItemType (s9api) for 6 callers expecting ItemType.
+    // An item type with no constant in ItemType: the declared type of a parameter or a variable, the static type of
+    // a result. The second argument is the Configuration (or the Processor) whose type hierarchy answers for it.
     public class ConstructedItemType : ItemType
     {
+        private readonly Configuration config;
+
         public ConstructedItemType() : base(null) { }
-        public ConstructedItemType(Types.ItemType underlying, object processor) : base(underlying) { }
-        public override bool Matches(XdmItem item) => false;
-        public override bool Subsumes(ItemType other) => false;
+
+        public ConstructedItemType(Types.ItemType underlying, object processor) : base(underlying)
+        {
+            config = processor as Configuration ?? (processor as Processor)?.UnderlyingConfiguration;
+        }
+
+        public override bool Matches(XdmItem item)
+        {
+            return underlyingType != null && underlyingType.Matches(item.UnderlyingValue, Hierarchy());
+        }
+
+        public override bool Subsumes(ItemType other)
+        {
+            return underlyingType != null && Hierarchy().IsSubType(other.UnderlyingItemType, underlyingType);
+        }
+
+        private TypeHierarchy Hierarchy()
+        {
+            return (config ?? new Configuration()).GetTypeHierarchy();
+        }
     }
 }

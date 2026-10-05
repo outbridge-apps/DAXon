@@ -42,7 +42,29 @@ namespace OutSmart.DAXon.Api
                 return new XdmFunctionItem(__f);
             return new XdmValue(value);
         }
-        public bool Matches(object t) => false;
+        // Whether the value is an instance of the sequence type.
+        public virtual bool Matches(SequenceType type)
+        {
+            ItemType itemType = type.GetItemType();
+            int size = 0;
+            foreach (XdmItem item in this)
+            {
+                size++;
+                if (!itemType.Matches(item))
+                {
+                    return false;
+                }
+            }
+
+            return type.GetOccurrenceIndicator().Allows(size);
+        }
+
+        // The form callers were compiled against while this answered false to everything: a sequence type, or an
+        // item type, which the value matches when it is one such item.
+        public bool Matches(object t)
+        {
+            return t is SequenceType type ? Matches(type) : t is ItemType itemType && Matches(itemType.One());
+        }
         // Enumerate the wrapped value's items as XdmItems (was an always-empty stub — any foreach
         // over an XdmValue silently saw nothing, e.g. the driver's context-select narrowing).
         public IEnumerator<XdmItem> GetEnumerator()

@@ -12,12 +12,12 @@ using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Api
 {
 
-    // ExplainMismatch / GetCardinality extension methods on
-    // SequenceType. SequenceType wraps an ItemType + OccurrenceIndicator;
-    // these methods delegate to the wrapped types.
     public static class SequenceTypeExtensions
     {
+        // The engine has no more to say about a mismatch than the error itself says.
         public static string ExplainMismatch(this SequenceType st, object item, object th) => "";
-        public static int GetCardinality(this SequenceType st) => 0;
+
+        // The occurrence indicator as the engine's cardinality bits (StaticProperty.ALLOWS_...).
+        public static int GetCardinality(this SequenceType st) => st.GetOccurrenceIndicator().GetCardinality();
     }
 }

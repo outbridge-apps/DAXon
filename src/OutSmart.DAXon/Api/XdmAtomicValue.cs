@@ -97,7 +97,8 @@ namespace OutSmart.DAXon.Api
                 AtomicValue av = UnderlyingValue;
                 if (av is BooleanValue)
                 {
-                    return ((BooleanValue)av).GetBooleanValue() ? 0 : 1;
+                    // true is 1 here and in the double and decimal forms, as in a cast; s9api has the two swapped
+                    return ((BooleanValue)av).GetBooleanValue() ? 1 : 0;
                 }
                 else if (av is NumericValue)
                 {
@@ -303,7 +304,7 @@ namespace OutSmart.DAXon.Api
             AtomicValue av = UnderlyingValue;
             if (av is BooleanValue)
             {
-                return ((BooleanValue)av).GetBooleanValue() ? 0 : 1;
+                return ((BooleanValue)av).GetBooleanValue() ? 1 : 0;
             }
             else if (av is NumericValue)
             {
@@ -332,7 +333,7 @@ namespace OutSmart.DAXon.Api
             AtomicValue av = UnderlyingValue;
             if (av is BooleanValue)
             {
-                return ((BooleanValue)av).GetBooleanValue() ? BigDecimal.Zero : BigDecimal.One;
+                return ((BooleanValue)av).GetBooleanValue() ? BigDecimal.One : BigDecimal.Zero;
             }
             else if (av is NumericValue)
             {

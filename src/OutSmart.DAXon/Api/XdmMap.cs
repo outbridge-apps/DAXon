@@ -5,6 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using System;
+using System.Collections.Generic;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Values.Maps;
@@ -18,6 +19,21 @@ namespace OutSmart.DAXon.Api
     {
         public XdmMap() { }
         public XdmMap(OutSmart.DAXon.Model.IItem map) : base(map) { }
+
+        // A copy of the entries: changing it leaves the map as it was.
+        public override Dictionary<XdmAtomicValue, XdmValue> AsMap()
+        {
+            var entries = new Dictionary<XdmAtomicValue, XdmValue>();
+            if (UnderlyingValue is MapItem map)
+            {
+                foreach (OutSmart.DAXon.Values.Maps.KeyValuePair entry in map.KeyValuePairs())
+                {
+                    entries[new XdmAtomicValue(entry.key)] = XdmValue.Wrap(entry.value);
+                }
+            }
+
+            return entries;
+        }
 
         // upstream s9api XdmMap.put: functional add — returns a NEW map, the receiver is unchanged.
         public virtual XdmMap Put(XdmAtomicValue key, XdmValue value)
