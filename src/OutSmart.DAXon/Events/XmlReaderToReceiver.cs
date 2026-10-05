@@ -229,6 +229,7 @@ namespace OutSmart.DAXon.Events
                     if (dtd == DtdUse.Whitespace || mayBeXml11)
                     {
                         charStream = PeekProlog(charStream, settings, dtd == DtdUse.Whitespace, out mayHaveDoctype);
+                        EntitiesOf(settings, entities);
                     }
 
                     return Tracked(XmlReader.Create(charStream, UseDtd(settings, mayHaveDoctype, ref use), baseUri), use.Events);
@@ -245,6 +246,7 @@ namespace OutSmart.DAXon.Events
                 try
                 {
                     byteStream = PeekHead(byteStream, settings, dtd == DtdUse.Whitespace, out mayHaveDoctype);
+                    EntitiesOf(settings, entities);
                     return Tracked(XmlReader.Create(byteStream, UseDtd(settings, mayHaveDoctype, ref use), baseUri), use.Events);
                 }
                 catch
@@ -271,6 +273,7 @@ namespace OutSmart.DAXon.Events
                 try
                 {
                     principal = PeekHead(principal, settings, dtd == DtdUse.Whitespace, out mayHaveDoctype);
+                    EntitiesOf(settings, entities);
                     return Tracked(XmlReader.Create(principal, UseDtd(settings, mayHaveDoctype, ref use), uri.ToString()), use.Events);
                 }
                 catch
@@ -281,6 +284,58 @@ namespace OutSmart.DAXon.Events
             }
 
             throw new XPathException("ActiveStreamSource supplies neither a stream nor a system identifier");
+        }
+
+        // A document labelled XML 1.1 (the peek has switched the check of character references off for it) may pull
+        // in a DTD and entities labelled 1.1 themselves; one labelled 1.0 may not, and the parser goes on refusing them.
+        private static void EntitiesOf(XmlReaderSettings settings, XmlResolver entities)
+        {
+            if (!settings.CheckCharacters)
+            {
+                settings.XmlResolver = new Xml11Entities(entities);
+            }
+        }
+
+        // Serves what the resolver serves, the XML 1.1 label of its text declaration read as the document's own was.
+        private sealed class Xml11Entities : XmlResolver
+        {
+            private readonly XmlResolver served;
+
+            public Xml11Entities(XmlResolver served)
+            {
+                this.served = served;
+            }
+
+            public override System.Net.ICredentials Credentials
+            {
+                set { served.Credentials = value; }
+            }
+
+            public override Uri ResolveUri(Uri baseUri, string relativeUri)
+            {
+                return served.ResolveUri(baseUri, relativeUri);
+            }
+
+            public override bool SupportsType(Uri absoluteUri, System.Type type)
+            {
+                return served.SupportsType(absoluteUri, type);
+            }
+
+            public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
+            {
+                object entity = served.GetEntity(absoluteUri, role, ofObjectToReturn);
+                try
+                {
+                    return entity is Stream bytes ? PeekHead(bytes, new XmlReaderSettings(), false, out _)
+                        : entity is TextReader characters ? PeekProlog(characters, new XmlReaderSettings(), false, out _)
+                        : entity;
+                }
+                catch
+                {
+                    (entity as IDisposable)?.Dispose();
+                    throw;
+                }
+            }
         }
 
         // Has the parser say that an input given by system id cannot be resolved.

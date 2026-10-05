@@ -63,6 +63,15 @@ namespace OutSmart.DAXon.Functions
 
                 Configuration configuration = controller.GetConfiguration();
                 string skeleton = "<!DOCTYPE z [<!ENTITY e SYSTEM \"http://www.saxonica.com/parse-xml-fragment/actual.xml\">]>\n<z>&e;</z>";
+
+                // A fragment labelled XML 1.1 is an entity only a document so labelled may include: the wrapper is
+                // one then, and both labels are read as a 1.1 document's is on every other path (see Xml11Label).
+                bool labelled = XmlReaderToReceiver.IsLabelledXml11(inputXml);
+                if (labelled)
+                {
+                    skeleton = "<?xml version=\"1.1\"?>" + skeleton;
+                }
+
                 StringReader skeletonReader = new StringReader(skeleton);
                 Builder b = controller.MakeBuilder();
                 b.SetDurability(Durability.TEMPORARY);
@@ -93,7 +102,7 @@ namespace OutSmart.DAXon.Functions
                 // Native fragment parse: the DTD skeleton references the fragment as an external parsed entity;
                 // a System.Xml.XmlResolver hands back the fragment content, so XmlReaderToReceiver expands it
                 // inline as children of the wrapper element, which OuterElementStripper then removes.
-                using (System.Xml.XmlReader xr = XmlReaderToReceiver.CreateXmlReader(skeletonReader, null, baseURI, new FragmentEntityResolver(inputXml), XmlReaderToReceiver.DtdUse.None, inputInEntity: inputXml.Length, mayBeXml11: false))
+                using (System.Xml.XmlReader xr = XmlReaderToReceiver.CreateXmlReader(skeletonReader, null, baseURI, new FragmentEntityResolver(inputXml), XmlReaderToReceiver.DtdUse.None, inputInEntity: inputXml.Length, mayBeXml11: labelled))
                 {
                     Sender.Send(xr, baseURI, s, options);
                 }
@@ -136,8 +145,20 @@ namespace OutSmart.DAXon.Functions
 
             public override System.Net.ICredentials Credentials { set { } }
             public FragmentEntityResolver(string fragment) { this.fragment = fragment; }
+            // The fragment is characters, and is served as characters: as bytes its text declaration decided how
+            // they were read - one naming iso-8859-1 turned every non-ASCII character into two.
+            public override bool SupportsType(Uri absoluteUri, System.Type type)
+            {
+                return type == typeof(TextReader) || base.SupportsType(absoluteUri, type);
+            }
+
             public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
             {
+                if (ofObjectToReturn == typeof(TextReader))
+                {
+                    return new StringReader(fragment);
+                }
+
                 return new MemoryStream(Encoding.UTF8.GetBytes(fragment));
             }
         }
