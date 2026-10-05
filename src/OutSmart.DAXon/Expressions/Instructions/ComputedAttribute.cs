@@ -429,6 +429,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             prefix = "ns0"; // this will be replaced later if it is already in use
                         }
                     }
+                    else if (uri.Equals(NamespaceUri.XML))
+                    {
+                        // only the prefix xml names the XML namespace: the name is given it, as namespace fixup would
+                        prefix = "xml";
+                    }
                 }
             }
 

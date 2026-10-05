@@ -254,12 +254,18 @@ namespace OutSmart.DAXon.Xslt
                     CompileContent(compilation, decl, instruction, separator);
                     return instruction;
                 }
-                else if (@namespace is StringLiteral)
+                else if (@namespace is StringLiteral && !NamespaceUri.XMLNS.Equals(NamespaceUri.Of(((StringLiteral)@namespace).Stringify())))
                 {
+                    // (the xmlns namespace is left to the instruction that computes the name: it is XTDE0865 when it runs)
                     UnicodeString nsuri = ((StringLiteral)@namespace).GetString();
                     if (nsuri.IsEmpty())
                     {
                         parts[0] = "";
+                    }
+                    else if (NamespaceUri.XML.Equals(NamespaceUri.Of(nsuri.ToString())))
+                    {
+                        // only the prefix xml names the XML namespace
+                        parts[0] = "xml";
                     }
                     else if (parts[0].Equals(""))
                     {

@@ -432,6 +432,13 @@ namespace OutSmart.DAXon.Events
                 NamespaceUri uri = pendingNSMap.GetNamespaceUri(nodePrefix);
                 if (uri == null)
                 {
+                    if (nodeURI.Equals(NamespaceUri.XML))
+                    {
+                        // Only the prefix xml names the XML namespace, and it needs no declaration: a name that came
+                        // with another prefix is given it, as a name whose prefix is taken is given a substitute.
+                        return new FingerprintedQName("xml", nodeURI, nodeName.GetLocalPart());
+                    }
+
                     pendingNSMap = pendingNSMap.Put(nodePrefix, nodeURI);
                     return nodeName;
                 }
