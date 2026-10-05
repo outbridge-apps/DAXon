@@ -87,7 +87,8 @@ namespace OutSmart.DAXon.Serialization
         }
 
         // insertNulls: each replacement goes between two U+0000, the marks that tell the serializer not to escape it.
-        // The result then holds no other U+0000 - not from the data, not from a replacement.
+        // The result then holds no other U+0000: one of the data or of a replacement is U+FFFD, as the serializer
+        // writes it where there are no marks.
         public virtual UnicodeString IMap(UnicodeString @in, bool insertNulls)
         {
             if (!mapsWhitespace && @in is WhitespaceString)
@@ -121,7 +122,7 @@ namespace OutSmart.DAXon.Serialization
                         if (insertNulls)
                         {
                             buffer.Append((char)0);
-                            buffer.Append(rep.IndexOf((char)0) < 0 ? rep : rep.Replace("\0", ""));
+                            buffer.Append(rep.IndexOf((char)0) < 0 ? rep : rep.Replace('\0', (char)0xFFFD));
                             buffer.Append((char)0);
                         }
                         else
@@ -130,9 +131,9 @@ namespace OutSmart.DAXon.Serialization
                         }
                     }
                 }
-                else if (c != 0 || !insertNulls)
+                else
                 {
-                    buffer.Append(c);
+                    buffer.Append(c == 0 && insertNulls ? 0xFFFD : c);
                 }
             }
 

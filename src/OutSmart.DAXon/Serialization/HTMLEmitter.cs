@@ -255,10 +255,19 @@ namespace OutSmart.DAXon.Serialization
                 if (ch == 0)
                 {
 
-                    // the expander's mark switches escaping on and off; U+0000 of the data is left out
+                    // the expander's mark switches escaping on and off; U+0000 of the data is U+FFFD, which is
+                    // what an HTML parser makes of one
                     if (marked)
                     {
                         disabled = !disabled;
+                    }
+                    else if (escapeNonAscii)
+                    {
+                        characterReferenceGenerator.OutputCharacterReference(0xFFFD, writer);
+                    }
+                    else
+                    {
+                        WriteReplacement();
                     }
                 }
                 else if (disabled)
@@ -364,6 +373,15 @@ namespace OutSmart.DAXon.Serialization
         }
 
         protected abstract bool RejectControlCharacters();
+
+        private static readonly Func<int, bool> isNul = (c) => c == 0;
+
+        // HTML takes a comment, an instruction and an identifier as they are given, but for U+0000: a parser reads
+        // U+FFFD for one wherever it stands, and a file that holds one is no text to the tools that meet it first.
+        private protected override UnicodeString Literal(UnicodeString chars)
+        {
+            return chars.IndexOf(0, 0) < 0 ? chars : Replaced(chars, isNul, false);
+        }
         protected override void WriteEmptyElementTagCloser(string displayName, INodeName nameCode)
         {
             if (IsHTMLElement(nameCode))
@@ -415,6 +433,14 @@ namespace OutSmart.DAXon.Serialization
         {
             if (inScript > 0)
             {
+                // The content of a script or a style goes out as it stands - but for U+0000 of the data, as in a
+                // comment. Where the stylesheet itself disabled escaping it asked for every character; the marks of
+                // a character map are taken out further on.
+                if (!ReceiverOption.Contains(properties, ReceiverOption.DISABLE_ESCAPING) && !ReceiverOption.Contains(properties, ReceiverOption.USE_NULL_MARKERS) && chars.IndexOf(0, 0) >= 0)
+                {
+                    chars = Replaced(chars, isNul, true);
+                }
+
                 properties |= ReceiverOption.DISABLE_ESCAPING;
             }
 
@@ -431,7 +457,7 @@ namespace OutSmart.DAXon.Serialization
                 OpenDocument();
             }
 
-            UnicodeString t = data.Tidy();
+            UnicodeString t = Literal(data.Tidy());
             if (t.IndexOf('>') >= 0)
             {
                 throw new XPathException("A processing instruction in HTML must not contain a > character", "SERE0015");

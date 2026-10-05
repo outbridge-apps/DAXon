@@ -59,8 +59,14 @@ namespace OutSmart.DAXon.Serialization
         protected ICharacterReferenceGenerator characterReferenceGenerator = HexCharacterReferenceGenerator.THE_INSTANCE;
 
         // True while the value being written carries the character map expander's marks: only there does U+0000
-        // switch escaping off and on. In any other value it came with the data, and is left out.
+        // switch escaping off and on. In any other value it came with the data, and is no character of XML.
         private protected bool marked;
+
+        // The XML written is 1.1: a control character is a character reference there, and no character at all in 1.0.
+        private protected bool xml11;
+
+        private static readonly Func<int, bool> noLiteral10 = (c) => IsNoLiteral(c, false);
+        private static readonly Func<int, bool> noLiteral11 = (c) => IsNoLiteral(c, true);
 
         Func<int, bool> isSpecialInText;
         Func<int, bool> isSpecialInAttribute;
@@ -159,15 +165,19 @@ namespace OutSmart.DAXon.Serialization
                 attSpecials = specialInAttSingle;
             }
 
+            string version = outputProperties.GetProperty(DAXonOutputKeys.VERSION);
+            xml11 = version == null ? GetConfiguration()?.XMLVersion == Configuration.XML11 : version.Equals("1.1");
+
+            // Past U+2028 the scan also stops at what is no character of XML - half a surrogate pair, U+FFFE, U+FFFF.
             if (allCharactersEncodable)
             {
-                isSpecialInText = (c) => (c < 127 ? specialInText[c] : (c < 160 || c == 0x2028));
-                isSpecialInAttribute = (c) => (c < 127 ? attSpecials[c] : (c < 160 || c == 0x2028));
+                isSpecialInText = (c) => (c < 127 ? specialInText[c] : (c < 160 || (c >= 0x2028 && (c == 0x2028 || (c >= 0xD800 && c <= 0xFFFF && (c <= 0xDFFF || c >= 0xFFFE))))));
+                isSpecialInAttribute = (c) => (c < 127 ? attSpecials[c] : (c < 160 || (c >= 0x2028 && (c == 0x2028 || (c >= 0xD800 && c <= 0xFFFF && (c <= 0xDFFF || c >= 0xFFFE))))));
             }
             else
             {
-                isSpecialInText = (c) => (c < 127 ? specialInText[c] : (c < 160 || c == 0x2028 || c > 65535 || !characterSet.InCharset(c)));
-                isSpecialInAttribute = (c) => (c < 127 ? attSpecials[c] : (c < 160 || c == 0x2028 || c > 65535 || !characterSet.InCharset(c)));
+                isSpecialInText = (c) => (c < 127 ? specialInText[c] : (c < 160 || c == 0x2028 || c > 65535 || !characterSet.InCharset(c) || (c >= 0xD800 && (c <= 0xDFFF || c >= 0xFFFE))));
+                isSpecialInAttribute = (c) => (c < 127 ? attSpecials[c] : (c < 160 || c == 0x2028 || c > 65535 || !characterSet.InCharset(c) || (c >= 0xD800 && (c <= 0xDFFF || c >= 0xFFFE))));
             }
 
             WriteDeclaration();
@@ -320,6 +330,7 @@ namespace OutSmart.DAXon.Serialization
                     writer.WriteAscii(DOCTYPE);
                     writer.Write(displayName);
                     writer.WriteCodePoint(0x0A);
+                    systemId = systemId == null ? null : Literal(StringView.Of(systemId)).ToString();
                     string quotedSystemId = null;
                     if (systemId != null)
                     {
@@ -878,6 +889,7 @@ namespace OutSmart.DAXon.Serialization
                 }
             }
 
+            data = Literal(data);
             x = TestCharacters(data);
             if (x != 0)
             {
@@ -963,10 +975,14 @@ namespace OutSmart.DAXon.Serialization
                 if (c == 0)
                 {
 
-                    // the expander's mark switches escaping on and off; U+0000 of the data is left out
+                    // the expander's mark switches escaping on and off; U+0000 of the data is no character
                     if (marked)
                     {
                         disabled = !disabled;
+                    }
+                    else
+                    {
+                        WriteReplacement();
                     }
                 }
                 else if (disabled)
@@ -1010,8 +1026,16 @@ namespace OutSmart.DAXon.Serialization
                             break;
                         default:
 
-                            // C0 control characters
-                            characterReferenceGenerator.OutputCharacterReference(c, writer);
+                            // C0 control characters: a reference in XML 1.1, which has them; XML 1.0 does not
+                            if (xml11)
+                            {
+                                characterReferenceGenerator.OutputCharacterReference(c, writer);
+                            }
+                            else
+                            {
+                                WriteReplacement();
+                            }
+
                             break;
                     }
                 }
@@ -1032,6 +1056,10 @@ namespace OutSmart.DAXon.Serialization
                         characterReferenceGenerator.OutputCharacterReference(c, writer);
                     }
                 }
+                else if (IsNoCharacter(c))
+                {
+                    WriteReplacement();
+                }
                 else
                 {
 
@@ -1049,6 +1077,45 @@ namespace OutSmart.DAXon.Serialization
             writer.WriteCodePoint(c);
         }
 
+        // U+FFFD, for what is no character of the XML being written.
+        private protected void WriteReplacement()
+        {
+            if (characterSet.InCharset(0xFFFD))
+            {
+                writer.WriteCodePoint(0xFFFD);
+            }
+            else
+            {
+                characterReferenceGenerator.OutputCharacterReference(0xFFFD, writer);
+            }
+        }
+
+        // The text as a comment, a processing instruction or a system identifier holds it, where no character
+        // reference can stand for a character: U+FFFD for what the output cannot have ('?' where the encoding has no
+        // U+FFFD either). The same text comes back when there is nothing of the kind in it.
+        private protected virtual UnicodeString Literal(UnicodeString chars)
+        {
+            // one of two delegates made once: every comment and instruction of the output is scanned here
+            Func<int, bool> unfit = xml11 ? noLiteral11 : noLiteral10;
+            return chars.IndexWhere(unfit, 0) < 0 ? chars : Replaced(chars, unfit, false);
+        }
+
+        // The text with U+FFFD for each character a test picks out - or '?', where no reference can stand for a
+        // character and the encoding has no U+FFFD.
+        private protected UnicodeString Replaced(UnicodeString chars, Func<int, bool> unfit, bool referable)
+        {
+            int replacement = referable || characterSet == null || characterSet.InCharset(0xFFFD) ? 0xFFFD : '?';
+            UnicodeBuilder clean = new UnicodeBuilder();
+            long length = chars.Length();
+            for (long i = 0; i < length; i++)
+            {
+                int c = chars.CodePointAt(i);
+                clean.Append(unfit(c) ? replacement : c);
+            }
+
+            return clean.ToUnicodeString();
+        }
+
         //return;
         public override void Comment(UnicodeString chars, ILocation locationId, int properties)
         {
@@ -1057,6 +1124,7 @@ namespace OutSmart.DAXon.Serialization
                 OpenDocument();
             }
 
+            chars = Literal(chars);
             int x = TestCharacters(chars);
             if (x != 0)
             {

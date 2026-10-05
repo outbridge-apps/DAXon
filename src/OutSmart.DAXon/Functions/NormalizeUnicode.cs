@@ -63,6 +63,13 @@ namespace OutSmart.DAXon.Functions
                 throw new XPathException(msg, "FOCH0003");
             }
 
+            return Normalize(sv, fb);
+        }
+
+        // Every normalization the engine does goes through here - the function, the normalization-form of a
+        // serializer, the escaping of a URI attribute.
+        public static string Normalize(string sv, NormalizationForm fb)
+        {
             try
             {
                 return sv.Normalize(fb);
@@ -73,14 +80,14 @@ namespace OutSmart.DAXon.Functions
                 // (U+FDD0–U+FDEF, U+xFFFE/U+xFFFF) with ArgumentException; Java's ICU normalizer passes each
                 // noncharacter through unchanged (they have no decomposition/composition) while still
                 // normalizing the surrounding text. Match Java by normalizing each maximal noncharacter-free
-                // run and re-inserting the noncharacters verbatim.
+                // run and re-inserting the noncharacters verbatim. Half a surrogate pair goes the same way.
                 return NormalizeAroundNonChars(sv, fb);
             }
         }
 
         private static bool IsNonChar(int cp)
         {
-            return (cp >= 0xFDD0 && cp <= 0xFDEF) || (cp & 0xFFFE) == 0xFFFE;
+            return (cp >= 0xFDD0 && cp <= 0xFDEF) || (cp & 0xFFFE) == 0xFFFE || (cp >= 0xD800 && cp <= 0xDFFF);
         }
 
         private static string NormalizeAroundNonChars(string sv, NormalizationForm fb)

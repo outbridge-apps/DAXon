@@ -161,7 +161,7 @@ namespace OutSmart.DAXon.Serialization
                 {
                     if (normalize)
                     {
-                        string normalized = url.Normalize(NormalizationForm.FormC);
+                        string normalized = NormalizeUnicode.Normalize(url, NormalizationForm.FormC);
                         return ReallyEscapeURL(normalized).ToString();
                     }
                     else

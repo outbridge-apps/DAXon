@@ -53,6 +53,29 @@ namespace OutSmart.DAXon.Serialization
             this.writer = unicodeWriter;
         }
 
+        // No character of XML, 1.0 or 1.1: U+0000, half a surrogate pair, U+FFFE, U+FFFF.
+        internal static bool IsNoCharacter(int c)
+        {
+            return c == 0 || (c >= 0xD800 && (c <= 0xDFFF || c == 0xFFFE || c == 0xFFFF));
+        }
+
+        // What XML cannot hold where no character reference can stand for it - a comment, a processing instruction, a
+        // CDATA section: no character of XML, the control characters XML 1.0 does not have, and those 1.1 restricts.
+        internal static bool IsNoLiteral(int c, bool xml11)
+        {
+            if (c < 0x20)
+            {
+                return c != 0x9 && c != 0xA && c != 0xD;
+            }
+
+            if (c < 0xA0)
+            {
+                return xml11 && c >= 0x7F && c != 0x85;
+            }
+
+            return c >= 0xD800 && (c <= 0xDFFF || c == 0xFFFE || c == 0xFFFF);
+        }
+
         public virtual void SetMustClose(bool mustClose)
         {
             this.mustClose = mustClose;

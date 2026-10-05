@@ -28,6 +28,7 @@ namespace OutSmart.DAXon.Serialization
         private readonly Stack<INodeName> stack = new Stack<INodeName>();
         private ISet<INodeName> nameList;             // names of cdata elements
         private ICharacterSet characterSet;
+        private bool xml11;                           // the XML written is 1.1
 
         /// <summary>
         /// Create a CDATA Filter
@@ -45,6 +46,8 @@ namespace OutSmart.DAXon.Serialization
         {
             GetCdataElements(details);
             characterSet = GetConfiguration().GetCharacterSetFactory().GetCharacterSet(details);
+            string version = details.GetProperty(DAXonOutputKeys.VERSION);
+            xml11 = version == null ? GetConfiguration().XMLVersion == OutSmart.DAXon.Core.Configuration.XML11 : version.Equals("1.1");
         }
 
         /// <summary>
@@ -141,7 +144,8 @@ namespace OutSmart.DAXon.Serialization
                 }
 
                 // Check that the buffer doesn't include a character not available in the current
-                // encoding
+                // encoding, or one a CDATA section cannot hold: what is no character of the XML being
+                // written goes the way of the first kind, out of the section to the emitter
 
                 UnicodeString bufferContent = buffer.ToUnicodeString();
 
@@ -150,7 +154,7 @@ namespace OutSmart.DAXon.Serialization
                 while (k < end)
                 {
                     int next = bufferContent.CodePointAt(k);
-                    if (next != 0 && characterSet.InCharset(next))
+                    if (characterSet.InCharset(next) && !Emitter.IsNoLiteral(next, xml11))
                     {
                         k++;
                     }
@@ -173,7 +177,7 @@ namespace OutSmart.DAXon.Serialization
                                 break;
                             }
                             next = bufferContent.CodePointAt(k);
-                            if (characterSet.InCharset(next))
+                            if (characterSet.InCharset(next) && !Emitter.IsNoLiteral(next, xml11))
                             {
                                 break;
                             }

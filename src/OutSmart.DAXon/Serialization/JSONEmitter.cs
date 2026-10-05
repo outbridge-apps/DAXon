@@ -285,8 +285,9 @@ namespace OutSmart.DAXon.Serialization
                 for (int c = 0; c < 128; c++)
                 {
                     // Exactly the chars the generic path touches: named escapes and quote/backslash
-                    // are < 31 or listed; the hex predicate adds c < 31, DEL, and out-of-charset.
-                    t[c] = c < 31 || c == 127 || c == '"' || c == '\\' || (c == '/' && escapeSolidus) || !characterSet.InCharset(c);
+                    // are < 32 or listed; the hex predicate adds c < 32, DEL, and out-of-charset. (Upstream has
+                    // 31 for the bound: U+001F went out unescaped, which JSON does not allow in a string.)
+                    t[c] = c < 32 || c == 127 || c == '"' || c == '\\' || (c == '/' && escapeSolidus) || !characterSet.InCharset(c);
                 }
 
                 asciiDirty = t;
@@ -459,7 +460,7 @@ namespace OutSmart.DAXon.Serialization
         {
             if (normalize)
             {
-                cs = cs.Normalize(normalizationForm);
+                cs = NormalizeUnicode.Normalize(cs, normalizationForm);
             }
 
             // Table-driven clean scan; only dirty strings pay the delegate-per-char path. Past ASCII a
@@ -484,7 +485,7 @@ namespace OutSmart.DAXon.Serialization
                 return cs;
             }
 
-            return JsonReceiver.Escape(cs, false, !escapeSolidus, (c) => c < 31 || (c >= 127 && c <= 159) || !characterSet.InCharset(c));
+            return JsonReceiver.Escape(cs, false, !escapeSolidus, (c) => c < 32 || (c >= 127 && c <= 159) || !characterSet.InCharset(c));
         }
 
         private void Emit(string s)

@@ -91,7 +91,7 @@ namespace OutSmart.DAXon.Serialization
                 int nextNull = s.IndexOf((char)0);
                 while (nextNull >= 0)
                 {
-                    @out.Append(s.Substring(start, nextNull - start).Normalize(normForm));
+                    @out.Append(NormalizeUnicode.Normalize(s.Substring(start, nextNull - start), normForm));
                     @out.Append((char)0);
                     start = nextNull + 1;
                     nextNull = s.IndexOf((char)0, start);
@@ -101,12 +101,12 @@ namespace OutSmart.DAXon.Serialization
                     nextNull = s.IndexOf((char)0, start);
                 }
 
-                @out.Append(s.Substring(start).Normalize(normForm));
+                @out.Append(NormalizeUnicode.Normalize(s.Substring(start), normForm));
                 return StringView.Tidy(@out.ToString());
             }
             else
             {
-                return StringView.Tidy(@in.ToString().Normalize(normForm));
+                return StringView.Tidy(NormalizeUnicode.Normalize(@in.ToString(), normForm));
             }
         }
     }

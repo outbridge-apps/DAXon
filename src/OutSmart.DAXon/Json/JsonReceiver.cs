@@ -28,7 +28,8 @@ namespace OutSmart.DAXon.Json
     {
         private static readonly string ERR_INPUT = "FOJS0006";
 
-        private static readonly Func<int, bool> isControlChar = (c) => c < 31 || (c >= 127 && c <= 159);
+        // 32, not upstream's 31: U+001F is a control character JSON wants escaped like the rest
+        private static readonly Func<int, bool> isControlChar = (c) => c < 32 || (c >= 127 && c <= 159);
 
         // Shared immutable JSON punctuation tokens: the emitter used to allocate a fresh BMPString for
         // every ",", quote, brace etc. — 6-8 allocations per element on large documents.
@@ -319,7 +320,6 @@ namespace OutSmart.DAXon.Json
         }
 
         // The one "Escape(s, false, false, isControlChar) leaves it alone" rule behind both fast paths.
-        // CONSERVATIVE: 0x1F counts as special though Escape keeps it raw - it only takes the slow path.
         // Past the Framework JIT's inlining size limit, so it showed as its own 0.9% frame without the hint.
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private static bool IsPlainJsonChar(int c)

@@ -102,7 +102,7 @@ namespace OutSmart.DAXon.Serialization
                                 {
                                     string normalized = IsAllAscii(value)
                                         ? value
-                                        : value.Normalize(NormalizationForm.FormC);
+                                        : OutSmart.DAXon.Functions.NormalizeUnicode.Normalize(value, NormalizationForm.FormC);
                                     return new AttributeInfo(
                                         attName,
                                         att.GetType(),
