@@ -76,7 +76,7 @@ namespace OutSmart.DAXon.Serialization
                     {
                         maxLineLength = int.Parse(max, CultureInfo.InvariantCulture);
                     }
-                    catch (FormatException err)
+                    catch (Exception err) when (err is FormatException || err is OverflowException)
                     {
                     }
                 }
@@ -88,7 +88,7 @@ namespace OutSmart.DAXon.Serialization
                     {
                         indentSpaces = int.Parse(spaces, CultureInfo.InvariantCulture);
                     }
-                    catch (FormatException err)
+                    catch (Exception err) when (err is FormatException || err is OverflowException)
                     {
                     }
                 }

@@ -65,7 +65,8 @@ namespace OutSmart.DAXon.Transformation
             BreakPoint();
         }
 
-        public XPathException(Exception err) : base("", err)
+        // The cause's message is the message: Java's Throwable(cause) describes its cause, an empty string said nothing.
+        public XPathException(Exception err) : base(err == null ? "" : err.Message, err)
         {
             BreakPoint();
         }

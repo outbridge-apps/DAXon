@@ -494,6 +494,12 @@ namespace OutSmart.DAXon.Xslt
 
                     priority = double.Parse(priorityAtt, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
                 }
+                catch (OverflowException)
+                {
+
+                    // .NET Framework: a decimal beyond any double is the infinity later runtimes and Java round it to
+                    priority = priorityAtt.TrimStart().StartsWith("-", StringComparison.Ordinal) ? double.NegativeInfinity : double.PositiveInfinity;
+                }
                 catch (FormatException err)
                 {
 

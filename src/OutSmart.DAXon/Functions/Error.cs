@@ -76,7 +76,7 @@ namespace OutSmart.DAXon.Functions
                             {
                                 line = lineVal == null ? -1 : int.Parse(lineVal, CultureInfo.InvariantCulture);
                             }
-                            catch (FormatException ex)
+                            catch (Exception ex) when (ex is FormatException || ex is OverflowException)
                             {
                                 line = -1;
                             }
@@ -87,7 +87,7 @@ namespace OutSmart.DAXon.Functions
                             {
                                 col = columnVal == null ? -1 : int.Parse(columnVal, CultureInfo.InvariantCulture);
                             }
-                            catch (FormatException ex)
+                            catch (Exception ex) when (ex is FormatException || ex is OverflowException)
                             {
                                 col = -1;
                             }

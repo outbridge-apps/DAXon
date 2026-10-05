@@ -412,7 +412,15 @@ namespace OutSmart.DAXon.Expressions.Numbering
 
         private static bool InDaylightTime(TimeZoneInfo zone, long secondsSinceEpoch)
         {
-            return zone.IsDaylightSavingTime(DateTimeOffset.FromUnixTimeSeconds(secondsSinceEpoch));
+            try
+            {
+                return zone.IsDaylightSavingTime(DateTimeOffset.FromUnixTimeSeconds(secondsSinceEpoch));
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // A year .NET's calendar does not reach - below 1, above 9999: standard time, as TimeZone.GetOffset has it.
+                return false;
+            }
         }
 
         public static TimeZoneInfo GetNamedTimeZone(string olsonName)

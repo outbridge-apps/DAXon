@@ -21,7 +21,13 @@ namespace OutSmart.DAXon.Values
     // Converter.PromoterToDouble (Converter.java:734).
     internal sealed class PromoterToDouble : Converter
     {
-        public PromoterToDouble(object rules) { }
+        private readonly StringToDouble stringToDouble;
+
+        public PromoterToDouble(object rules)
+        {
+            stringToDouble = (rules as OutSmart.DAXon.Lib.ConversionRules)?.StringToDoubleConverter ?? OutSmart.DAXon.Functions.StringToDouble11.GetInstance();
+        }
+
         public override IConversionResult Convert(object value)
         {
             AtomicValue input = (AtomicValue)value;
@@ -35,23 +41,16 @@ namespace OutSmart.DAXon.Values
             }
             if (input.IsUntypedAtomic())
             {
-                try
+                // By the lexical rules of xs:double, as a cast reads it. double.Parse took "1,000" for 1000 and "1,5"
+                // for 15, knew "Infinity", and on .NET Framework threw for a magnitude no double holds.
+                if (stringToDouble.TryStringToNumber(input.UnicodeStringValue, out double d))
                 {
-                    string s = input.GetStringValue().Trim();
-                    switch (s)
-                    {
-                        case "INF": case "+INF": return new DoubleValue(double.PositiveInfinity);
-                        case "-INF": return new DoubleValue(double.NegativeInfinity);
-                        case "NaN": return new DoubleValue(double.NaN);
-                        default: return new DoubleValue(double.Parse(s, System.Globalization.CultureInfo.InvariantCulture));
-                    }
+                    return new DoubleValue(d);
                 }
-                catch (FormatException)
-                {
-                    var verr = new ValidationFailure("Cannot convert string \"" + input.GetStringValue() + "\" to xs:double");
-                    verr.SetErrorCode("FORG0001");
-                    return verr;
-                }
+
+                var verr = new ValidationFailure("Cannot convert string \"" + input.GetStringValue() + "\" to xs:double");
+                verr.SetErrorCode("FORG0001");
+                return verr;
             }
             var err = new ValidationFailure("Cannot promote non-numeric value to xs:double");
             err.SetErrorCode("XPTY0004");

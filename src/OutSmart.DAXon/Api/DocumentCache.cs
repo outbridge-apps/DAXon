@@ -54,28 +54,37 @@ namespace OutSmart.DAXon.Api
         /// </summary>
         public XdmNode GetOrParseFile(string path)
         {
-            string full = Path.GetFullPath(path);
-            var info = new FileInfo(full);
-            if (!info.Exists)
+            try
             {
-                throw new FileNotFoundException("Document not found: " + full, full);
-            }
-
-            if (info.Length > maxInputBytes)
-            {
-                throw new DAXonApiException(
-                    $"Input document too large: {full} is {info.Length} bytes, exceeds the Processor's MaxInputBytes limit of {maxInputBytes} bytes");
-            }
-
-            // Windows paths: normalize case in the key so the same file hits the same entry
-            var key = Key.ForFile(full.ToUpperInvariant(), info.LastWriteTimeUtc.Ticks, info.Length);
-            return cache.GetOrAdd(key, _ =>
-            {
-                using (var s = File.OpenRead(full))
+                string full = Path.GetFullPath(path);
+                var info = new FileInfo(full);
+                if (!info.Exists)
                 {
-                    return processor.NewDocumentBuilder().Build(s, new Uri(full).AbsoluteUri);
+                    throw new FileNotFoundException("Document not found: " + full, full);
                 }
-            });
+
+                if (info.Length > maxInputBytes)
+                {
+                    throw new DAXonApiException(
+                        $"Input document too large: {full} is {info.Length} bytes, exceeds the Processor's MaxInputBytes limit of {maxInputBytes} bytes");
+                }
+
+                // Windows paths: normalize case in the key so the same file hits the same entry
+                var key = Key.ForFile(full.ToUpperInvariant(), info.LastWriteTimeUtc.Ticks, info.Length);
+                return cache.GetOrAdd(key, _ =>
+                {
+                    using (var s = File.OpenRead(full))
+                    {
+                        return processor.NewDocumentBuilder().Build(s, new Uri(full).AbsoluteUri);
+                    }
+                });
+            }
+            catch (Exception e) when (DAXonApiException.IsIO(e))
+            {
+                // A file that cannot be read - missing, held, named as the file system will not have it - as
+                // DocumentBuilder.Build(path) reports it: SXXP0003, the reason in the message, the cause inside.
+                throw DAXonApiException.FromIO(e, path);
+            }
         }
 
         /// <summary>

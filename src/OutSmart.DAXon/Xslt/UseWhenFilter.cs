@@ -81,6 +81,8 @@ namespace OutSmart.DAXon.Xslt
                 }
                 catch (Exception ex)
                 {
+                    // Neither a URI nor a path: with nothing pushed, the first element found the stack empty
+                    throw new XPathException("Invalid URI for stylesheet: " + sysId);
                 }
             }
         }
@@ -216,7 +218,18 @@ namespace OutSmart.DAXon.Xslt
                 request.uri = key.AbsoluteURI;
                 request.nature = ResourceRequest.XSLT_NATURE;
                 request.purpose = ResourceRequest.ANY_PURPOSE;
-                ResolvedResource source = request.Resolve(resolver, config.GetResourceResolver(), new DirectResourceResolver(config));
+                ResolvedResource source;
+                try
+                {
+                    source = request.Resolve(resolver, config.GetResourceResolver(), new DirectResourceResolver(config));
+                }
+                catch (XPathException e)
+                {
+                    // A module no resolver can go for - a relative href with no absolute base URI behind it
+                    e.MaybeSetErrorCode("XTSE0165");
+                    throw;
+                }
+
                 if (source == null)
                 {
                     throw new XPathException("Unable to resolve " + elemName.DisplayName + " stylesheet URI " + href, "XTSE0165").WithLocation(location);

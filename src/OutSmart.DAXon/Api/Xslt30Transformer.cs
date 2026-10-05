@@ -487,7 +487,15 @@ namespace OutSmart.DAXon.Api
         {
             Serializer serializer = processor.NewSerializer(file);
             serializer.SetOutputProperties(controller.GetExecutable().PrimarySerializationProperties);
-            SetBaseOutputURI(new Uri(Path.GetFullPath(file)).AbsoluteUri);
+            try
+            {
+                SetBaseOutputURI(new Uri(Path.GetFullPath(file)).AbsoluteUri);
+            }
+            catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is IOException || e is FormatException || e is System.Security.SecurityException)
+            {
+                // As in Serializer.SetOutputFile: the name is refused when the file is opened, as SXRD0004
+            }
+
             return serializer;
         }
 

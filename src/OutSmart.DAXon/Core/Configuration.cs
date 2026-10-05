@@ -2729,7 +2729,7 @@ namespace OutSmart.DAXon.Core
                 {
                     return int.Parse((string)value, CultureInfo.InvariantCulture);
                 }
-                catch (FormatException nfe)
+                catch (Exception nfe) when (nfe is FormatException || nfe is OverflowException)
                 {
                     throw new ArgumentException(propertyName + " must be an integer");
                 }

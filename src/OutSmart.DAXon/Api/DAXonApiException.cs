@@ -57,7 +57,8 @@ namespace OutSmart.DAXon.Api
 
         internal static bool IsIO(Exception e)
         {
-            return e is System.IO.IOException || e is UnauthorizedAccessException || IsPathRefused(e);
+            // UriFormatException: a name that is no path either - a device ("CON"), "c:relative", "\.\pipe\x".
+            return e is System.IO.IOException || e is UnauthorizedAccessException || e is UriFormatException || IsPathRefused(e);
         }
 
         // .NET Framework refusing a path by its form ("Illegal characters in path.", "The given path's format is not

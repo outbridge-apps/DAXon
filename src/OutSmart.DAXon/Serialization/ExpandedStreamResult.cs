@@ -139,17 +139,12 @@ namespace OutSmart.DAXon.Serialization
                 // safe in either order.
                 originatingResult.SetOutputStream(outputStream);
             }
-            catch (FileNotFoundException fnf)
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is ArgumentException || e is NotSupportedException
+                || e is FormatException || e is System.Security.SecurityException || e is URISyntaxException)
             {
-                throw new XPathException(fnf);
-            }
-            catch (URISyntaxException fnf)
-            {
-                throw new XPathException(fnf);
-            }
-            catch (ArgumentException fnf)
-            {
-                throw new XPathException(fnf);
+                // Held by another process, refused by the file system for its form, out of reach: one error for a
+                // destination that cannot be written, with the system's own reason. A held file was a raw IOException.
+                throw new XPathException("Cannot write to " + uriString + ": " + e.Message, e).WithErrorCode(DAXonErrorCode.SXRD0004);
             }
 
             return outputStream;
@@ -165,13 +160,8 @@ namespace OutSmart.DAXon.Serialization
             URI uri = new URI(uriString);
             if (!uri.IsAbsolute())
             {
-                try
-                {
-                    uri = new Uri(Path.GetFullPath(uriString)).AbsoluteUri;
-                }
-                catch (Exception e)
-                {
-                }
+                // A name the file system refuses fails here, with the reason (the caller reports it)
+                uri = new Uri(Path.GetFullPath(uriString)).AbsoluteUri;
             }
 
             string file = new Uri(uri.ToString()).LocalPath;
@@ -198,9 +188,9 @@ namespace OutSmart.DAXon.Serialization
                     throw new XPathException("Cannot write to URI " + uriString, DAXonErrorCode.SXRD0004);
                 }
             }
-            catch (IOException err)
+            catch (Exception err) when (err is IOException || err is UnauthorizedAccessException)
             {
-                throw new XPathException("Failed to create output file " + uri, err);
+                throw new XPathException("Failed to create output file " + uri + ": " + err.Message, err).WithErrorCode(DAXonErrorCode.SXRD0004);
             }
 
             return file;

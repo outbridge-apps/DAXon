@@ -460,7 +460,18 @@ namespace OutSmart.DAXon.Internal.Numerics
             return unchecked((long)(ulong)(integerPart & ulong.MaxValue));
         }
         public int IntValue() => unchecked((int)LongValue());
-        public double DoubleValue() => double.Parse(ToString(), CultureInfo.InvariantCulture);
+        // Java's doubleValue() gives an infinity for a magnitude no double holds; .NET Framework's parser throws.
+        public double DoubleValue()
+        {
+            try
+            {
+                return double.Parse(ToString(), CultureInfo.InvariantCulture);
+            }
+            catch (OverflowException)
+            {
+                return Sign < 0 ? double.NegativeInfinity : double.PositiveInfinity;
+            }
+        }
         // Java BigDecimal.floatValue() — narrowing decimal->float conversion.
         // FormatNumber.AdjustToDecimal compares trial.FloatValue() == value at precision 1.
         public float FloatValue() => (float)DoubleValue();

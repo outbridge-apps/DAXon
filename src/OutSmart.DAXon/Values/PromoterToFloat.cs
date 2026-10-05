@@ -21,7 +21,13 @@ namespace OutSmart.DAXon.Values
     // upstream Converter.PromoterToFloat (Converter.java:771): double -> float is NOT promotable.
     internal sealed class PromoterToFloat : Converter
     {
-        public PromoterToFloat(object rules) { }
+        private readonly StringToDouble stringToDouble;
+
+        public PromoterToFloat(object rules)
+        {
+            stringToDouble = (rules as OutSmart.DAXon.Lib.ConversionRules)?.StringToDoubleConverter ?? OutSmart.DAXon.Functions.StringToDouble11.GetInstance();
+        }
+
         public override IConversionResult Convert(object value)
         {
             AtomicValue input = (AtomicValue)value;
@@ -41,23 +47,15 @@ namespace OutSmart.DAXon.Values
             }
             if (input.IsUntypedAtomic())
             {
-                try
+                // By the lexical rules, as a cast to xs:float reads it (see PromoterToDouble).
+                if (stringToDouble.TryStringToNumber(input.UnicodeStringValue, out double d))
                 {
-                    string s = input.GetStringValue().Trim();
-                    switch (s)
-                    {
-                        case "INF": case "+INF": return new FloatValue(float.PositiveInfinity);
-                        case "-INF": return new FloatValue(float.NegativeInfinity);
-                        case "NaN": return new FloatValue(float.NaN);
-                        default: return new FloatValue(float.Parse(s, System.Globalization.CultureInfo.InvariantCulture));
-                    }
+                    return new FloatValue((float)d);
                 }
-                catch (FormatException)
-                {
-                    var verr = new ValidationFailure("Cannot convert string \"" + input.GetStringValue() + "\" to xs:float");
-                    verr.SetErrorCode("FORG0001");
-                    return verr;
-                }
+
+                var verr = new ValidationFailure("Cannot convert string \"" + input.GetStringValue() + "\" to xs:float");
+                verr.SetErrorCode("FORG0001");
+                return verr;
             }
             var err = new ValidationFailure("Cannot promote non-numeric value to xs:float");
             err.SetErrorCode("XPTY0004");

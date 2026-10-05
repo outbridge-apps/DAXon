@@ -195,7 +195,11 @@ namespace OutSmart.DAXon.Xslt
                     }
                 }
 
-                if (nsuri != null)
+                // A name in the xmlns namespace, one in the xml namespace under another prefix and the prefix xmlns have
+                // rules of their own (XTDE0835, a prefix to replace), which the computed form applies when the
+                // instruction runs; a FixedElement of such a name failed in the namespace map or declared xmlns.
+                bool reserved = nsuri != null && (nsuri.Equals(NamespaceUri.XMLNS) || parts[0].Equals("xmlns") || (nsuri.Equals(NamespaceUri.XML) && !parts[0].Equals("xml")));
+                if (nsuri != null && !reserved)
                 {
 
                     // Local name and namespace are both known statically: generate a FixedElement instruction

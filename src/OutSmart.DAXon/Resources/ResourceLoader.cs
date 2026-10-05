@@ -17,6 +17,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Streams;
+using OutSmart.DAXon.Transformation;
 using System.IO;
 namespace OutSmart.DAXon.Resources
 {
@@ -161,9 +162,31 @@ namespace OutSmart.DAXon.Resources
             }
             else
             {
-                return ResourceLoader.UrlConnection(new Uri(url), config, kind)
+                return ResourceLoader.UrlConnection(Absolute(url), config, kind)
                     .DecodedStream(InputSizeLimit.MaxFor(config), url, kind == OutSmart.DAXon.Api.ResourceKind.Text ? "FOUT1170" : "FODC0002");
             }
+        }
+
+        // What reaches here unresolved had no absolute base URI behind it - a stylesheet compiled from text under a
+        // relative system id, an xsl:include in it. An error of its own, not .NET's UriFormatException, and not an
+        // I/O failure either: the resolver answers one of those by handing the name to the parser, which would
+        // read it from the current directory.
+        private static Uri Absolute(string url)
+        {
+            if (Uri.TryCreate(url, UriKind.Absolute, out Uri absolute))
+            {
+                return absolute;
+            }
+
+            // With a scheme it is a URI .NET does not take ("jar:file:/x!/y"): its own exception, as callers expect
+            int colon = url.IndexOf(':');
+            int delimiter = url.IndexOfAny(new[] { '/', '?', '#' });
+            if (colon > 0 && char.IsLetter(url[0]) && (delimiter < 0 || delimiter > colon))
+            {
+                return new Uri(url);
+            }
+
+            throw new XPathException("'" + url + "' is not an absolute URI, and the base URI it was resolved against is not one either");
         }
 
         public static ResolvedResource TypedResource(Configuration config, string url)
@@ -174,7 +197,7 @@ namespace OutSmart.DAXon.Resources
             }
             else
             {
-                URLConnection conn = ResourceLoader.UrlConnection(new Uri(url), config, OutSmart.DAXon.Api.ResourceKind.Text);
+                URLConnection conn = ResourceLoader.UrlConnection(Absolute(url), config, OutSmart.DAXon.Api.ResourceKind.Text);
                 System.IO.Stream inputStream = new BufferedStream(conn.DecodedStream(InputSizeLimit.MaxFor(config), url, "FOUT1170"));
 
                 return new ResolvedResource { Stream = inputStream, ContentType = conn.ContentType, SystemId = url };

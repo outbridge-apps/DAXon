@@ -212,7 +212,17 @@ namespace OutSmart.DAXon.Api
             result.SetOutputStream(null);
             result.SetWriter(null);
             result.SetSystemId(file);
-            DestinationBaseURI = new Uri(Path.GetFullPath(file)).AbsoluteUri;
+            try
+            {
+                DestinationBaseURI = new Uri(Path.GetFullPath(file)).AbsoluteUri;
+            }
+            catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is IOException || e is FormatException || e is System.Security.SecurityException)
+            {
+                // A name the file system refuses is reported when the file is opened (SXRD0004), with every other
+                // reason a file cannot be written; here it was .NET's own exception, a different one for each fault.
+                DestinationBaseURI = null;
+            }
+
             mustClose = true;
         }
 

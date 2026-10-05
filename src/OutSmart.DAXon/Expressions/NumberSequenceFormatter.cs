@@ -214,7 +214,7 @@ namespace OutSmart.DAXon.Expressions
                     int n = int.Parse(tok, CultureInfo.InvariantCulture);
                     list.Add(n);
                 }
-                catch (FormatException err)
+                catch (Exception err) when (err is FormatException || err is OverflowException)
                 {
                     throw new XPathException("Invalid start-at value: non-integer component {" + tok + "}").WithErrorCode("XTDE0030").WithLocation(GetLocation());
                 }
@@ -425,7 +425,7 @@ namespace OutSmart.DAXon.Expressions
                         {
                             gpsize = int.Parse(g, CultureInfo.InvariantCulture);
                         }
-                        catch (FormatException err)
+                        catch (Exception err) when (err is FormatException || err is OverflowException)
                         {
                             throw new XPathException("grouping-size must be numeric").WithXPathContext(context).WithErrorCode("XTDE0030").WithLocation(expr.GetLocation());
                         }

@@ -1099,7 +1099,7 @@ namespace OutSmart.DAXon.Lib
                     throw new XPathException("Value of " + Err.Wrap(key) + " must be a non-negative integer", "SEPM0016");
                 }
             }
-            catch (FormatException err)
+            catch (Exception err) when (err is FormatException || err is OverflowException)
             {
                 throw new XPathException("Value of " + Err.Wrap(key) + " must be a non-negative integer", "SEPM0016");
             }

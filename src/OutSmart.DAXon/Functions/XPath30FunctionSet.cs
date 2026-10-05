@@ -69,7 +69,9 @@ namespace OutSmart.DAXon.Functions
 
             Register("sort", 2, (e) => e.Populate(() => new Sort_2(), AnyItemType.GetInstance(), STAR, 0).Arg(0, AnyItemType.GetInstance(), STAR, null).Arg(1, BuiltInAtomicType.STRING, OPT, null));
 
-            Register("sort", 3, (e) => e.Populate(() => new Sort_3(), AnyItemType.GetInstance(), STAR, 0).Arg(0, AnyItemType.GetInstance(), STAR, null).Arg(1, BuiltInAtomicType.STRING, OPT, null).Arg(2, AnyFunctionType.GetInstance(), ONE, null));
+            // function(item()) as xs:anyAtomicType*: the coercion to it is what checks the key function's arity and arguments
+            var __sortKey = new SpecificFunctionType(new SequenceType[] { SequenceType.SINGLE_ITEM }, SequenceType.ATOMIC_SEQUENCE);
+            Register("sort", 3, (e) => e.Populate(() => new Sort_3(), AnyItemType.GetInstance(), STAR, 0).Arg(0, AnyItemType.GetInstance(), STAR, null).Arg(1, BuiltInAtomicType.STRING, OPT, null).Arg(2, __sortKey, ONE, null));
 
             Register("generate-id", 0, (e) => e.Populate(() => new ContextItemAccessorFunction(), BuiltInAtomicType.STRING, ONE, CITEM | LATE));
 

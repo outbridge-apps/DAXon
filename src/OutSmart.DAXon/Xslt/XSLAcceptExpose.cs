@@ -161,7 +161,7 @@ namespace OutSmart.DAXon.Xslt
                         {
                             arity = int.Parse(tok.Substring(hash + 1), CultureInfo.InvariantCulture);
                         }
-                        catch (FormatException err)
+                        catch (Exception err) when (err is FormatException || err is OverflowException)
                         {
                             CompileErrorInAttribute("Malformed function arity in '" + tok + "'", "XTSE0020", "names");
                         }

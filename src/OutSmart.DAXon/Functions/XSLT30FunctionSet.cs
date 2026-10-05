@@ -196,7 +196,9 @@ namespace OutSmart.DAXon.Functions
             // fn:sort (upstream XPath31FunctionSet) + current-group/current-grouping-key (XSLT30FunctionSet, LATE).
             Register("sort", 1, (e) => e.Populate(() => new Sort_1(), AnyItemType.GetInstance(), STAR, 0).Arg(0, AnyItemType.GetInstance(), STAR, null));
             Register("sort", 2, (e) => e.Populate(() => new Sort_2(), AnyItemType.GetInstance(), STAR, 0).Arg(0, AnyItemType.GetInstance(), STAR, null).Arg(1, BuiltInAtomicType.STRING, OPT, null));
-            Register("sort", 3, (e) => e.Populate(() => new Sort_3(), AnyItemType.GetInstance(), STAR, 0).Arg(0, AnyItemType.GetInstance(), STAR, null).Arg(1, BuiltInAtomicType.STRING, OPT, null).Arg(2, AnyFunctionType.GetInstance(), ONE, null));
+            // function(item()) as xs:anyAtomicType*: the coercion to it is what checks the key function's arity and arguments
+            var __sortKey = new SpecificFunctionType(new SequenceType[] { SequenceType.SINGLE_ITEM }, SequenceType.ATOMIC_SEQUENCE);
+            Register("sort", 3, (e) => e.Populate(() => new Sort_3(), AnyItemType.GetInstance(), STAR, 0).Arg(0, AnyItemType.GetInstance(), STAR, null).Arg(1, BuiltInAtomicType.STRING, OPT, null).Arg(2, __sortKey, ONE, null));
             Register("current-group", 0, (e) => e.Populate(() => new CurrentGroup(), Types.Type.ITEM_TYPE, STAR, LATE));
             Register("current-grouping-key", 0, (e) => e.Populate(() => new CurrentGroupingKey(), BuiltInAtomicType.ANY_ATOMIC, STAR, LATE));
             // XSLT30FunctionSet.java:53-118 tail the bring-up list missed: current() (rewritten at compile time

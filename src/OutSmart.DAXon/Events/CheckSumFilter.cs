@@ -141,7 +141,7 @@ namespace OutSmart.DAXon.Events
                             requireDigest = int.Parse(minorVersion, CultureInfo.InvariantCulture) >= 5;
                         }
                     }
-                    catch (FormatException e)
+                    catch (Exception e) when (e is FormatException || e is OverflowException)
                     {
                         requireDigest = true;
                     }
@@ -225,7 +225,7 @@ namespace OutSmart.DAXon.Events
                         int found = (int)Convert.ToInt64("0" + data, 16);
                         checksumCorrect = found == checksum;
                     }
-                    catch (FormatException e)
+                    catch (Exception e) when (e is FormatException || e is OverflowException)
                     {
                         checksumCorrect = false;
                     }

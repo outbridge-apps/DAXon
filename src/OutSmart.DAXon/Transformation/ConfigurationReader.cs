@@ -768,7 +768,7 @@ namespace OutSmart.DAXon.Transformation
                     {
                         details.priority = int.Parse(priority, CultureInfo.InvariantCulture);
                     }
-                    catch (FormatException err)
+                    catch (Exception err) when (err is FormatException || err is OverflowException)
                     {
                         Error("package", "priority", priority, "Requires an integer.");
                     }

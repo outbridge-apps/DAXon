@@ -77,7 +77,7 @@ namespace OutSmart.DAXon.Values
                     valuei[i] = int.Parse(parts[i], CultureInfo.InvariantCulture);
                 }
             }
-            catch (FormatException exc)
+            catch (Exception exc) when (exc is FormatException || exc is OverflowException)
             {
                 throw new XPathException("Nested integer value has incorrect format: " + v);
             }

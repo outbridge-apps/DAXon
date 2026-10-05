@@ -769,15 +769,14 @@ namespace OutSmart.DAXon.Functions
             int zeroDigit = Alphanumeric.GetDigitFamily(format.CodePointAt(0));
             if (zeroDigit >= 0 && zeroDigit != '0')
             {
-                int[] digits = new int[10];
-                for (int z = 0; z <= 9; z++)
+                // Digit by digit: padded to the picture's width, the fraction can have more digits than a long holds.
+                UnicodeBuilder family = new UnicodeBuilder(str.Length32());
+                for (long i = 0; i < str.Length(); i++)
                 {
-                    digits[z] = zeroDigit + z;
+                    family.Append(zeroDigit + (str.CodePointAt(i) - '0'));
                 }
 
-                long n = long.Parse(str.ToString(), CultureInfo.InvariantCulture);
-                int requiredLength = str.Length32();
-                str = StringView.Tidy(AbstractNumberer.ConvertDigitSystem(n, digits, requiredLength));
+                str = family.ToUnicodeString();
             }
 
             return str;
