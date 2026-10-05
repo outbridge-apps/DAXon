@@ -300,8 +300,10 @@ namespace OutSmart.DAXon.Serialization
             return sb.ToString();
         }
 
+        // An array or a map inside another descends through here: the depth is the value's, so the stack is asked.
         private void SerializeArray(ArrayItem array)
         {
+            StackGuard.Probe();
             Emit("[");
             bool first = true;
             foreach (ISequence seq in array.Members())
@@ -323,6 +325,7 @@ namespace OutSmart.DAXon.Serialization
 
         private void SerializeMap(MapItem map)
         {
+            StackGuard.Probe();
             Emit("map{");
             bool first = true;
             foreach (OutSmart.DAXon.Values.Maps.KeyValuePair pair in map.KeyValuePairs())
