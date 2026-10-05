@@ -65,7 +65,9 @@ namespace OutSmart.DAXon.Serialization
 
             if (versionProperty != null)
             {
-                if (versionProperty.Equals("4.0") || versionProperty.Equals("4.01"))
+                // A decimal, as the parameter is declared: 4, 4.0 and 4.00 are one version. Compared as text, "4" - what
+                // html-version="4" says, and what the xs:decimal 4.0 is as a string - was an unsupported version.
+                if (DAXonOutputKeys.IsDecimal(versionProperty, "4.0") || DAXonOutputKeys.IsDecimal(versionProperty, "4.01"))
                 {
                     version = 4;
                 }

@@ -89,16 +89,22 @@ namespace OutSmart.DAXon.Serialization
             }
         }
 
+        // set once text that is not white space has been written before the first start tag
+        private bool textBeforeRoot;
+
         public override void Characters(UnicodeString chars, ILocation locationId, int properties)
         {
             // Ignore whitespace before the first start tag: we buffer nothing, but need the first element's
-            // name to emit the DOCTYPE, so leading whitespace is dropped (matches upstream).
-            if (!started && Whitespace.IsAllWhite(chars))
+            // name to emit the DOCTYPE, so leading whitespace is dropped (matches upstream) - while it is leading.
+            // After text it is content: the space between two atomic values of a sequence that has no element was
+            // dropped with it, and "1 a" was written "1a".
+            if (!started && !textBeforeRoot && Whitespace.IsAllWhite(chars))
             {
                 // no action
             }
             else
             {
+                textBeforeRoot = true;
                 base.Characters(chars, locationId, properties);
             }
         }

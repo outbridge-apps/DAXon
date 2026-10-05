@@ -112,6 +112,19 @@ namespace OutSmart.DAXon.Lib
             return ITEM_SEPARATOR.Equals(key) || NEWLINE.Equals(key);
         }
 
+        // A version is a decimal, and is that number however it is written: "4", "4.0", "4.00".
+        internal static bool IsDecimal(string value, string number)
+        {
+            try
+            {
+                return ((DecimalValue)BigDecimalValue.MakeDecimalValue(value, false).AsAtomic()).GetDecimalValue().Equals(new BigDecimal(number));
+            }
+            catch (ValidationException)
+            {
+                return false;
+            }
+        }
+
         public static bool IsXhtmlHtmlVersion5(Properties properties)
         {
             string htmlVersion = properties.GetProperty(DAXonOutputKeys.HTML_VERSION);
