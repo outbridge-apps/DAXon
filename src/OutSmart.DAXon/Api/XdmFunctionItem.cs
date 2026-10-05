@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Api
 {
     public class XdmFunctionItem : XdmItem
     {
-        // Public as it was in 1.3, for the hosts built against it. s9api keeps it for its subclasses.
+        // Public as it was in 1.3, for the hosts built against it; s9api has no such constructor.
         [Obsolete("A function item made this way holds no function, and any use of it fails: take one from an expression.")]
         public XdmFunctionItem() : base(null) { }
         public XdmFunctionItem(OutSmart.DAXon.Model.IItem function) : base(function) { }
