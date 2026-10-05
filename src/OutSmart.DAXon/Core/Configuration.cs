@@ -875,8 +875,14 @@ namespace OutSmart.DAXon.Core
             defaultParseOptions = defaultParseOptions.WithLineNumbering(lineNumbering);
         }
 
+        // The .NET parser has no XInclude, and until 1.4 the request was dropped without a word.
         public virtual void SetXIncludeAware(bool state)
         {
+            if (state)
+            {
+                throw new NotSupportedException("XInclude is not supported on this platform");
+            }
+
             defaultParseOptions = defaultParseOptions.WithXIncludeAware(state);
         }
 
@@ -2497,7 +2503,12 @@ namespace OutSmart.DAXon.Core
                         // no action
                         break;
                     case FeatureCode.XINCLUDE:
-                        SetXIncludeAware(RequireBoolean(name, value));
+                        if (RequireBoolean(name, value))
+                        {
+                            throw new ArgumentException(name + ": XInclude is not supported on this platform");
+                        }
+
+                        SetXIncludeAware(false);
                         break;
                     case FeatureCode.XPATH_VERSION_FOR_XSD:
                         {

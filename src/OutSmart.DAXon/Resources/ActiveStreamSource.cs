@@ -95,6 +95,11 @@ namespace OutSmart.DAXon.Resources
             }
 
             bool dtdValidate = dtd == XmlReaderToReceiver.DtdUse.Validate || dtd == XmlReaderToReceiver.DtdUse.ValidateLax;
+            if (options.IsXIncludeAware())
+            {
+                // Asked for one document (saxon:xinclude on xsl:source-document): the .NET parser has none.
+                throw new XPathException("XInclude is not supported on this platform");
+            }
 
             // External entities / an external DTD subset resolve through the config's ResourceResolver. A bare
             // non-validating parse with no external references needs no resolver (null = no external fetch).
