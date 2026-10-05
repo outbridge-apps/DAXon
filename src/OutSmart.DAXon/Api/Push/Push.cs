@@ -17,6 +17,9 @@ namespace OutSmart.DAXon.Api.Push
 {
     public interface IPush
     {
+        IDocument Document(bool wellFormed);
+
+        [Obsolete("Use Document(bool): this is the same method under the name of the type it returns.")]
         IDocument IDocument(bool wellFormed);
     }
 }

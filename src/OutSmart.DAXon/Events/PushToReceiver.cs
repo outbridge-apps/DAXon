@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Events
             this.destination = destination;
         }
 
-        public IDocument IDocument(bool wellFormed)
+        public IDocument Document(bool wellFormed)
         {
             Send(() =>
             {
@@ -45,6 +45,11 @@ namespace OutSmart.DAXon.Events
                 cco.StartDocument(ReceiverOption.NONE);
             });
             return new DocImpl(this, wellFormed);
+        }
+
+        public IDocument IDocument(bool wellFormed)
+        {
+            return Document(wellFormed);
         }
 
         private void Send(Action events)
