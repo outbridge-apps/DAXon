@@ -92,8 +92,12 @@ namespace OutSmart.DAXon.Functions
 
                 s.SetPipelineConfiguration(b.GetPipelineConfiguration());
 
-                // P5: parse the literal XML string via the direct System.Xml.XmlReader path (no JAXP Source).
-                using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(sr, null, baseURI, null, false, false, config))
+                // P5: parse the literal XML string via the direct System.Xml.XmlReader path (no JAXP Source). Never
+                // validated; a DTD's ignorable whitespace is told apart as for any other document.
+                XmlReaderToReceiver.DtdUse dtd = XmlReaderToReceiver.LeavesOutIgnorable(b.GetPipelineConfiguration().GetParseOptions()) && XmlReaderToReceiver.MayHaveDoctype(inputXml)
+                    ? XmlReaderToReceiver.DtdUse.Whitespace
+                    : XmlReaderToReceiver.DtdUse.None;
+                using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(sr, null, baseURI, null, dtd, config))
                 {
                     Sender.Send(reader, baseURI, s, options);
                 }

@@ -15,9 +15,12 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Xml;
+using System.Xml.Schema;
 
 namespace OutSmart.DAXon.Events
 {
@@ -85,6 +88,9 @@ namespace OutSmart.DAXon.Events
         // Java SAX parser never would, so it is suppressed at depth 0.
         private int elementDepth;
 
+        // For each open element, whether the DTD declares it: only there can whitespace be ignorable.
+        private bool[] declaredAt;
+
         // Stack of in-scope namespace maps; the bottom entry is the empty document-level map.
         private readonly Stack<NamespaceMap> namespaceStack = new Stack<NamespaceMap>();
 
@@ -139,15 +145,48 @@ namespace OutSmart.DAXon.Events
         /// </summary>
         public static XmlReader CreateXmlReader(TextReader charStream, Stream byteStream, string systemId, XmlResolver resolver)
         {
-            return CreateXmlReader(charStream, byteStream, systemId, resolver, false);
+            return CreateXmlReader(charStream, byteStream, systemId, resolver, DtdUse.None);
         }
+
+        // What the parser does with a document's DTD besides reading its entities and attribute defaults.
+        internal enum DtdUse
+        {
+            None,
+            // Tells the whitespace of element-only content apart, for the tree to leave it out.
+            Whitespace,
+            // Reports every validity error as well: the parse fails at its end if there was one.
+            Validate,
+            // As Validate, the errors being warnings the parse survives.
+            ValidateLax
+        }
+
+        // The whitespace a DTD makes ignorable stays out of the tree unless the parse keeps all whitespace, as with
+        // Saxon's SAX handler.
+        internal static bool LeavesOutIgnorable(ParseOptions options)
+        {
+            return !(options?.SpaceStrippingRule is NoElementsSpaceStrippingRule);
+        }
+
+        // The use of its DTD a parse under these options asks of the reader.
+        internal static DtdUse DtdUseFor(ParseOptions options)
+        {
+            int validation = options == null ? Validation.SKIP : options.DTDValidationMode;
+            return validation == Validation.STRICT ? DtdUse.Validate
+                : validation == Validation.LAX ? DtdUse.ValidateLax
+                : LeavesOutIgnorable(options) ? DtdUse.Whitespace : DtdUse.None;
+        }
+
+        // The validity errors of the readers made here that read a DTD (see DtdEvents).
+        private static readonly ConditionalWeakTable<XmlReader, DtdEvents> DtdEventsOf = new ConditionalWeakTable<XmlReader, DtdEvents>();
 
         // config: the configuration whose resource policy gates the default resolver's file reads
         // (external DTD subsets and entities); null for the engine's own embedded resources.
         // inputInEntity: characters of the input itself that arrive as an external entity (parse-xml-fragment),
         // which the reader would otherwise count against the expansion limit.
-        public static XmlReader CreateXmlReader(TextReader charStream, Stream byteStream, string systemId, XmlResolver resolver, bool dtdValidate, bool suppressValidationErrors = false, Configuration config = null, long inputInEntity = 0)
+        // reporter: receives the validity errors of a validating parse; the configuration's when null.
+        public static XmlReader CreateXmlReader(TextReader charStream, Stream byteStream, string systemId, XmlResolver resolver, DtdUse dtd, Configuration config = null, long inputInEntity = 0, IErrorReporter reporter = null)
         {
+            XmlResolver entities = resolver ?? new FileOnlyXmlResolver(config, charStream == null && byteStream == null ? systemId : null);
             var settings = new XmlReaderSettings
             {
                 // File-relative DTD/external-entity fetch by default (Java SAX parity); an internal subset
@@ -155,8 +194,8 @@ namespace OutSmart.DAXon.Events
                 // resolve through it instead.
                 DtdProcessing = DtdProcessing.Parse,
                 MaxCharactersFromEntities = MaxEntityCharacters + inputInEntity,
-                XmlResolver = resolver ?? new FileOnlyXmlResolver(config, charStream == null && byteStream == null ? systemId : null),
-                ValidationType = dtdValidate ? ValidationType.DTD : ValidationType.None,
+                XmlResolver = entities,
+                ValidationType = ValidationType.None,
                 IgnoreComments = false,
                 IgnoreProcessingInstructions = false,
                 IgnoreWhitespace = false,
@@ -164,13 +203,6 @@ namespace OutSmart.DAXon.Events
                 CloseInput = true,
                 ConformanceLevel = ConformanceLevel.Document,
             };
-            if (dtdValidate && suppressValidationErrors)
-            {
-                // ValidationType.DTD here is used only so .NET classifies element-content whitespace as
-                // ignorable (XmlNodeType.Whitespace vs SignificantWhitespace — see Parse()); we do not want a
-                // DTD-invalid but well-formed document to abort, so swallow validity events.
-                settings.ValidationEventHandler += (sender, e) => { };
-            }
 
             // Ownership note: CloseInput=true above means this factory OWNS the supplied stream/reader
             // - the returned XmlReader's Dispose closes it, on the success path and the mid-parse-error
@@ -178,12 +210,22 @@ namespace OutSmart.DAXon.Events
             // (engine-opened for doc()/includes; wrapped in a deadline guard for http) leaks to the
             // finalizer holding its file handle or pooled socket. The declaration peek is a real throw
             // site: a guarded network stream raises SXTO0001 from Read when the run's deadline expires.
+
+            // A reader that tells a DTD's whitespace apart validates, which costs every text node its fast lane:
+            // the prolog is read first, and a document that has no DOCTYPE gets the plain reader.
+            bool mayHaveDoctype = true;
             string baseUri = systemId ?? string.Empty;
+            var use = new DtdSetup { Dtd = dtd, SystemId = baseUri, Reporter = reporter, Config = config };
             if (charStream != null)
             {
                 try
                 {
-                    return XmlReader.Create(charStream, settings, baseUri);
+                    if (dtd == DtdUse.Whitespace)
+                    {
+                        charStream = PeekProlog(charStream, out mayHaveDoctype);
+                    }
+
+                    return Tracked(XmlReader.Create(charStream, UseDtd(settings, mayHaveDoctype, ref use), baseUri), use.Events);
                 }
                 catch
                 {
@@ -199,8 +241,8 @@ namespace OutSmart.DAXon.Events
                 // well-formed in 1.1 (but not 1.0) pass. A 1.0 / declaration-less document is untouched.
                 try
                 {
-                    byteStream = MaybeDowngradeXml11(byteStream, settings);
-                    return XmlReader.Create(byteStream, settings, baseUri);
+                    byteStream = PeekHead(byteStream, settings, true, dtd == DtdUse.Whitespace, out mayHaveDoctype);
+                    return Tracked(XmlReader.Create(byteStream, UseDtd(settings, mayHaveDoctype, ref use), baseUri), use.Events);
                 }
                 catch
                 {
@@ -213,13 +255,73 @@ namespace OutSmart.DAXon.Events
 
             if (!string.IsNullOrEmpty(systemId))
             {
-                return XmlReader.Create(systemId, settings);
+                if (dtd == DtdUse.Whitespace && entities is FileOnlyXmlResolver opener)
+                {
+                    // Opened here the way XmlReader.Create(systemId) opens it, for the prolog to be read first. A
+                    // version="1.1" declaration is left alone, as it always was for an input given by system id.
+                    Uri uri = opener.ResolveUri(null, systemId);
+                    Stream principal = (Stream)opener.GetEntity(uri, string.Empty, typeof(Stream));
+                    try
+                    {
+                        principal = PeekHead(principal, settings, false, true, out mayHaveDoctype);
+                        return Tracked(XmlReader.Create(principal, UseDtd(settings, mayHaveDoctype, ref use), uri.ToString()), use.Events);
+                    }
+                    catch
+                    {
+                        principal.Dispose();
+                        throw;
+                    }
+                }
+
+                return Tracked(XmlReader.Create(systemId, UseDtd(settings, true, ref use)), use.Events);
             }
 
             throw new XPathException("ActiveStreamSource supplies neither a stream nor a system identifier");
         }
 
-        private static Stream MaybeDowngradeXml11(Stream input, XmlReaderSettings settings)
+        // What CreateXmlReader was asked about the DTD, and the events of the reader it then made.
+        private struct DtdSetup
+        {
+            public DtdUse Dtd;
+            public string SystemId;
+            public IErrorReporter Reporter;
+            public Configuration Config;
+            public DtdEvents Events;
+        }
+
+        // Sets the reader up for the use it makes of a DTD: none at all when the parse only tells whitespace apart
+        // and the document has no DOCTYPE.
+        private static XmlReaderSettings UseDtd(XmlReaderSettings settings, bool mayHaveDoctype, ref DtdSetup use)
+        {
+            if (use.Dtd != DtdUse.None && (mayHaveDoctype || use.Dtd != DtdUse.Whitespace))
+            {
+                // ValidationType.DTD has .NET classify element-content whitespace (see Parse()). A document that
+                // is well-formed but not valid must not abort there, so the validity errors go to the handler.
+                use.Events = new DtdEvents(use.Dtd, use.SystemId, use.Dtd == DtdUse.Whitespace ? null : use.Reporter ?? use.Config?.MakeErrorReporter());
+                settings.ValidationType = ValidationType.DTD;
+                settings.ValidationEventHandler += use.Events.OnEvent;
+            }
+
+            return settings;
+        }
+
+        private static XmlReader Tracked(XmlReader reader, DtdEvents events)
+        {
+            if (events != null)
+            {
+                DtdEventsOf.Add(reader, events);
+            }
+
+            return reader;
+        }
+
+        // A prolog longer than this is not read through: the reader then tells whitespace apart whether or not a
+        // DOCTYPE follows, which is right either way and only slower.
+        private const int MaxPrologPeek = 64 * 1024;
+
+        // Reads the head of the stream: for a version="1.1" declaration, which it rewrites, and for whether the
+        // prolog has a DOCTYPE. What was read is served again.
+        private static Stream PeekHead(Stream input, XmlReaderSettings settings, bool downgradeXml11, bool findDoctype, out bool mayHaveDoctype)
         {
             // XmlReader refills its internal buffer in small chunks, so an unbuffered input
             // (File.OpenRead's 4KB default, raw network streams) pays a syscall per refill —
@@ -230,12 +332,13 @@ namespace OutSmart.DAXon.Events
                 int bufSize = 64 * 1024;
                 if (input.CanSeek)
                 {
-                    bufSize = (int)Math.Min(bufSize, Math.Max(4096, input.Length));
+                    bufSize = (int)Math.Min(bufSize, Math.Max(XmlDeclPeekBytes, input.Length));
                 }
 
                 input = new BufferedStream(input, bufSize);
             }
 
+            long start = input.CanSeek ? input.Position : -1;
             byte[] head = new byte[XmlDeclPeekBytes];
             int n = 0, r;
             while (n < XmlDeclPeekBytes && (r = input.Read(head, n, XmlDeclPeekBytes - n)) > 0)
@@ -243,7 +346,7 @@ namespace OutSmart.DAXon.Events
                 n += r;
             }
 
-            int digit = Xml11VersionDigit(head, n);
+            int digit = downgradeXml11 ? Xml11VersionDigit(head, n) : -1;
             if (digit >= 0)
             {
                 settings.CheckCharacters = false;
@@ -251,7 +354,270 @@ namespace OutSmart.DAXon.Events
                 head[digit] = (byte)'0';
             }
 
+            mayHaveDoctype = true;
+            while (findDoctype)
+            {
+                Doctype found = FindDoctype(head, n, n < head.Length);
+                if (found != Doctype.NeedsMore || head.Length >= MaxPrologPeek)
+                {
+                    mayHaveDoctype = found != Doctype.Absent;
+                    break;
+                }
+
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+                Array.Resize(ref head, head.Length * 16);
+                while (n < head.Length && (r = input.Read(head, n, head.Length - n)) > 0)
+                {
+                    n += r;
+                }
+            }
+
+            if (start >= 0 && digit < 0)
+            {
+                // Nothing was rewritten and the stream can go back: the parser reads it from where it stood, and
+                // sizes its buffers by its length - some 10 KB less for a small document.
+                input.Position = start;
+                return input;
+            }
+
             return new PrefixedStream(head, n, input);
+        }
+
+        // Whether a document held as text may have a DOCTYPE: a caller that holds it can ask for the plain reader
+        // outright, and spare a small document the read-ahead.
+        internal static bool MayHaveDoctype(string xml)
+        {
+            return FindDoctype(new StringUnits(xml), true) != Doctype.Absent;
+        }
+
+        // As PeekHead, for an input that arrives as characters.
+        private static TextReader PeekProlog(TextReader input, out bool mayHaveDoctype)
+        {
+            char[] head = new char[XmlDeclPeekBytes];
+            int n = 0;
+            bool ended = false;
+            while (true)
+            {
+                int r = n < head.Length ? input.Read(head, n, head.Length - n) : 0;
+                if (r > 0)
+                {
+                    n += r;
+                }
+                else if (n < head.Length)
+                {
+                    ended = true;
+                }
+
+                Doctype found = FindDoctype(new CharUnits(head, n), ended);
+                if (found != Doctype.NeedsMore || (n == head.Length && n >= MaxPrologPeek))
+                {
+                    mayHaveDoctype = found != Doctype.Absent;
+                    break;
+                }
+
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+                if (n == head.Length)
+                {
+                    Array.Resize(ref head, n * 16);
+                }
+            }
+
+            return new PrefixedTextReader(head, n, input);
+        }
+
+        private enum Doctype
+        {
+            Unknown,     // the prolog does not show it: an encoding not read here, or not XML at all
+            Present,
+            Absent,
+            NeedsMore    // the prolog goes on beyond what was read
+        }
+
+        // The code units of a prolog, whatever they arrive as.
+        private interface IUnits
+        {
+            int Count { get; }
+
+            int this[int index] { get; }
+        }
+
+        private readonly struct CharUnits : IUnits
+        {
+            private readonly char[] chars;
+            private readonly int count;
+
+            public CharUnits(char[] chars, int count)
+            {
+                this.chars = chars;
+                this.count = count;
+            }
+
+            public int Count => count;
+
+            public int this[int index] => chars[index];
+        }
+
+        private readonly struct StringUnits : IUnits
+        {
+            private readonly string text;
+
+            public StringUnits(string text)
+            {
+                this.text = text;
+            }
+
+            public int Count => text.Length;
+
+            public int this[int index] => text[index];
+        }
+
+        // Bytes of an encoding that keeps ASCII (size 1), or of UTF-16 (size 2).
+        private readonly struct ByteUnits : IUnits
+        {
+            private readonly byte[] bytes;
+            private readonly int start;
+            private readonly int count;
+            private readonly int size;
+            private readonly bool bigEndian;
+
+            public ByteUnits(byte[] bytes, int start, int end, int size, bool bigEndian)
+            {
+                this.bytes = bytes;
+                this.start = start;
+                this.count = (end - start) / size;
+                this.size = size;
+                this.bigEndian = bigEndian;
+            }
+
+            public int Count => count;
+
+            public int this[int index]
+            {
+                get
+                {
+                    if (size == 1)
+                    {
+                        return bytes[start + index];
+                    }
+
+                    int at = start + 2 * index;
+                    return bigEndian ? (bytes[at] << 8) | bytes[at + 1] : (bytes[at + 1] << 8) | bytes[at];
+                }
+            }
+        }
+
+        // complete: there is nothing after these bytes.
+        private static Doctype FindDoctype(byte[] head, int n, bool complete)
+        {
+            if (n < 4)
+            {
+                return complete ? Doctype.Unknown : Doctype.NeedsMore;
+            }
+
+            int b0 = head[0], b1 = head[1], b2 = head[2], b3 = head[3];
+            if ((b0 == 0xFF && b1 == 0xFE) || (b0 == 0x3C && b1 == 0))
+            {
+                // UTF-16LE with or without a byte order mark; UTF-32LE begins the same way and is not read here.
+                return b2 == 0 && b3 == 0 ? Doctype.Unknown : FindDoctype(new ByteUnits(head, b0 == 0xFF ? 2 : 0, n, 2, false), complete);
+            }
+
+            if ((b0 == 0xFE && b1 == 0xFF) || (b0 == 0 && b1 == 0x3C))
+            {
+                return FindDoctype(new ByteUnits(head, b0 == 0xFE ? 2 : 0, n, 2, true), complete);
+            }
+
+            return FindDoctype(new ByteUnits(head, b0 == 0xEF && b1 == 0xBB && b2 == 0xBF ? 3 : 0, n, 1, false), complete);
+        }
+
+        // Walks the prolog - XML declaration, comments, processing instructions, whitespace - up to the DOCTYPE or
+        // the document element. Anything else, and any control character on the way, is Unknown.
+        private static Doctype FindDoctype<T>(T units, bool complete)
+            where T : struct, IUnits
+        {
+            Doctype cut = complete ? Doctype.Unknown : Doctype.NeedsMore;
+            int n = units.Count;
+            int i = 0;
+            while (true)
+            {
+                while (i < n && (units[i] == ' ' || units[i] == '\t' || units[i] == '\r' || units[i] == '\n' || (i == 0 && units[i] == 0xFEFF)))
+                {
+                    i++;
+                }
+
+                if (i + 1 >= n)
+                {
+                    return cut;
+                }
+
+                if (units[i] != '<')
+                {
+                    return Doctype.Unknown;
+                }
+
+                int c = units[i + 1];
+                string end;
+                if (c == '?')
+                {
+                    end = "?>";
+                    i += 2;
+                }
+                else if (c == '!')
+                {
+                    if (i + 3 >= n)
+                    {
+                        return cut;
+                    }
+
+                    if (units[i + 2] != '-' || units[i + 3] != '-')
+                    {
+                        const string doctype = "DOCTYPE";
+                        for (int k = 0; k < doctype.Length; k++)
+                        {
+                            if (i + 2 + k >= n)
+                            {
+                                return cut;
+                            }
+
+                            if (units[i + 2 + k] != doctype[k])
+                            {
+                                return Doctype.Unknown;
+                            }
+                        }
+
+                        return Doctype.Present;
+                    }
+
+                    end = "-->";
+                    i += 4;
+                }
+                else
+                {
+                    return c == '_' || c == ':' || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c >= 0x80 ? Doctype.Absent : Doctype.Unknown;
+                }
+
+                // To the end of the comment or processing instruction.
+                while (true)
+                {
+                    if (i + end.Length > n)
+                    {
+                        return cut;
+                    }
+
+                    int u = units[i];
+                    if (u < ' ' && u != '\t' && u != '\r' && u != '\n')
+                    {
+                        return Doctype.Unknown;
+                    }
+
+                    if (u == end[0] && units[i + 1] == end[1] && (end.Length == 2 || units[i + 2] == end[2]))
+                    {
+                        i += end.Length;
+                        break;
+                    }
+
+                    i++;
+                }
+            }
         }
 
         // Offset of the last digit of version="1.1" (or '1.1') in the document's XML declaration, else
@@ -320,18 +686,36 @@ namespace OutSmart.DAXon.Events
             // When the reader validates against a DTD, .NET reports whitespace in element-only content as
             // XmlNodeType.Whitespace and whitespace in mixed content as SignificantWhitespace — the signal
             // needed to drop ignorable whitespace (number-4501). Without validation every inter-element
-            // whitespace is Whitespace, so this stays off and such nodes are preserved.
-            bool dtdWhitespaceClassification = reader.Settings != null && reader.Settings.ValidationType == ValidationType.DTD;
+            // whitespace is Whitespace, so this stays off and such nodes are preserved. A parse that keeps
+            // all whitespace keeps this too, as Saxon's SAX handler does.
+            XmlReaderSettings settings = reader.Settings;
+            bool dtdWhitespaceClassification = false;
+            DtdEvents dtd = null;
+            if (settings != null && settings.ValidationType == ValidationType.DTD)
+            {
+                DtdEventsOf.TryGetValue(reader, out dtd);
+                dtdWhitespaceClassification = LeavesOutIgnorable(pipe.GetParseOptions());
+                declaredAt = new bool[16];
+            }
+
             // Cooperative deadline: a doc()/document() call mid-run parses here with no other
             // check site, so a large document must not outrun the transformation limit. Called
             // per node event - the active token throttles clock sampling itself.
-            while (reader.Read())
+            while (true)
             {
+                dtd?.NextNode();
+                if (!reader.Read())
+                {
+                    break;
+                }
+
                 OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
 
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
+                        // Asked before the attributes are walked: the name is the element's while the reader is on it.
+                        bool declared = dtd == null || !dtd.IsUndeclared(reader);
                         StartElement();
 
                         // An empty element (<x/>) opens and closes in one node and raises no separate
@@ -343,6 +727,15 @@ namespace OutSmart.DAXon.Events
                         else
                         {
                             elementDepth++;
+                            if (dtdWhitespaceClassification)
+                            {
+                                if (elementDepth >= declaredAt.Length)
+                                {
+                                    Array.Resize(ref declaredAt, elementDepth * 2);
+                                }
+
+                                declaredAt[elementDepth] = declared;
+                            }
                         }
 
                         break;
@@ -371,8 +764,9 @@ namespace OutSmart.DAXon.Events
                         // element-only-content whitespace as Whitespace (mixed content is SignificantWhitespace
                         // above). Drop it — Java's SAX ignorableWhitespace() likewise never enters the XSLT/XDM
                         // source tree (number-4501). Gated on the reader validating against a DTD, so a
-                        // DTD-less document (every inter-element node is Whitespace) preserves it.
-                        if (hasDtd && dtdWhitespaceClassification)
+                        // DTD-less document (every inter-element node is Whitespace) preserves it; and on the
+                        // DTD declaring the element, as .NET reports Whitespace in one it does not describe too.
+                        if (hasDtd && dtdWhitespaceClassification && declaredAt[elementDepth])
                         {
                             break;
                         }
@@ -407,6 +801,7 @@ namespace OutSmart.DAXon.Events
             }
 
             EndDocument();
+            dtd?.Finish(hasDtd);
         }
 
         private void StartDocument()
@@ -799,6 +1194,177 @@ namespace OutSmart.DAXon.Events
             return created;
         }
 
+        // The validity errors of one parse that reads a DTD. They say which elements the DTD does not declare: .NET
+        // reports the whitespace in those as it does that of element-only content. A validating parse reports them
+        // too, and fails or warns at its end, as Saxon does with a SAX parser.
+        internal sealed class DtdEvents
+        {
+            private readonly DtdUse use;
+            private readonly string systemId;
+            private readonly IErrorReporter reporter;
+            private int errors;
+            private string firstMessage;
+            private ILocation firstLocation;
+
+            // Of the node being read. The error naming an undeclared element is its first or second.
+            private readonly string[] pending = new string[4];
+            private int pendingCount;
+            private Dictionary<string, bool> undeclared;
+            private UndeclaredMessage wording;
+
+            internal DtdEvents(DtdUse use, string systemId, IErrorReporter reporter)
+            {
+                this.use = use;
+                this.systemId = systemId;
+                this.reporter = reporter;
+            }
+
+            internal bool Validates => use != DtdUse.Whitespace;
+
+            internal void OnEvent(object sender, ValidationEventArgs e)
+            {
+                if (e.Severity != XmlSeverityType.Error)
+                {
+                    return;
+                }
+
+                if (pendingCount < pending.Length)
+                {
+                    pending[pendingCount++] = e.Message;
+                }
+
+                if (Validates)
+                {
+                    XmlSchemaException at = e.Exception;
+                    Invalid(e.Message, new Loc(string.IsNullOrEmpty(at.SourceUri) ? systemId : at.SourceUri, at.LineNumber, at.LinePosition));
+                }
+            }
+
+            private void Invalid(string message, ILocation location)
+            {
+                if (errors++ == 0)
+                {
+                    firstMessage = message;
+                    firstLocation = location;
+                }
+
+                reporter?.Report(new XmlProcessingIncident("Error reported by XML parser: " + message, DAXonErrorCode.SXXP0003, location));
+            }
+
+            // At the end of the document. hasDtd: it had a DOCTYPE; without one there is nothing it is valid against.
+            internal void Finish(bool hasDtd)
+            {
+                if (!Validates)
+                {
+                    return;
+                }
+
+                if (!hasDtd)
+                {
+                    Invalid("The document has no DTD to be validated against", new Loc(systemId, -1, -1));
+                }
+
+                if (errors == 0)
+                {
+                    return;
+                }
+
+                string count = "The XML parser reported " + new OutSmart.DAXon.Expressions.Numbering.Numberer_en().ToWords(string.Empty, errors).ToLowerInvariant()
+                    + " validation error" + (errors == 1 ? string.Empty : "s");
+                if (use == DtdUse.ValidateLax)
+                {
+                    reporter?.Report(new XmlProcessingIncident(count + ". Processing continues, because recovery from validation errors was requested", DAXonErrorCode.SXXP0003, firstLocation).AsWarning());
+                    return;
+                }
+
+                throw new XPathException(count + (errors == 1 ? ": " : ". The first: ") + firstMessage).WithErrorCode(DAXonErrorCode.SXXP0003).WithLocation(firstLocation);
+            }
+
+            // Before each node is read: what the reader raises while reading it is that node's.
+            internal void NextNode()
+            {
+                pendingCount = 0;
+            }
+
+            // Whether the element the reader is on is one the DTD does not declare.
+            internal bool IsUndeclared(XmlReader reader)
+            {
+                if (pendingCount == 0)
+                {
+                    return false;
+                }
+
+                string name = reader.Name;
+                undeclared = undeclared ?? new Dictionary<string, bool>();
+                if (!undeclared.TryGetValue(name, out bool verdict))
+                {
+                    wording = wording ?? UndeclaredMessage.Current();
+                    for (int i = 0; i < pendingCount && !verdict; i++)
+                    {
+                        verdict = wording.Names(pending[i], name);
+                    }
+
+                    undeclared.Add(name, verdict);
+                }
+
+                return verdict;
+            }
+        }
+
+        // The parser's message for an element its DTD does not declare, around the element's name. Learnt from the
+        // parser itself, per UI culture: .NET Framework localizes it, and no public member tells the errors apart.
+        private sealed class UndeclaredMessage
+        {
+            private static readonly ConcurrentDictionary<string, UndeclaredMessage> ByCulture = new ConcurrentDictionary<string, UndeclaredMessage>();
+            private readonly string before;
+            private readonly string after;
+
+            private UndeclaredMessage(string before, string after)
+            {
+                this.before = before;
+                this.after = after;
+            }
+
+            internal static UndeclaredMessage Current()
+            {
+                return ByCulture.GetOrAdd(System.Globalization.CultureInfo.CurrentUICulture.Name, culture => Learn());
+            }
+
+            // Not learnt (before == null): every error then counts, which only keeps more whitespace.
+            internal bool Names(string message, string element)
+            {
+                return before == null
+                    || (message.Length == before.Length + element.Length + after.Length
+                        && message.StartsWith(before, StringComparison.Ordinal)
+                        && message.EndsWith(after, StringComparison.Ordinal)
+                        && string.CompareOrdinal(message, before.Length, element, 0, element.Length) == 0);
+            }
+
+            private static UndeclaredMessage Learn()
+            {
+                const string element = "q7z";
+                string message = null;
+                try
+                {
+                    var settings = new XmlReaderSettings { DtdProcessing = DtdProcessing.Parse, ValidationType = ValidationType.DTD, XmlResolver = null };
+                    settings.ValidationEventHandler += (sender, e) => message = message ?? e.Message;
+                    using (XmlReader probe = XmlReader.Create(new StringReader("<!DOCTYPE a [<!ELEMENT a ANY>]><a><" + element + "/></a>"), settings))
+                    {
+                        while (probe.Read())
+                        {
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    message = null;
+                }
+
+                int at = message == null ? -1 : message.IndexOf(element, StringComparison.Ordinal);
+                return at < 0 ? new UndeclaredMessage(null, null) : new UndeclaredMessage(message.Substring(0, at), message.Substring(at + element.Length));
+            }
+        }
+
         /// <summary>
         /// As above, but optionally validating against the document's DTD (<c>ValidationType.DTD</c>) — the
         /// native replacement for the old SAX DTD-STRICT path. DTD validation needs an XmlResolver to fetch an
@@ -959,6 +1525,55 @@ namespace OutSmart.DAXon.Events
             public override long Seek(long offset, SeekOrigin origin) => throw new System.NotSupportedException();
             public override void SetLength(long value) => throw new System.NotSupportedException();
             public override void Write(byte[] buffer, int offset, int count) => throw new System.NotSupportedException();
+
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing)
+                {
+                    rest.Dispose();
+                }
+
+                base.Dispose(disposing);
+            }
+        }
+
+        // As PrefixedStream, for an input of characters.
+        private sealed class PrefixedTextReader : TextReader
+        {
+            private readonly char[] prefix;
+            private readonly int prefixLen;
+            private int pos;
+            private readonly TextReader rest;
+
+            public PrefixedTextReader(char[] prefix, int count, TextReader rest)
+            {
+                this.prefix = prefix;
+                this.prefixLen = count;
+                this.rest = rest;
+            }
+
+            public override int Peek()
+            {
+                return pos < prefixLen ? prefix[pos] : rest.Peek();
+            }
+
+            public override int Read()
+            {
+                return pos < prefixLen ? prefix[pos++] : rest.Read();
+            }
+
+            public override int Read(char[] buffer, int index, int count)
+            {
+                if (pos < prefixLen)
+                {
+                    int take = Math.Min(count, prefixLen - pos);
+                    System.Array.Copy(prefix, pos, buffer, index, take);
+                    pos += take;
+                    return take;
+                }
+
+                return rest.Read(buffer, index, count);
+            }
 
             protected override void Dispose(bool disposing)
             {

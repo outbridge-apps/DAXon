@@ -212,10 +212,14 @@ namespace OutSmart.DAXon.Api
         }
 
         // Drop element-content (ignorable) whitespace only when the effective policy strips it (the default).
-        // The reader is asked to DTD-validate purely so .NET classifies that whitespace (number-4501); errors
-        // are swallowed. A NONE/XSLT policy keeps all whitespace, so it must not enable the DTD classification.
+        // The reader then has the DTD tell that whitespace apart (number-4501). A NONE/XSLT policy keeps all
+        // whitespace, so it must not enable the DTD classification.
         private bool StripsIgnorableWhitespace()
             => whitespacePolicy == WhitespaceStrippingPolicy.UNSPECIFIED || whitespacePolicy == WhitespaceStrippingPolicy.IGNORABLE;
+
+        private XmlReaderToReceiver.DtdUse DtdUse
+            => dtdValidation ? XmlReaderToReceiver.DtdUse.Validate
+                : StripsIgnorableWhitespace() ? XmlReaderToReceiver.DtdUse.Whitespace : XmlReaderToReceiver.DtdUse.None;
 
         // .NET-native input overloads (P5): build a document directly from a Stream/TextReader with an
         // explicit system identifier — the caller no longer constructs a JAXP Source.
@@ -223,20 +227,18 @@ namespace OutSmart.DAXon.Api
         {
             if (input == null)
                 throw new NullReferenceException("input");
-            bool ws = StripsIgnorableWhitespace();
             long length = OutSmart.DAXon.Resources.ActiveStreamSource.RemainingLength(input);
             return BuildFromXmlReader(() => XmlReaderToReceiver.CreateXmlReader(
-                null, InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), systemId, null, ws, ws, config), systemId, length);
+                null, InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), systemId, null, DtdUse, config), systemId, length);
         }
 
         public virtual XdmNode Build(System.IO.TextReader input, string systemId)
         {
             if (input == null)
                 throw new NullReferenceException("input");
-            bool ws = StripsIgnorableWhitespace();
             long length = OutSmart.DAXon.Resources.ActiveStreamSource.RemainingLength(input);
             return BuildFromXmlReader(() => XmlReaderToReceiver.CreateXmlReader(
-                InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), null, systemId, null, ws, ws, config), systemId, length);
+                InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), null, systemId, null, DtdUse, config), systemId, length);
         }
 
         // Round B1: MaxInputBytes reads as a Processor-wide cap, but only resolver-routed fetches
@@ -312,10 +314,9 @@ namespace OutSmart.DAXon.Api
         public virtual XdmNode Build(string file)
         {
             // P5: build via the native XmlReader path (a bare systemId opens through XmlReader.Create), no JAXP Source.
-            bool ws = StripsIgnorableWhitespace();
             // The size comes from the handle the reader opens: asking the file system by path costs ~165 us here.
             var opener = new XmlReaderToReceiver.FileOnlyXmlResolver(config, file);
-            return BuildFromXmlReader(() => XmlReaderToReceiver.CreateXmlReader(null, null, file, opener, ws, ws, config), file, -1, opener);
+            return BuildFromXmlReader(() => XmlReaderToReceiver.CreateXmlReader(null, null, file, opener, DtdUse, config), file, -1, opener);
         }
 
         private IReceiver InjectValidator(IReceiver r, Builder builder)
@@ -414,7 +415,7 @@ namespace OutSmart.DAXon.Api
             {
                 ParseOptions options = GetParseOptions();
                 PipelineConfiguration pipe = config.MakePipelineConfiguration();
-                using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(null, null, file, null, false, false, config))
+                using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(null, null, file, null, DtdUse, config))
                 {
                     Sender.Send(reader, file, destination.GetReceiver(pipe, new SerializationProperties()), options);
                 }

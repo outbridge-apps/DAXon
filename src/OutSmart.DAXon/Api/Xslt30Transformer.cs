@@ -158,7 +158,8 @@ namespace OutSmart.DAXon.Api
                     IReceiver sOut = GetDestinationReceiver(controller, destination);
                     long length = Resources.ActiveStreamSource.RemainingLength(input);
                     Stream capped = InputSizeLimit.Apply(input, length, InputSizeLimit.MaxFor(processor.UnderlyingConfiguration), systemId, "FODC0002");
-                    using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(null, capped, systemId, null, false, false, processor.UnderlyingConfiguration))
+                    Configuration config = processor.UnderlyingConfiguration;
+                    using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(null, capped, systemId, null, XmlReaderToReceiver.DtdUseFor(config.GetParseOptions()), config, 0, GetErrorReporter()))
                     {
                         ApplyTemplatesToXmlReader(reader, systemId, sOut, length);
                     }

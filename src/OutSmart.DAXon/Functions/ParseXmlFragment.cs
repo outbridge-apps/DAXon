@@ -93,7 +93,7 @@ namespace OutSmart.DAXon.Functions
                 // Native fragment parse: the DTD skeleton references the fragment as an external parsed entity;
                 // a System.Xml.XmlResolver hands back the fragment content, so XmlReaderToReceiver expands it
                 // inline as children of the wrapper element, which OuterElementStripper then removes.
-                using (System.Xml.XmlReader xr = XmlReaderToReceiver.CreateXmlReader(skeletonReader, null, baseURI, new FragmentEntityResolver(inputXml), false, inputInEntity: inputXml.Length))
+                using (System.Xml.XmlReader xr = XmlReaderToReceiver.CreateXmlReader(skeletonReader, null, baseURI, new FragmentEntityResolver(inputXml), XmlReaderToReceiver.DtdUse.None, inputInEntity: inputXml.Length))
                 {
                     Sender.Send(xr, baseURI, s, options);
                 }

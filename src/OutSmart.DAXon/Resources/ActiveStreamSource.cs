@@ -86,7 +86,15 @@ namespace OutSmart.DAXon.Resources
             Configuration config = receiver.GetPipelineConfiguration().GetConfiguration();
             string url = systemId;
 
-            bool dtdValidate = options.DTDValidationMode == Validation.STRICT;
+            // The whitespace a DTD makes ignorable is told apart only where both the parse and its pipeline leave it
+            // out: a stylesheet module is parsed keeping all of it.
+            XmlReaderToReceiver.DtdUse dtd = XmlReaderToReceiver.DtdUseFor(options);
+            if (dtd == XmlReaderToReceiver.DtdUse.Whitespace && !XmlReaderToReceiver.LeavesOutIgnorable(receiver.GetPipelineConfiguration().GetParseOptions()))
+            {
+                dtd = XmlReaderToReceiver.DtdUse.None;
+            }
+
+            bool dtdValidate = dtd == XmlReaderToReceiver.DtdUse.Validate || dtd == XmlReaderToReceiver.DtdUse.ValidateLax;
 
             // External entities / an external DTD subset resolve through the config's ResourceResolver. A bare
             // non-validating parse with no external references needs no resolver (null = no external fetch).
@@ -96,7 +104,7 @@ namespace OutSmart.DAXon.Resources
 
             try
             {
-                using (System.Xml.XmlReader xr = XmlReaderToReceiver.CreateXmlReader(charStream, byteStream, url, resolver, dtdValidate, false, config))
+                using (System.Xml.XmlReader xr = XmlReaderToReceiver.CreateXmlReader(charStream, byteStream, url, resolver, dtd, config, 0, options.GetErrorReporter()))
                 {
                     XmlReaderToReceiver.Send(xr, receiver);
                 }
