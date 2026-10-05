@@ -126,7 +126,7 @@ namespace OutSmart.DAXon.Functions
             // true#0 / false#0 — exact signatures from XPath20FunctionSet:210/109 (ConstantFunction.True/.False above). Invoice's serialize map uses 'indent':true().
             Register("true", 0, (e) => e.Populate(() => new ConstantFunction.True(), BuiltInAtomicType.BOOLEAN, ONE, 0));
             Register("false", 0, (e) => e.Populate(() => new ConstantFunction.False(), BuiltInAtomicType.BOOLEAN, ONE, 0));
-            // serialize#2 — minimal Serialize stub (above); positional map arg, SetOptionDetails dropped (not needed for a positional map). Invoice: serialize(array{...}, map{'method':'json','indent':true()}).
+            // serialize#2: the second argument is an output:serialization-parameters element or a map; the entries of a map are typed in Serialize itself.
             Register("serialize", 2, (e) => e.Populate(Serialize.New(), BuiltInAtomicType.STRING, ONE, 0).Arg(0, AnyItemType.GetInstance(), STAR, null).Arg(1, Types.Type.ITEM_TYPE, OPT, null));
             // count#1 — exact signature from XPath20FunctionSet:116-117 (result INTEGER/ONE; arg item()* default 0). Real Count.cs excluded + name occupied by hollow stub -> bind to the real Count_1 impl above. UO/INS optimizer flags -> 0/ABS per the ctor convention.
             Register("count", 1, (e) => e.Populate(() => new Count_1(), BuiltInAtomicType.INTEGER, ONE, 0).Arg(0, Types.Type.ITEM_TYPE, STAR | ABS, Int64Value.ZERO));

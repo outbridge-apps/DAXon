@@ -170,7 +170,7 @@ namespace OutSmart.DAXon.Serialization
             string value = element.GetAttributeValue(NamespaceUri.NULL, localName);
             if (value == null)
             {
-                throw new XPathException("In serialization parameters, attribute @" + localName + " is missing on element " + element.DisplayName);
+                throw new XPathException("In serialization parameters, attribute @" + localName + " is missing on element " + element.DisplayName, "SEPM0017");
             }
 
             return value;

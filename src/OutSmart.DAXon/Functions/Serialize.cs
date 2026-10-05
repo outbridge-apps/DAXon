@@ -12,25 +12,53 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal.Collections;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions;
+using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Values.Maps;
 using OutSmart.DAXon.Serialization;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Utilities;
+using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Functions
 {
 
-    // Minimal fn:serialize#2 (Invoice: serialize(array{...}, map{'method':'json','indent':true()})). Ported from the
-    // core of the excluded Serialize.cs EvalSerialize WITHOUT re-including the full file (re-including it unmasks a
-    // deferred CS0507 UnicodeString.Copy8bit cascade). Reads only method/indent from the options map (sufficient for
-    // Invoice; full OptionsParameter validation deferred) and delegates the actual JSON formatting to the already-
-    // compiled SerializerFactory -> JSONEmitter/JSONSerializer path (the same path xml-to-json uses), so output is
-    // byte-identical to Saxon. SequenceCopier re-included (csproj); UnicodeWriterResult stub made functional (above).
+    // fn:serialize, XPath 3.1. The parameters come as an output:serialization-parameters element or as a map; what the
+    // map may hold, and of what type, is the table of F&O 3.1 (14.7.3). The text is made by the serializer that
+    // xsl:output drives (SerializerFactory), into a string.
     internal sealed class Serialize : SystemFunction
     {
+        // The parameters of the map form and the type of each. All are optional in their type: an empty sequence asks
+        // for the default, as an absent entry does. method and json-node-output-method are union(xs:string,
+        // xs:QName)?, told apart in MethodName; escape-solidus is of XSLT 4.0, and the JSON method here knows it.
+        private static readonly Dictionary<string, SequenceType> PARAMETERS = new Dictionary<string, SequenceType>(StringComparer.Ordinal)
+        {
+            { "allow-duplicate-names", SequenceType.OPTIONAL_BOOLEAN },
+            { "byte-order-mark", SequenceType.OPTIONAL_BOOLEAN },
+            { "cdata-section-elements", BuiltInAtomicType.QNAME.ZeroOrMore() },
+            { "doctype-public", SequenceType.OPTIONAL_STRING },
+            { "doctype-system", SequenceType.OPTIONAL_STRING },
+            { "encoding", SequenceType.OPTIONAL_STRING },
+            { "escape-solidus", SequenceType.OPTIONAL_BOOLEAN },
+            { "escape-uri-attributes", SequenceType.OPTIONAL_BOOLEAN },
+            { "html-version", SequenceType.OPTIONAL_DECIMAL },
+            { "include-content-type", SequenceType.OPTIONAL_BOOLEAN },
+            { "indent", SequenceType.OPTIONAL_BOOLEAN },
+            { "item-separator", SequenceType.OPTIONAL_STRING },
+            { "json-node-output-method", SequenceType.OPTIONAL_ATOMIC },
+            { "media-type", SequenceType.OPTIONAL_STRING },
+            { "method", SequenceType.OPTIONAL_ATOMIC },
+            { "normalization-form", SequenceType.OPTIONAL_STRING },
+            { "omit-xml-declaration", SequenceType.OPTIONAL_BOOLEAN },
+            { "standalone", SequenceType.OPTIONAL_BOOLEAN },
+            { "suppress-indentation", BuiltInAtomicType.QNAME.ZeroOrMore() },
+            { "undeclare-prefixes", SequenceType.OPTIONAL_BOOLEAN },
+            { "use-character-maps", MapType.OPTIONAL_MAP_ITEM },
+            { "version", SequenceType.OPTIONAL_STRING },
+        };
+
         public Serialize() { }
         public static Func<Serialize> New() => () => new Serialize();
 
@@ -57,21 +85,21 @@ namespace OutSmart.DAXon.Functions
             StructuredQName name = new StructuredQName("output", NamespaceUri.OUTPUT, "serialization-parameters");
             return new CharacterMap(name, intHashMap);
         }
+
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
             var iter = arguments[0].Iterate();
             IItem param = arguments.Length < 2 ? null : arguments[1].Head();
-            Properties props = new Properties();
-            SerializationProperties elementSprops = null;
-            // Character maps supplied via the map form's use-character-maps parameter (null if none).
-            CharacterMapIndex __mapCharMaps = null;
-            if (param is NodeInfo pnode)
+            SerializationProperties sprops;
+            if (param == null)
             {
-                // fn:serialize with an output:serialization-parameters element. The 2nd argument must be an
-                // element(Q{output}serialization-parameters) — a wrong element name or namespace is a type
-                // error (XPTY0004, what the function signature would raise) — and the parameters are validated
-                // (SEPM0017 bad param / SEPM0018 duplicate character-map char / SEPM0019 duplicate parameter)
-                // by SerializationParamsHandler, which also assembles the properties + any character map.
+                sprops = new SerializationProperties(new Properties());
+            }
+            else if (param is NodeInfo pnode)
+            {
+                // The element form: a wrong element name or namespace is a type error (XPTY0004, what the function
+                // signature would raise); SerializationParamsHandler validates the parameters (SEPM0017 bad parameter,
+                // SEPM0018 duplicate character, SEPM0019 duplicate parameter) and assembles them with any character map.
                 NodeInfo el = pnode;
                 if (el.GetNodeKind() == OutSmart.DAXon.Types.Type.DOCUMENT)
                 {
@@ -85,177 +113,34 @@ namespace OutSmart.DAXon.Functions
                     throw new XPathException("The second argument of fn:serialize must be an output:serialization-parameters element or a map", "XPTY0004");
                 }
 
-                SerializationParamsHandler sph = new SerializationParamsHandler(props);
+                SerializationParamsHandler sph = new SerializationParamsHandler(new Properties());
                 sph.SetSerializationParams(el);
-                if (props.GetProperty("method") == null)
-                {
-                    props.SetProperty("method", "xml");
-                }
-                // The port's XML indenter is not wired into the fn:serialize() receiver chain (it throws there,
-                // though it works for xsl:result-document). Until that chain is fixed, neutralise indent="yes"
-                // so serialize(., <serialization-parameters><indent value="yes"/>…) yields (unindented) output
-                // instead of a runtime error. No fn-serialize test asserts on indentation whitespace.
-                // [follow-up: XML indent in the serialize() emitter chain]
-                if (props.GetProperty("indent") == "yes")
-                {
-                    props.SetProperty("indent", "no");
-                }
-                elementSprops = sph.GetSerializationProperties();
+                sprops = sph.GetSerializationProperties();
             }
             else if (param is MapItem paramMap)
             {
-                // use-character-maps entries collected from the options map (codepoint -> replacement string),
-                // applied to the serializer below via a CharacterMapIndex (serialize-xml-132).
-                OutSmart.DAXon.Collections.IntHashMap<string> __charMapEntries = null;
-                // Read options by iterating KeyValuePairs and matching the key's string value. HashTrieMap.Get with a
-                // freshly-constructed StringValue key does NOT match a stored key (the StringValue/UnicodeString
-                // match-key is not value-equal across construction paths); iterating sidesteps that.
-                foreach (OutSmart.DAXon.Values.Maps.KeyValuePair __opt in paramMap.KeyValuePairs())
-                {
-                    // Standard serialization parameters have xs:string keys; a QName key denotes an
-                    // implementation-defined parameter (unsupported here). key.GetStringValue() on
-                    // QName("","indent") returns the local name "indent", which must NOT be matched as the
-                    // standard indent parameter — serialize(., map{QName("","indent"):true()}) must NOT indent
-                    // (serialize-xml-120/120b). untypedAtomic is a StringValue, so string keys still pass.
-                    if (!(__opt.key is StringValue))
-                    {
-                        continue;
-                    }
-                    string __k = __opt.key.GetStringValue();
-                    IItem __v = __opt.value == null ? null : __opt.value.Head();
-                    if (__v == null)
-                    {
-                        continue;
-                    }
-                    if (__k == "method")
-                    {
-                        props.SetProperty("method", CheckedMethod(__v.UnicodeStringValue.ToString(), context));
-                    }
-                    else if (__k == "indent")
-                    {
-                        props.SetProperty("indent", RequireBooleanParam(__opt.value, __k) ? "yes" : "no");
-                    }
-                    else if (__k == "omit-xml-declaration")
-                    {
-                        props.SetProperty("omit-xml-declaration", RequireBooleanParam(__opt.value, __k) ? "yes" : "no");
-                    }
-                    else if (__k == "standalone")
-                    {
-                        props.SetProperty("standalone", RequireBooleanParam(__opt.value, __k) ? "yes" : "no");
-                    }
-                    else if (__k == "byte-order-mark")
-                    {
-                        props.SetProperty("byte-order-mark", RequireBooleanParam(__opt.value, __k) ? "yes" : "no");
-                    }
-                    else if (__k == "allow-duplicate-names")
-                    {
-                        props.SetProperty(DAXonOutputKeys.ALLOW_DUPLICATE_NAMES, RequireBooleanParam(__opt.value, __k) ? "yes" : "no");
-                    }
-                    else if (__k == "doctype-system")
-                    {
-                        props.SetProperty("doctype-system", __v.UnicodeStringValue.ToString());
-                    }
-                    else if (__k == "doctype-public")
-                    {
-                        props.SetProperty("doctype-public", __v.UnicodeStringValue.ToString());
-                    }
-                    else if (__k == "encoding")
-                    {
-                        props.SetProperty("encoding", __v.UnicodeStringValue.ToString());
-                    }
-                    else if (__k == "version")
-                    {
-                        props.SetProperty("version", __v.UnicodeStringValue.ToString());
-                    }
-                    else if (__k == "media-type")
-                    {
-                        props.SetProperty("media-type", __v.UnicodeStringValue.ToString());
-                    }
-                    else if (__k == "item-separator")
-                    {
-                        props.SetProperty("item-separator", __v.UnicodeStringValue.ToString());
-                    }
-                    else if (__k == "cdata-section-elements" || __k == "suppress-indentation")
-                    {
-                        // Map-form value is xs:QName* — serialize to the space-separated Clark-name list
-                        // the property consumers (CDATAFilter / indenters) parse back with FromClarkName.
-                        var __names = new System.Text.StringBuilder();
-                        ISequenceIterator __qi = __opt.value.Iterate();
-                        for (IItem __qn; (__qn = __qi.Next()) != null;)
-                        {
-                            if (!(__qn is QualifiedNameValue __qv))
-                            {
-                                throw new XPathException("The value of the " + __k + " serialization parameter must be a sequence of xs:QName", "XPTY0004");
-                            }
-                            if (__names.Length > 0)
-                            {
-                                __names.Append(' ');
-                            }
-                            __names.Append(__qv.GetStructuredQName().ClarkName);
-                        }
-                        props.SetProperty(__k == "cdata-section-elements" ? "cdata-section-elements" : DAXonOutputKeys.SUPPRESS_INDENTATION, __names.ToString());
-                    }
-                    else if (__k == "use-character-maps")
-                    {
-                        // Option-parameter conventions require map(xs:string, xs:string): every key and value
-                        // must be an xs:string (or xs:untypedAtomic, which converts). A QName key, or a node /
-                        // QName value, is a type error (XPTY0004). (Applying the map is handled elsewhere; this
-                        // only validates the argument.)
-                        if (!(__v is MapItem __cmap))
-                        {
-                            throw new XPathException("The value of the use-character-maps serialization parameter must be a map", "XPTY0004");
-                        }
-                        foreach (OutSmart.DAXon.Values.Maps.KeyValuePair __ce in __cmap.KeyValuePairs())
-                        {
-                            IItem __ck = __ce.key;
-                            IItem __cv = __ce.value == null ? null : __ce.value.Head();
-                            // untypedAtomic is a StringValue with IsUntypedAtomic() in this port, so `is
-                            // StringValue` accepts xs:string and xs:untypedAtomic; QName / node / numeric do not.
-                            bool __keyOk = __ck is StringValue;
-                            bool __valOk = __cv is StringValue;
-                            if (!__keyOk || !__valOk)
-                            {
-                                throw new XPathException("use-character-maps must be a map(xs:string, xs:string)", "XPTY0004");
-                            }
-                            // Record the mapping so it is actually applied by the serializer (was validate-only).
-                            // The key is a single character (its codepoint); the value is its replacement string.
-                            string __ckStr = __ck.GetStringValue();
-                            if (__ckStr.Length >= 1)
-                            {
-                                if (__charMapEntries == null)
-                                {
-                                    __charMapEntries = new OutSmart.DAXon.Collections.IntHashMap<string>();
-                                }
-                                __charMapEntries.Put(char.ConvertToUtf32(__ckStr, 0), __cv.GetStringValue());
-                            }
-                        }
-                    }
-                }
-                if (__charMapEntries != null)
-                {
-                    StructuredQName __cmName = NamespaceUri.NULL.QName("charMap");
-                    __mapCharMaps = new CharacterMapIndex();
-                    __mapCharMaps.PutCharacterMap(__cmName, new CharacterMap(__cmName, __charMapEntries));
-                    // The serializer applies only the maps NAMED in the use-character-maps property (a list of
-                    // char-map names), so register the name here too — exactly as the element form does.
-                    props.SetProperty(DAXonOutputKeys.USE_CHARACTER_MAPS, "charMap");
-                }
+                sprops = ParamsFromMap(paramMap, context);
             }
-            // Defaults for the map / no-params forms only. The element form takes its properties (and any
-            // spec defaults) from SerializationParamsHandler.GetSerializationProperties() — in particular it
-            // must NOT force omit-xml-declaration=yes, so that serialize(., <serialization-parameters/>)
-            // emits the XML declaration per the serialization spec default.
-            if (elementSprops == null)
+            else
             {
-                if (props.GetProperty("method") == null)
-                {
-                    props.SetProperty("method", "xml");
-                }
-                if (props.GetProperty("omit-xml-declaration") == null)
-                {
-                    props.SetProperty("omit-xml-declaration", "yes");
-                }
+                throw new XPathException("The second argument of fn:serialize must be an output:serialization-parameters element or a map", "XPTY0004").AsTypeError();
             }
+
+            // What the parameters do not say: the XML method, and no XML declaration. F&O fixes these for a map; for the
+            // element form and for no parameters the defaults are the implementation's, and they are the same here -
+            // but that an element which asks for what only a declaration can say is given the declaration (in a map
+            // that is SEPM0009, by the default F&O fixes).
+            Properties props = sprops.GetProperties();
+            if (props.GetProperty("method") == null)
+            {
+                props.SetProperty("method", "xml");
+            }
+
+            if (props.GetProperty("omit-xml-declaration") == null)
+            {
+                props.SetProperty("omit-xml-declaration", param is NodeInfo && NeedsDeclaration(props) ? "no" : "yes");
+            }
+
             try
             {
                 // Byte-path in-memory sink: Latin1 output (the overwhelmingly common case) accumulates
@@ -266,7 +151,6 @@ namespace OutSmart.DAXon.Functions
                 SerializerFactory sf = context.GetConfiguration().SerializerFactory;
                 // The run's pipeline (upstream: the configuration's), so copying a large node honours its deadline.
                 PipelineConfiguration pipe = context.GetController()?.MakePipelineConfiguration() ?? context.GetConfiguration().MakePipelineConfiguration();
-                SerializationProperties sprops = elementSprops ?? (__mapCharMaps != null ? new SerializationProperties(props, __mapCharMaps) : new SerializationProperties(props));
                 // Inline sequence-copy (real SequenceCopier.cs uses a newer 0-arg Append() this IReceiver lacks):
                 // Open -> Append(item) per item -> Close.
                 using (IReceiver outr = sf.GetReceiver(result, sprops, pipe))
@@ -289,13 +173,167 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        // A value that names no method (a typo such as 'XML') is SEPM0016 here; unchecked, it was taken for
-        // the class name of a user-defined method.
-        private static string CheckedMethod(string value, IXPathContext context)
+        // standalone, or a version other than 1.0 beside a document type: without a declaration each is SEPM0009
+        private static bool NeedsDeclaration(Properties props)
+        {
+            string standalone = props.GetProperty("standalone");
+            string version = props.GetProperty("version");
+            return (standalone != null && standalone != "omit")
+                || (version != null && version != "1.0" && props.GetProperty("doctype-system") != null);
+        }
+
+        // The value of a parameter, made of its required type by the function conversion rules as the conventions
+        // for options have it: an untyped value is cast, an array or a node is atomized.
+        private static IGroundedValue Converted(string name, IGroundedValue value, SequenceType required, IXPathContext context)
+        {
+            TypeHierarchy th = context.GetConfiguration().GetTypeHierarchy();
+            if (required.Matches(value, th))
+            {
+                return value;
+            }
+
+            try
+            {
+                Func<RoleDiagnostic> role = () => new RoleDiagnostic(RoleDiagnostic.OPTION, name, 0, "XPTY0004");
+                return th.ApplyFunctionConversionRules(value, required, role, Loc.NONE).Materialize();
+            }
+            catch (XPathException e) when (!e.HasErrorCode("XPTY0004"))
+            {
+                // A value that cannot be made of the required type - a cast that fails, an item with no atoms - is
+                // the type error of the conventions, whatever the conversion itself called it.
+                throw new XPathException(e.Message, "XPTY0004").AsTypeError();
+            }
+        }
+
+        // The entries of the map that are parameters. An entry whose key is not one of the strings of the table - a
+        // QName, which is for a parameter of an implementation; a name that has no meaning here - is not looked at.
+        private static SerializationProperties ParamsFromMap(MapItem map, IXPathContext context)
+        {
+            Properties props = new Properties();
+            CharacterMapIndex maps = null;
+            foreach (OutSmart.DAXon.Values.Maps.KeyValuePair entry in map.KeyValuePairs())
+            {
+                // (xs:untypedAtomic and xs:anyURI are the same key as the string, and are StringValue too)
+                if (!(entry.key is StringValue))
+                {
+                    continue;
+                }
+
+                string name = entry.key.GetStringValue();
+                if (!PARAMETERS.TryGetValue(name, out SequenceType required))
+                {
+                    continue;
+                }
+
+                IGroundedValue value = Converted(name, entry.value, required, context);
+                if (value.GetLength() == 0)
+                {
+                    // the default: for the lists of names that is no names, for standalone "omit"
+                    continue;
+                }
+
+                switch (name)
+                {
+                    case "allow-duplicate-names":
+                    case "byte-order-mark":
+                    case "escape-solidus":
+                    case "escape-uri-attributes":
+                    case "include-content-type":
+                    case "indent":
+                    case "omit-xml-declaration":
+                    case "standalone":
+                    case "undeclare-prefixes":
+                        props.SetProperty(name, ((BooleanValue)value.Head()).GetBooleanValue() ? "yes" : "no");
+                        break;
+                    case "doctype-public":
+                    case "doctype-system":
+                        // a zero-length string is "absent", as the empty sequence is
+                        if (value.Head().GetStringValue().Length != 0)
+                        {
+                            props.SetProperty(name, Checked(name, value.Head().GetStringValue(), context));
+                        }
+
+                        break;
+                    case "normalization-form":
+                        props.SetProperty(name, Checked(name, value.Head().GetStringValue(), context));
+                        break;
+                    case "encoding":
+                    case "html-version":
+                    case "item-separator":
+                    case "media-type":
+                    case "version":
+                        props.SetProperty(name, value.Head().GetStringValue());
+                        break;
+                    case "method":
+                    case "json-node-output-method":
+                        props.SetProperty(name, MethodName(name, value.Head(), context));
+                        break;
+                    case "cdata-section-elements":
+                    case "suppress-indentation":
+                        // the space-separated Clark names that CDATAFilter and the indenters read back
+                        var names = new System.Text.StringBuilder();
+                        ISequenceIterator qnames = value.Iterate();
+                        for (IItem qname; (qname = qnames.Next()) != null;)
+                        {
+                            if (names.Length > 0)
+                            {
+                                names.Append(' ');
+                            }
+
+                            names.Append(((QualifiedNameValue)qname).GetStructuredQName().ClarkName);
+                        }
+
+                        props.SetProperty(name, names.ToString());
+                        break;
+                    case "use-character-maps":
+                        // The serializer applies the maps NAMED in the property, so the one map is given a name.
+                        StructuredQName mapName = NamespaceUri.NULL.QName("charMap");
+                        maps = new CharacterMapIndex();
+                        maps.PutCharacterMap(mapName, CharacterMapOf((MapItem)value.Head(), mapName));
+                        props.SetProperty(DAXonOutputKeys.USE_CHARACTER_MAPS, "charMap");
+                        break;
+                }
+            }
+
+            return maps != null ? new SerializationProperties(props, maps) : new SerializationProperties(props);
+        }
+
+        // union(xs:string, xs:QName): a string names a method of the specification; a QName, which must be in a
+        // namespace, one of the implementation's own - and there is none, so the factory refuses it.
+        private static string MethodName(string key, IItem value, IXPathContext context)
+        {
+            string name;
+            if (value is QualifiedNameValue qname)
+            {
+                StructuredQName q = qname.GetStructuredQName();
+                if (q.GetNamespaceUri().IsEmpty())
+                {
+                    throw new XPathException("The value of the '" + key + "' serialization parameter, when it is an xs:QName, must be in a namespace: "
+                        + "the methods of the specification are named by strings", "SEPM0016");
+                }
+
+                name = q.EQName;
+            }
+            else if (value is StringValue)
+            {
+                name = value.GetStringValue();
+            }
+            else
+            {
+                throw new XPathException("The value of the '" + key + "' serialization parameter must be an xs:string or an xs:QName", "XPTY0004").AsTypeError();
+            }
+
+            return Checked(key, name, context);
+        }
+
+        // A value of the right type that is not one the parameter may have is SEPM0016: a method that is none (a typo
+        // such as 'XML' was taken for the class name of a user's method), a public identifier with a character it may
+        // not hold, a normalization form that is no name. The check is the one the API and xsl:output make.
+        private static string Checked(string key, string value, IXPathContext context)
         {
             try
             {
-                return context.GetConfiguration().SerializerFactory.CheckOutputProperty("method", value);
+                return context.GetConfiguration().SerializerFactory.CheckOutputProperty(key, value);
             }
             catch (XPathException e)
             {
@@ -304,34 +342,30 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        // A yes/no serialization parameter supplied via the options map must be a single xs:boolean; anything
-        // else (an integer, a string like "true", or a 2-item sequence) is a type error per the function
-        // signature / option-parameter conventions (XPTY0004). Previously a non-boolean value was silently
-        // dropped, so serialize([1,2,3], map{'method':'json','indent':23}) produced output instead of erroring.
-        private static bool RequireBooleanParam(ISequence value, string key)
+        // map(xs:string, xs:string): the conventions for options do not reach into this map, so a key or a value of
+        // another type is not converted (XPTY0004); a key that is not one character is SEPM0016.
+        private static CharacterMap CharacterMapOf(MapItem map, StructuredQName name)
         {
-            ISequenceIterator it = value.Iterate();
-            IItem first = it.Next();
-            IItem second = first == null ? null : it.Next();
-            if (first != null && second == null)
+            var entries = new OutSmart.DAXon.Collections.IntHashMap<string>();
+            foreach (OutSmart.DAXon.Values.Maps.KeyValuePair pair in map.KeyValuePairs())
             {
-                if (first is BooleanValue bv)
+                IGroundedValue replacement = pair.value;
+                if (!(pair.key is StringValue) || replacement == null || replacement.GetLength() != 1 || !(replacement.Head() is StringValue))
                 {
-                    return bv.GetBooleanValue();
+                    throw new XPathException("use-character-maps must be a map(xs:string, xs:string)", "XPTY0004").AsTypeError();
                 }
-                // Option-parameter conventions convert xs:untypedAtomic (but NOT xs:string) to the required
-                // type, so serialize(., map{'indent': xs:untypedAtomic('false')}) is valid (serialize-xml-142).
-                if (first is StringValue sv && sv.IsUntypedAtomic())
+
+                UnicodeString ch = pair.key.UnicodeStringValue;
+                if (ch.Length() != 1)
                 {
-                    string s = sv.GetStringValue().Trim();
-                    if (s == "true" || s == "1")
-                        return true;
-                    if (s == "false" || s == "0")
-                        return false;
+                    throw new XPathException("In the serialization parameter for the character map, each character to be mapped " +
+                        "must be a single Unicode character", "SEPM0016");
                 }
+
+                entries.Put(ch.CodePointAt(0), replacement.Head().GetStringValue());
             }
 
-            throw new XPathException("The value of the '" + key + "' serialization parameter must be a single xs:boolean", "XPTY0004");
+            return new CharacterMap(name, entries);
         }
     }
 }
