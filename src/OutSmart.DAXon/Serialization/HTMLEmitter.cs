@@ -137,11 +137,18 @@ namespace OutSmart.DAXon.Serialization
             }
 
             string byteOrderMark = outputProperties.GetProperty(DAXonOutputKeys.BYTE_ORDER_MARK);
-            if (byteOrderMark == "yes" && "UTF-8".Equals(outputProperties.GetProperty(DAXonOutputKeys.ENCODING), StringComparison.OrdinalIgnoreCase))
+            string encoding = outputProperties.GetProperty(DAXonOutputKeys.ENCODING);
+            if (encoding == null || encoding.Equals("utf8", StringComparison.OrdinalIgnoreCase))
+            {
+                // no encoding named is UTF-8, as for the XML and text methods: the mark asked for was left out for it
+                encoding = "UTF-8";
+            }
+
+            if (byteOrderMark == "yes" && ("UTF-8".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16LE".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(encoding, StringComparison.OrdinalIgnoreCase)))
             {
                 try
                 {
-                    writer.WriteCodePoint(0xFEFF);
+                    WriteByteOrderMark();
                 }
                 catch (IOException err)
                 {

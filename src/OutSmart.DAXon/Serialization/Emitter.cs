@@ -66,6 +66,25 @@ namespace OutSmart.DAXon.Serialization
             return WriteFailure(err, GetSystemId());
         }
 
+        private bool markWritten;
+
+        // The byte order mark that byte-order-mark="yes" asks for, as a character, once: the HTML emitter opens its
+        // document anew for every piece of text until the first element, and wrote a U+FEFF before each. And not at
+        // all when the writer marks its own bytes (UnicodeWriterToWriter.MarksItself): one mark is all there may be.
+        private protected void WriteByteOrderMark()
+        {
+            if (markWritten)
+            {
+                return;
+            }
+
+            markWritten = true;
+            if (!(writer is UnicodeWriterToWriter w && w.MarksItself))
+            {
+                writer.WriteCodePoint(0xFEFF);
+            }
+        }
+
         // No character of XML, 1.0 or 1.1: U+0000, half a surrogate pair, U+FFFE, U+FFFF.
         internal static bool IsNoCharacter(int c)
         {

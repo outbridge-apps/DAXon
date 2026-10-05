@@ -39,6 +39,8 @@ namespace OutSmart.DAXon.Serialization
         private ICharacterSet characterSet;
         private string encoding;
         private bool mustCloseAfterUse = false;
+        // set when the writer made here over a stream begins the bytes with their mark itself (see Marked)
+        private bool marksItself;
 
         public virtual TextWriter Writer
         {
@@ -90,7 +92,7 @@ namespace OutSmart.DAXon.Serialization
             if (byteOrderMark == "no" && encoding == "UTF16")
             {
 
-                // Java always writes a bom for UTF-16, so if the user doesn't want one, use utf16-be
+                // UTF-16 that begins with no mark is read as big-endian (RFC 2781), and so it is written
                 encoding = "UTF-16BE";
             }
             else if (!(characterSet is UTF8CharacterSet))
@@ -105,7 +107,8 @@ namespace OutSmart.DAXon.Serialization
         {
             if (writer != null)
             {
-                return new UnicodeWriterToWriter(writer);
+                // a StreamWriter of the host's whose encoding has a preamble begins its bytes with that mark itself
+                return new UnicodeWriterToWriter(writer, writer is StreamWriter own && own.Encoding.GetPreamble().Length > 0);
             }
             else
             {
@@ -211,6 +214,32 @@ namespace OutSmart.DAXon.Serialization
             return true;
         }
 
+        // The byte order mark of UTF-16 and UTF-32 bytes is what byte-order-mark says: yes is a mark, no is none. When
+        // it says nothing they have one, as .NET writes one for each of them and as they always had here (XSLT's own
+        // default has one for UTF-16 alone). UTF-8 under another of its names has one when the parameter says yes, as
+        // UTF-8 has. The StreamWriter writes the mark, at the start of a stream and nowhere else, so that no emitter
+        // need add it: with one of its own as well, UTF-16LE with "yes" began with two and did not parse.
+        private Encoding Marked(Encoding platform)
+        {
+            string mark = outputProperties.GetProperty(DAXonOutputKeys.BYTE_ORDER_MARK);
+            switch (platform.CodePage)
+            {
+                case 1200:
+                case 1201:
+                    marksItself = true;
+                    return new UnicodeEncoding(platform.CodePage == 1201, mark != "no");
+                case 12000:
+                case 12001:
+                    marksItself = true;
+                    return new UTF32Encoding(platform.CodePage == 12001, mark != "no");
+                case 65001:
+                    marksItself = true;
+                    return new UTF8Encoding(mark == "yes");
+                default:
+                    return platform;
+            }
+        }
+
         private TextWriter MakeWriterFromOutputStream(System.IO.Stream stream)
         {
             outputStream = stream;
@@ -230,7 +259,7 @@ namespace OutSmart.DAXon.Serialization
                     Encoding dotnetEncoding = encoding.Equals("iso-646", StringComparison.OrdinalIgnoreCase) || encoding.Equals("iso646", StringComparison.OrdinalIgnoreCase)
                         ? Encoding.ASCII
                         : Encoding.GetEncoding(encoding);
-                    writer = new StreamWriter(outputStream, dotnetEncoding);
+                    writer = new StreamWriter(outputStream, Marked(dotnetEncoding));
                 }
 
                 return writer;
@@ -258,7 +287,7 @@ namespace OutSmart.DAXon.Serialization
                 else
                 {
                     TextWriter writer = MakeWriterFromOutputStream(stream);
-                    return new UnicodeWriterToWriter(writer);
+                    return new UnicodeWriterToWriter(writer, marksItself);
                 }
             }
             catch (Exception err)

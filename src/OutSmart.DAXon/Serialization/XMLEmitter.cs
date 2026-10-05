@@ -203,7 +203,7 @@ namespace OutSmart.DAXon.Serialization
 
                 if (byteOrderMark == "yes" && !canonical && ("UTF-8".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16LE".Equals(encoding, StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(encoding, StringComparison.OrdinalIgnoreCase)))
                 {
-                    writer.WriteCodePoint(0xFEFF);
+                    WriteByteOrderMark();
                 }
 
                 string omitXMLDeclaration = outputProperties.GetProperty(DAXonOutputKeys.OMIT_XML_DECLARATION);

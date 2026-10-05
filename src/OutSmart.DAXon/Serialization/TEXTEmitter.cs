@@ -68,7 +68,7 @@ namespace OutSmart.DAXon.Serialization
             {
                 try
                 {
-                    writer.WriteCodePoint(0xFEFF);
+                    WriteByteOrderMark();
                 }
                 catch (IOException err)
                 {

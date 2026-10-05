@@ -27,6 +27,17 @@ namespace OutSmart.DAXon.Serialization
         private const int WRITE_CHUNK = 1 << 15;
         private char[] writeBuf;
         public UnicodeWriterToWriter(TextWriter writer) { _w = writer; }
+
+        // A writer whose bytes begin with a byte order mark of their own when they are to have one - the engine's over
+        // UTF-16 or UTF-32, a StreamWriter of the host's whose encoding has a preamble: the U+FEFF that
+        // byte-order-mark="yes" asks an emitter for would be a second mark, and the document would not parse.
+        public UnicodeWriterToWriter(TextWriter writer, bool marksItself)
+        {
+            _w = writer;
+            MarksItself = marksItself;
+        }
+
+        internal bool MarksItself { get; }
         public void Write(UnicodeString chars)
         {
             // Latin1 byte reps: widen straight into the reused buffer - the ToString() below
