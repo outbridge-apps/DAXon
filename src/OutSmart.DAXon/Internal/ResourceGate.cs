@@ -118,13 +118,14 @@ namespace OutSmart.DAXon.Internal
             return options != null && !options.IsUnrestricted;
         }
 
-        // A denial carrying the code a missing resource of this kind gets; query modules and
-        // external entities are coded by their callers.
+        // A denial carrying the code a missing resource of this kind gets; external entities are coded
+        // by their callers.
         public static ResourceDeniedException Denied(string text, ResourceKind kind)
         {
             string code = kind == ResourceKind.Text ? "FOUT1170"
                 : kind == ResourceKind.Document || kind == ResourceKind.Collection ? "FODC0002"
                 : kind == ResourceKind.StylesheetModule ? "XTSE0165"
+                : kind == ResourceKind.QueryModule ? "XQST0059"
                 : null;
             return code == null ? new ResourceDeniedException(text) : new ResourceDeniedException(text, code);
         }
