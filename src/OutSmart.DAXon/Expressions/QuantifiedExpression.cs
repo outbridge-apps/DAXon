@@ -222,6 +222,7 @@ namespace OutSmart.DAXon.Expressions
             while ((it = @base.Next()) != null)
             {
                 context.SetLocalVariable(slot, it);
+                Core.Controller.CheckActiveTimeoutPerStep();
                 if (some == GetAction().EffectiveBooleanValue(context))
                 {
                     @base.Dispose();
@@ -285,6 +286,7 @@ namespace OutSmart.DAXon.Expressions
                     for (IItem it; (it = @base.Next()) != null;)
                     {
                         context.SetLocalVariable(slot, it);
+                        Core.Controller.CheckActiveTimeoutPerStep();
                         if (some == satisfiesEval.Eval(context))
                         {
                             @base.Dispose();

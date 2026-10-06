@@ -39,6 +39,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             {
                 return ItemMappingIterator.Filter(basis, (item) =>
                 {
+                    Core.Controller.CheckActiveTimeoutPerStep();
                     IItem r = fused.CallOne(item).Head();
                     if (!(r is BooleanValue b))
                     {
@@ -50,6 +51,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
 
             return ItemMappingIterator.Filter(basis, (item) =>
             {
+                Core.Controller.CheckActiveTimeoutPerStep();
                 IItem r = DynamicCall(function, context, new ISequence[] { item }).Head();
                 if (!(r is BooleanValue b))
                 {

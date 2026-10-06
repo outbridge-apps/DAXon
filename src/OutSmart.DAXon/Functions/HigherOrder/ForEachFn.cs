@@ -46,7 +46,11 @@ namespace OutSmart.DAXon.Functions.HigherOrder
 
         private ISequenceIterator EvalMap(IFunctionItem function, ISequenceIterator @base, IXPathContext context)
         {
-            return MappingIterator.IMap(@base, (item) => DynamicCall(function, context, new ISequence[] { item }).Iterate());
+            return MappingIterator.IMap(@base, (item) =>
+            {
+                Core.Controller.CheckActiveTimeoutPerStep();
+                return DynamicCall(function, context, new ISequence[] { item }).Iterate();
+            });
         }
     }
 }

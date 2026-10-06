@@ -153,8 +153,14 @@ namespace OutSmart.DAXon.Functions
 
                 int pos1 = 0;
                 int pos2 = 0;
+                int itemSteps = 0;
                 while (true)
                 {
+                    if ((++itemSteps & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeout();
+                    }
+
                     IItem item1 = op1.Next();
                     IItem item2 = op2.Next();
                     if (item1 == null && item2 == null)
@@ -377,8 +383,14 @@ namespace OutSmart.DAXon.Functions
                         c2 = MergeAdjacentTextNodes(c2);
                     }
 
+                    int childSteps = 0;
                     while (true)
                     {
+                        if ((++childSteps & 1023) == 0)
+                        {
+                            Core.Controller.CheckActiveTimeout();
+                        }
+
                         NodeInfo d1 = (NodeInfo)c1.Next();
                         NodeInfo d2 = (NodeInfo)c2.Next();
                         if (d1 == null || d2 == null)

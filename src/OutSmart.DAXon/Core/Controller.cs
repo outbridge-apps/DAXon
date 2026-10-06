@@ -258,6 +258,15 @@ namespace OutSmart.DAXon.Core
         }
 
         /// <summary>
+        /// <see cref="CheckActiveTimeout"/> for a per-step site: one call of a function the stylesheet supplied,
+        /// whose cost can be anything (see <see cref="CheckTimeoutPerStep"/>).
+        /// </summary>
+        internal static void CheckActiveTimeoutPerStep()
+        {
+            activeOnThread?.CheckPerStep();
+        }
+
+        /// <summary>
         /// Milliseconds left on this thread's active deadline, or -1 when none is armed. Blocking
         /// I/O cannot poll a cooperative deadline, so the socket layer is given this as its own
         /// timeout: a fetch can then never outlive the run that asked for it.

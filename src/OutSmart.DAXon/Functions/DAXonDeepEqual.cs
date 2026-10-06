@@ -157,8 +157,14 @@ namespace OutSmart.DAXon.Functions
 
                 int pos1 = 0;
                 int pos2 = 0;
+                int itemSteps = 0;
                 while (true)
                 {
+                    if ((++itemSteps & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeout();
+                    }
+
                     IItem item1 = op1.Next();
                     IItem item2 = op2.Next();
                     if (item1 == null && item2 == null)
@@ -321,8 +327,14 @@ namespace OutSmart.DAXon.Functions
                 case Types.Type.DOCUMENT:
                     IAxisIterator c1 = n1.IterateAxis(AxisInfo.CHILD);
                     IAxisIterator c2 = n2.IterateAxis(AxisInfo.CHILD);
+                    int childSteps = 0;
                     while (true)
                     {
+                        if ((++childSteps & 1023) == 0)
+                        {
+                            Core.Controller.CheckActiveTimeout();
+                        }
+
                         NodeInfo d1 = c1.Next();
                         while (d1 != null && IsIgnorable(d1, flags))
                         {

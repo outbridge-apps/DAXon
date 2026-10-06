@@ -38,8 +38,15 @@ namespace OutSmart.DAXon.Functions
         {
             try
             {
+                int steps = 0;
                 for (IItem item; (item = iter.Next()) != null;)
                 {
+                    // A stored input's iterator looks at no clock, and an item of a fold can be cheap.
+                    if ((++steps & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeout();
+                    }
+
                     fold.ProcessItem(item);
                     if (fold.IsFinished())
                     {

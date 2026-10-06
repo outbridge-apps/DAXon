@@ -167,6 +167,7 @@ namespace OutSmart.DAXon.Values.Arrays
                 IList<IGroundedValue> list = new List<IGroundedValue>(ExpectedSize());
                 foreach (IGroundedValue gv in array.Members())
                 {
+                    Core.Controller.CheckActiveTimeoutPerStep();
                     if (((BooleanValue)DynamicCall(fn, context, new ISequence[] { gv }).Head()).GetBooleanValue())
                     {
                         list.Add(gv);
@@ -224,6 +225,7 @@ namespace OutSmart.DAXon.Values.Arrays
                 int i;
                 for (i = 0; i < arraySize; i++)
                 {
+                    Core.Controller.CheckActiveTimeoutPerStep();
                     zero = DynamicCall(fn, context, new ISequence[] { zero, array[i] });
                 }
 
@@ -244,6 +246,7 @@ namespace OutSmart.DAXon.Values.Arrays
                 int i;
                 for (i = array.ArrayLength() - 1; i >= 0; i--)
                 {
+                    Core.Controller.CheckActiveTimeoutPerStep();
                     zero = DynamicCall(fn, context, new ISequence[] { array[i], zero });
                 }
 
@@ -307,6 +310,7 @@ namespace OutSmart.DAXon.Values.Arrays
                 IList<IGroundedValue> list = new List<IGroundedValue>(ExpectedSize());
                 foreach (IGroundedValue gv in array.Members())
                 {
+                    Core.Controller.CheckActiveTimeoutPerStep();
                     list.Add(DynamicCall(fn, context, new IGroundedValue[] { gv }).Materialize());
                 }
 
@@ -328,6 +332,7 @@ namespace OutSmart.DAXon.Values.Arrays
                 int i;
                 for (i = 0; i < array1.ArrayLength() && i < array2.ArrayLength(); i++)
                 {
+                    Core.Controller.CheckActiveTimeoutPerStep();
                     list.Add(DynamicCall(fn, context, new ISequence[] { array1[i], array2[i] }).Materialize());
                 }
 

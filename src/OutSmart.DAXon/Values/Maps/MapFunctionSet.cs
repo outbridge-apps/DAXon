@@ -125,6 +125,7 @@ namespace OutSmart.DAXon.Values.Maps
                 MapItem result = new HashTrieMap();
                 foreach (KeyValuePair pair in map.KeyValuePairs())
                 {
+                    Core.Controller.CheckActiveTimeoutPerStep();
                     BooleanValue match = (BooleanValue)DynamicCall(fn, context, new ISequence[] { pair.key, pair.value }).Head();
                     if (match.GetBooleanValue())
                     {
@@ -475,6 +476,7 @@ namespace OutSmart.DAXon.Values.Maps
                 List<IItem> results = new List<IItem>();
                 foreach (KeyValuePair pair in map.KeyValuePairs())
                 {
+                    Core.Controller.CheckActiveTimeoutPerStep();
                     ISequence seq = DynamicCall(fn, context, new ISequence[] { pair.key, pair.value });
                     ISequenceIterator it = seq.Iterate();
                     for (IItem item; (item = it.Next()) != null;)
@@ -557,6 +559,7 @@ namespace OutSmart.DAXon.Values.Maps
                     ZenoSequence results = new ZenoSequence();
                     foreach (KeyValuePair pair in map.KeyValuePairs())
                     {
+                        Core.Controller.CheckActiveTimeoutPerStep();
                         BooleanValue selected = (BooleanValue)fn.Call(context, new ISequence[] { pair.value }).Head();
                         if (selected.GetBooleanValue())
                         {

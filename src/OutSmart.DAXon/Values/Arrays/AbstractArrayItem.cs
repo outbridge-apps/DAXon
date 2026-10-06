@@ -107,6 +107,11 @@ namespace OutSmart.DAXon.Values.Arrays
 
                 for (int i = 0; i < this.ArrayLength(); i++)
                 {
+                    if ((i & 1023) == 1023)
+                    {
+                        Core.Controller.CheckActiveTimeout();
+                    }
+
                     if (!DAXonDeepEqual.DeepEqual(this[i].Iterate(), that[i].Iterate(), comparer, context, flags))
                     {
                         return false;
@@ -133,6 +138,11 @@ namespace OutSmart.DAXon.Values.Arrays
 
                 for (int i = 0; i < this.ArrayLength(); i++)
                 {
+                    if ((i & 1023) == 1023)
+                    {
+                        Core.Controller.CheckActiveTimeout();
+                    }
+
                     if (!DeepEqual.DeepEqualFn(this[i].Iterate(), that[i].Iterate(), context, options))
                     {
                         return false;

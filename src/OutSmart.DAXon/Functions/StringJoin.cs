@@ -320,8 +320,14 @@ namespace OutSmart.DAXon.Functions
             IItem it;
             try
             {
+                int steps = 0;
                 while ((it = iter.Next()) != null)
                 {
+                    if ((++steps & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeout();
+                    }
+
                     if (first)
                     {
                         first = false;

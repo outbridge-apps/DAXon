@@ -129,6 +129,12 @@ namespace OutSmart.DAXon.Functions.HigherOrder
 
             public void ProcessItem(IItem item)
             {
+                if (!laneActive)
+                {
+                    // A call of the function is a step; RunFold looks at the clock for the integer lane's cheap ones.
+                    Core.Controller.CheckActiveTimeoutPerStep();
+                }
+
                 if (laneActive)
                 {
                     if (item is Values.Int64Value iv

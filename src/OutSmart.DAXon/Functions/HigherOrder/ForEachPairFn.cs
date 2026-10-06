@@ -61,6 +61,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             PairedSequenceIterator pairs = new PairedSequenceIterator(seq0, seq1);
             return MappingIterator.IMap(pairs, (item) =>
             {
+                Core.Controller.CheckActiveTimeoutPerStep();
                 ISequence[] pair = ((ObjectValue<ISequence[]>)item).GetObject();
                 return DynamicCall(function, context, pair).Iterate();
             });
@@ -109,6 +110,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                         return null;
                     }
 
+                    Core.Controller.CheckActiveTimeoutPerStep();
                     ISequence result = fused.CallTwo(i0, i1);
                     if (result is IItem one)
                     {

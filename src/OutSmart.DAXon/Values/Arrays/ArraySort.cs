@@ -59,6 +59,7 @@ namespace OutSmart.DAXon.Values.Arrays
 
             foreach (IGroundedValue seq in array.Members())
             {
+                Core.Controller.CheckActiveTimeoutPerStep();
                 MemberToBeSorted member = new MemberToBeSorted();
                 member.value = seq;
                 member.originalPosition = i++;

@@ -80,6 +80,11 @@ namespace OutSmart.DAXon.Functions
                     while ((baseItem = (AtomicValue)@base.Next()) != null)
                     {
                         index++;
+                        if ((index & 1023) == 0)
+                        {
+                            Core.Controller.CheckActiveTimeout();
+                        }
+
                         if (Types.Type.IsGuaranteedComparable(searchType, baseItem.PrimitiveType, false) && comparer.ComparesEqual(baseItem, key))
                         {
                             return new Int64Value(index);

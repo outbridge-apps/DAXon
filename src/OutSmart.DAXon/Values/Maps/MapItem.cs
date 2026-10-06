@@ -286,8 +286,14 @@ namespace OutSmart.DAXon.Values.Maps
             {
                 IAtomicIterator keyIter = Keys();
                 AtomicValue key;
+                int steps = 0;
                 while ((key = keyIter.Next()) != null)
                 {
+                    if ((++steps & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeout();
+                    }
+
                     ISequence thisValue = Get(key);
                     ISequence otherValue = ((MapItem)other)[key];
                     if (otherValue == null)
@@ -313,8 +319,14 @@ namespace OutSmart.DAXon.Values.Maps
             {
                 IAtomicIterator keyIter = Keys();
                 AtomicValue key;
+                int steps = 0;
                 while ((key = keyIter.Next()) != null)
                 {
+                    if ((++steps & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeout();
+                    }
+
                     ISequence thisValue = Get(key);
                     ISequence otherValue = ((MapItem)other)[key];
                     if (otherValue == null)

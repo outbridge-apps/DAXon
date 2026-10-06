@@ -68,7 +68,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             };
             add(second);
             SequenceTool.Supply(@base, add);
-            sequence.Sort(comparer);
+            DeadlineSort.Sort(sequence, comparer);
             iterator = new NodeListIterator(sequence);
         }
 
@@ -114,7 +114,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             };
             add(second);
             SequenceTool.Supply(@base, add);
-            sequence.Sort(comparer);
+            DeadlineSort.Sort(sequence, comparer);
             iterator = new NodeListIterator(sequence);
         }
 

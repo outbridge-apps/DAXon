@@ -94,8 +94,14 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                     && ReferenceEquals(z.GetItemType(), Types.BuiltInAtomicType.INTEGER))
                 {
                     long acc = z.LongValue();
+                    int laneSteps = 0;
                     while ((item = reverseBase.Next()) != null)
                     {
+                        if ((++laneSteps & 1023) == 0)
+                        {
+                            Core.Controller.CheckActiveTimeout();
+                        }
+
                         if (item is Values.Int64Value iv
                             && ReferenceEquals(iv.GetItemType(), Types.BuiltInAtomicType.INTEGER)
                             && lane(iv.LongValue(), acc, out long next))
@@ -109,6 +115,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                         zero = fused.CallTwoSeq(item, zero);
                         while ((item = reverseBase.Next()) != null)
                         {
+                            Core.Controller.CheckActiveTimeoutPerStep();
                             zero = fused.CallTwoSeq(item, zero);
                         }
 
@@ -121,6 +128,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 // Reused-frame invoker (same contract as fold-left); results come back materialized.
                 while ((item = reverseBase.Next()) != null)
                 {
+                    Core.Controller.CheckActiveTimeoutPerStep();
                     zero = fused.CallTwoSeq(item, zero);
                 }
 
@@ -130,6 +138,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             ISequence[] args = new ISequence[2];
             while ((item = reverseBase.Next()) != null)
             {
+                Core.Controller.CheckActiveTimeoutPerStep();
                 args[0] = item;
                 args[1] = zero.Materialize();
                 try
