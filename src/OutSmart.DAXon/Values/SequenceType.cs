@@ -313,6 +313,35 @@ namespace OutSmart.DAXon.Values
             return !((count == 0 && !OutSmart.DAXon.Values.Cardinality.AllowsZero(_cardinality))
                      || (count > 1 && !OutSmart.DAXon.Values.Cardinality.AllowsMany(_cardinality)));
         }
+        /// <summary>
+        /// The XPath syntax, as upstream prints it in messages: "xs:string+", "array(xs:integer)?", "empty-sequence()".
+        /// A computed type is as deep as its value (array(array(...))), so the depth is capped like a depiction's.
+        /// </summary>
+        public override string ToString()
+        {
+            if (_cardinality == OutSmart.DAXon.Expressions.StaticProperty.EMPTY)
+            {
+                return "empty-sequence()";
+            }
+
+            if (_primaryType == null)
+            {
+                return "*";
+            }
+
+            OutSmart.DAXon.Transformation.Err.EnterDepiction();
+            try
+            {
+                return OutSmart.DAXon.Transformation.Err.DepictionTooDeep
+                    ? "..."
+                    : _primaryType.ToString() + Cardinality.GetOccurrenceIndicator(_cardinality);
+            }
+            finally
+            {
+                OutSmart.DAXon.Transformation.Err.LeaveDepiction();
+            }
+        }
+
         public string ToAlphaCode() => string.Empty;
         public string ToExportString() => string.Empty;
         public string ToString(object config) => string.Empty;
