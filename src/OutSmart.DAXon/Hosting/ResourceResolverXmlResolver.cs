@@ -124,7 +124,12 @@ namespace OutSmart.DAXon.Lib
                 // directory) instead of "Cannot resolve"; an entity is probed, as System.Xml tries a PUBLIC id first.
                 if (absoluteUri != null && absoluteUri.IsFile && (isPrincipal || File.Exists(absoluteUri.LocalPath)))
                 {
-                    return OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(absoluteUri.LocalPath);
+                    Stream file = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(absoluteUri.LocalPath);
+
+                    // What the document pulls in - its external DTD, an external entity - is input under the same cap;
+                    // the document itself is capped by GetEntity.
+                    return isPrincipal ? file : OutSmart.DAXon.Internal.Streams.InputSizeLimit.Apply(file,
+                        OutSmart.DAXon.Internal.Streams.InputSizeLimit.MaxFor(config), absoluteUri.OriginalString, "FODC0002");
                 }
                 return null;
             }
