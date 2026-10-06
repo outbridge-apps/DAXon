@@ -4,6 +4,7 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+using System.Collections.Concurrent;
 using System.Globalization;
 
 namespace OutSmart.DAXon.Expressions.Numbering
@@ -15,12 +16,49 @@ namespace OutSmart.DAXon.Expressions.Numbering
     /// </summary>
     internal sealed class Numberer_bcl : Numberer_en
     {
+        // Made once for a culture whose own calendar is not Gregorian; null when it has no Gregorian one.
+        private static readonly ConcurrentDictionary<string, DateTimeFormatInfo> GregorianByCulture = new ConcurrentDictionary<string, DateTimeFormatInfo>();
+
         private readonly DateTimeFormatInfo names;
 
-        public Numberer_bcl(CultureInfo culture, string language)
+        public Numberer_bcl(DateTimeFormatInfo names, string language)
         {
-            names = culture.DateTimeFormat;
+            this.names = names;
             SetLanguage(language);
+        }
+
+        // The names of the culture's Gregorian calendar, or null when it has none: by default ar counts the months
+        // of Um al-Qura, fa and ps the Persian ones, and an xs:date is Gregorian.
+        internal static DateTimeFormatInfo GregorianNames(CultureInfo culture)
+        {
+            DateTimeFormatInfo names = culture.DateTimeFormat;
+            if (names.Calendar is GregorianCalendar)
+            {
+                return names;
+            }
+
+            return GregorianByCulture.GetOrAdd(culture.Name, _ => WithGregorianCalendar(culture));
+        }
+
+        private static DateTimeFormatInfo WithGregorianCalendar(CultureInfo culture)
+        {
+            GregorianCalendar gregorian = null;
+            foreach (Calendar calendar in culture.OptionalCalendars)
+            {
+                if (calendar is GregorianCalendar g && (gregorian == null || g.CalendarType == GregorianCalendarTypes.Localized))
+                {
+                    gregorian = g;
+                }
+            }
+
+            if (gregorian == null)
+            {
+                return null;
+            }
+
+            DateTimeFormatInfo names = (DateTimeFormatInfo)culture.DateTimeFormat.Clone();
+            names.Calendar = gregorian;
+            return DateTimeFormatInfo.ReadOnly(names);
         }
 
         public override string MonthName(int month, int minWidth, int maxWidth)

@@ -1316,15 +1316,16 @@ namespace OutSmart.DAXon.Core
         {
             if (localizerFactory == null)
             {
-                // Non-English month/day names come from the OS culture when it knows the tag
-                // (format-date lang='de' etc.); unknown tags keep the English fallback, which
+                // Non-English month/day names come from the OS culture when it knows the tag and has a
+                // Gregorian calendar (format-date lang='de' etc.); otherwise the English fallback, which
                 // FormatDate marks with the [Language: en] prefix.
                 if (language != null && !language.StartsWith("en", StringComparison.Ordinal))
                 {
                     System.Globalization.CultureInfo culture = DotNetPlatform.TryGetKnownCulture(language);
-                    if (culture != null)
+                    System.Globalization.DateTimeFormatInfo names = culture == null ? null : Numberer_bcl.GregorianNames(culture);
+                    if (names != null)
                     {
-                        Numberer_bcl bcl = new Numberer_bcl(culture, language);
+                        Numberer_bcl bcl = new Numberer_bcl(names, language);
                         if (country != null)
                         {
                             bcl.Country = country;
