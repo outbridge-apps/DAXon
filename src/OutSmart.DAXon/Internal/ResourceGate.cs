@@ -60,6 +60,32 @@ namespace OutSmart.DAXon.Internal
             }
         }
 
+        // A member of an archive whose own URI CheckRead has passed: only the host's ReadFilter is left to ask, with the
+        // member's jar: URI (the flags and host rules would take that scheme for the network).
+        public static string CheckMember(Configuration config, string memberUri, ResourceKind kind)
+        {
+            ProcessorOptions options = config?.ProcessorOptions;
+            if (options == null || options.IsUnrestricted)
+            {
+                return null;
+            }
+
+            Uri uri;
+            if (!Uri.TryCreate(memberUri, UriKind.Absolute, out uri))
+            {
+                return "Access to " + memberUri + " is denied by the resource-access policy: the URI cannot be classified";
+            }
+
+            try
+            {
+                return options.PermitsMember(uri, kind) ? null : options.DescribeMemberDenial(uri, kind);
+            }
+            catch (Exception e) when (!(e is OutOfMemoryException))
+            {
+                return "Access to " + uri + " is denied: the resource-access policy failed (" + e.Message + ")";
+            }
+        }
+
         public static string CheckWrite(Configuration config, string absoluteUri)
         {
             ProcessorOptions options = config?.ProcessorOptions;

@@ -135,9 +135,9 @@ namespace OutSmart.DAXon.Api
         public HostRuleCollection BlockedHosts { get; }
 
         /// <summary>
-        /// A rule of the host's own, asked about every read the flags and host rules allow (a <c>data:</c> URI too);
-        /// false denies it. It runs on the threads that run stylesheets, so it must be thread-safe; if it throws, the
-        /// read is denied.
+        /// A rule of the host's own, asked about every read the flags and host rules allow (a <c>data:</c> URI too, and
+        /// each member of a ZIP collection by its <c>jar:</c> URI); false denies it. It runs on the threads that run
+        /// stylesheets, so it must be thread-safe; if it throws, the read is denied.
         /// </summary>
         public Func<Uri, ResourceKind, bool> ReadFilter
         {
@@ -187,6 +187,12 @@ namespace OutSmart.DAXon.Api
             return Reason(uri, false) == null && (readFilter == null || readFilter(uri, kind));
         }
 
+        // Whether the ReadFilter takes a member of an archive the flags and host rules have passed (by the archive's URI).
+        internal bool PermitsMember(Uri uri, ResourceKind kind)
+        {
+            return readFilter == null || readFilter(uri, kind);
+        }
+
         // Whether the built-in output resolvers may write uri (absolute).
         internal bool PermitsWrite(Uri uri)
         {
@@ -205,6 +211,11 @@ namespace OutSmart.DAXon.Api
         {
             return "Access to " + uri + " (" + KindText(kind) + ") is denied by the resource-access policy: "
                 + (Reason(uri, false) ?? "ReadFilter refused it");
+        }
+
+        internal string DescribeMemberDenial(Uri uri, ResourceKind kind)
+        {
+            return "Access to " + uri + " (" + KindText(kind) + ") is denied by the resource-access policy: ReadFilter refused it";
         }
 
         internal string DescribeWriteDenial(Uri uri)
