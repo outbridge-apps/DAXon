@@ -39,20 +39,20 @@ namespace OutSmart.DAXon.Functions
                 return EmptySequence.GetInstance();
             }
 
-            int scaleRnd = 0;
             RoundingRule roundingRule = RoundingRule.HALF_TO_CEILING;
-            if (arguments.Length >= 2)
-            {
-                NumericValue scaleVal = (NumericValue)arguments[1].Head();
-                scaleRnd = scaleVal == null ? 0 : (int)scaleVal.LongValue();
-            }
-
+            NumericValue scaleVal = arguments.Length >= 2 ? (NumericValue)arguments[1].Head() : null;
             if (arguments.Length >= 3)
             {
                 StringValue rounding = (StringValue)arguments[2].Head();
                 roundingRule = rounding == null ? RoundingRule.HALF_TO_CEILING : GetRoundingRule(rounding.GetStringValue());
             }
 
+            if (KeepsEveryDigit(scaleVal))
+            {
+                return val0;
+            }
+
+            int scaleRnd = Precision(scaleVal);
             if (roundingRule == RoundingRule.HALF_TO_CEILING)
             {
                 return val0.Round(scaleRnd);
@@ -66,6 +66,24 @@ namespace OutSmart.DAXon.Functions
         public override Elaborator GetElaborator()
         {
             return new RoundElaborator();
+        }
+
+        // A precision past int keeps every digit, as round-half-to-even does; a plain (int) cast made 2^31 into
+        // -2^31, which rounds every digit away.
+        private static bool KeepsEveryDigit(NumericValue precision)
+        {
+            return precision != null && precision.CompareTo(int.MaxValue) > 0;
+        }
+
+        // Below int every digit is rounded away, as at int.MinValue.
+        private static int Precision(NumericValue precision)
+        {
+            if (precision == null)
+            {
+                return 0;
+            }
+
+            return precision.CompareTo(int.MinValue) < 0 ? int.MinValue : (int)precision.LongValue();
         }
 
         public static RoundingRule GetRoundingRule(string s)
@@ -136,13 +154,12 @@ namespace OutSmart.DAXon.Functions
                         }
 
                         IntegerValue scaleArgVal = ((IntegerValue)scaleArg.Eval(context));
-                        if (scaleArgVal == null)
+                        if (KeepsEveryDigit(scaleArgVal))
                         {
-                            return result.Round(0);
+                            return result;
                         }
 
-                        int scale = (int)scaleArgVal.LongValue();
-                        return result.Round(scale);
+                        return result.Round(Precision(scaleArgVal));
                     };
                 }
                 else
@@ -158,9 +175,14 @@ namespace OutSmart.DAXon.Functions
                         }
 
                         IntegerValue scaleArgVal = ((IntegerValue)scaleArg.Eval(context));
-                        int scale = scaleArgVal == null ? 0 : (int)scaleArgVal.LongValue();
                         StringValue midpointModeVal = ((StringValue)modeArg.Eval(context));
                         RoundingRule mode = midpointModeVal == null ? RoundingRule.HALF_TO_CEILING : GetRoundingRule(midpointModeVal.GetStringValue());
+                        if (KeepsEveryDigit(scaleArgVal))
+                        {
+                            return result;
+                        }
+
+                        int scale = Precision(scaleArgVal);
                         if (mode == RoundingRule.HALF_TO_CEILING)
                         {
                             return result.Round(scale);
