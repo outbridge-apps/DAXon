@@ -491,15 +491,18 @@ namespace OutSmart.DAXon.XQuery
         {
             Controller controller = new Controller(executable.GetConfiguration(), executable);
             env.InitializeController(controller);
+            ArmLimits(controller);
+            return controller;
+        }
 
-            // Arm the Processor-wide cooperative deadline for this query run. A module loaded via
-            // fn:load-xquery-module overrides this by inheriting the caller's deadline (see there).
+        // Arm the Processor-wide limits for one query call - also on a controller the evaluator keeps for direct function
+        // calls, which armed only once before. A module loaded via fn:load-xquery-module inherits the caller's instead.
+        internal void ArmLimits(Controller controller)
+        {
             if (executable.GetConfiguration().GetProcessor() is OutSmart.DAXon.Api.Processor p)
             {
                 controller.SetTimeout(p.TransformTimeout, "Query");
             }
-
-            return controller;
         }
 
         public virtual void Explain(ExpressionPresenter @out)

@@ -137,6 +137,7 @@ namespace OutSmart.DAXon.Api
             ISequence value;
             try
             {
+                exp.ArmEvaluation(dynamicContext);
                 value = SequenceTool.ToGroundedValue(exp.Iterate(dynamicContext));
             }
             catch (UncheckedXPathException uxe)
@@ -164,6 +165,7 @@ namespace OutSmart.DAXon.Api
             using RunResources run = RunResources.Enter();
             try
             {
+                exp.ArmEvaluation(dynamicContext);
                 IItem i = exp.EvaluateSingle(dynamicContext);
                 if (i == null)
                 {
@@ -171,6 +173,10 @@ namespace OutSmart.DAXon.Api
                 }
 
                 return (XdmItem)XdmValue.Wrap(i);
+            }
+            catch (UncheckedXPathException uxe)
+            {
+                throw new DAXonApiException(uxe);   // an iterator's error, a limit among them, as Evaluate() reports it
             }
             catch (XPathException e)
             {
@@ -188,7 +194,13 @@ namespace OutSmart.DAXon.Api
             RunResources saved = scope.Activate();
             try
             {
+                exp.ArmEvaluation(dynamicContext);
                 return new XdmSequenceIterator<XdmItem>(exp.Iterate(dynamicContext), scope);
+            }
+            catch (UncheckedXPathException e)
+            {
+                scope.CloseAll();
+                throw new DAXonApiUncheckedException(e.GetXPathException());
             }
             catch (XPathException e)
             {
@@ -211,7 +223,12 @@ namespace OutSmart.DAXon.Api
             using RunResources run = RunResources.Enter();
             try
             {
+                exp.ArmEvaluation(dynamicContext);
                 return exp.EffectiveBooleanValue(dynamicContext);
+            }
+            catch (UncheckedXPathException uxe)
+            {
+                throw new DAXonApiException(uxe);
             }
             catch (XPathException e)
             {

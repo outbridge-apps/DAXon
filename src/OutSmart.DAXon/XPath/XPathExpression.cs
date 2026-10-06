@@ -81,6 +81,13 @@ namespace OutSmart.DAXon.XPath
             }
         }
 
+        // Each evaluation of a selector is a call of its own: the limits run from its start on the thread that evaluates.
+        // A selector used to arm once, when it was made, so every later evaluation shared the first one's deadline.
+        internal void ArmEvaluation(XPathDynamicContext dynamicContext)
+        {
+            ArmDeadline((XPathContextMajor)dynamicContext.XPathContextObject);
+        }
+
         public virtual XPathDynamicContext CreateDynamicContext(Controller controller, IItem contextItem)
         {
             CheckContextItemType(contextItem);

@@ -397,6 +397,7 @@ namespace OutSmart.DAXon.Api
                 else
                 {
                     context.InitializeController(controller);
+                    expression.ArmLimits(controller);
                 }
             }
             catch (XPathException e)
@@ -456,6 +457,7 @@ namespace OutSmart.DAXon.Api
                 else
                 {
                     context.InitializeController(controller);
+                    expression.ArmLimits(controller);
                 }
 
                 Configuration config = processor.UnderlyingConfiguration;
