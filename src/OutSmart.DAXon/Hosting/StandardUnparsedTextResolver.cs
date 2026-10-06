@@ -132,7 +132,7 @@ namespace OutSmart.DAXon.Lib
                 }
                 return new StringReader(text);
             }
-            catch (Exception e) when (!(e is XPathException))
+            catch (Exception e) when (!(e is XPathException) && !(e is OutOfMemoryException))
             {
                 throw Unreadable(e, function, absoluteURI.ToString(), encoding);
             }
@@ -172,7 +172,7 @@ namespace OutSmart.DAXon.Lib
             // Upstream contract is `throws XPathException` (StandardUnparsedTextResolver.java:157) and the
             // UnparsedTextFunction.ReadFile call site sits OUTSIDE its IOException try - so translate all
             // native failures here: missing/unreadable resource -> FOUT1170, unknown encoding -> FOUT1190.
-            catch (Exception e) when (!(e is XPathException))
+            catch (Exception e) when (!(e is XPathException) && !(e is OutOfMemoryException))
             {
                 throw Unreadable(e, function, src.SystemId ?? "(anonymous source)", encoding);
             }

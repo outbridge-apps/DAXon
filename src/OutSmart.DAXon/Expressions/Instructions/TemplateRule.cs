@@ -293,11 +293,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 // DocumentInstr elaborator note (deep-unwind stack discipline, round AQ).
                 throw e.MaybeWithLocation(this).MaybeWithContext(context);
             }
-            catch (Exception e2) when (!(e2 is XPathException) && !(e2 is RecursionDepthError))
+            catch (Exception e2) when (!(e2 is XPathException) && !(e2 is RecursionDepthError) && !(e2 is OutOfMemoryException))
             {
                 // RecursionDepthError excluded: it is not an internal error, and wrapping it here
                 // would re-enter dispatch once per recursion level - the very cost the guard exists
-                // to avoid.
+                // to avoid. OutOfMemoryException neither: the host must see the runtime's own signal.
                 string message = "Internal error evaluating template rule " + (GetLineNumber() > 0 ? " at line " + GetLineNumber() : "") + (GetSystemId() != null ? " in module " + GetSystemId() : "");
                 throw new InvalidOperationException(message, e2);
             }
