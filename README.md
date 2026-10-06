@@ -80,7 +80,7 @@ people you do not fully trust, restrict it when you create the `Processor`:
 var proc = new Processor(new ProcessorOptions
 {
     TransformTimeout = TimeSpan.FromSeconds(30),
-    MaxInputBytes = 50L * 1024 * 1024,
+    MaxMemoryBytes = 500L * 1024 * 1024,   // per call; off by default
     AllowFileRead = false,
     AllowFileWrite = false,
     AllowEnvironmentVariables = false,
@@ -101,7 +101,7 @@ var proc = new Processor(new ProcessorOptions
   before the request, and the HTTP stack resolves the name again when it connects.
 - Your own code is trusted and not gated: a resolver or `xsl:result-document` handler you
   install, and calls with an explicit path such as `DocumentBuilder.Build(file)`.
-  `MaxInputBytes` caps input you pass in directly too (`DocumentBuilder`, `XsltCompiler`, ...).
+  `MaxMemoryBytes` caps input you pass in directly too (`DocumentBuilder`, `XsltCompiler`, ...).
 - The `Processor` takes the options: after `new Processor(options)` a setter throws, and
   `fn:transform` / `xsl:evaluate` inherit them. For decisions of your own, set `ReadFilter`,
   `WriteFilter` or `EnvironmentVariableFilter`: they are asked after the flags and host rules,
@@ -109,15 +109,23 @@ var proc = new Processor(new ProcessorOptions
 - Entity expansion in any XML the engine parses stops at 10,000,000 characters per document,
   under every policy and on every host. .NET sets this limit itself only for applications that
   target .NET Framework 4.5.2 or later; the engine sets it for the rest too.
+- `MaxMemoryBytes` bounds one call - a compile, a document build, a transformation, a query, an
+  XPath evaluation. .NET cannot tell what one call holds, only what its thread allocates, so a
+  call counts the trees you hand it, by their size, and every byte it allocates, including what
+  it has already released (a transformation typically allocates 3-5 times what it holds). Over
+  the limit the call stops with `SXLM0003`, which `xsl:try` does not catch. Calls running at
+  once are counted apart. It is also the largest input accepted; without it, inputs up to
+  150 MB. Allocations are counted on .NET and .NET Framework 4.8.
 
 ## Status
 
 The port is verified against the full W3C QT3 (XPath/XQuery 3.1) + XSLT 3.0 test corpora and
 matches Java Saxon-HE verdict-for-verdict, except 17 cases requiring XML 1.1 input documents,
 which the .NET `XmlReader` cannot parse. Hostile inputs cannot kill the process: transformation
-and compile-time deadlines, input-size caps and adaptive stack guards turn deep recursion / deep
-JSON / deep regex nesting into catchable coded errors; `ProcessorOptions.StackSizeThreshold`
-sets how much of the thread's stack stays free for that (128 KB by default, and at least).
+and compile-time deadlines, an optional memory limit per call, input-size caps and adaptive stack
+guards turn deep recursion / deep JSON / deep regex nesting into catchable coded errors;
+`ProcessorOptions.StackSizeThreshold` sets how much of the thread's stack stays free for that
+(128 KB by default, and at least).
 
 The conformance runner lives in [`tests/QT3Test`](tests/QT3Test); it downloads the W3C
 corpora at pinned revisions, so the result above can be reproduced locally.
