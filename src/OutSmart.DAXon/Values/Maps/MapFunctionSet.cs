@@ -333,12 +333,22 @@ namespace OutSmart.DAXon.Values.Maps
             {
                 IList<IGroundedValue> result = new List<IGroundedValue>();
                 AtomicValue key = (AtomicValue)arguments[1].Head();
-                ProcessSequence(arguments[0], key, result);
+                try
+                {
+                    ProcessSequence(arguments[0], key, result);
+                }
+                catch (RecursionDepthError e) when (!e.Described)
+                {
+                    throw e.Describe("Too many nested levels in map:find. The searched input is too deeply nested.", DAXonErrorCode.SXLM0001, null);
+                }
+
                 return new SimpleArrayItem(result);
             }
 
             private void ProcessSequence(ISequence @in, AtomicValue key, IList<IGroundedValue> result)
             {
+                // The depth is the input's: nested JSON reaches it.
+                StackGuard.Probe();
                 SequenceTool.Supply(@in.Iterate(), (item) =>
                 {
                     if (item is ArrayItem)

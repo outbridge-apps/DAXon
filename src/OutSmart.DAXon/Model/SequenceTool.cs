@@ -279,47 +279,56 @@ namespace OutSmart.DAXon.Model
 
         public static Types.ItemType GetItemType(ISequence sequence, TypeHierarchy th)
         {
-            if (sequence is IItem)
+            // Arrays and maps type their members through here, so the depth is the value's (12 KB of JSON).
+            StackGuard.Probe();
+            try
             {
-                return Types.Type.GetItemType((IItem)sequence, th);
-            }
-            else if (sequence is IntegerRange)
-            {
-                return BuiltInAtomicType.INTEGER;
-            }
-            else if (sequence is IGroundedValue)
-            {
-                try
+                if (sequence is IItem)
                 {
-                    Types.ItemType type = null;
-                    ISequenceIterator iter = sequence.Iterate();
-                    for (IItem item; (item = iter.Next()) != null;)
-                    {
-                        if (type == null)
-                        {
-                            type = Types.Type.GetItemType(item, th);
-                        }
-                        else
-                        {
-                            type = Types.Type.GetCommonSuperType(type, Types.Type.GetItemType(item, th), th);
-                        }
-
-                        if (type == AnyItemType.GetInstance())
-                        {
-                            break;
-                        }
-                    }
-
-                    return type == null ? ErrorType.GetInstance() : type;
+                    return Types.Type.GetItemType((IItem)sequence, th);
                 }
-                catch (UncheckedXPathException err)
+                else if (sequence is IntegerRange)
+                {
+                    return BuiltInAtomicType.INTEGER;
+                }
+                else if (sequence is IGroundedValue)
+                {
+                    try
+                    {
+                        Types.ItemType type = null;
+                        ISequenceIterator iter = sequence.Iterate();
+                        for (IItem item; (item = iter.Next()) != null;)
+                        {
+                            if (type == null)
+                            {
+                                type = Types.Type.GetItemType(item, th);
+                            }
+                            else
+                            {
+                                type = Types.Type.GetCommonSuperType(type, Types.Type.GetItemType(item, th), th);
+                            }
+
+                            if (type == AnyItemType.GetInstance())
+                            {
+                                break;
+                            }
+                        }
+
+                        return type == null ? ErrorType.GetInstance() : type;
+                    }
+                    catch (UncheckedXPathException err)
+                    {
+                        return AnyItemType.GetInstance();
+                    }
+                }
+                else
                 {
                     return AnyItemType.GetInstance();
                 }
             }
-            else
+            catch (RecursionDepthError e) when (!e.Described)
             {
-                return AnyItemType.GetInstance();
+                throw e.Describe("Too many nested arrays or maps to compute the type of a value. The value is too deeply nested.", DAXonErrorCode.SXLM0001, null);
             }
         }
 

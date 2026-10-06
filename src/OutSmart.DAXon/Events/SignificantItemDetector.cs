@@ -147,24 +147,33 @@ namespace OutSmart.DAXon.Events
                 }
                 else
                 {
-                    foreach (ISequence mem in ((ArrayItem)item).Members())
+                    // Each nested array is a level of recursion: the depth is the value's.
+                    StackGuard.Probe();
+                    try
                     {
-                        try
+                        foreach (ISequence mem in ((ArrayItem)item).Members())
                         {
-                            ISequenceIterator memIter = mem.Iterate();
-                            IItem it;
-                            while ((it = memIter.Next()) != null)
+                            try
                             {
-                                if (IsSignificant(it))
+                                ISequenceIterator memIter = mem.Iterate();
+                                IItem it;
+                                while ((it = memIter.Next()) != null)
                                 {
-                                    return true;
+                                    if (IsSignificant(it))
+                                    {
+                                        return true;
+                                    }
                                 }
                             }
+                            catch (UncheckedXPathException e)
+                            {
+                                return true;
+                            }
                         }
-                        catch (UncheckedXPathException e)
-                        {
-                            return true;
-                        }
+                    }
+                    catch (RecursionDepthError e) when (!e.Described)
+                    {
+                        throw e.Describe("Too many nested arrays to tell whether content is empty (xsl:on-empty, xsl:on-non-empty). The array is too deeply nested.", DAXonErrorCode.SXLM0001, null);
                     }
 
                     return false;

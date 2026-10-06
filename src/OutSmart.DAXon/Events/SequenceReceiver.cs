@@ -84,9 +84,18 @@ namespace OutSmart.DAXon.Events
 
         protected virtual void Flatten(ArrayItem array, ILocation locationId, int copyNamespaces)
         {
-            foreach (ISequence member in array.Members())
+            // Each nested array is a level of recursion: deep JSON in a result must stop with SXLM0001.
+            StackGuard.Probe();
+            try
             {
-                SequenceTool.Supply(member.Iterate(), (it) => Append(it, locationId, copyNamespaces));
+                foreach (ISequence member in array.Members())
+                {
+                    SequenceTool.Supply(member.Iterate(), (it) => Append(it, locationId, copyNamespaces));
+                }
+            }
+            catch (RecursionDepthError e) when (!e.Described)
+            {
+                throw e.Describe("Too many nested arrays to flatten. The array is too deeply nested.", DAXonErrorCode.SXLM0001, locationId);
             }
         }
 

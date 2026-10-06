@@ -100,15 +100,24 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
             else if (item is ArrayItem)
             {
-                foreach (IGroundedValue value in ((ArrayItem)item).Members())
+                // Each nested array is a level of recursion: the depth is the value's.
+                StackGuard.Probe();
+                try
                 {
-                    foreach (IItem it in value.AsIterable())
+                    foreach (IGroundedValue value in ((ArrayItem)item).Members())
                     {
-                        if (!IsDeemedEmpty(it))
+                        foreach (IItem it in value.AsIterable())
                         {
-                            return false;
+                            if (!IsDeemedEmpty(it))
+                            {
+                                return false;
+                            }
                         }
                     }
+                }
+                catch (RecursionDepthError e) when (!e.Described)
+                {
+                    throw e.Describe("Too many nested arrays to tell whether xsl:where-populated content is empty. The array is too deeply nested.", DAXonErrorCode.SXLM0001, null);
                 }
 
                 return true;
