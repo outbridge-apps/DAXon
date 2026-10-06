@@ -57,10 +57,10 @@ namespace OutSmart.DAXon.Serialization
             if (b8 != null)
             {
                 int len8 = chars.Length32();
-                char[] buf8 = writeBuf ?? (writeBuf = new char[WRITE_CHUNK]);
-                for (int i = 0; i < len8; i += WRITE_CHUNK)
+                char[] buf8 = Chars(len8);
+                for (int i = 0; i < len8; i += buf8.Length)
                 {
-                    int n = Math.Min(WRITE_CHUNK, len8 - i);
+                    int n = Math.Min(buf8.Length, len8 - i);
                     for (int k = 0; k < n; k++)
                     {
                         buf8[k] = (char)(b8[off8 + i + k] & 0xff);
@@ -83,7 +83,7 @@ namespace OutSmart.DAXon.Serialization
             {
                 // No astral codepoints: codepoints map 1:1 to chars; copy each slice into a
                 // reused buffer and hand it to the writer's char[] overload -- zero big strings.
-                char[] buf = writeBuf ?? (writeBuf = new char[WRITE_CHUNK]);
+                char[] buf = Chars(WRITE_CHUNK);
                 for (long i = 0; i < len; i += WRITE_CHUNK)
                 {
                     long end = Math.Min(i + WRITE_CHUNK, len);
@@ -103,11 +103,37 @@ namespace OutSmart.DAXon.Serialization
                 }
             }
         }
+        // The chars every write goes through, made for what is written and grown up to WRITE_CHUNK: made at that size on
+        // the first text, it was 64 KB on every serialization to a TextWriter - ten times the rest of a small one.
+        private char[] Chars(int needed)
+        {
+            char[] buf = writeBuf;
+            if (buf == null || (buf.Length < needed && buf.Length < WRITE_CHUNK))
+            {
+                buf = writeBuf = new char[Math.Min(WRITE_CHUNK, Math.Max(needed, buf == null ? 256 : buf.Length * 2))];
+            }
+
+            return buf;
+        }
+
         public void Write(string chars) { _w.Write(chars); }
         // Hot path (element/attribute names, XML punctuation): widen bytes -> char[] once and hand it to the
         // Writer's char[] overload, instead of allocating BOTH a char[] (ConvertAll) AND a string (new string)
-        // per call only to have Writer.Write(string) re-copy it. Byte-identical, ~2 fewer allocations per write.
-        public void WriteAscii(byte[] content) { var chars = new char[content.Length]; for (int i = 0; i < content.Length; i++) chars[i] = (char)content[i]; _w.Write(chars, 0, content.Length); }
+        // per call only to have Writer.Write(string) re-copy it. Byte-identical; the char[] is the shared buffer.
+        public void WriteAscii(byte[] content)
+        {
+            char[] chars = Chars(content.Length);
+            for (int i = 0; i < content.Length; i += chars.Length)
+            {
+                int n = Math.Min(chars.Length, content.Length - i);
+                for (int k = 0; k < n; k++)
+                {
+                    chars[k] = (char)content[i + k];
+                }
+
+                _w.Write(chars, 0, n);
+            }
+        }
         public void WriteRepeatedAscii(byte asciiChar, int count) { _w.Write(new string((char)asciiChar, count)); }
         // BMP fast path: write the single char with no per-codepoint string allocation (ConvertFromUtf32 only for astral).
         // IO-removal W2: write the BMP char via Write(char) — compat Writer.Write(int) had char semantics,
