@@ -13,8 +13,8 @@ using SysRegex = System.Text.RegularExpressions;
 namespace OutSmart.DAXon.Api
 {
     /// <summary>
-    /// A test on the host of a URI, for <see cref="ResourceAccessPolicy.AllowedHosts"/> and
-    /// <see cref="ResourceAccessPolicy.BlockedHosts"/>. The factories validate their argument, so a
+    /// A test on the host of a URI, for <see cref="ProcessorOptions.AllowedHosts"/> and
+    /// <see cref="ProcessorOptions.BlockedHosts"/>. The factories validate their argument, so a
     /// bad rule fails when it is created, not at the first fetch. Hosts are compared in canonical
     /// form: IDN host (punycode), lower case, no trailing dot; an IPv4-mapped IPv6 address counts
     /// as the IPv4 address.

@@ -653,10 +653,10 @@ namespace OutSmart.DAXon.Core
             return apiProcessor;
         }
 
-        // The policy of the Processor this configuration serves, which nested Processors over it
+        // The options of the Processor this configuration serves, which nested Processors over it
         // inherit; null for the engine's own configurations, left unrestricted and uncapped.
-        internal ResourceAccessPolicy ResourcePolicy
-            => (GetProcessor() as Processor)?.Resources;
+        internal ProcessorOptions ProcessorOptions
+            => (GetProcessor() as Processor)?.Options;
 
         public virtual void CheckLicensedFeature(int feature, string name, int localLicenseId)
         {

@@ -10,10 +10,10 @@ using OutSmart.DAXon.Core;
 namespace OutSmart.DAXon.Internal
 {
     /// <summary>
-    /// The one place the engine's built-in resolvers ask the Processor's ResourceAccessPolicy.
+    /// The one place the engine's built-in resolvers ask the Processor's options what they may reach.
     /// Read and write answer null when allowed, otherwise the denial text for the caller's error.
-    /// An unrestricted policy (the default) answers at once without parsing anything; a policy
-    /// that throws counts as a denial.
+    /// Options that allow everything (the default) answer at once without parsing anything; a
+    /// filter of the host's that throws counts as a denial.
     /// </summary>
     /// <summary>
     /// A resource-policy denial. Its own type lets a call site give it that site's retrieval code
@@ -36,8 +36,8 @@ namespace OutSmart.DAXon.Internal
     {
         public static string CheckRead(Configuration config, string absoluteUri, ResourceKind kind)
         {
-            ResourceAccessPolicy policy = config?.ResourcePolicy;
-            if (policy == null || policy.IsUnrestricted)
+            ProcessorOptions options = config?.ProcessorOptions;
+            if (options == null || options.IsUnrestricted)
             {
                 return null;
             }
@@ -50,9 +50,9 @@ namespace OutSmart.DAXon.Internal
 
             try
             {
-                return policy.PermitsRead(uri, kind)
+                return options.PermitsRead(uri, kind)
                     ? null
-                    : policy.DescribeDenial(uri, kind) ?? "Access to " + uri + " is denied by the resource-access policy";
+                    : options.DescribeDenial(uri, kind) ?? "Access to " + uri + " is denied by the resource-access policy";
             }
             catch (Exception e) when (!(e is OutOfMemoryException))
             {
@@ -62,8 +62,8 @@ namespace OutSmart.DAXon.Internal
 
         public static string CheckWrite(Configuration config, string absoluteUri)
         {
-            ResourceAccessPolicy policy = config?.ResourcePolicy;
-            if (policy == null || policy.IsUnrestricted)
+            ProcessorOptions options = config?.ProcessorOptions;
+            if (options == null || options.IsUnrestricted)
             {
                 return null;
             }
@@ -76,7 +76,7 @@ namespace OutSmart.DAXon.Internal
 
             try
             {
-                return policy.PermitsWrite(uri) ? null : policy.DescribeWriteDenial(uri);
+                return options.PermitsWrite(uri) ? null : options.DescribeWriteDenial(uri);
             }
             catch (Exception e) when (!(e is OutOfMemoryException))
             {
@@ -84,12 +84,12 @@ namespace OutSmart.DAXon.Internal
             }
         }
 
-        // Any policy but the unrestricted default: the built-in HTTP fetchers then follow redirects
+        // Any options but the unrestricted default: the built-in HTTP fetchers then follow redirects
         // themselves and check every hop.
         public static bool IsRestricted(Configuration config)
         {
-            ResourceAccessPolicy policy = config?.ResourcePolicy;
-            return policy != null && !policy.IsUnrestricted;
+            ProcessorOptions options = config?.ProcessorOptions;
+            return options != null && !options.IsUnrestricted;
         }
 
         // A denial carrying the code a missing resource of this kind gets; query modules and
@@ -106,8 +106,8 @@ namespace OutSmart.DAXon.Internal
         // For the built-in result-document resolvers: gates a write only when href names a target.
         public static string CheckOutput(Configuration config, string href, string baseUri)
         {
-            ResourceAccessPolicy policy = config?.ResourcePolicy;
-            if (policy == null || policy.IsUnrestricted)
+            ProcessorOptions options = config?.ProcessorOptions;
+            if (options == null || options.IsUnrestricted)
             {
                 return null;
             }
@@ -168,15 +168,15 @@ namespace OutSmart.DAXon.Internal
 
         public static bool PermitsEnvironment(Configuration config, string name)
         {
-            ResourceAccessPolicy policy = config?.ResourcePolicy;
-            if (policy == null || policy.IsUnrestricted)
+            ProcessorOptions options = config?.ProcessorOptions;
+            if (options == null || options.IsUnrestricted)
             {
                 return true;
             }
 
             try
             {
-                return policy.PermitsEnvironmentVariable(name);
+                return options.PermitsEnvironmentVariable(name);
             }
             catch (Exception e) when (!(e is OutOfMemoryException))
             {

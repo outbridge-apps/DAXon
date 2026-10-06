@@ -7,7 +7,7 @@ namespace OutSmart.DAXon.Api
 {
     /// <summary>
     /// What a stylesheet or query asks the engine to read; passed to
-    /// <see cref="ResourceAccessPolicy.PermitsRead"/>.
+    /// <see cref="ProcessorOptions.ReadFilter"/>.
     /// </summary>
     public enum ResourceKind
     {

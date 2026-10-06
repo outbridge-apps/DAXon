@@ -77,21 +77,15 @@ resolvers:
 people you do not fully trust, restrict it when you create the `Processor`:
 
 ```csharp
-var policy = new ResourceAccessPolicy
-{
-    AllowFileRead = false,
-    AllowFileWrite = false,
-    AllowEnvironmentVariables = false,
-    MaxInputBytes = 50L * 1024 * 1024,
-};
-policy.AllowedHosts.Add(HostRule.Exact("api.contoso.com"));
-policy.AllowedHosts.Add(HostRule.Wildcard("*.contoso.net"));    // subdomains only
-policy.BlockedHosts.Add(HostRule.IpRange("10.0.0.0/8"));
-
 var proc = new Processor(new ProcessorOptions
 {
     TransformTimeout = TimeSpan.FromSeconds(30),
-    Resources = policy,
+    MaxInputBytes = 50L * 1024 * 1024,
+    AllowFileRead = false,
+    AllowFileWrite = false,
+    AllowEnvironmentVariables = false,
+    AllowedHosts = { HostRule.Exact("api.contoso.com"), HostRule.Wildcard("*.contoso.net") },   // *. = subdomains only
+    BlockedHosts = { HostRule.IpRange("10.0.0.0/8") },
 });
 ```
 
@@ -108,10 +102,10 @@ var proc = new Processor(new ProcessorOptions
 - Your own code is trusted and not gated: a resolver or `xsl:result-document` handler you
   install, and calls with an explicit path such as `DocumentBuilder.Build(file)`.
   `MaxInputBytes` caps input you pass in directly too (`DocumentBuilder`, `XsltCompiler`, ...).
-- The `Processor` freezes the policy; a frozen policy can be shared between processors, and
-  `fn:transform` / `xsl:evaluate` inherit it. For decisions of your own, derive from
-  `ResourceAccessPolicy` and override `PermitsRead`, `PermitsWrite` or
-  `PermitsEnvironmentVariable` (and `DescribeDenial` for the message).
+- The `Processor` takes the options: after `new Processor(options)` a setter throws, and
+  `fn:transform` / `xsl:evaluate` inherit them. For decisions of your own, set `ReadFilter`,
+  `WriteFilter` or `EnvironmentVariableFilter`: they are asked after the flags and host rules,
+  can only deny more, and the error names the filter.
 - Entity expansion in any XML the engine parses stops at 10,000,000 characters per document,
   under every policy and on every host. .NET sets this limit itself only for applications that
   target .NET Framework 4.5.2 or later; the engine sets it for the rest too.
@@ -122,7 +116,8 @@ The port is verified against the full W3C QT3 (XPath/XQuery 3.1) + XSLT 3.0 test
 matches Java Saxon-HE verdict-for-verdict, except 17 cases requiring XML 1.1 input documents,
 which the .NET `XmlReader` cannot parse. Hostile inputs cannot kill the process: transformation
 and compile-time deadlines, input-size caps and adaptive stack guards turn deep recursion / deep
-JSON / deep regex nesting into catchable coded errors.
+JSON / deep regex nesting into catchable coded errors; `ProcessorOptions.StackSizeThreshold`
+sets how much of the thread's stack stays free for that (128 KB by default, and at least).
 
 The conformance runner lives in [`tests/QT3Test`](tests/QT3Test); it downloads the W3C
 corpora at pinned revisions, so the result above can be reproduced locally.

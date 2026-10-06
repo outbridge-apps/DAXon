@@ -115,6 +115,7 @@ namespace OutSmart.DAXon.Core
             internal long deadlineTimestamp;
             internal TimeSpan setting;
             internal string activity;   // what the limit stopped when not a transformation: "Compilation", "Parsing", ...
+            internal int stackThreshold;   // the Processor's ProcessorOptions.StackSizeThreshold; 0 for the default
 
             // TWO independent clock-sampling throttles, one per class of call site. Reading the
             // clock costs ~25ns, far too much to do on every item of a hot iterator, so each class
@@ -312,8 +313,8 @@ namespace OutSmart.DAXon.Core
         // activity names what the limit stops when it is not a transformation ("Compilation", "Parsing", ...).
         internal void SetTimeout(TimeSpan timeout, string activity)
         {
-            var token = new DeadlineToken { activity = activity };
-            activeOnThread = token;   // this run now owns the deadline slot on the running thread
+            var token = new DeadlineToken { activity = activity, stackThreshold = StackThresholdOf(config) };
+            Own(token);   // this run now owns the deadline slot on the running thread
             hasDeadline = false;
 
             if (timeout > TimeSpan.Zero)
@@ -369,8 +370,8 @@ namespace OutSmart.DAXon.Core
         /// </summary>
         public void InheritDeadlineFrom(Controller parent)
         {
-            var token = new DeadlineToken { activity = parent?.deadlineToken?.activity };
-            activeOnThread = token;   // the nested run now owns the deadline slot on the running thread
+            var token = new DeadlineToken { activity = parent?.deadlineToken?.activity, stackThreshold = StackThresholdOf(config) };
+            Own(token);   // the nested run now owns the deadline slot on the running thread
             if (parent == null || !parent.hasDeadline)
             {
                 hasDeadline = false;
@@ -417,18 +418,18 @@ namespace OutSmart.DAXon.Core
             {
                 // The token alone, as SetTimeout arms it for a fresh Controller: building one to arm it cost
                 // ~2.8 KB and ~3 us on every API call.
-                var token = new DeadlineToken { activity = activity };
+                var token = new DeadlineToken { activity = activity, stackThreshold = p.Options.StackSizeThreshold };
                 TimeSpan timeout = p.TransformTimeout;
                 if (timeout > TimeSpan.Zero)
                 {
                     token.Arm(DeadlineFromNow(timeout), timeout);
                 }
 
-                activeOnThread = token;
+                Own(token);
             }
             else
             {
-                activeOnThread = null;
+                Own(null);
             }
 
             return previous;
@@ -436,7 +437,21 @@ namespace OutSmart.DAXon.Core
 
         internal static void RestoreThreadDeadline(DeadlineToken previous)
         {
-            activeOnThread = previous;
+            Own(previous);
+        }
+
+        // The thread now runs a call of the token's owner: its deadline for the checks with no context at hand, and the
+        // stack its options keep free for the recursion guard. Every change of the slot goes through here.
+        private static void Own(DeadlineToken token)
+        {
+            activeOnThread = token;
+            OutSmart.DAXon.Internal.StackGuard.UseThreshold(token?.stackThreshold ?? 0);
+        }
+
+        // The StackSizeThreshold of the Processor a configuration serves; 0 (the default) for the engine's own.
+        private static int StackThresholdOf(Configuration config)
+        {
+            return (config?.GetProcessor() as OutSmart.DAXon.Api.Processor)?.Options.StackSizeThreshold ?? 0;
         }
 
         /// <summary>
@@ -448,7 +463,7 @@ namespace OutSmart.DAXon.Core
         internal static DeadlineToken SuspendThreadDeadline()
         {
             DeadlineToken previous = activeOnThread;
-            activeOnThread = null;
+            Own(null);
             return previous;
         }
 

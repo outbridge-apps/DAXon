@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Api
         // ~450 MB; the cap keeps a single oversized document from exhausting the host.
         public const long DefaultMaxInputBytes = 150L * 1024 * 1024;
 
-        private const string ObsoleteLimits = "Use Processor(ProcessorOptions): TransformTimeout, and Resources.MaxInputBytes for the input cap.";
+        private const string ObsoleteLimits = "Use Processor(ProcessorOptions): TransformTimeout and MaxInputBytes.";
         private const string ObsoleteEdition = "licensedEdition has no effect (DAXon has one edition): use new Processor(), or Processor(ProcessorOptions) for limits.";
 
         /// <summary>
@@ -58,18 +58,19 @@ namespace OutSmart.DAXon.Api
         /// Largest input accepted, in BYTES, on every entry point: DocumentBuilder, JsonBuilder,
         /// XsltCompiler, DocumentCache, and everything the resolver fetches (doc/document/
         /// collection/unparsed-text/json-doc, compile-time includes). long.MaxValue disables it.
-        /// Same as <c>Resources.MaxInputBytes</c>.
+        /// Same as <c>Options.MaxInputBytes</c>.
         /// </summary>
-        public long MaxInputBytes => Resources.MaxInputBytes;
+        public long MaxInputBytes => Options.MaxInputBytes;
 
         /// <summary>
-        /// What stylesheets and queries run by this Processor may reach; frozen. A Processor built
-        /// over a Configuration that already serves one reports (and applies) that one's policy.
+        /// The options this Processor runs with: its limits and what its stylesheets and queries may
+        /// reach. It has taken them, so they can no longer change. A Processor built over a
+        /// Configuration that already serves one reports (and applies) that one's options.
         /// </summary>
-        public ResourceAccessPolicy Resources { get; }
+        public ProcessorOptions Options { get; }
 
         // For a Processor over a fresh Configuration: allows everything, 150 MB - as in 1.3.3.
-        private static readonly ResourceAccessPolicy DefaultResources = FrozenDefaultPolicy();
+        private static readonly ProcessorOptions DefaultOptions = FrozenDefaultOptions();
 
         private Configuration config;
         private SchemaManager schemaManager;
@@ -158,9 +159,9 @@ namespace OutSmart.DAXon.Api
                 schemaManager = MakeSchemaManager();
             }
 
-            // A configuration already serving a Processor keeps that one's policy, so a nested
-            // fn:transform or xsl:evaluate cannot widen it; a fresh one gets the default.
-            Resources = config.ResourcePolicy ?? DefaultResources;
+            // A configuration already serving a Processor keeps that one's options, so a nested
+            // fn:transform or xsl:evaluate cannot widen them; a fresh one gets the default.
+            Options = config.ProcessorOptions ?? DefaultOptions;
 
             // Make the Processor discoverable from its Configuration (so config.GetProcessor()
             // yields it, e.g. to read TransformTimeout when a query builds its Controller). Don't
@@ -183,7 +184,7 @@ namespace OutSmart.DAXon.Api
             }
 
             TransformTimeout = options.TransformTimeout ?? DefaultTransformTimeout;
-            Resources = options.Resources;
+            Options = options;
             if (config.GetProcessor() == null)
             {
                 config.SetProcessor(this);
@@ -211,17 +212,17 @@ namespace OutSmart.DAXon.Api
             var options = new ProcessorOptions
             {
                 TransformTimeout = transformTimeout,
-                Resources = new ResourceAccessPolicy { MaxInputBytes = maxInputBytes },
+                MaxInputBytes = maxInputBytes,
             };
             options.Freeze();
             return options;
         }
 
-        private static ResourceAccessPolicy FrozenDefaultPolicy()
+        private static ProcessorOptions FrozenDefaultOptions()
         {
-            var policy = new ResourceAccessPolicy();
-            policy.Freeze();
-            return policy;
+            var options = new ProcessorOptions();
+            options.Freeze();
+            return options;
         }
 
         public Processor(ResolvedResource source)
@@ -240,7 +241,7 @@ namespace OutSmart.DAXon.Api
                 throw new DAXonApiException(e.ToXPathException());
             }
 
-            Resources = DefaultResources;
+            Options = DefaultOptions;
             config.SetProcessor(this);
             TransformTimeout = DefaultTransformTimeout;
         }

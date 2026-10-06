@@ -37,10 +37,19 @@ namespace OutSmart.DAXon.Internal
         // 64KB still allowed a real StackOverflowException on a 256KB thread, while 96KB survived.
         // Keep the next 32KB tier as safety margin. This is a fixed abort/unwind reserve, not a
         // percentage of the host stack; depth-proportional error paths add their own extraMargin.
-        private const ulong Margin = 128UL * 1024;
+        // The default of ProcessorOptions.StackSizeThreshold, and the least it may be.
+        internal const int MinThreshold = 128 * 1024;
 
         [ThreadStatic]
         private static ulong stackLow;   // low bound of this thread's reserved stack region
+
+        // stackLow plus the threshold of the engine call that owns this thread: a probe below it throws. 0 until the
+        // bounds are read, and always where they cannot be (the runtime's own check stands in there).
+        [ThreadStatic]
+        private static ulong stackFloor;
+
+        [ThreadStatic]
+        private static int threshold;   // of the call that owns this thread; MinThreshold when below it (0: none set)
 
         private static volatile bool noApi;   // GetCurrentThreadStackLimits needs Windows 8/Server 2012+; absent off Windows
 
@@ -75,8 +84,8 @@ namespace OutSmart.DAXon.Internal
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void Probe(ulong extraMargin)
         {
-            ulong low = stackLow;
-            if (low == 0)
+            ulong floor = stackFloor;
+            if (floor == 0)
             {
                 ProbeSlow(extraMargin);
                 return;
@@ -85,22 +94,39 @@ namespace OutSmart.DAXon.Internal
             unsafe
             {
                 byte probe;
-                ulong remaining = (ulong)&probe - low;
+                ulong at = (ulong)&probe;
                 if (Dbg && (++dbgCount & 255) == 0)
                 {
-                    Console.Error.WriteLine("[SG] remaining=" + remaining / 1024 + "KB");
+                    Console.Error.WriteLine("[SG] remaining=" + (at - stackLow) / 1024 + "KB");
                 }
 
-                if (remaining < Margin + extraMargin)
+                if (at < floor + extraMargin)
                 {
                     if (Dbg)
                     {
-                        Console.Error.WriteLine("[SG] THREW at remaining=" + remaining / 1024 + "KB");
+                        Console.Error.WriteLine("[SG] THREW at remaining=" + (at - stackLow) / 1024 + "KB");
                     }
 
                     throw new RecursionDepthError();
                 }
             }
+        }
+
+        /// <summary>
+        /// The thread now runs a call of a Processor whose options ask this many bytes of stack to stay free
+        /// (<see cref="OutSmart.DAXon.Api.ProcessorOptions.StackSizeThreshold"/>); 0 for none, which is the default.
+        /// Set wherever the thread's deadline is (Controller), so it follows the same owner.
+        /// </summary>
+        internal static void UseThreshold(int bytes)
+        {
+            threshold = bytes;
+            ulong low = stackLow;
+            stackFloor = low == 0 ? 0 : low + Effective(bytes);
+        }
+
+        private static ulong Effective(int bytes)
+        {
+            return (ulong)(bytes < MinThreshold ? MinThreshold : bytes);
         }
 
         /// <summary>
@@ -111,8 +137,8 @@ namespace OutSmart.DAXon.Internal
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static void ProbeNesting(ILocation location)
         {
-            ulong low = stackLow;
-            if (low == 0)
+            ulong floor = stackFloor;
+            if (floor == 0)
             {
                 ReadBounds();
                 if (noApi)
@@ -121,13 +147,13 @@ namespace OutSmart.DAXon.Internal
                     return;
                 }
 
-                low = stackLow;
+                floor = stackFloor;
             }
 
             unsafe
             {
                 byte probe;
-                if ((ulong)&probe - low < Margin)
+                if ((ulong)&probe < floor)
                 {
                     if (Dbg)
                     {
@@ -139,7 +165,7 @@ namespace OutSmart.DAXon.Internal
             }
         }
 
-        // Once-per-thread init plus the pre-Windows-8 route (noApi leaves stackLow at 0, so
+        // Once-per-thread init plus the pre-Windows-8 route (noApi leaves stackFloor at 0, so
         // those threads land here on every probe, as before). Holds the EH that must not sit
         // in the inlined hot body.
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -164,6 +190,7 @@ namespace OutSmart.DAXon.Internal
                 {
                     GetCurrentThreadStackLimits(out UIntPtr lo, out _);
                     stackLow = (ulong)lo;
+                    stackFloor = stackLow + Effective(threshold);
                 }
                 catch (EntryPointNotFoundException)
                 {

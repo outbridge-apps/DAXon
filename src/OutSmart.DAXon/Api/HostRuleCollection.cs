@@ -9,7 +9,7 @@ using System.Collections.ObjectModel;
 namespace OutSmart.DAXon.Api
 {
     /// <summary>
-    /// The host rules of a <see cref="ResourceAccessPolicy"/>. Read-only once the policy is frozen.
+    /// The host rules of <see cref="ProcessorOptions"/>. Read-only once a Processor has taken the options.
     /// </summary>
     public sealed class HostRuleCollection : Collection<HostRule>
     {
@@ -62,7 +62,7 @@ namespace OutSmart.DAXon.Api
         {
             if (frozen)
             {
-                throw new InvalidOperationException("The host rules belong to a frozen ResourceAccessPolicy and can no longer change.");
+                throw new InvalidOperationException("These host rules belong to ProcessorOptions a Processor has taken and can no longer change.");
             }
         }
     }
