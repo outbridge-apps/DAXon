@@ -97,14 +97,14 @@ namespace OutSmart.DAXon.Core
             string classAtt = props.GetProperty("class");
             if (classAtt != null)
             {
-                throw new XPathException("Collation property class=" + classAtt + " is not supported on the .NET platform");
+                throw new XPathException("Collation property class=" + classAtt + " is not supported on the .NET platform", "FOCH0002");
             }
 
             // rules= : Java builds a RuleBasedCollator. Not ported (the RuleBasedCollator here is a stub).
             string rulesAtt = props.GetProperty("rules");
             if (rulesAtt != null)
             {
-                throw new XPathException("Collation property 'rules' (RuleBasedCollator) is not supported on the .NET platform");
+                throw new XPathException("Collation property 'rules' (RuleBasedCollator) is not supported on the .NET platform", "FOCH0002");
             }
 
             // lang= : map to CultureInfo.CompareInfo. Absent -> current culture.
@@ -139,7 +139,7 @@ namespace OutSmart.DAXon.Core
                         comparer.Ordinal = true;
                         break;
                     default:
-                        throw new XPathException("strength must be primary, secondary, tertiary, or identical");
+                        throw new XPathException("strength must be primary, secondary, tertiary, or identical", "FOCH0002");
                 }
             }
 
@@ -154,7 +154,7 @@ namespace OutSmart.DAXon.Core
                 else if (ignore.Equals("no")) { /* no-op */ }
                 else
                 {
-                    throw new XPathException("ignore-width must be yes or no");
+                    throw new XPathException("ignore-width must be yes or no", "FOCH0002");
                 }
             }
             ignore = props.GetProperty("ignore-case");
@@ -164,7 +164,7 @@ namespace OutSmart.DAXon.Core
                 {
                     case "yes": comparer.Options = CompareOptions.IgnoreCase; break;
                     case "no": break;
-                    default: throw new XPathException("ignore-case must be yes or no");
+                    default: throw new XPathException("ignore-case must be yes or no", "FOCH0002");
                 }
             }
             ignore = props.GetProperty("ignore-modifiers");
@@ -177,7 +177,7 @@ namespace OutSmart.DAXon.Core
                 else if (ignore.Equals("no")) { /* no-op */ }
                 else
                 {
-                    throw new XPathException("ignore-modifiers must be yes or no");
+                    throw new XPathException("ignore-modifiers must be yes or no", "FOCH0002");
                 }
             }
             // decomposition and ignore-symbols: not separately configurable through CompareInfo -> ignored (as Java ignores ignore-symbols)
@@ -206,7 +206,7 @@ namespace OutSmart.DAXon.Core
                         stringCollator = new AlphanumericCollator(CodepointCollator.GetInstance());
                         break;
                     default:
-                        throw new XPathException("alphanumeric must be yes, no, or codepoint");
+                        throw new XPathException("alphanumeric must be yes, no, or codepoint", "FOCH0002");
                 }
             }
 
