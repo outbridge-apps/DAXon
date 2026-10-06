@@ -126,8 +126,9 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 // synthetic-import structure cannot tell nested from top-level, so a nested XQST0059
                 // escapes as XQST0059. No corpus coverage; a message-sniffing discriminator would be
                 // more fragile than the deviation.
+                // The time limit keeps SXTO0001 too: the module had no static error, the run ran out of time.
                 string code = ExtractCode(e);
-                if (code == "XQST0059" || code == "FOQM0002")
+                if (code == "XQST0059" || code == "FOQM0002" || code == DAXonErrorCode.SXTO0001)
                 {
                     throw new XPathException(RootMessage(e), code);
                 }

@@ -110,7 +110,8 @@ namespace OutSmart.DAXon.Functions
                 node = b.CurrentRoot;
                 b.Reset();
             }
-            catch (XPathException err)
+            // The time limit keeps SXTO0001: the run ran out of time, the input was not malformed.
+            catch (XPathException err) when (!err.IsTimeLimit())
             {
                 XPathException xe = new XPathException("First argument to parse-xml-fragment() is not a well-formed and namespace-well-formed XML fragment. XML parser reported: " + err.Message, "FODC0006");
                 xe.MaybeSetContext(context);
