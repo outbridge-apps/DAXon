@@ -266,8 +266,8 @@ namespace OutSmart.DAXon.Values
         // which made TypeHierarchy.ApplyFunctionConversionRules' fast-path accept ANY value for a typed
         // function parameter (e.g. passing 'abc' to an xs:integer parameter) -> the coercion/type-error
         // check was skipped and a raw StringValue reached the body -> InvalidCastException instead of XPTY0004.
-        // Only concrete primary types whose real Matches is reachable are evaluated; for any other kind we
-        // keep the permissive behaviour so the downstream ItemTypeCheckingFunction still enforces the type.
+        // Only concrete primary types whose real Matches is reachable are evaluated; for any other kind the
+        // items pass here (the downstream ItemTypeCheckingFunction tests them) and only their number is checked.
         public bool Matches(object value, object th)
         {
             var groundedValue = value as OutSmart.DAXon.Model.IGroundedValue;
@@ -287,9 +287,9 @@ namespace OutSmart.DAXon.Values
                   || _primaryType is OutSmart.DAXon.Patterns.NodeTest
                   || _primaryType is OutSmart.DAXon.Types.IFunctionItemType))
             {
-                // any/unknown kinds (e.g. AnyItemType): permissive fast-path — every item matches item()
-                // anyway; the downstream ItemTypeCheckingFunction still enforces exotic cases.
-                return true;
+                // Every item is an item(): what is left is how many there are, which upstream checks too
+                // (item()? took two items and item() none).
+                return OutSmart.DAXon.Values.Cardinality.Allows(_cardinality, groundedValue.GetLength());
             }
 
             // Singleton fast path: one item satisfies every cardinality clause below, and the HOF
