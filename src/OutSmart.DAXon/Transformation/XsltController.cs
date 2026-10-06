@@ -316,6 +316,22 @@ namespace OutSmart.DAXon.Transformation
             return tunnel ? initialTemplateTunnelParams : initialTemplateParams;
         }
 
+        // The initial template's parameters count against the memory limit too.
+        internal override void ChargeRunInputs()
+        {
+            base.ChargeRunInputs();
+            foreach (Dictionary<StructuredQName, ISequence> parameters in new[] { initialTemplateParams, initialTemplateTunnelParams })
+            {
+                if (parameters != null)
+                {
+                    foreach (ISequence value in parameters.Values)
+                    {
+                        ChargeInput(value);
+                    }
+                }
+            }
+        }
+
         public virtual void SetMessageFactory(Func<IReceiver> messageReceiverFactory)
         {
         }

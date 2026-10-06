@@ -401,9 +401,22 @@ namespace OutSmart.DAXon.Text
                 lastSegmentLength = newLength & MASK;
             }
         }
+        // Storage the buffer holds, in bytes: what a tree's text costs a call's memory limit.
+        internal long RetainedBytes()
+        {
+            long bytes = lastSegment.Bytes;
+            foreach (ISegment segment in completeSegments)
+            {
+                bytes += segment.Bytes;
+            }
+
+            return bytes;
+        }
+
         private interface ISegment
         {
             int Width { get; }
+            long Bytes { get; }
             ISegment Stretch(int oldLength, int newLength, int newWidth);
             UnicodeString AsUnicodeString();
             UnicodeString Substring(int start, int end);
@@ -417,6 +430,7 @@ namespace OutSmart.DAXon.Text
             public byte[] bytes;
 
             public int Width => 8;
+            public long Bytes => bytes.Length;
             public Segment8(byte[] bytes)
             {
                 this.bytes = bytes;
@@ -466,6 +480,7 @@ namespace OutSmart.DAXon.Text
             public char[] chars;
 
             public int Width => 16;
+            public long Bytes => chars.Length * 2L;
             public Segment16(char[] chars)
             {
                 this.chars = chars;
@@ -509,6 +524,7 @@ namespace OutSmart.DAXon.Text
             public byte[] bytes;
 
             public int Width => 24;
+            public long Bytes => bytes.Length;
             public Segment24(byte[] bytes)
             {
                 this.bytes = bytes;

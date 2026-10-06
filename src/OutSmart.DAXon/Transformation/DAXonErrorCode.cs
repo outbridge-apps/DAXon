@@ -26,6 +26,10 @@ namespace OutSmart.DAXon.Transformation
         /// </summary>
         public const string SXLM0002 = "SXLM0002";
         /// <summary>
+        /// SXLM0003: a call went over its memory limit (ProcessorOptions.MaxMemoryBytes)
+        /// </summary>
+        public const string SXLM0003 = "SXLM0003";
+        /// <summary>
         /// SXCH0002: cannot supply output to ContentHandler because it is not well-formed
         /// </summary>
         public const string SXCH0002 = "SXCH0002";

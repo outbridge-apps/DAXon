@@ -211,8 +211,8 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 catch (XPathException err)
                 {
 
-                    // mustn't throw the error unless the branch is actually selected, unless its a type error or the time limit
-                    if (err.IsTypeError() || err.IsTimeLimit())
+                    // mustn't throw the error unless the branch is actually selected, unless its a type error or a limit of the run
+                    if (err.IsTypeError() || err.IsRunLimit())
                     {
                         throw;
                     }
@@ -399,8 +399,8 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     XPathException e2 = err.MaybeWithLocation(GetLocation()).MaybeWithFailingExpression(GetAction(i));
 
-                    // mustn't throw the error unless the branch is actually selected, unless its a static or type error or the time limit
-                    if (e2.IsStaticError() || e2.IsTimeLimit())
+                    // mustn't throw the error unless the branch is actually selected, unless its a static or type error or a limit of the run
+                    if (e2.IsStaticError() || e2.IsRunLimit())
                     {
                         throw e2;
                     }
@@ -465,7 +465,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 }
                 catch (XPathException err)
                 {
-                    if (err.IsStaticError() || err.IsTimeLimit())
+                    if (err.IsStaticError() || err.IsRunLimit())
                     {
                         throw;
                     }
@@ -546,8 +546,8 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 catch (XPathException err)
                 {
 
-                    // mustn't throw the error unless the branch is actually selected, unless its a type error or the time limit
-                    if ((err.IsTypeError() && !visitor.IsInliningFunctions()) || err.IsTimeLimit())
+                    // mustn't throw the error unless the branch is actually selected, unless its a type error or a limit of the run
+                    if ((err.IsTypeError() && !visitor.IsInliningFunctions()) || err.IsRunLimit())
                     {
                         throw;
                     }

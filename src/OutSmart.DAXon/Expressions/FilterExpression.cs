@@ -436,13 +436,13 @@ namespace OutSmart.DAXon.Expressions
                     return SequenceTool.ToGroundedValue(Iterate(context));
                 }
             }
-            catch (UncheckedXPathException e) when (e.GetXPathException()?.IsTimeLimit() == true)
+            catch (UncheckedXPathException e) when (e.GetXPathException()?.IsRunLimit() == true)
             {
-                // The time limit stopped the compile, not the filter: a compile that went on past it would
+                // A limit of the compile stopped it, not the filter: a compile that went on past it would
                 // succeed or fail by luck. Unwrapped, so the compile reports it like any other static error.
                 throw e.GetXPathException();
             }
-            catch (Exception e) when (!(e is XPathException x && x.IsTimeLimit()))
+            catch (Exception e) when (!(e is XPathException x && x.IsRunLimit()))
             {
 
                 // can happen for a variety of reasons, for example the filter references a global parameter,

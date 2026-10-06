@@ -107,8 +107,8 @@ namespace OutSmart.DAXon.Functions
                 b.Reset();
                 return node;
             }
-            // The time limit keeps SXTO0001: the run ran out of time, the input was not malformed.
-            catch (XPathException err) when (!err.IsTimeLimit())
+            // A limit of the run keeps its code (SXTO0001, SXLM0003): the input was not malformed.
+            catch (XPathException err) when (!err.IsRunLimit())
             {
                 string msg = MakeParsingErrorMessage(err);
                 XPathException xe = new XPathException(msg, "FODC0006");
@@ -185,8 +185,8 @@ namespace OutSmart.DAXon.Functions
                 b.Reset();
                 return root;
             }
-            // The time limit keeps SXTO0001: the run ran out of time, the input was not malformed.
-            catch (XPathException err) when (!err.IsTimeLimit())
+            // A limit of the run keeps its code (SXTO0001, SXLM0003): the input was not malformed.
+            catch (XPathException err) when (!err.IsRunLimit())
             {
                 string msg = MakeParsingErrorMessage(err);
                 XPathException xe = new XPathException(msg, "FODC0006");

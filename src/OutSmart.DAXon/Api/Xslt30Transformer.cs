@@ -122,6 +122,18 @@ namespace OutSmart.DAXon.Api
             primed = true;
         }
 
+        // The trees in a function's arguments count against the run's memory limit, as its context item does.
+        private void ChargeArguments(XdmValue[] arguments)
+        {
+            if (arguments != null)
+            {
+                foreach (XdmValue argument in arguments)
+                {
+                    controller.ChargeInput((ISequence)argument?.UnderlyingValue);
+                }
+            }
+        }
+
         /*staticParameters*/
         public virtual void SetInitialTemplateParameters<T>(Dictionary<QName, T> parameters, bool tunnel)
         {
@@ -209,6 +221,7 @@ namespace OutSmart.DAXon.Api
                     throw new NullReferenceException();
                 controller.OpenTraceEpisode();
                 Prime();
+                controller.ChargeInput((ISequence)(selection.UnderlyingValue));
                 bool closed = false;
                 try
                 {
@@ -339,6 +352,7 @@ namespace OutSmart.DAXon.Api
                     throw new NullReferenceException();
                 controller.OpenTraceEpisode();
                 Prime();
+                ChargeArguments(arguments);
                 try
                 {
                     Component f = GetFunctionComponent(function, arguments);
@@ -423,6 +437,7 @@ namespace OutSmart.DAXon.Api
             {
                 controller.OpenTraceEpisode();
                 Prime();
+                ChargeArguments(arguments);
                 bool ran = false;
                 try
                 {

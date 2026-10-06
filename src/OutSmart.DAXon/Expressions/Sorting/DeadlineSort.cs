@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
     /// <summary>
     /// A List.Sort cannot be stopped from outside, and over a million nodes it runs for seconds: past a few thousand
     /// nodes one comparison in 1024 looks at the run's deadline. The sort wraps what a comparison throws in an
-    /// InvalidOperationException, so the time limit's own error is taken out again.
+    /// InvalidOperationException, so the time or memory limit's own error is taken out again.
     /// </summary>
     internal static class DeadlineSort
     {
@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             {
                 nodes.Sort(new Watching(comparer));
             }
-            catch (InvalidOperationException e) when (e.InnerException is XPathException x && x.IsTimeLimit())
+            catch (InvalidOperationException e) when (e.InnerException is XPathException x && x.IsRunLimit())
             {
                 throw x;
             }

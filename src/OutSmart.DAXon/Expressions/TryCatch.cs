@@ -37,14 +37,14 @@ namespace OutSmart.DAXon.Expressions
         /// <summary>
         /// Errors xsl:try must never intercept, whatever its catch clauses match. A stack overflow
         /// is one: there is no headroom left to run a handler. The host's wall-clock deadline
-        /// (SXTO0001) is the other, and the reason is not headroom but authority - it is a limit
-        /// the HOST set on the run, so a stylesheet able to catch it would turn a hard limit into a
-        /// suggestion, and a catch inside the offending loop would defeat it outright. Deliberately
-        /// wider than upstream, which has no such deadline to protect.
+        /// (SXTO0001) and memory limit (SXLM0003) are the others, and the reason is not headroom but
+        /// authority - they are limits the HOST set on the run, so a stylesheet able to catch them
+        /// would turn a hard limit into a suggestion, and a catch inside the offending loop would
+        /// defeat it outright. Deliberately wider than upstream, which has no such limits to protect.
         /// </summary>
         private static bool IsUncatchable(XPathException err)
         {
-            return err is XPathException.StackOverflow || err.HasErrorCode(DAXonErrorCode.SXTO0001);
+            return err is XPathException.StackOverflow || err.IsRunLimit();
         }
 
         public Expression TryExpr => tryOp.GetChildExpression();

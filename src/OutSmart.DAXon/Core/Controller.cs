@@ -93,6 +93,10 @@ namespace OutSmart.DAXon.Core
         private bool hasInheritedCap;        // nested run: may not outlive the enclosing run
         private long inheritedDeadline;
         private TimeSpan inheritedSetting;
+        private DeadlineToken inheritedMemory;   // nested run: the enclosing run's memory count, which it continues
+        private bool chargesInputs;              // this run has a memory limit of its own and counts what it is handed
+        private HashSet<long> chargedTrees;      // document numbers of the trees counted already
+        private long firstTreeOfRun;             // trees numbered from here on were made by the run itself
 
 
         // The deadline active on the current thread, published when a deadline is armed (once per
@@ -117,6 +121,13 @@ namespace OutSmart.DAXon.Core
             internal string activity;   // what the limit stopped when not a transformation: "Compilation", "Parsing", ...
             internal int stackThreshold;   // the Processor's ProcessorOptions.StackSizeThreshold; 0 for the default
 
+            // ProcessorOptions.MaxMemoryBytes, 0 for none. The call has taken the thread's allocation counter less
+            // memoryBase; counting a tree it was handed lowers the base, as if the call had allocated the tree.
+            internal long memoryLimit;
+            internal long memoryBase;
+            internal long memoryInputs;   // of it the trees the call was handed, for the message
+            private bool armed;           // a deadline or a memory limit: whether the throttles sample at all
+
             // TWO independent clock-sampling throttles, one per class of call site. Reading the
             // clock costs ~25ns, far too much to do on every item of a hot iterator, so each class
             // samples once per stride and retunes the stride from what it measures.
@@ -139,15 +150,51 @@ namespace OutSmart.DAXon.Core
                 deadlineTimestamp = deadline;
                 setting = limit;
                 hasDeadline = true;
+                armed = true;
                 long now = System.Diagnostics.Stopwatch.GetTimestamp();
                 perItem.Reset(now);
                 perStep.Reset(now);
             }
 
+            // A memory limit counted from now.
+            internal void ArmMemory(long limit)
+            {
+                memoryLimit = limit;
+                memoryBase = OutSmart.DAXon.Internal.AllocationMeter.Read();
+                memoryInputs = 0;
+                StartSampling();
+            }
+
+            // A call nested in another continues that one's count: one limit for both.
+            internal void ContinueMemory(DeadlineToken outer)
+            {
+                memoryLimit = outer.memoryLimit;
+                memoryBase = outer.memoryBase;
+                memoryInputs = outer.memoryInputs;
+                StartSampling();
+            }
+
+            internal void ChargeInput(long bytes)
+            {
+                memoryBase -= bytes;
+                memoryInputs += bytes;
+            }
+
+            private void StartSampling()
+            {
+                if (!armed)
+                {
+                    armed = true;
+                    long now = System.Diagnostics.Stopwatch.GetTimestamp();
+                    perItem.Reset(now);
+                    perStep.Reset(now);
+                }
+            }
+
             /// <summary>Per-item sites: iterators, the regex driver, the parse loops.</summary>
             internal void Check()
             {
-                if (hasDeadline && perItem.Tick())
+                if (armed && perItem.Tick())
                 {
                     Sample(perItem);
                 }
@@ -158,7 +205,7 @@ namespace OutSmart.DAXon.Core
             /// </summary>
             internal void CheckPerStep()
             {
-                if (hasDeadline && perStep.Tick())
+                if (armed && perStep.Tick())
                 {
                     Sample(perStep);
                 }
@@ -167,12 +214,37 @@ namespace OutSmart.DAXon.Core
             private void Sample(Throttle t)
             {
                 long now = System.Diagnostics.Stopwatch.GetTimestamp();
-                if (now >= deadlineTimestamp)
+                if (hasDeadline && now >= deadlineTimestamp)
                 {
                     throw Exceeded();
                 }
 
+                CheckMemory();
                 t.Retune(now);
+            }
+
+            // Reading the counter costs about what reading the clock does, so input reads can afford it on every buffer.
+            internal void CheckMemory()
+            {
+                if (memoryLimit > 0 && OutSmart.DAXon.Internal.AllocationMeter.Read() - memoryBase > memoryLimit)
+                {
+                    throw MemoryExceeded();
+                }
+            }
+
+            private XPathException MemoryExceeded()
+            {
+                long taken = OutSmart.DAXon.Internal.AllocationMeter.Read() - memoryBase;
+                string handed = memoryInputs > 0 ? ", " + Size(memoryInputs) + " of it the trees it was handed" : "";
+                return new XPathException((activity ?? "Transformation") + " exceeded its memory limit of " + Size(memoryLimit)
+                    + " (ProcessorOptions.MaxMemoryBytes): " + Size(taken) + " counted" + handed, DAXonErrorCode.SXLM0003);
+            }
+
+            private static string Size(long bytes)
+            {
+                return bytes < 1048576
+                    ? (bytes / 1024.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " KB"
+                    : (bytes / 1048576.0).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + " MB";
             }
 
             // The limit is the Processor's TransformTimeout, which also bounds compiling and parsing:
@@ -236,6 +308,8 @@ namespace OutSmart.DAXon.Core
                 {
                     throw Exceeded();
                 }
+
+                CheckMemory();
             }
         }
 
@@ -256,6 +330,18 @@ namespace OutSmart.DAXon.Core
         {
             activeOnThread?.CheckNow();
         }
+
+        /// <summary>
+        /// The memory limit alone, from every buffer an input stream reads: a huge text node grows inside the XML reader,
+        /// where no check of the parse runs until the node is complete.
+        /// </summary>
+        internal static void CheckActiveMemory()
+        {
+            activeOnThread?.CheckMemory();
+        }
+
+        // Whether the call on this thread has a memory limit: its input streams are then metered even when their length is known.
+        internal static bool HasActiveMemoryLimit => activeOnThread?.memoryLimit > 0;
 
         /// <summary>
         /// <see cref="CheckActiveTimeout"/> for a per-step site: one call of a function the stylesheet supplied,
@@ -305,6 +391,12 @@ namespace OutSmart.DAXon.Core
                 inheritedDeadline = parent.deadlineTimestamp;
                 inheritedSetting = parent.timeoutSetting;
             }
+
+            // Nor a fresh memory limit: the nested run continues the enclosing run's count.
+            if (parent?.deadlineToken != null && parent.deadlineToken.memoryLimit > 0)
+            {
+                inheritedMemory = parent.deadlineToken;
+            }
         }
 
         /// <summary>
@@ -340,13 +432,79 @@ namespace OutSmart.DAXon.Core
                 hasDeadline = true;
             }
 
+            ArmMemory(token);
             if (!hasDeadline)
             {
-                return;               // token stays unarmed
+                if (token.memoryLimit > 0)
+                {
+                    deadlineToken = token;   // the memory limit alone
+                    ChargeRunInputs();
+                }
+
+                return;               // no deadline: the token holds at most the memory limit
             }
 
             token.Arm(deadlineTimestamp, timeoutSetting);
             deadlineToken = token;
+            ChargeRunInputs();
+        }
+
+        // The Processor's memory limit for this call, counted from now - or, for a nested run, the enclosing run's count.
+        private void ArmMemory(DeadlineToken token)
+        {
+            chargedTrees = null;
+            chargesInputs = false;
+            if (inheritedMemory != null)
+            {
+                token.ContinueMemory(inheritedMemory);
+                return;
+            }
+
+            long limit = MemoryLimitOf(config);
+            if (limit > 0)
+            {
+                token.ArmMemory(limit);
+                chargesInputs = true;
+                firstTreeOfRun = config.DocumentNumberAllocator.AllocateDocumentNumber();
+            }
+        }
+
+        // ProcessorOptions.MaxMemoryBytes of the Processor a configuration serves; 0 for none.
+        private static long MemoryLimitOf(Configuration config)
+        {
+            return (config?.GetProcessor() as OutSmart.DAXon.Api.Processor)?.Options.MaxMemoryBytes ?? 0;
+        }
+
+        /// <summary>
+        /// Count the trees the host hands this run - in a context item, parameters, a selection - against its memory limit,
+        /// as if the run had allocated them: each once, by its size. Repeating it is harmless. A nested run counts nothing
+        /// (the enclosing one did).
+        /// </summary>
+        internal void ChargeInput(ISequence value)
+        {
+            if (chargesInputs && value != null && deadlineToken != null)
+            {
+                deadlineToken.ChargeInput(InputSize.Of(value, chargedTrees ??= new HashSet<long>(), firstTreeOfRun));
+            }
+        }
+
+        // The trees the run holds: its global context item and the stylesheet's or query's parameters. Run when the limits
+        // are armed, and again by an entry point that installs its inputs afterwards.
+        internal virtual void ChargeRunInputs()
+        {
+            if (!chargesInputs)
+            {
+                return;
+            }
+
+            ChargeInput(globalContextItem);
+            if (globalParameters != null)
+            {
+                foreach (StructuredQName name in globalParameters.Keys)
+                {
+                    ChargeInput(globalParameters.Get(name));
+                }
+            }
         }
 
         /// <summary>
@@ -381,10 +539,21 @@ namespace OutSmart.DAXon.Core
         {
             var token = new DeadlineToken { activity = parent?.deadlineToken?.activity, stackThreshold = StackThresholdOf(config) };
             Own(token);   // the nested run now owns the deadline slot on the running thread
+            chargesInputs = false;   // and continues the parent's memory count, which counted the inputs
+            if (parent?.deadlineToken != null && parent.deadlineToken.memoryLimit > 0)
+            {
+                token.ContinueMemory(parent.deadlineToken);
+            }
+
             if (parent == null || !parent.hasDeadline)
             {
                 hasDeadline = false;
-                return;               // token stays unarmed
+                if (token.memoryLimit > 0)
+                {
+                    deadlineToken = token;
+                }
+
+                return;               // no deadline: the token holds at most the memory limit
             }
 
             deadlineTimestamp = parent.deadlineTimestamp;
@@ -410,6 +579,10 @@ namespace OutSmart.DAXon.Core
                 hasDeadline = true;
                 deadlineToken = token;
             }
+            else if (token != null && token.memoryLimit > 0)
+            {
+                deadlineToken = token;   // the compile's memory limit alone
+            }
         }
 
         /// <summary>
@@ -432,6 +605,11 @@ namespace OutSmart.DAXon.Core
                 if (timeout > TimeSpan.Zero)
                 {
                     token.Arm(DeadlineFromNow(timeout), timeout);
+                }
+
+                if (p.Options.MaxMemoryBytes is long memory)
+                {
+                    token.ArmMemory(memory);
                 }
 
                 Own(token);

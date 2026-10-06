@@ -72,6 +72,48 @@ namespace OutSmart.DAXon.Trees.Tiny
             whitespaceTextState = found ? 1 : 2;
             return found;
         }
+
+        // What the tree holds, for the memory limit of a call it is handed to (ProcessorOptions.MaxMemoryBytes): its
+        // node, attribute and namespace arrays, its text and its attribute values. Small indexes are left out.
+        internal long RetainedBytes()
+        {
+            return Size(nodeKind, 1) + Size(depth, 2) + Size(next, 4) + Size(alpha, 4) + Size(beta, 4) + Size(nameCode, 4)
+                + Size(prior, 4) + Size(typeArray, 8) + Size(typedValueArray, 8) + Size(lineNumbers, 4) + Size(columnNumbers, 4)
+                + Size(attParent, 4) + Size(attCode, 4) + Size(attValue, 8) + Size(attTypedValue, 8) + Size(attType, 8)
+                + Size(namespaceMaps, 8) + (textBuffer?.RetainedBytes() ?? 0) + 2L * (commentBuffer?.Length32() ?? 0)
+                + AttributeValueBytes();
+        }
+
+        private static long Size(Array array, int width)
+        {
+            return array == null ? 0 : (long)array.Length * width;
+        }
+
+        // Summed once: a built tree no longer changes, and a tree handed to many calls is measured for each.
+        private long[] attributeValueBytes;   // {attributes summed, their bytes}, replaced whole
+
+        private long AttributeValueBytes()
+        {
+            long[] memo = attributeValueBytes;
+            if (memo != null && memo[0] == numberOfAttributes)
+            {
+                return memo[1];
+            }
+
+            long bytes = 0;
+            for (int i = 0; i < numberOfAttributes; i++)
+            {
+                string value = attValue[i];
+                if (value != null)
+                {
+                    bytes += 24 + 2L * value.Length;
+                }
+            }
+
+            attributeValueBytes = new long[] { numberOfAttributes, bytes };
+            return bytes;
+        }
+
         public byte[] nodeKind;
         public short[] depth;
         public int[] next;

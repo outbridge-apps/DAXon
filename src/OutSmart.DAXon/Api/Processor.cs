@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Api
         // ~450 MB; the cap keeps a single oversized document from exhausting the host.
         public const long DefaultMaxInputBytes = 150L * 1024 * 1024;
 
-        private const string ObsoleteLimits = "Use Processor(ProcessorOptions): TransformTimeout and MaxInputBytes.";
+        private const string ObsoleteLimits = "Use Processor(ProcessorOptions): TransformTimeout and MaxMemoryBytes.";
         private const string ObsoleteEdition = "licensedEdition has no effect (DAXon has one edition): use new Processor(), or Processor(ProcessorOptions) for limits.";
 
         /// <summary>
@@ -58,9 +58,9 @@ namespace OutSmart.DAXon.Api
         /// Largest input accepted, in BYTES, on every entry point: DocumentBuilder, JsonBuilder,
         /// XsltCompiler, DocumentCache, and everything the resolver fetches (doc/document/
         /// collection/unparsed-text/json-doc, compile-time includes). long.MaxValue disables it.
-        /// Same as <c>Options.MaxInputBytes</c>.
+        /// <see cref="ProcessorOptions.MaxMemoryBytes"/> when set, else 150 MB or what an obsolete constructor was given.
         /// </summary>
-        public long MaxInputBytes => Options.MaxInputBytes;
+        public long MaxInputBytes => Options.InputCap;
 
         /// <summary>
         /// The options this Processor runs with: its limits and what its stylesheets and queries may

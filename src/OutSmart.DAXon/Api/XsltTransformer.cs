@@ -206,6 +206,7 @@ namespace OutSmart.DAXon.Api
                     }
 
                     controller.InitializeController(parameters);
+                    controller.ChargeRunInputs();   // installed after the limits were armed
                     controller.OpenTraceEpisode();
                     if (initialTemplateName != null)
                     {

@@ -266,10 +266,13 @@ namespace OutSmart.DAXon.Transformation
             return _isTypeError;
         }
 
-        /// <summary>The host's time limit (SXTO0001) stopped the work: a fact about the run or compile, not the expression.</summary>
-        internal bool IsTimeLimit()
+        /// <summary>
+        /// A limit the host set stopped the work - time (SXTO0001) or memory (SXLM0003): a fact about the run or compile,
+        /// not the expression.
+        /// </summary>
+        internal bool IsRunLimit()
         {
-            return HasErrorCode(DAXonErrorCode.SXTO0001);
+            return HasErrorCode(DAXonErrorCode.SXTO0001) || HasErrorCode(DAXonErrorCode.SXLM0003);
         }
 
         public virtual void SetIsGlobalError(bool @is)
@@ -424,8 +427,8 @@ namespace OutSmart.DAXon.Transformation
 
         public virtual bool IsReportableStatically()
         {
-            // The time limit stopped the compile itself: deferred into the code, it would fail every run at once.
-            if (IsStaticError() || IsTypeError() || IsTimeLimit())
+            // A limit stopped the compile itself: deferred into the code, it would fail every run at once.
+            if (IsStaticError() || IsTypeError() || IsRunLimit())
             {
                 return true;
             }

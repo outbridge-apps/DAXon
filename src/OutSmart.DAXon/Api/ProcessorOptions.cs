@@ -33,6 +33,7 @@ namespace OutSmart.DAXon.Api
 
         private TimeSpan? transformTimeout;
         private long maxInputBytes = Processor.DefaultMaxInputBytes;
+        private long? maxMemoryBytes;
         private int stackSizeThreshold = StackGuard.MinThreshold;
         private bool allowFileRead = true;
         private bool allowFileWrite = true;
@@ -59,11 +60,32 @@ namespace OutSmart.DAXon.Api
         }
 
         /// <summary>
-        /// Largest input accepted, in bytes; <see cref="long.MaxValue"/> disables the cap. Not only what a stylesheet
-        /// fetches: it also caps input the host passes in directly - DocumentBuilder, JsonBuilder, XsltCompiler,
-        /// DocumentCache.
+        /// Memory one engine call may take, in bytes; null (the default) for no limit. A call - a compile, a document build,
+        /// a transformation, a query, an XPath evaluation - is counted from nothing, so calls running at once on one
+        /// Processor do not add up. Counted are the trees the host hands the call, by their size, and every byte the call
+        /// allocates, including what it has already released (a transformation typically allocates 3-5 times what it
+        /// holds). Over the limit the call stops with SXLM0003, which xsl:try does not catch. Also the largest input
+        /// accepted (150 MB when null). Allocations are counted on .NET and .NET Framework 4.8; the 4.7.2 runtime checks
+        /// only input sizes.
         /// </summary>
-        public long MaxInputBytes
+        public long? MaxMemoryBytes
+        {
+            get => maxMemoryBytes;
+            set
+            {
+                ThrowIfFrozen();
+                if (value <= 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value));
+                }
+
+                maxMemoryBytes = value;
+            }
+        }
+
+        // The input cap when MaxMemoryBytes is not set: 150 MB, or what an obsolete Processor constructor was given.
+        // Internal, as one memory option replaces two; the tests of the cap on each input channel set it.
+        internal long MaxInputBytes
         {
             get => maxInputBytes;
             set
@@ -77,6 +99,9 @@ namespace OutSmart.DAXon.Api
                 maxInputBytes = value;
             }
         }
+
+        // The largest input accepted: no input can be larger than the memory of the call that reads it.
+        internal long InputCap => maxMemoryBytes ?? maxInputBytes;
 
         /// <summary>
         /// Bytes of the running thread's stack a recursion must leave free, or it stops with SXLM0001 (deep input with

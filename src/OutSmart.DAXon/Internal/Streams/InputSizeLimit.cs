@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Internal.Streams
         /// </summary>
         public static long MaxFor(OutSmart.DAXon.Core.Configuration config)
         {
-            return config?.ProcessorOptions?.MaxInputBytes ?? long.MaxValue;
+            return config?.ProcessorOptions?.InputCap ?? long.MaxValue;
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace OutSmart.DAXon.Internal.Streams
                     throw Oversized(length, max, uri, errorCode);
                 }
 
-                return stream;   // exact length known and under the cap - no wrapper needed
+                return Metered(stream);   // exact length known and under the cap: only the memory limit to watch
             }
 
             return new CappedStream(stream, max, uri, errorCode);
@@ -96,7 +96,13 @@ namespace OutSmart.DAXon.Internal.Streams
                 throw Oversized(length, max, uri, errorCode);
             }
 
-            return stream;
+            return Metered(stream);
+        }
+
+        // A stream of known length under the cap is wrapped only when the call has a memory limit, which each read checks.
+        private static System.IO.Stream Metered(System.IO.Stream stream)
+        {
+            return OutSmart.DAXon.Core.Controller.HasActiveMemoryLimit ? new MeteredStream(stream) : stream;
         }
 
         // A resource the host passes with its own stream or reader: capped as either would be when passed
@@ -159,6 +165,7 @@ namespace OutSmart.DAXon.Internal.Streams
                     throw Oversized(-1, max, uri, errorCode);
                 }
 
+                OutSmart.DAXon.Core.Controller.CheckActiveMemory();
                 return n;
             }
 
@@ -180,6 +187,45 @@ namespace OutSmart.DAXon.Internal.Streams
             public override long Position { get => count; set => throw new NotSupportedException(); }
             public override void Flush() { }
             public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+            public override void SetLength(long value) => throw new NotSupportedException();
+            public override void Write(byte[] buffer, int offset, int length) => throw new NotSupportedException();
+
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing)
+                {
+                    inner.Dispose();
+                }
+
+                base.Dispose(disposing);
+            }
+        }
+
+        // Pass-through for a stream of known length, seekable as before: each buffer read checks the call's memory limit.
+        private sealed class MeteredStream : System.IO.Stream
+        {
+            private readonly System.IO.Stream inner;
+
+            internal MeteredStream(System.IO.Stream inner)
+            {
+                this.inner = inner;
+            }
+
+            public override int Read(byte[] buffer, int offset, int length)
+            {
+                int n = inner.Read(buffer, offset, length);
+                OutSmart.DAXon.Core.Controller.CheckActiveMemory();
+                return n;
+            }
+
+            public override int ReadByte() => inner.ReadByte();
+            public override bool CanRead => inner.CanRead;
+            public override bool CanSeek => inner.CanSeek;
+            public override bool CanWrite => false;
+            public override long Length => inner.Length;
+            public override long Position { get => inner.Position; set => inner.Position = value; }
+            public override void Flush() { }
+            public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
             public override void SetLength(long value) => throw new NotSupportedException();
             public override void Write(byte[] buffer, int offset, int length) => throw new NotSupportedException();
 
@@ -233,6 +279,7 @@ namespace OutSmart.DAXon.Internal.Streams
             public override int Read(char[] buffer, int index, int count)
             {
                 int n = inner.Read(buffer, index, count);
+                OutSmart.DAXon.Core.Controller.CheckActiveMemory();
                 int i = index;
                 int end = index + n;
                 while (i < end)
