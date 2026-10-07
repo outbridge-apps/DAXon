@@ -142,36 +142,37 @@ namespace OutSmart.DAXon.Core
             // per second - starved behind a countdown of 4096. Split, each class adapts to its own
             // pace, and no loop decrements more than one of them, so there is no stride^2 blind
             // spot either.
-            private Throttle perItem = new Throttle();
-            private Throttle perStep = new Throttle();
+            // Structs, reset when the token is armed: arming a call allocates the token alone (each call of a reused
+            // selector arms one). now is the one clock reading of the arming.
+            private Throttle perItem;
+            private Throttle perStep;
 
-            internal void Arm(long deadline, TimeSpan limit)
+            internal void Arm(long deadline, TimeSpan limit, long now)
             {
                 deadlineTimestamp = deadline;
                 setting = limit;
                 hasDeadline = true;
                 armed = true;
-                long now = System.Diagnostics.Stopwatch.GetTimestamp();
                 perItem.Reset(now);
                 perStep.Reset(now);
             }
 
             // A memory limit counted from now.
-            internal void ArmMemory(long limit)
+            internal void ArmMemory(long limit, long now)
             {
                 memoryLimit = limit;
                 memoryBase = OutSmart.DAXon.Internal.AllocationMeter.Read();
                 memoryInputs = 0;
-                StartSampling();
+                StartSampling(now);
             }
 
             // A call nested in another continues that one's count: one limit for both.
-            internal void ContinueMemory(DeadlineToken outer)
+            internal void ContinueMemory(DeadlineToken outer, long now)
             {
                 memoryLimit = outer.memoryLimit;
                 memoryBase = outer.memoryBase;
                 memoryInputs = outer.memoryInputs;
-                StartSampling();
+                StartSampling(now);
             }
 
             internal void ChargeInput(long bytes)
@@ -180,12 +181,11 @@ namespace OutSmart.DAXon.Core
                 memoryInputs += bytes;
             }
 
-            private void StartSampling()
+            private void StartSampling(long now)
             {
                 if (!armed)
                 {
                     armed = true;
-                    long now = System.Diagnostics.Stopwatch.GetTimestamp();
                     perItem.Reset(now);
                     perStep.Reset(now);
                 }
@@ -196,7 +196,7 @@ namespace OutSmart.DAXon.Core
             {
                 if (armed && perItem.Tick())
                 {
-                    Sample(perItem);
+                    Sample(ref perItem);
                 }
             }
 
@@ -207,11 +207,11 @@ namespace OutSmart.DAXon.Core
             {
                 if (armed && perStep.Tick())
                 {
-                    Sample(perStep);
+                    Sample(ref perStep);
                 }
             }
 
-            private void Sample(Throttle t)
+            private void Sample(ref Throttle t)
             {
                 long now = System.Diagnostics.Stopwatch.GetTimestamp();
                 if (hasDeadline && now >= deadlineTimestamp)
@@ -259,13 +259,13 @@ namespace OutSmart.DAXon.Core
 
             // One class's sampling rate. Kept off the token so the two cannot be confused, and out
             // of Sample() so the hot path stays a decrement and a branch.
-            private sealed class Throttle
+            private struct Throttle
             {
                 private const int StrideMax = 4096;
                 private static readonly long SampleTargetTicks = System.Diagnostics.Stopwatch.Frequency / 50;   // 20 ms
 
-                private int countdown = 1;
-                private int stride = 1;
+                private int countdown;
+                private int stride;
                 private long lastSample;
 
                 internal void Reset(long now)
@@ -417,11 +417,19 @@ namespace OutSmart.DAXon.Core
             var token = new DeadlineToken { activity = activity, stackThreshold = StackThresholdOf(config) };
             Own(token);   // this run now owns the deadline slot on the running thread
             hasDeadline = false;
+            chargedTrees = null;
+            chargesInputs = false;
+            long memoryLimit = inheritedMemory != null ? inheritedMemory.memoryLimit : MemoryLimitOf(config);
+            if (timeout <= TimeSpan.Zero && !hasInheritedCap && memoryLimit <= 0)
+            {
+                return;               // no limit at all: the token stays unarmed
+            }
 
+            long now = System.Diagnostics.Stopwatch.GetTimestamp();   // the one reading for the deadline and the throttles
             if (timeout > TimeSpan.Zero)
             {
                 timeoutSetting = timeout;
-                deadlineTimestamp = DeadlineFromNow(timeout);
+                deadlineTimestamp = DeadlineFromNow(timeout, now);
                 hasDeadline = true;
             }
 
@@ -432,38 +440,26 @@ namespace OutSmart.DAXon.Core
                 hasDeadline = true;
             }
 
-            ArmMemory(token);
-            if (!hasDeadline)
+            ArmMemory(token, memoryLimit, now);
+            if (hasDeadline)
             {
-                if (token.memoryLimit > 0)
-                {
-                    deadlineToken = token;   // the memory limit alone
-                    ChargeRunInputs();
-                }
-
-                return;               // no deadline: the token holds at most the memory limit
+                token.Arm(deadlineTimestamp, timeoutSetting, now);
             }
 
-            token.Arm(deadlineTimestamp, timeoutSetting);
             deadlineToken = token;
             ChargeRunInputs();
         }
 
         // The Processor's memory limit for this call, counted from now - or, for a nested run, the enclosing run's count.
-        private void ArmMemory(DeadlineToken token)
+        private void ArmMemory(DeadlineToken token, long limit, long now)
         {
-            chargedTrees = null;
-            chargesInputs = false;
             if (inheritedMemory != null)
             {
-                token.ContinueMemory(inheritedMemory);
-                return;
+                token.ContinueMemory(inheritedMemory, now);
             }
-
-            long limit = MemoryLimitOf(config);
-            if (limit > 0)
+            else if (limit > 0)
             {
-                token.ArmMemory(limit);
+                token.ArmMemory(limit, now);
                 chargesInputs = true;
                 firstTreeOfRun = config.DocumentNumberAllocator.AllocateDocumentNumber();
             }
@@ -540,9 +536,10 @@ namespace OutSmart.DAXon.Core
             var token = new DeadlineToken { activity = parent?.deadlineToken?.activity, stackThreshold = StackThresholdOf(config) };
             Own(token);   // the nested run now owns the deadline slot on the running thread
             chargesInputs = false;   // and continues the parent's memory count, which counted the inputs
+            long now = System.Diagnostics.Stopwatch.GetTimestamp();
             if (parent?.deadlineToken != null && parent.deadlineToken.memoryLimit > 0)
             {
-                token.ContinueMemory(parent.deadlineToken);
+                token.ContinueMemory(parent.deadlineToken, now);
             }
 
             if (parent == null || !parent.hasDeadline)
@@ -559,7 +556,7 @@ namespace OutSmart.DAXon.Core
             deadlineTimestamp = parent.deadlineTimestamp;
             timeoutSetting = parent.timeoutSetting;
             hasDeadline = true;
-            token.Arm(deadlineTimestamp, timeoutSetting);
+            token.Arm(deadlineTimestamp, timeoutSetting, now);
             deadlineToken = token;
         }
 
@@ -602,14 +599,19 @@ namespace OutSmart.DAXon.Core
                 // ~2.8 KB and ~3 us on every API call.
                 var token = new DeadlineToken { activity = activity, stackThreshold = p.Options.StackSizeThreshold };
                 TimeSpan timeout = p.TransformTimeout;
-                if (timeout > TimeSpan.Zero)
+                long? memory = p.Options.MaxMemoryBytes;
+                if (timeout > TimeSpan.Zero || memory != null)
                 {
-                    token.Arm(DeadlineFromNow(timeout), timeout);
-                }
+                    long now = System.Diagnostics.Stopwatch.GetTimestamp();
+                    if (timeout > TimeSpan.Zero)
+                    {
+                        token.Arm(DeadlineFromNow(timeout, now), timeout, now);
+                    }
 
-                if (p.Options.MaxMemoryBytes is long memory)
-                {
-                    token.ArmMemory(memory);
+                    if (memory != null)
+                    {
+                        token.ArmMemory(memory.Value, now);
+                    }
                 }
 
                 Own(token);
@@ -656,10 +658,10 @@ namespace OutSmart.DAXon.Core
 
         // Saturates: TimeSpan.MaxValue in Stopwatch ticks overflows a long, and the wrapped deadline
         // was already past, so every call failed at once. Thousands of years stand in for "never".
-        private static long DeadlineFromNow(TimeSpan timeout)
+        private static long DeadlineFromNow(TimeSpan timeout, long now)
         {
             double ticks = timeout.TotalSeconds * System.Diagnostics.Stopwatch.Frequency;
-            return ticks >= long.MaxValue / 2 ? long.MaxValue : System.Diagnostics.Stopwatch.GetTimestamp() + (long)ticks;
+            return ticks >= long.MaxValue / 2 ? long.MaxValue : now + (long)ticks;
         }
 
         public virtual string BaseOutputURI
