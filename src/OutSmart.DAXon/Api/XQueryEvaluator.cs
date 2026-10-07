@@ -352,6 +352,7 @@ namespace OutSmart.DAXon.Api
 
             RunResources scope = RunResources.Detached();
             RunResources saved = scope.Activate();
+            Core.Controller.DeadlineToken limitsBefore = Core.Controller.ActiveLimits;   // the iterator keeps its own
             try
             {
                 return new XdmSequenceIterator<XdmItem>(expression.IIterator(context), scope);
@@ -369,6 +370,7 @@ namespace OutSmart.DAXon.Api
             finally
             {
                 RunResources.Restore(saved);
+                Core.Controller.RestoreThreadDeadline(limitsBefore);
             }
         }
 
@@ -394,6 +396,7 @@ namespace OutSmart.DAXon.Api
                 throw new InvalidOperationException("No destination has been supplied");
             }
 
+            Core.Controller.DeadlineToken limitsBefore = Core.Controller.ActiveLimits;   // given back when the run is over
             try
             {
                 if (controller == null)
@@ -408,10 +411,12 @@ namespace OutSmart.DAXon.Api
             }
             catch (XPathException e)
             {
+                Core.Controller.RestoreThreadDeadline(limitsBefore);
                 throw new DAXonApiException(e);
             }
             catch (RecursionDepthError e)
             {
+                Core.Controller.RestoreThreadDeadline(limitsBefore);
                 throw new DAXonApiException(e.ToXPathException());
             }
 
@@ -426,17 +431,24 @@ namespace OutSmart.DAXon.Api
             SequenceNormalizer sn = @params.MakeSequenceNormalizer(@out);
             sn.OnClose(() =>
             {
-                NodeInfo doc = sourceTreeBuilder.CurrentRoot;
-                if (doc == null)
+                try
                 {
-                    throw new DAXonApiException("No source document has been built by the previous pipeline stage");
-                }
+                    NodeInfo doc = sourceTreeBuilder.CurrentRoot;
+                    if (doc == null)
+                    {
+                        throw new DAXonApiException("No source document has been built by the previous pipeline stage");
+                    }
 
-                doc.GetTreeInfo().SpaceStrippingRule = controller.SpaceStrippingRule;
-                SetSource(new ResolvedResource { Node = doc });
-                sourceTreeBuilder = null;
-                Run(destination);
-                destination.CloseAndNotify();
+                    doc.GetTreeInfo().SpaceStrippingRule = controller.SpaceStrippingRule;
+                    SetSource(new ResolvedResource { Node = doc });
+                    sourceTreeBuilder = null;
+                    Run(destination);
+                    destination.CloseAndNotify();
+                }
+                finally
+                {
+                    Core.Controller.RestoreThreadDeadline(limitsBefore);
+                }
             });
             return sn;
         }

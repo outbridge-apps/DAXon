@@ -18,6 +18,7 @@ namespace OutSmart.DAXon.Internal
 
         private readonly RunResources outer;
         private readonly bool entered;
+        private readonly Core.Controller.DeadlineToken limitsBefore;   // the thread's limits when the call began
         private HashSet<WeakReference<IDisposable>> open;
         private int sweepAt = 64;
 
@@ -25,6 +26,7 @@ namespace OutSmart.DAXon.Internal
         {
             this.outer = outer;
             this.entered = entered;
+            limitsBefore = entered ? Core.Controller.ActiveLimits : null;
         }
 
         // A scope for the duration of a call: using (RunResources.Enter()) { ... }
@@ -120,11 +122,18 @@ namespace OutSmart.DAXon.Internal
             }
         }
 
+        // Leaving the call also gives the thread's limit slot back as the call found it: a finished call's deadline and
+        // memory count stopped the host's own work on the thread (GetStringValue, iterating a returned range) after it.
         public void Dispose()
         {
             if (entered && current == this)
             {
                 current = outer;
+            }
+
+            if (entered)
+            {
+                Core.Controller.RestoreThreadDeadline(limitsBefore);
             }
 
             CloseAll();

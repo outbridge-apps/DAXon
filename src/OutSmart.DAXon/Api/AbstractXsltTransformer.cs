@@ -273,6 +273,7 @@ namespace OutSmart.DAXon.Api
             if (controller.GetInitialMode().IsDeclaredStreamable())
             {
                 IReceiver sOut = GetDestinationReceiver(controller, finalDestination);
+                Controller.DeadlineToken limitsBefore = Controller.ActiveLimits;
                 try
                 {
                     controller.InitializeController(parameters);
@@ -281,6 +282,7 @@ namespace OutSmart.DAXon.Api
                 }
                 catch (XPathException e)
                 {
+                    Controller.RestoreThreadDeadline(limitsBefore);   // no run to keep them for
                     throw new DAXonApiException(e);
                 }
             }
@@ -289,7 +291,8 @@ namespace OutSmart.DAXon.Api
                 // The caller streams the source into the returned receiver BEFORE Dispose() arms
                 // the run's deadline - arm now so that parse runs under this run's fresh budget,
                 // not a spent token left on the thread by an earlier run. Dispose() re-arms for
-                // the transform phase itself.
+                // the transform phase itself, and Close() gives the thread's limits back.
+                Controller.DeadlineToken limitsBefore = Controller.ActiveLimits;
                 controller.SetTimeout(processor.TransformTimeout);
                 Builder sourceTreeBuilder = controller.MakeBuilder();
                 sourceTreeBuilder.SetDurability(Durability.LASTING);
@@ -304,13 +307,13 @@ namespace OutSmart.DAXon.Api
                     stripper = controller.GetConfiguration().GetAnnotationStripper(stripper);
                 }
 
-                return MakeTreeReceiver(controller, parameters, finalDestination, sourceTreeBuilder, stripper);
+                return MakeTreeReceiver(controller, parameters, finalDestination, sourceTreeBuilder, stripper, limitsBefore);
             }
         }
 
-        private TreeReceiver MakeTreeReceiver(XsltController controller, GlobalParameterSet parameters, IDestination finalDestination, Builder sourceTreeBuilder, IReceiver stripper)
+        private TreeReceiver MakeTreeReceiver(XsltController controller, GlobalParameterSet parameters, IDestination finalDestination, Builder sourceTreeBuilder, IReceiver stripper, Controller.DeadlineToken limitsBefore)
         {
-            return new AnonymousTreeReceiver(this, stripper, controller, parameters, finalDestination, sourceTreeBuilder);
+            return new AnonymousTreeReceiver(this, stripper, controller, parameters, finalDestination, sourceTreeBuilder, limitsBefore);
         }
 
         private sealed class AnonymousIResultDocumentResolver : IResultDocumentResolver
@@ -365,9 +368,11 @@ namespace OutSmart.DAXon.Api
             private readonly GlobalParameterSet parameters;
             private readonly IDestination finalDestination;
             private readonly Builder sourceTreeBuilder;
+            private readonly Controller.DeadlineToken limitsBefore;   // the thread's limits before the receiver was made
             bool closed = false;
-            public AnonymousTreeReceiver(AbstractXsltTransformer parent, IReceiver stripper, XsltController controller, GlobalParameterSet parameters, IDestination finalDestination, Builder sourceTreeBuilder) : base(stripper)
+            public AnonymousTreeReceiver(AbstractXsltTransformer parent, IReceiver stripper, XsltController controller, GlobalParameterSet parameters, IDestination finalDestination, Builder sourceTreeBuilder, Controller.DeadlineToken limitsBefore) : base(stripper)
             {
+                this.limitsBefore = limitsBefore;
                 this.parent = parent;
                 this.controller = controller;
                 this.parameters = parameters;
@@ -401,6 +406,10 @@ namespace OutSmart.DAXon.Api
                     catch (DAXonApiException e)
                     {
                         throw XPathException.MakeXPathException(e);
+                    }
+                    finally
+                    {
+                        Controller.RestoreThreadDeadline(limitsBefore);   // the run is over
                     }
 
                     closed = true;

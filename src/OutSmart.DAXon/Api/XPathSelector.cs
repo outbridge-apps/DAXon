@@ -37,7 +37,15 @@ namespace OutSmart.DAXon.Api
         {
             this.exp = exp;
             this.declaredVariables = declaredVariables;
-            dynamicContext = exp.CreateDynamicContext();
+            Core.Controller.DeadlineToken limitsBefore = Core.Controller.ActiveLimits;   // making a selector is no call
+            try
+            {
+                dynamicContext = exp.CreateDynamicContext();
+            }
+            finally
+            {
+                Core.Controller.RestoreThreadDeadline(limitsBefore);
+            }
         }
 
         public virtual void SetContextItem(XdmItem item)
@@ -198,6 +206,7 @@ namespace OutSmart.DAXon.Api
         {
             RunResources scope = RunResources.Detached();
             RunResources saved = scope.Activate();
+            Core.Controller.DeadlineToken limitsBefore = Core.Controller.ActiveLimits;   // the iterator keeps its own
             try
             {
                 exp.ArmEvaluation(dynamicContext);
@@ -221,6 +230,7 @@ namespace OutSmart.DAXon.Api
             finally
             {
                 RunResources.Restore(saved);
+                Core.Controller.RestoreThreadDeadline(limitsBefore);
             }
         }
 
