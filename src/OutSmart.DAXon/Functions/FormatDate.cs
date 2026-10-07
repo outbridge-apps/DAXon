@@ -229,6 +229,12 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
+            // Month and day names in the language, a word or an ordinal in English: the output names the fallback.
+            if (numberer is Numberer_bcl bcl && bcl.UsedEnglish)
+            {
+                sb.Insert(0, "[Language: en]");
+            }
+
             return sb.ToString();
         }
 

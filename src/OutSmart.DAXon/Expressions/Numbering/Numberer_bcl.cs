@@ -27,6 +27,41 @@ namespace OutSmart.DAXon.Expressions.Numbering
             SetLanguage(language);
         }
 
+        // Set once an English word, ordinal suffix, half-day or era name stands in for the language: format-date then
+        // names the language it used, as F&O asks of a fallback ("[Language: en]", as Saxon writes it).
+        internal bool UsedEnglish { get; private set; }
+
+        public override string ToWords(string cardinal, long number)
+        {
+            UsedEnglish = true;
+            return base.ToWords(cardinal, number);
+        }
+
+        public override string ToOrdinalWords(string ordinalParam, long number, int wordCase)
+        {
+            UsedEnglish = true;
+            return base.ToOrdinalWords(ordinalParam, number, wordCase);
+        }
+
+        protected override string OrdinalSuffix(string ordinalParam, long number)
+        {
+            string suffix = base.OrdinalSuffix(ordinalParam, number);
+            UsedEnglish |= suffix.Length != 0;
+            return suffix;
+        }
+
+        public override string HalfDayName(int minutes, int minWidth, int maxWidth)
+        {
+            UsedEnglish = true;
+            return base.HalfDayName(minutes, minWidth, maxWidth);
+        }
+
+        public override string GetEraName(int year)
+        {
+            UsedEnglish = true;
+            return base.GetEraName(year);
+        }
+
         // The names of the culture's Gregorian calendar, or null when it has none: by default ar counts the months
         // of Um al-Qura, fa and ps the Persian ones, and an xs:date is Gregorian.
         internal static DateTimeFormatInfo GregorianNames(CultureInfo culture)
