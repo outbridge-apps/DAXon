@@ -31,6 +31,7 @@ namespace OutSmart.DAXon.Api
         private readonly XPathExpression exp;
         private readonly XPathDynamicContext dynamicContext;
         private readonly Dictionary<StructuredQName, XPathVariable> declaredVariables;
+        private int evaluations;   // the lazy result of an evaluation ends it only if none has started since
 
         public virtual XPathDynamicContext UnderlyingXPathContext => dynamicContext;
         public XPathSelector(XPathExpression exp, Dictionary<StructuredQName, XPathVariable> declaredVariables)
@@ -145,6 +146,7 @@ namespace OutSmart.DAXon.Api
             ISequence value;
             try
             {
+                evaluations++;
                 exp.ArmEvaluation(dynamicContext);
                 value = SequenceTool.ToGroundedValue(exp.Iterate(dynamicContext));
             }
@@ -164,6 +166,10 @@ namespace OutSmart.DAXon.Api
                 // the abort must not meet a handler that runs.
                 throw new DAXonApiException(e.ToXPathException());
             }
+            finally
+            {
+                exp.EndEvaluation(dynamicContext);
+            }
 
             return XdmValue.Wrap(value);
         }
@@ -173,6 +179,7 @@ namespace OutSmart.DAXon.Api
             using RunResources run = RunResources.Enter();
             try
             {
+                evaluations++;
                 exp.ArmEvaluation(dynamicContext);
                 IItem i = exp.EvaluateSingle(dynamicContext);
                 if (i == null)
@@ -194,6 +201,10 @@ namespace OutSmart.DAXon.Api
             {
                 throw new DAXonApiException(e.ToXPathException());
             }
+            finally
+            {
+                exp.EndEvaluation(dynamicContext);
+            }
         }
 
         [Obsolete("Use Iterator(): the same method, named as s9api names it (iterator).")]
@@ -209,6 +220,14 @@ namespace OutSmart.DAXon.Api
             Core.Controller.DeadlineToken limitsBefore = Core.Controller.ActiveLimits;   // the iterator keeps its own
             try
             {
+                int evaluation = ++evaluations;
+                scope.OnClose(() =>
+                {
+                    if (evaluations == evaluation)
+                    {
+                        exp.EndEvaluation(dynamicContext);
+                    }
+                });
                 exp.ArmEvaluation(dynamicContext);
                 return new XdmSequenceIterator<XdmItem>(exp.Iterate(dynamicContext), scope);
             }
@@ -239,6 +258,7 @@ namespace OutSmart.DAXon.Api
             using RunResources run = RunResources.Enter();
             try
             {
+                evaluations++;
                 exp.ArmEvaluation(dynamicContext);
                 return exp.EffectiveBooleanValue(dynamicContext);
             }
@@ -253,6 +273,10 @@ namespace OutSmart.DAXon.Api
             catch (RecursionDepthError e)
             {
                 throw new DAXonApiException(e.ToXPathException());
+            }
+            finally
+            {
+                exp.EndEvaluation(dynamicContext);
             }
         }
         // s9api XPathSelector is Iterable<XdmItem>: foreach over the selector evaluates it.

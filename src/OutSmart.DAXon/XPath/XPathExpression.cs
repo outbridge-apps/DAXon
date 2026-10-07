@@ -97,6 +97,39 @@ namespace OutSmart.DAXon.XPath
             }
         }
 
+        // A reused selector evaluates in one stack frame and one controller: what an evaluation bound to its local
+        // variables stayed reachable until the next one, and the documents doc() loaded for as long as the selector.
+        internal void EndEvaluation(XPathDynamicContext dynamicContext)
+        {
+            XPathContextMajor context = (XPathContextMajor)dynamicContext.XPathContextObject;
+            ISequence[] slots = context.GetStackFrame().StackFrameValues;
+            for (int i = numberOfExternalVariables; i < slots.Length; i++)
+            {
+                slots[i] = null;
+            }
+
+            Controller controller = context.GetController();
+            int pooled = controller.GetDocumentPool().Count;
+            if (pooled == 0)
+            {
+                return;
+            }
+
+            // The document of the context item the host set stays: doc() of its URI is that node, evaluation after evaluation.
+            // Its key is made only when the pool holds more (a key normalizes its URI: a microsecond and a kilobyte).
+            NodeInfo host = context.GetContextItem() as NodeInfo;
+            ITreeInfo hostTree = host != null && host.GetSystemId() != null ? host.GetTreeInfo() : null;
+            bool hostPooled = hostTree != null && controller.GetDocumentPool().Contains(hostTree);
+            if (pooled > (hostPooled ? 1 : 0))
+            {
+                controller.ReleaseRunState();
+                if (hostPooled)
+                {
+                    controller.GetDocumentPool().Add(hostTree, new DocumentKey(host.GetSystemId()));
+                }
+            }
+        }
+
         public virtual XPathDynamicContext CreateDynamicContext(Controller controller, IItem contextItem)
         {
             CheckContextItemType(contextItem);

@@ -43,6 +43,18 @@ namespace OutSmart.DAXon.Model
             }
         }
 
+        // Documents and documents known to be unavailable.
+        internal int Count
+        {
+            get
+            {
+                lock (syncLock)
+                {
+                    return documentNameMap.Count + unavailableDocuments.Count;
+                }
+            }
+        }
+
         public void Add(ITreeInfo doc, string uri)
         {
             lock (syncLock)

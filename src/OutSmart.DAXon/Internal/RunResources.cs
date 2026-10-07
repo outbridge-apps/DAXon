@@ -20,6 +20,7 @@ namespace OutSmart.DAXon.Internal
         private readonly bool entered;
         private readonly Core.Controller.DeadlineToken limitsBefore;   // the thread's limits when the call began
         private HashSet<WeakReference<IDisposable>> open;
+        private List<Action> onClose;   // the end of the evaluation the scope belongs to: once, when it closes
         private int sweepAt = 64;
 
         private RunResources(RunResources outer, bool entered)
@@ -90,34 +91,51 @@ namespace OutSmart.DAXon.Internal
             }
         }
 
+        public void OnClose(Action action)
+        {
+            lock (this)
+            {
+                (onClose ??= new List<Action>()).Add(action);
+            }
+        }
+
         public void CloseAll()
         {
             HashSet<WeakReference<IDisposable>> left;
+            List<Action> actions;
             lock (this)
             {
                 left = open;
                 open = null;
+                actions = onClose;
+                onClose = null;
             }
 
-            if (left == null)
+            if (left != null)
             {
-                return;
+                foreach (WeakReference<IDisposable> ticket in left)
+                {
+                    if (!ticket.TryGetTarget(out IDisposable resource))
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        resource.Dispose();
+                    }
+                    catch (Exception)
+                    {
+                        // closing is best effort; the call's own outcome stands
+                    }
+                }
             }
 
-            foreach (WeakReference<IDisposable> ticket in left)
+            if (actions != null)
             {
-                if (!ticket.TryGetTarget(out IDisposable resource))
+                foreach (Action action in actions)
                 {
-                    continue;
-                }
-
-                try
-                {
-                    resource.Dispose();
-                }
-                catch (Exception)
-                {
-                    // closing is best effort; the call's own outcome stands
+                    action();
                 }
             }
         }
