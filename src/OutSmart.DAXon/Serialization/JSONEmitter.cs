@@ -35,7 +35,7 @@ namespace OutSmart.DAXon.Serialization
         private Properties outputProperties;
         private ICharacterSet characterSet;
         private bool isIndenting;
-        private int indentSpaces = 3;
+        private int indentSpaces = 2;   // as Saxon 12.9; 1.3.3 indented by three
         private int maxLineLength;
         private bool first = true;
         private bool afterKey = false;
