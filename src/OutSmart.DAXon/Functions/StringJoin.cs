@@ -236,7 +236,10 @@ namespace OutSmart.DAXon.Functions
                                 done += chunk;
                             }
 
-                            return new StringValue(new string(buf));
+                            // One step builds up to 64M characters, and a query can end on it: look at the limits after it.
+                            StringValue joined = new StringValue(new string(buf));
+                            Core.Controller.CheckActiveTimeoutNow();
+                            return joined;
                         };
                     }
                 }
