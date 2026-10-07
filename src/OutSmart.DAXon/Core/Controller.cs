@@ -126,6 +126,7 @@ namespace OutSmart.DAXon.Core
             internal long memoryLimit;
             internal long memoryBase;
             internal long memoryInputs;   // of it the trees the call was handed, for the message
+            private long memoryTaken;     // a lazy result's count when it last went back to the host
             private bool armed;           // a deadline or a memory limit: whether the throttles sample at all
 
             // TWO independent clock-sampling throttles, one per class of call site. Reading the
@@ -179,6 +180,24 @@ namespace OutSmart.DAXon.Core
             {
                 memoryBase -= bytes;
                 memoryInputs += bytes;
+            }
+
+            // A lazy result goes back to the host, whose allocations until the next step are not the call's: the call keeps
+            // what it has taken, and the next step counts on from it, on whatever thread the host iterates.
+            internal void PauseMemory()
+            {
+                if (memoryLimit > 0)
+                {
+                    memoryTaken = OutSmart.DAXon.Internal.AllocationMeter.Read() - memoryBase;
+                }
+            }
+
+            internal void ResumeMemory()
+            {
+                if (memoryLimit > 0)
+                {
+                    memoryBase = OutSmart.DAXon.Internal.AllocationMeter.Read() - memoryTaken;
+                }
             }
 
             private void StartSampling(long now)
@@ -342,6 +361,28 @@ namespace OutSmart.DAXon.Core
 
         // Whether the call on this thread has a memory limit: its input streams are then metered even when their length is known.
         internal static bool HasActiveMemoryLimit => activeOnThread?.memoryLimit > 0;
+
+        // The limits of the call running on this thread, which a lazy result it makes keeps; null when it has none.
+        internal static DeadlineToken ActiveLimits => activeOnThread;
+
+        /// <summary>
+        /// A step of a lazy result the host iterates runs under the limits of the call that made it, whatever ran on the
+        /// thread since, and the host's allocations between steps are not counted. Returns the previous owner of the
+        /// slot, which the caller MUST give back to <see cref="EndLazyStep"/> (try/finally).
+        /// </summary>
+        internal static DeadlineToken BeginLazyStep(DeadlineToken limits)
+        {
+            DeadlineToken previous = activeOnThread;
+            limits.ResumeMemory();
+            Own(limits);
+            return previous;
+        }
+
+        internal static void EndLazyStep(DeadlineToken limits, DeadlineToken previous)
+        {
+            limits.PauseMemory();
+            Own(previous);
+        }
 
         /// <summary>
         /// <see cref="CheckActiveTimeout"/> for a per-step site: one call of a function the stylesheet supplied,

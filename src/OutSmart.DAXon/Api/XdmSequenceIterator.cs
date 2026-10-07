@@ -23,6 +23,7 @@ namespace OutSmart.DAXon.Api
     {
         private readonly ILookaheadIterator @base;
         private readonly RunResources scope;   // what the lazy evaluation opens; closed when it ends
+        private readonly Core.Controller.DeadlineToken limits;   // of the call that made the lazy result; null for none
         private bool closed = false;
         private T current;
 
@@ -40,6 +41,12 @@ namespace OutSmart.DAXon.Api
             try
             {
                 this.@base = LookaheadIteratorImpl.MakeLookaheadIterator(@base);
+                if (scope != null)
+                {
+                    // the call that makes the lazy result has armed its limits; its steps run under them
+                    limits = Core.Controller.ActiveLimits;
+                    limits?.PauseMemory();
+                }
             }
             catch (UncheckedXPathException uxe)
             {
@@ -88,6 +95,7 @@ namespace OutSmart.DAXon.Api
             }
 
             RunResources saved = scope?.Activate();
+            Core.Controller.DeadlineToken previous = limits == null ? null : Core.Controller.BeginLazyStep(limits);
             try
             {
                 bool more = @base.HasNext;
@@ -98,23 +106,20 @@ namespace OutSmart.DAXon.Api
 
                 return more;
             }
-            catch (UncheckedXPathException e)
+            catch (Exception e) when (IsEngineError(e))
             {
-                scope?.CloseAll();
-                throw new DAXonApiUncheckedException(e.GetXPathException());
+                throw Failed(e);
             }
             finally
             {
-                if (scope != null)
-                {
-                    RunResources.Restore(saved);
-                }
+                EndStep(previous, saved);
             }
         }
 
         public virtual T Next()
         {
             RunResources saved = scope?.Activate();
+            Core.Controller.DeadlineToken previous = limits == null ? null : Core.Controller.BeginLazyStep(limits);
             try
             {
                 IItem it = @base.Next();
@@ -127,17 +132,13 @@ namespace OutSmart.DAXon.Api
                     return (T)(object)XdmItem.WrapItem(it);
                 }
             }
-            catch (UncheckedXPathException e)
+            catch (Exception e) when (IsEngineError(e))
             {
-                scope?.CloseAll();
-                throw new DAXonApiUncheckedException(e.GetXPathException());
+                throw Failed(e);
             }
             finally
             {
-                if (scope != null)
-                {
-                    RunResources.Restore(saved);
-                }
+                EndStep(previous, saved);
             }
         }
 
@@ -154,21 +155,68 @@ namespace OutSmart.DAXon.Api
         }
 
         // IEnumerator over the same items: MoveNext had always answered false, so a plain
-        // while (it.MoveNext()) loop saw an empty sequence.
+        // while (it.MoveNext()) loop saw an empty sequence. One step for the test and the item.
         bool System.Collections.IEnumerator.MoveNext()
         {
-            if (!HasNext())
+            if (closed)
             {
                 current = default;
                 return false;
             }
 
-            current = Next();
-            return true;
+            RunResources saved = scope?.Activate();
+            Core.Controller.DeadlineToken previous = limits == null ? null : Core.Controller.BeginLazyStep(limits);
+            try
+            {
+                IItem it = @base.Next();
+                if (it == null)
+                {
+                    scope?.CloseAll();
+                    current = default;
+                    return false;
+                }
+
+                current = (T)(object)XdmItem.WrapItem(it);
+                return true;
+            }
+            catch (Exception e) when (IsEngineError(e))
+            {
+                throw Failed(e);
+            }
+            finally
+            {
+                EndStep(previous, saved);
+            }
         }
 
         void System.Collections.IEnumerator.Reset()
         {
+        }
+
+        // A time or memory limit of the call raises a checked XPathException in a step: it reached the host raw.
+        private static bool IsEngineError(Exception e)
+        {
+            return e is UncheckedXPathException || e is XPathException || e is RecursionDepthError;
+        }
+
+        private DAXonApiUncheckedException Failed(Exception e)
+        {
+            scope?.CloseAll();
+            return new DAXonApiUncheckedException(e is UncheckedXPathException u ? u.GetXPathException()
+                : e is RecursionDepthError r ? r.ToXPathException() : (XPathException)e);
+        }
+
+        private void EndStep(Core.Controller.DeadlineToken previous, RunResources saved)
+        {
+            if (limits != null)
+            {
+                Core.Controller.EndLazyStep(limits, previous);
+            }
+
+            if (scope != null)
+            {
+                RunResources.Restore(saved);
+            }
         }
     }
 }
