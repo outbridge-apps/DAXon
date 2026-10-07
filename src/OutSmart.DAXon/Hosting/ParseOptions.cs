@@ -185,7 +185,12 @@ namespace OutSmart.DAXon.Lib
                 result = new ParseOptions(properties.Put(key, value));
             }
 
-            AddToCache(key, value, result);
+            // A reporter is made new for each use, so its entry never hit; and it keeps the last error it reported, with the
+            // context of the failed run, so ten entries on the configuration's options held the documents of failed runs.
+            if (key != Key.ERROR_REPORTER)
+            {
+                AddToCache(key, value, result);
+            }
 
             return result;
         }
