@@ -337,7 +337,13 @@ namespace OutSmart.DAXon.Api
             }
         }
 
+        [Obsolete("Use Iterator(): the same method, named as s9api names it (iterator).")]
         public XdmSequenceIterator<XdmItem> IIterator()
+        {
+            return Iterator();
+        }
+
+        public XdmSequenceIterator<XdmItem> Iterator()
         {
             if (expression.IsUpdateQuery())
             {
@@ -494,7 +500,7 @@ namespace OutSmart.DAXon.Api
         // s9api XQueryEvaluator is Iterable<XdmItem>: foreach over the evaluator runs the query.
         public IEnumerator<XdmItem> GetEnumerator()
         {
-            using (XdmSequenceIterator<XdmItem> it = IIterator())
+            using (XdmSequenceIterator<XdmItem> it = Iterator())
             {
                 while (it.HasNext())
                 {

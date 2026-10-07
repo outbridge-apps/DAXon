@@ -180,13 +180,25 @@ namespace OutSmart.DAXon.Api
             return UnderlyingNode.GetColumnNumber();
         }
 
+        [Obsolete("Use AxisIterator(Axis): the same method, named as s9api names it (axisIterator).")]
         public virtual XdmSequenceIterator<XdmNode> IAxisIterator(Axis axis)
+        {
+            return AxisIterator(axis);
+        }
+
+        [Obsolete("Use AxisIterator(Axis, QName): the same method, named as s9api names it (axisIterator).")]
+        public virtual XdmSequenceIterator<XdmNode> IAxisIterator(Axis axis, QName name)
+        {
+            return AxisIterator(axis, name);
+        }
+
+        public virtual XdmSequenceIterator<XdmNode> AxisIterator(Axis axis)
         {
             IAxisIterator @base = UnderlyingNode.IterateAxis(axis.GetAxisNumber());
             return XdmSequenceIterator<XdmNode>.OfNodes(@base);
         }
 
-        public virtual XdmSequenceIterator<XdmNode> IAxisIterator(Axis axis, QName name)
+        public virtual XdmSequenceIterator<XdmNode> AxisIterator(Axis axis, QName name)
         {
             int kind;
             switch (axis)

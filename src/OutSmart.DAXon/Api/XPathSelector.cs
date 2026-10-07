@@ -188,7 +188,13 @@ namespace OutSmart.DAXon.Api
             }
         }
 
+        [Obsolete("Use Iterator(): the same method, named as s9api names it (iterator).")]
         public virtual XdmSequenceIterator<XdmItem> IIterator()
+        {
+            return Iterator();
+        }
+
+        public virtual XdmSequenceIterator<XdmItem> Iterator()
         {
             RunResources scope = RunResources.Detached();
             RunResources saved = scope.Activate();
@@ -242,7 +248,7 @@ namespace OutSmart.DAXon.Api
         // s9api XPathSelector is Iterable<XdmItem>: foreach over the selector evaluates it.
         public IEnumerator<XdmItem> GetEnumerator()
         {
-            using (XdmSequenceIterator<XdmItem> it = IIterator())
+            using (XdmSequenceIterator<XdmItem> it = Iterator())
             {
                 while (it.HasNext())
                 {
