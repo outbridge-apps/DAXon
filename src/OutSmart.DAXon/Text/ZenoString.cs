@@ -372,6 +372,13 @@ namespace OutSmart.DAXon.Text
                     segments[i] = ConcatSegments(segments[i], segments[i + 1]);
                     segments.RemoveAt(i + 1);
                     offsets.RemoveAt(i + 1);
+
+                    // A string doubling from step to step of a loop outgrows the loop's own checks (see ZenoChain.Reorganize):
+                    // a big merge looks at the time and memory limits.
+                    if (segments[i].Length() >= 65536)
+                    {
+                        OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();
+                    }
                 }
             }
 

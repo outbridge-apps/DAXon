@@ -187,9 +187,14 @@ namespace OutSmart.DAXon.Collections.Zeno
         public ZenoChain<T> AddAll(IEnumerable<T> items)
         {
             ZenoChain<T> result = this;
+            int count = 0;
             foreach (T item in items)
             {
                 result = result.Add(item);
+                if ((++count & 0xFFFF) == 0)
+                {
+                    OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();   // as in Reorganize
+                }
             }
 
             return result;
@@ -353,6 +358,13 @@ namespace OutSmart.DAXon.Collections.Zeno
                     combinedSegment.AddRange(masterList[i]);
                     masterList[i - 1] = combinedSegment;
                     masterList.RemoveAt(i);
+
+                    // A sequence doubling from step to step of a loop outgrows the loop's own checks, whose stride grew
+                    // while the steps were cheap: a big merge looks at the time and memory limits.
+                    if (priorSize + segSize >= 65536)
+                    {
+                        OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();
+                    }
                 }
             }
 
