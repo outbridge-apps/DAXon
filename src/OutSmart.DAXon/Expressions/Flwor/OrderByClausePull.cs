@@ -71,10 +71,16 @@ namespace OutSmart.DAXon.Expressions.Flwor
         // ClassCastException. Stability is guaranteed by the originalPosition tie-break in the comparator.
         internal static void SortTupleArray(List<ObjectToBeSorted> tupleArray, IAtomicComparer[] comparers)
         {
+            int comparisons = 0;
             try
             {
                 tupleArray.Sort((a, b) =>
                 {
+                    if ((++comparisons & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeoutNow();   // as in SortedIterator: nothing else stops a List.Sort
+                    }
+
                     for (int i = 0; i < comparers.Length; i++)
                     {
                         int comp = comparers[i].CompareAtomicValues(a.sortKeyValues[i], b.sortKeyValues[i]);

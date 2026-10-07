@@ -60,7 +60,7 @@ namespace OutSmart.DAXon.Functions
             // single DoubleValue -> compare raw doubles with the exact semantics of the comparer's
             // double/double branch (NaN first, +-0 equal, position tie-break), skipping the
             // per-comparison type tests, virtual comparer call and double unboxing (n log n of them).
-            // Cannot throw, so the non-comparable-types handling below does not apply.
+            // Throws only the run's limits, so the non-comparable-types handling below does not apply.
             bool allDoubles = true;
             foreach (ItemToBeSorted m in inputList)
             {
@@ -77,14 +77,28 @@ namespace OutSmart.DAXon.Functions
 
             if (allDoubles)
             {
-                inputList.Sort((a, b) =>
+                int flatComparisons = 0;
+                try
                 {
-                    double x = a.dkey, y = b.dkey;
-                    int result = double.IsNaN(x)
-                        ? (double.IsNaN(y) ? 0 : -1)
-                        : double.IsNaN(y) ? +1 : x == y ? 0 : x < y ? -1 : +1;
-                    return result == 0 ? a.originalPosition - b.originalPosition : result;
-                });
+                    inputList.Sort((a, b) =>
+                    {
+                        if ((++flatComparisons & 1023) == 0)
+                        {
+                            Core.Controller.CheckActiveTimeoutNow();
+                        }
+
+                        double x = a.dkey, y = b.dkey;
+                        int result = double.IsNaN(x)
+                            ? (double.IsNaN(y) ? 0 : -1)
+                            : double.IsNaN(y) ? +1 : x == y ? 0 : x < y ? -1 : +1;
+                        return result == 0 ? a.originalPosition - b.originalPosition : result;
+                    });
+                }
+                catch (InvalidOperationException e) when (e.InnerException is XPathException limit && limit.IsRunLimit())
+                {
+                    throw limit;
+                }
+
                 List<IItem> flatOutput = new List<IItem>(inputList.Count);
                 foreach (ItemToBeSorted member in inputList)
                 {
@@ -94,10 +108,17 @@ namespace OutSmart.DAXon.Functions
                 return new SequenceExtent.Of<IItem>(flatOutput);
             }
 
+            int comparisons = 0;
             try
             {
                 inputList.Sort((a, b) =>
                 {
+                    // Nothing else stops a List.Sort: a million string keys make some twenty million comparisons.
+                    if ((++comparisons & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeoutNow();
+                    }
+
                     int result = ArraySort.CompareSortKeys(a.sortKey, b.sortKey, atomicComparer);
                     if (result == 0)
                     {

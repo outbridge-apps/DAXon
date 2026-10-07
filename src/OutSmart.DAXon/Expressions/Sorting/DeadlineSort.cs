@@ -51,9 +51,11 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
             public int Compare(NodeInfo a, NodeInfo b)
             {
+                // The clock itself: the stride the loop that gathered the nodes grew would put the first look millions
+                // of comparisons away.
                 if ((++comparisons & 1023) == 0)
                 {
-                    Core.Controller.CheckActiveTimeout();
+                    Core.Controller.CheckActiveTimeoutNow();
                 }
 
                 return inner.Compare(a, b);

@@ -247,6 +247,10 @@ namespace OutSmart.DAXon.Expressions.Sorting
             {
                 throw new XPathException("Non-comparable types found while sorting: " + e.Message).WithErrorCode(hostLanguage == HostLanguage.XSLT ? "XTDE1030" : "XPTY0004");
             }
+            catch (InvalidOperationException e) when (e.InnerException is XPathException x && x.IsRunLimit())
+            {
+                throw x;   // the time or memory limit, which SortComparer looks at
+            }
             catch (InvalidOperationException e)
             {
                 // .NET Array.Sort wraps comparator exceptions in InvalidOperationException ("Failed to
@@ -1101,6 +1105,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private sealed class SortComparer : IComparer<ObjectToBeSorted>
         {
             private IAtomicComparer[] comparators;
+            private int comparisons;
             public SortComparer(IAtomicComparer[] comparators)
             {
                 this.comparators = comparators;
@@ -1108,6 +1113,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
             public int Compare(ObjectToBeSorted a, ObjectToBeSorted b)
             {
+                // Nothing else stops an Array.Sort: 1.5M keys under lang=de make 30M comparisons, 15 s on .NET Framework.
+                if ((++comparisons & 1023) == 0)
+                {
+                    Core.Controller.CheckActiveTimeoutNow();
+                }
+
                 try
                 {
                     if (comparators.Length == 1)

@@ -35,6 +35,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             IItem item;
             while ((item = iterator.Next()) != null)
             {
+                Core.Controller.CheckActiveTimeoutPerStep();   // one call of the key, as in array:sort
                 ItemToBeSorted member = new ItemToBeSorted();
                 member.value = item;
                 member.originalPosition = i++;

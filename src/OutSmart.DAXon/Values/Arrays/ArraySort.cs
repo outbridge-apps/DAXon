@@ -76,10 +76,16 @@ namespace OutSmart.DAXon.Values.Arrays
             }
 
             IAtomicComparer atomicComparer = AtomicSortComparer.MakeSortComparer(collation, StandardNames.XS_ANY_ATOMIC_TYPE, context);
+            int comparisons = 0;
             try
             {
                 inputList.Sort((a, b) =>
                 {
+                    if ((++comparisons & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeoutNow();   // as in fn:sort: nothing else stops a List.Sort
+                    }
+
                     int result = CompareSortKeys(a.sortKey, b.sortKey, atomicComparer);
                     if (result == 0)
                     {
