@@ -127,7 +127,7 @@ namespace OutSmart.DAXon.Core
                 switch (strengthAtt)
                 {
                     case "primary":
-                        comparer.Options = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreSymbols;
+                        comparer.UsePrimaryStrength();
                         break;
                     case "secondary":
                         comparer.Options = CompareOptions.IgnoreCase;
@@ -172,7 +172,7 @@ namespace OutSmart.DAXon.Core
             {
                 if (ignore.Equals("yes") && strengthAtt == null)
                 {
-                    comparer.Options = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace | CompareOptions.IgnoreSymbols;
+                    comparer.UsePrimaryStrength();   // Java: setStrength(PRIMARY)
                 }
                 else if (ignore.Equals("no")) { /* no-op */ }
                 else
@@ -191,6 +191,15 @@ namespace OutSmart.DAXon.Core
             {
                 comparer.Options = CompareOptions.IgnoreCase;
                 stringCollator = OutSmart.DAXon.Expressions.Sorting.CaseFirstCollator.MakeCaseOrderedCollator(uri, stringCollator, caseOrder);
+            }
+
+            // alternate=blanked|shifted: punctuation and symbols do not count (UCA variable weighting). Saxon-HE's Java
+            // collator ignores the keyword; the F&O examples of the substring functions need it, and passed only because
+            // primary strength used to drop every symbol.
+            string alternate = props.GetProperty("alternate");
+            if ((alternate == "blanked" || alternate == "shifted") && !comparer.Ordinal)
+            {
+                comparer.Options |= CompareOptions.IgnoreSymbols;
             }
 
             // alphanumeric=yes|codepoint  (pure algorithm; byte-identical to Java)
@@ -265,7 +274,7 @@ namespace OutSmart.DAXon.Core
                     // identical strength: the value's own UTF-16 bytes are the key (equal strings -> equal keys)
                     return new Base64BinaryValue(Encoding.BigEndianUnicode.GetBytes(value));
                 }
-                SortKey sk = cic.CompareInfo.GetSortKey(value, cic.Options);
+                SortKey sk = cic.CompareInfo.GetSortKey(cic.Visible(value), cic.Options);
                 return new Base64BinaryValue(sk.KeyData);
             }
             // Fallback: codepoint-equal key (equal strings -> equal keys). Not a locale sort key, but
@@ -303,14 +312,43 @@ namespace OutSmart.DAXon.Core
         // models Java's IDENTICAL strength (full code-unit comparison).
         internal sealed class CompareInfoComparer : IComparer<string>
         {
+            private CompareOptions options;
+
             public CompareInfo CompareInfo { get; }
-            public CompareOptions Options { get; set; }
             public bool Ordinal { get; set; }
+
+            // Setting the options sets another strength, as Java's setStrength does for case-order: spaces and dashes
+            // count again.
+            public CompareOptions Options
+            {
+                get => options;
+                set
+                {
+                    options = value;
+                    DropsSpacesAndDashes = false;
+                }
+            }
+
+            // Primary strength as Java's collator has it: spaces and dashes are dropped (PrimaryIgnorables), other
+            // punctuation counts. IgnoreSymbols dropped all of it: "C#" equalled "C" and "1.5" equalled "15".
+            public bool DropsSpacesAndDashes { get; private set; }
 
             public CompareInfoComparer(CompareInfo compareInfo, CompareOptions options)
             {
                 CompareInfo = compareInfo;
                 Options = options;
+            }
+
+            public void UsePrimaryStrength()
+            {
+                Options = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace;
+                DropsSpacesAndDashes = true;
+            }
+
+            // The text the comparison sees.
+            public string Visible(string s)
+            {
+                return DropsSpacesAndDashes ? PrimaryIgnorables.Strip(s) : s;
             }
 
             public int Compare(string x, string y)
@@ -319,7 +357,7 @@ namespace OutSmart.DAXon.Core
                 {
                     return string.CompareOrdinal(x, y);
                 }
-                return CompareInfo.Compare(x, y, Options);
+                return CompareInfo.Compare(Visible(x), Visible(y), Options);
             }
         }
     }
