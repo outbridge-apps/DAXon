@@ -158,6 +158,15 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return count;
         }
 
+        // The items being sorted: the array, a record each with its key, and the items as a few of them tell.
+        private static readonly Func<object, long> Sizer = o =>
+        {
+            var s = (SortedIterator)o;
+            ObjectToBeSorted[] v = s.values;
+            int n = s.count;
+            return v == null || n == 0 ? 0 : 24 + 8L * v.Length + (72 + Core.MemoryLedger.MemberBytes(v[n / 2]?.value)) * n;
+        };
+
         protected virtual void BuildArray()
         {
             int allocated = SequenceTool.SupportsGetLength(@base) ? SequenceTool.GetLength(@base) : 100;
@@ -202,6 +211,10 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
                 // make the sort stable by adding the record number
                 itbs.originalPosition = count++;
+                if (count == Core.MemoryLedger.BigCount)
+                {
+                    Core.MemoryLedger.Hold(this, Sizer);   // summed as it grows
+                }
             }
 
 

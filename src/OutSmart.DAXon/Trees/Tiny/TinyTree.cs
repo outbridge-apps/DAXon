@@ -73,23 +73,28 @@ namespace OutSmart.DAXon.Trees.Tiny
             return found;
         }
 
-        // What the tree holds, for the memory limit of a call it is handed to (ProcessorOptions.MaxMemoryBytes): its
-        // node, attribute and namespace arrays, its text and its attribute values. Small indexes are left out.
+        // What the tree holds, for a call's memory limit (ProcessorOptions.MaxMemoryBytes): its node, attribute and
+        // namespace arrays, its text, its attribute values and its large namespace maps. Small indexes are left out.
         internal long RetainedBytes()
         {
             return Size(nodeKind, 1) + Size(depth, 2) + Size(next, 4) + Size(alpha, 4) + Size(beta, 4) + Size(nameCode, 4)
                 + Size(prior, 4) + Size(typeArray, 8) + Size(typedValueArray, 8) + Size(lineNumbers, 4) + Size(columnNumbers, 4)
                 + Size(attParent, 4) + Size(attCode, 4) + Size(attValue, 8) + Size(attTypedValue, 8) + Size(attType, 8)
                 + Size(namespaceMaps, 8) + (textBuffer?.RetainedBytes() ?? 0) + 2L * (commentBuffer?.Length32() ?? 0)
-                + AttributeValueBytes();
+                + AttributeValueBytes() + namespaceBytes + TreeOverhead;
         }
+
+        // The tree's own objects and its arrays' headers, which a small tree mostly consists of (measured: 300k one-element
+        // trees held 1.2 KB each).
+        private const int TreeOverhead = 1100;
 
         private static long Size(Array array, int width)
         {
             return array == null ? 0 : (long)array.Length * width;
         }
 
-        // Summed once: a built tree no longer changes, and a tree handed to many calls is measured for each.
+        // Attributes are only ever appended, so the sum goes on from the last one: a tree being built is summed again
+        // and again, and a tree handed to many calls is measured for each.
         private long[] attributeValueBytes;   // {attributes summed, their bytes}, replaced whole
 
         private long AttributeValueBytes()
@@ -100,8 +105,9 @@ namespace OutSmart.DAXon.Trees.Tiny
                 return memo[1];
             }
 
-            long bytes = 0;
-            for (int i = 0; i < numberOfAttributes; i++)
+            int from = memo != null && memo[0] < numberOfAttributes ? (int)memo[0] : 0;
+            long bytes = from > 0 ? memo[1] : 0;
+            for (int i = from; i < numberOfAttributes; i++)
             {
                 string value = attValue[i];
                 if (value != null)
@@ -112,6 +118,32 @@ namespace OutSmart.DAXon.Trees.Tiny
 
             attributeValueBytes = new long[] { numberOfAttributes, bytes };
             return bytes;
+        }
+
+        // A namespace map binding one more prefix per level of nesting copies its parent's, so a deep tree's maps grow
+        // with the square of its depth. Maps this large count their contents; trees share the small ones.
+        private const int BigNamespaceMap = 256;
+        private long namespaceBytes;
+
+        // A tree that grows large is entered in the ledger of the call building it, which then sums it as it grows; a
+        // small one is sampled once built.
+        private bool inLedger;
+        private static readonly Func<object, long> Sizer = t => ((TinyTree)t).RetainedBytes();
+
+        private void Grown()
+        {
+            if (!inLedger && RetainedBytes() >= MemoryLedger.Big)
+            {
+                inLedger = true;
+                MemoryLedger.Hold(this, Sizer);
+            }
+        }
+
+        // RetainedBytes() without walking the attribute values or the text segments.
+        private long EstimatedBytes()
+        {
+            return 19L * nodeKind.Length + 16L * attParent.Length + 2L * textBuffer.Length() + 8L * namespaceMaps.Length
+                + namespaceBytes + TreeOverhead;
         }
 
         public byte[] nodeKind;
@@ -319,6 +351,8 @@ namespace OutSmart.DAXon.Trees.Tiny
                     Array.Resize(ref lineNumbers, k);
                     Array.Resize(ref columnNumbers, k);
                 }
+
+                Grown();
             }
         }
 
@@ -345,6 +379,8 @@ namespace OutSmart.DAXon.Trees.Tiny
                 {
                     Array.Resize(ref attTypedValue, k);
                 }
+
+                Grown();
             }
         }
 
@@ -360,6 +396,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                 }
 
                 Array.Resize(ref namespaceMaps, k);
+                Grown();
             }
         }
 
@@ -424,6 +461,11 @@ namespace OutSmart.DAXon.Trees.Tiny
         public void AppendChars(UnicodeString chars)
         {
             textBuffer.AppendUnicodeString(chars); //        chars.supplyContent(textBuffer, 0, chars.length());
+            if (!inLedger && textBuffer.Length() >= MemoryLedger.BigChars)
+            {
+                Grown();
+            }
+
             //        ensureTextCapacity(1);
             //        textChunks[textChunksUsed++] = chars;
         }
@@ -484,6 +526,12 @@ namespace OutSmart.DAXon.Trees.Tiny
             }
 
             prefixPool.Condense();
+            if (!inLedger)
+            {
+                inLedger = true;
+                MemoryLedger.Active?.Sample(this, EstimatedBytes());
+            }
+
             statistics.UpdateStatistics(numberOfNodes, numberOfAttributes, numberOfNamespaces, textBuffer, inputLength); //        System.Console.Error.println("STATS: " + averageNodes + ", " + averageAttributes + ", "
             //                + averageNamespaces + ", " + averageCharacters);
             //        if (charBufferLength * 3 < charBuffer.length ||
@@ -719,6 +767,11 @@ namespace OutSmart.DAXon.Trees.Tiny
             attParent[numberOfAttributes] = parent;
             attCode[numberOfAttributes] = nameCode;
             this.attValue[numberOfAttributes] = attValue.ToString();
+            if (!inLedger && attValue.Length >= MemoryLedger.BigChars)
+            {
+                Grown();
+            }
+
             if (!type.Equals(BuiltInAtomicType.UNTYPED_ATOMIC))
             {
                 InitializeAttributeTypeCodes();
@@ -912,6 +965,12 @@ namespace OutSmart.DAXon.Trees.Tiny
             lastAddedNsMap = nsMap;
             lastAddedNsIndex = numberOfNamespaces;
             numberOfNamespaces++;
+            int bindings = nsMap.Size();
+            if (bindings >= BigNamespaceMap)
+            {
+                namespaceBytes += 80 + 16L * bindings;
+                Grown();
+            }
         }
 
         public TinyNodeImpl GetNode(int nr)

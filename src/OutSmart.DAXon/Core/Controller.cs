@@ -112,7 +112,8 @@ namespace OutSmart.DAXon.Core
         private static DeadlineToken activeOnThread;
 
         // Snapshot of one run's deadline, shared between the arming Controller and the thread slot.
-        // Holds only value-typed state so a stale slot retains ~40 bytes, never the run's graph.
+        // Holds value-typed state and the memory ledger, whose references are weak: a stale slot keeps the
+        // ledger's entries, never the run's graph.
         internal sealed class DeadlineToken
         {
             internal bool hasDeadline;
@@ -121,13 +122,26 @@ namespace OutSmart.DAXon.Core
             internal string activity;   // what the limit stopped when not a transformation: "Compilation", "Parsing", ...
             internal int stackThreshold;   // the Processor's ProcessorOptions.StackSizeThreshold; 0 for the default
 
-            // ProcessorOptions.MaxMemoryBytes, 0 for none. The call has taken the thread's allocation counter less
-            // memoryBase; counting a tree it was handed lowers the base, as if the call had allocated the tree.
+            // ProcessorOptions.MaxMemoryBytes, 0 for none. What the call holds is in the ledger of memoryOwner - the call
+            // itself or the one it is nested in - made when something is first entered; the thread's allocation counter
+            // only tells when to sum it again.
             internal long memoryLimit;
-            internal long memoryBase;
-            internal long memoryInputs;   // of it the trees the call was handed, for the message
-            private long memoryTaken;     // a lazy result's count when it last went back to the host
+            private DeadlineToken memoryOwner;
+            private MemoryLedger memory;  // the owner's ledger, once made
+            private long memoryInputs;    // the owner's: the trees the call was handed
+            private long nextLook;        // the allocation counter at which the ledger is summed next
+            private long untilLook;       // allocations left to that sum when a lazy result last went back to the host
             private bool armed;           // a deadline or a memory limit: whether the throttles sample at all
+
+            // A call that makes nothing large allocates no ledger: a reused selector arms a token on every call.
+            internal MemoryLedger Ledger
+            {
+                get
+                {
+                    DeadlineToken owner = memoryOwner;
+                    return owner == null ? null : owner.memory ??= new MemoryLedger(owner.memoryLimit);
+                }
+            }
 
             // TWO independent clock-sampling throttles, one per class of call site. Reading the
             // clock costs ~25ns, far too much to do on every item of a hot iterator, so each class
@@ -158,45 +172,49 @@ namespace OutSmart.DAXon.Core
                 perStep.Reset(now);
             }
 
-            // A memory limit counted from now.
+            // A memory limit from now on, with a ledger of its own.
             internal void ArmMemory(long limit, long now)
             {
                 memoryLimit = limit;
-                memoryBase = OutSmart.DAXon.Internal.AllocationMeter.Read();
-                memoryInputs = 0;
+                memoryOwner = this;
+                memory = null;
+                nextLook = OutSmart.DAXon.Internal.AllocationMeter.Read() + MemoryLedger.StepOf(limit);
                 StartSampling(now);
             }
 
-            // A call nested in another continues that one's count: one limit for both.
+            // A call nested in another enters what it makes in that one's ledger: one limit for both.
             internal void ContinueMemory(DeadlineToken outer, long now)
             {
                 memoryLimit = outer.memoryLimit;
-                memoryBase = outer.memoryBase;
-                memoryInputs = outer.memoryInputs;
+                memoryOwner = outer.memoryOwner;
+                nextLook = OutSmart.DAXon.Internal.AllocationMeter.Read() + MemoryLedger.StepOf(memoryLimit);
                 StartSampling(now);
             }
 
             internal void ChargeInput(long bytes)
             {
-                memoryBase -= bytes;
-                memoryInputs += bytes;
+                if (bytes > 0)
+                {
+                    memoryOwner.memoryInputs += bytes;
+                    nextLook = long.MinValue;   // the next check sums
+                }
             }
 
-            // A lazy result goes back to the host, whose allocations until the next step are not the call's: the call keeps
-            // what it has taken, and the next step counts on from it, on whatever thread the host iterates.
+            // A lazy result goes back to the host, whose allocations until the next step do not bring the next sum nearer;
+            // the next step counts on, on whatever thread the host iterates.
             internal void PauseMemory()
             {
-                if (memoryLimit > 0)
+                if (memoryOwner != null)
                 {
-                    memoryTaken = OutSmart.DAXon.Internal.AllocationMeter.Read() - memoryBase;
+                    untilLook = nextLook - OutSmart.DAXon.Internal.AllocationMeter.Read();
                 }
             }
 
             internal void ResumeMemory()
             {
-                if (memoryLimit > 0)
+                if (memoryOwner != null)
                 {
-                    memoryBase = OutSmart.DAXon.Internal.AllocationMeter.Read() - memoryTaken;
+                    nextLook = OutSmart.DAXon.Internal.AllocationMeter.Read() + untilLook;
                 }
             }
 
@@ -243,20 +261,32 @@ namespace OutSmart.DAXon.Core
             }
 
             // Reading the counter costs about what reading the clock does, so input reads can afford it on every buffer.
+            // A runtime without the counter (.NET Framework 4.7.2) sums at every check.
             internal void CheckMemory()
             {
-                if (memoryLimit > 0 && OutSmart.DAXon.Internal.AllocationMeter.Read() - memoryBase > memoryLimit)
+                if (memoryOwner != null)
                 {
-                    throw MemoryExceeded();
+                    long allocated = OutSmart.DAXon.Internal.AllocationMeter.Read();
+                    if (allocated >= nextLook || !OutSmart.DAXon.Internal.AllocationMeter.IsAvailable)
+                    {
+                        long inputs = memoryOwner.memoryInputs;
+                        MemoryLedger ledger = memoryOwner.memory;
+                        long held = inputs;
+                        if (ledger != null ? ledger.Over(allocated, inputs, out held) : inputs > memoryLimit)
+                        {
+                            throw MemoryExceeded(held, inputs);
+                        }
+
+                        nextLook = OutSmart.DAXon.Internal.AllocationMeter.Read() + MemoryLedger.StepOf(memoryLimit);
+                    }
                 }
             }
 
-            private XPathException MemoryExceeded()
+            private XPathException MemoryExceeded(long held, long inputs)
             {
-                long taken = OutSmart.DAXon.Internal.AllocationMeter.Read() - memoryBase;
-                string handed = memoryInputs > 0 ? ", " + Size(memoryInputs) + " of it the trees it was handed" : "";
+                string handed = inputs > 0 ? ", " + Size(inputs) + " of it the trees it was handed" : "";
                 return new XPathException((activity ?? "Transformation") + " exceeded its memory limit of " + Size(memoryLimit)
-                    + " (ProcessorOptions.MaxMemoryBytes): " + Size(taken) + " counted" + handed, DAXonErrorCode.SXLM0003);
+                    + " (ProcessorOptions.MaxMemoryBytes): " + Size(held) + " held" + handed, DAXonErrorCode.SXLM0003);
             }
 
             private static string Size(long bytes)
@@ -362,12 +392,15 @@ namespace OutSmart.DAXon.Core
         // Whether the call on this thread has a memory limit: its input streams are then metered even when their length is known.
         internal static bool HasActiveMemoryLimit => activeOnThread?.memoryLimit > 0;
 
+        // The ledger of the call on this thread, when it has a memory limit: what the call builds is entered there.
+        internal static MemoryLedger ActiveLedger => activeOnThread?.Ledger;
+
         // The limits of the call running on this thread, which a lazy result it makes keeps; null when it has none.
         internal static DeadlineToken ActiveLimits => activeOnThread;
 
         /// <summary>
         /// A step of a lazy result the host iterates runs under the limits of the call that made it, whatever ran on the
-        /// thread since, and the host's allocations between steps are not counted. Returns the previous owner of the
+        /// thread since, and what the host does between steps is not the call's. Returns the previous owner of the
         /// slot, which the caller MUST give back to <see cref="EndLazyStep"/> (try/finally).
         /// </summary>
         internal static DeadlineToken BeginLazyStep(DeadlineToken limits)
@@ -514,7 +547,7 @@ namespace OutSmart.DAXon.Core
 
         /// <summary>
         /// Count the trees the host hands this run - in a context item, parameters, a selection - against its memory limit,
-        /// as if the run had allocated them: each once, by its size. Repeating it is harmless. A nested run counts nothing
+        /// as what the run holds: each once, by its size. Repeating it is harmless. A nested run counts nothing
         /// (the enclosing one did).
         /// </summary>
         internal void ChargeInput(ISequence value)

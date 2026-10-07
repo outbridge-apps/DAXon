@@ -105,6 +105,11 @@ namespace OutSmart.DAXon.Functions
                     mixed.Add(item);
                     if ((mixed.Count & 1023) == 0)
                     {
+                        if (mixed.Count == Core.MemoryLedger.BigCount)
+                        {
+                            Core.MemoryLedger.Hold(mixed, Core.MemoryLedger.ItemListSizer);   // summed as it grows
+                        }
+
                         Core.Controller.CheckActiveTimeoutNow();
                     }
                 }
@@ -118,6 +123,11 @@ namespace OutSmart.DAXon.Functions
                 list.Add(item);
                 if ((list.Count & 1023) == 0)
                 {
+                    if (list.Count == Core.MemoryLedger.BigCount)
+                    {
+                        Core.MemoryLedger.Hold(list, Core.MemoryLedger.ItemListSizer);   // summed as it grows
+                    }
+
                     Core.Controller.CheckActiveTimeoutNow();
                 }
 

@@ -52,6 +52,7 @@ namespace OutSmart.DAXon.Values.Maps
         {
             this.shape = shape;
             this.values = values;
+            OutSmart.DAXon.Core.MemoryLedger.SampleSmall(this, OutSmart.DAXon.Core.MemoryLedger.RecordBytes(values));   // its keys are its siblings'
         }
 
         public override IGroundedValue Get(AtomicValue key)

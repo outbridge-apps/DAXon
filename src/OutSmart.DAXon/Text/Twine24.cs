@@ -34,6 +34,7 @@ namespace OutSmart.DAXon.Text
         public Twine24(byte[] bytes)
         {
             this.bytes = bytes; //        if (Configuration.isAssertionsEnabled()) {
+            Held();
         }
 
         public Twine24(int[] codePoints, int used)
@@ -45,6 +46,17 @@ namespace OutSmart.DAXon.Text
                 bytes[j] = (byte)((c >> 16) & 0xff);
                 bytes[j + 1] = (byte)((c >> 8) & 0xff);
                 bytes[j + 2] = (byte)(c & 0xff);
+            }
+
+            Held();
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void Held()
+        {
+            if (bytes.Length >= 3 * OutSmart.DAXon.Core.MemoryLedger.BigChars)
+            {
+                OutSmart.DAXon.Core.MemoryLedger.HoldText(bytes);
             }
         }
 

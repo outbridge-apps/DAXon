@@ -45,6 +45,7 @@ namespace OutSmart.DAXon.Text
         public Twine8(byte[] bytes)
         {
             this.bytes = bytes;
+            Held();
         }
 
         public Twine8(char[] chars, int start, int len)
@@ -61,10 +62,22 @@ namespace OutSmart.DAXon.Text
 
                 bytes[i] = (byte)(c & 0xff);
             }
+
+            Held();
         }
         public Twine8(string str)
         {
             bytes = FromString(str);
+            Held();
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void Held()
+        {
+            if (bytes.Length >= MemoryLedger.BigChars)
+            {
+                MemoryLedger.HoldText(bytes);
+            }
         }
 
         // Latin-1 narrowing, one byte per char (UTF-8 would double-encode 0x80-0xFF and corrupt the twine).

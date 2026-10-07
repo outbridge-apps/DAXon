@@ -54,6 +54,10 @@ namespace OutSmart.DAXon.Expressions.Flwor
                     }
                     itbs.originalPosition = ++position;
                     tupleArray.Add(itbs);
+                    if (tupleArray.Count == Core.MemoryLedger.BigCount)
+                    {
+                        Core.MemoryLedger.Hold(tupleArray, TupleListSizer);   // summed as it grows
+                    }
                 }
                 SortTupleArray(tupleArray, comparers);
             }
@@ -64,6 +68,13 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
             return false;
         }
+
+        // The tuples an order by holds until sorted: a record each with its keys and the tuple's bindings.
+        internal static readonly Func<object, long> TupleListSizer = o =>
+        {
+            var tuples = (List<ObjectToBeSorted>)o;
+            return 24 + 8L * tuples.Capacity + 200L * tuples.Count;
+        };
 
         // Shared by the pull and push forms. List sorting wraps comparer exceptions in
         // InvalidOperationException (same gotcha as fn:sort, R5): unwrap an inner XPathException as-is and

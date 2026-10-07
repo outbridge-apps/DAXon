@@ -34,6 +34,34 @@ namespace OutSmart.DAXon.Trees.Linked
         private readonly Stack<NamespaceMap> namespaceStack = new Stack<NamespaceMap>();
         private bool allocateSequenceNumbers = true;
         private int nextNodeNumber = 1;
+        private bool inLedger;   // the tree grew large and is in the ledger of the call building it
+
+        // Bytes a node adds to the tree: its object, its child slot, its attributes and text, and a large namespace map of
+        // its own (one binding a prefix per level copies its parent's).
+        private void Charge(long bytes)
+        {
+            if (currentRoot is DocumentImpl doc)
+            {
+                doc.heldBytes += bytes;
+                if (!inLedger && doc.heldBytes >= MemoryLedger.Big)
+                {
+                    inLedger = true;
+                    MemoryLedger.Hold(doc, DocumentImpl.HeldSizer);
+                }
+            }
+        }
+
+        private static long ElementBytes(IAttributeMap attributes, NamespaceMap namespaces, NamespaceMap parentNamespaces)
+        {
+            long bytes = 128;
+            foreach (AttributeInfo att in attributes)
+            {
+                bytes += 88 + 2L * att.Value.Length;
+            }
+
+            int bindings = namespaces == null || ReferenceEquals(namespaces, parentNamespaces) ? 0 : namespaces.Size();
+            return bindings >= 256 ? bytes + 80 + 16L * bindings : bytes;
+        }
 
         public override NodeInfo CurrentRoot
         {
@@ -120,6 +148,8 @@ namespace OutSmart.DAXon.Trees.Linked
             DocumentImpl doc = new DocumentImpl();
             doc.SetMutable(durability == Durability.MUTABLE);
             currentRoot = doc;
+            inLedger = false;
+            doc.heldBytes = 400;   // the document node and the builder's share of the tree
             doc.SetSystemId(GetSystemId());
             doc.SetBaseURI(BaseURI);
             doc.SetConfiguration(config);
@@ -158,6 +188,11 @@ namespace OutSmart.DAXon.Trees.Linked
 
             currentNode.Compact(size[depth]);
             currentNode = null;
+            if (!inLedger && currentRoot is DocumentImpl doc)
+            {
+                inLedger = true;
+                MemoryLedger.Active?.Sample(doc, doc.heldBytes);
+            }
 
             // we're not going to use this Builder again so give the garbage collector
             // something to play with
@@ -195,6 +230,7 @@ namespace OutSmart.DAXon.Trees.Linked
             }
 
             ElementImpl elem = nodeFactory.MakeElementNode(currentNode, elemName, type, isNilled, suppliedAttributes, namespaceStack.Peek(), pipe, location, allocateSequenceNumbers ? nextNodeNumber++ : -1);
+            Charge(ElementBytes(suppliedAttributes, namespaces, (currentNode as ElementImpl)?.AllNamespaces));
 
             // the initial array used for pointing to children will be discarded when the exact number
             // of children in known. Therefore, it can be reused. So we allocate an initial array from
@@ -246,6 +282,7 @@ namespace OutSmart.DAXon.Trees.Linked
             if (!chars.IsEmpty())
             {
                 UnicodeString t = chars.Tidy();
+                Charge(64 + 2 * t.Length());
                 NodeInfo prev = currentNode.GetNthChild(size[depth] - 1);
                 if (prev is TextImpl)
                 {

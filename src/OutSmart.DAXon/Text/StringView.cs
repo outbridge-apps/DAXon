@@ -26,9 +26,15 @@ namespace OutSmart.DAXon.Text
         private readonly int[] _cps; // non-null only when _s contains a surrogate pair
         public override int Width => _cps != null ? 24 : 16;
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public StringView(string s)
         {
             _s = s ?? "";
+            if (_s.Length >= OutSmart.DAXon.Core.MemoryLedger.BigChars)
+            {
+                OutSmart.DAXon.Core.MemoryLedger.HoldText(_s);
+            }
+
             if (StringTool.ContainsSurrogates(_s))
             {
                 var list = new List<int>(_s.Length);

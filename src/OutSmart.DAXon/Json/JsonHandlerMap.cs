@@ -250,7 +250,13 @@ namespace OutSmart.DAXon.Json
             object top = stack.Peek();
             if (top is ArrayItem)
             {
-                ((SimpleArrayItem)top).GetMembers().Add(val.Materialize());
+                IList<IGroundedValue> members = ((SimpleArrayItem)top).GetMembers();
+                members.Add(val.Materialize());
+                if (members.Count == OutSmart.DAXon.Core.MemoryLedger.BigCount)
+                {
+                    SimpleArrayItem.HoldMembers(members);   // summed as it grows
+                }
+
                 return;
             }
 

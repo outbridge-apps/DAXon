@@ -339,6 +339,7 @@ namespace OutSmart.DAXon.Functions
             private readonly IStringCollator collator;
             private readonly IXPathContext context;
             private readonly HashSet<IAtomicMatchKey> lookup = new HashSet<IAtomicMatchKey>();
+            private static readonly Func<object, long> LookupSizer = o => 48 + 112L * ((HashSet<IAtomicMatchKey>)o).Count;   // a slot and a key each
             private IAction onDuplicates = null;
             public DistinctIterator(ISequenceIterator @base, IStringCollator collator, IXPathContext context)
             {
@@ -377,6 +378,11 @@ namespace OutSmart.DAXon.Functions
 
                     if (lookup.Add(key))
                     {
+                        if (lookup.Count == Core.MemoryLedger.BigCount)
+                        {
+                            Core.MemoryLedger.Hold(lookup, LookupSizer);   // summed as it grows
+                        }
+
 
                         // returns true if newly added (if not, keep looking)
                         return nextBase;

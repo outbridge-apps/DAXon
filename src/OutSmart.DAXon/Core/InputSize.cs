@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Core
         private const int Scanned = 1024;
 
         // seen: the document numbers counted already - numbers, so the call keeps no tree reachable. A tree numbered
-        // from firstOfCall on was made by the call itself, and its allocations count it already.
+        // from firstOfCall on was made by the call itself, and its ledger counts it already.
         internal static long Of(ISequence value, HashSet<long> seen, long firstOfCall)
         {
             if (value is IItem single)

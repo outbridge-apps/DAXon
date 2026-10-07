@@ -8,8 +8,8 @@ using System;
 namespace OutSmart.DAXon.Internal
 {
     /// <summary>
-    /// Bytes the current thread has allocated so far, what ProcessorOptions.MaxMemoryBytes counts. A call runs on one
-    /// thread, so the growth over a call is that call's alone, whatever else the process does meanwhile.
+    /// Bytes the current thread has allocated so far: the clock that tells a call when to sum its memory ledger again
+    /// (ProcessorOptions.MaxMemoryBytes). A call runs on one thread, so the growth over a call is that call's alone.
     /// </summary>
     internal static class AllocationMeter
     {

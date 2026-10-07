@@ -40,7 +40,31 @@ namespace OutSmart.DAXon.Values.Arrays
         public SimpleArrayItem(IList<IGroundedValue> members)
         {
             this._members = members;
+            if (members.Count >= MemoryLedger.BigCount)
+            {
+                HoldMembers(members);
+            }
+            else
+            {
+                MemoryLedger.Active?.Sample(this, 64 + 40L * members.Count);   // a chain of small arrays holds as much as a large one
+            }
         }
+
+        // A large member list, entered once in the ledger of the call making it; also for one still being filled.
+        internal static void HoldMembers(IList<IGroundedValue> members)
+        {
+            MemoryLedger.HoldOnce(members, -1, MembersSizer);
+        }
+
+        private static readonly Func<object, long> MembersSizer = o => MemoryLedger.ListBytes((IList<IGroundedValue>)o);
+
+        // The chunks a large array is collected in, summed as they grow.
+        private static readonly Func<object, long> ChunksSizer = o =>
+        {
+            var chunks = (List<IGroundedValue[]>)o;
+            long n = (long)chunks.Count * COLLECT_CHUNK;
+            return n == 0 ? 0 : 24 + 8 * n + MemoryLedger.MembersBytes(chunks[0], COLLECT_CHUNK) / COLLECT_CHUNK * n;
+        };
 
         public static SimpleArrayItem MakeSimpleArrayItem(ISequenceIterator input)
         {
@@ -79,6 +103,11 @@ namespace OutSmart.DAXon.Values.Arrays
                 if (used == COLLECT_CHUNK)
                 {
                     chunks.Add(cur);
+                    if (chunks.Count == 1)
+                    {
+                        MemoryLedger.Hold(chunks, ChunksSizer);
+                    }
+
                     cur = new IGroundedValue[COLLECT_CHUNK];
                     used = 0;
                 }

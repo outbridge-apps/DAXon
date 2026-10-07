@@ -44,7 +44,16 @@ namespace OutSmart.DAXon.Text
                 return v == 1;
             }
         }
-        public BMPString(string s) { _s = s ?? ""; }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public BMPString(string s)
+        {
+            _s = s ?? "";
+            if (_s.Length >= OutSmart.DAXon.Core.MemoryLedger.BigChars)
+            {
+                OutSmart.DAXon.Core.MemoryLedger.HoldText(_s);
+            }
+        }
+
         public static UnicodeString Of(string s) => new BMPString(s);
         public override long Length() => _s.Length;
         public override bool IsEmpty() => _s.Length == 0;

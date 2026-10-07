@@ -90,9 +90,10 @@ namespace OutSmart.DAXon.XPath
             ArmDeadline(context);
             Controller controller = context.GetController();
             controller.ChargeInput(context.GetContextItem());
-            foreach (ISequence value in context.GetStackFrame().StackFrameValues)
+            ISequence[] slots = context.GetStackFrame().StackFrameValues;
+            for (int i = 0; i < numberOfExternalVariables && i < slots.Length; i++)
             {
-                controller.ChargeInput(value);
+                controller.ChargeInput(slots[i]);   // the variables the host set; the slots after them are the last evaluation's
             }
         }
 

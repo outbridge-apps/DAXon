@@ -17,9 +17,33 @@ namespace OutSmart.DAXon.Text
         private readonly string _s;
         public char[] CharArray => _s.ToCharArray(); // batch6: real UTF8Writer fast path
         public override int Width => 16;
-        public Twine16(string s) { _s = s ?? ""; }
-        public Twine16(char[] chars) { _s = new string(chars); }
-        public Twine16(char[] chars, int offset, int length) { _s = new string(chars, offset, length); }
+        public Twine16(string s)
+        {
+            _s = s ?? "";
+            Held();
+        }
+
+        public Twine16(char[] chars)
+        {
+            _s = new string(chars);
+            Held();
+        }
+
+        public Twine16(char[] chars, int offset, int length)
+        {
+            _s = new string(chars, offset, length);
+            Held();
+        }
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private void Held()
+        {
+            if (_s.Length >= OutSmart.DAXon.Core.MemoryLedger.BigChars)
+            {
+                OutSmart.DAXon.Core.MemoryLedger.HoldText(_s);
+            }
+        }
+
         public override long Length() => _s.Length;
         public override bool IsEmpty() => _s.Length == 0;
         public override int CodePointAt(long index) => _s[(int)index];

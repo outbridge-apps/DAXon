@@ -31,6 +31,7 @@ namespace OutSmart.DAXon.Values.Maps
         {
             this.key = key;
             this.value = value;
+            MemoryLedger.SampleSmall(this, 48);   // a chain of maps, each holding the last, holds as much as a large one
         }
 
         public AtomicValue GetKey()

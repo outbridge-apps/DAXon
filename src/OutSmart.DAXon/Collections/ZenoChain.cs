@@ -91,7 +91,7 @@ namespace OutSmart.DAXon.Collections.Zeno
                         combinedSegment.AddRange(segment);
 
                         // add the combined segment to the master list, in place of the first of the pair
-                        masterList2[index] = combinedSegment;
+                        masterList2[index] = Held(combinedSegment);
 
                         // remove the second of the pair segment
                         masterList2.RemoveAt(index + 1);
@@ -167,7 +167,7 @@ namespace OutSmart.DAXon.Collections.Zeno
                         List<T> combinedSegment = new List<T>();
                         combinedSegment.AddRange(segment);
                         combinedSegment.AddRange(nextSegment);
-                        masterList2[index] = combinedSegment;
+                        masterList2[index] = Held(combinedSegment);
                         masterList2.RemoveAt(index - 1);
 
                         // Now add a new singleton segment at the start
@@ -226,7 +226,7 @@ namespace OutSmart.DAXon.Collections.Zeno
                     replacementSegment.AddRange(segment.GetRange(0, (n - offset) - (0)));
                     replacementSegment.Add(value);
                     replacementSegment.AddRange(segment.GetRange(n - offset + 1, (segment.Count) - (n - offset + 1)));
-                    masterList2.Add(replacementSegment);
+                    masterList2.Add(Held(replacementSegment));
                     done = true;
                 }
                 else
@@ -264,7 +264,7 @@ namespace OutSmart.DAXon.Collections.Zeno
                         List<T> replacementSegment = new List<T>(segment.Count - 1);
                         replacementSegment.AddRange(segment.GetRange(0, (n - offset) - (0)));
                         replacementSegment.AddRange(segment.GetRange(n - offset + 1, (segment.Count) - (n - offset + 1)));
-                        masterList2.Add(replacementSegment);
+                        masterList2.Add(Held(replacementSegment));
                     }
 
                     done = true;
@@ -319,7 +319,7 @@ namespace OutSmart.DAXon.Collections.Zeno
                     replacementSegment.AddRange(segment.GetRange(0, (n - offset) - (0)));
                     replacementSegment.Add(value);
                     replacementSegment.AddRange(segment.GetRange(n - offset, (segment.Count) - (n - offset)));
-                    masterList2.Add(replacementSegment);
+                    masterList2.Add(Held(replacementSegment));
                     done = true;
                 }
                 else
@@ -356,7 +356,7 @@ namespace OutSmart.DAXon.Collections.Zeno
                     List<T> combinedSegment = new List<T>(priorSize + segSize);
                     combinedSegment.AddRange(masterList[i - 1]);
                     combinedSegment.AddRange(masterList[i]);
-                    masterList[i - 1] = combinedSegment;
+                    masterList[i - 1] = Held(combinedSegment);
                     masterList.RemoveAt(i);
 
                     // A sequence doubling from step to step of a loop outgrows the loop's own checks, whose stride grew
@@ -430,7 +430,7 @@ namespace OutSmart.DAXon.Collections.Zeno
                     {
 
                         // ISegment spans the end position
-                        newMaster.Add(new List<T>(segment.GetRange(0, (remainingLength) - (0))));
+                        newMaster.Add(Held(new List<T>(segment.GetRange(0, (remainingLength) - (0)))));
                         return new ZenoChain<T>(newMaster);
                     }
                 }
@@ -448,12 +448,12 @@ namespace OutSmart.DAXon.Collections.Zeno
 
                             // special case for tail() - break a long first segment to reduce the cost next time.
                             // This assumes it's likely tail() will be called again on the sublist
-                            newMaster.Add(new List<T>(segment.GetRange(localStart, (localStart + 64) - (localStart))));
-                            newMaster.Add(new List<T>(segment.GetRange(localStart + 64, (segment.Count) - (localStart + 64))));
+                            newMaster.Add(Held(new List<T>(segment.GetRange(localStart, (localStart + 64) - (localStart)))));
+                            newMaster.Add(Held(new List<T>(segment.GetRange(localStart + 64, (segment.Count) - (localStart + 64)))));
                         }
                         else
                         {
-                            newMaster.Add(new List<T>(segment.GetRange(localStart, (segment.Count) - (localStart))));
+                            newMaster.Add(Held(new List<T>(segment.GetRange(localStart, (segment.Count) - (localStart)))));
                         }
 
                         remainingLength -= (segment.Count - localStart);
@@ -463,7 +463,7 @@ namespace OutSmart.DAXon.Collections.Zeno
                     {
 
                         // segment spans both the start and end positions
-                        newMaster.Add(new List<T>(segment.GetRange(localStart, (localStart + remainingLength) - (localStart))));
+                        newMaster.Add(Held(new List<T>(segment.GetRange(localStart, (localStart + remainingLength) - (localStart)))));
                         return new ZenoChain<T>(newMaster);
                     }
                 }
@@ -482,6 +482,19 @@ namespace OutSmart.DAXon.Collections.Zeno
 
             return new ZenoChain<T>(newMaster);
         }
+
+        // A large segment is entered in the ledger of the call making it, once: the chains that share it hold it.
+        private static List<T> Held(List<T> segment)
+        {
+            if (segment.Count >= OutSmart.DAXon.Core.MemoryLedger.BigCount)
+            {
+                OutSmart.DAXon.Core.MemoryLedger.Hold(segment, SegmentSizer);
+            }
+
+            return segment;
+        }
+
+        private static readonly Func<object, long> SegmentSizer = o => OutSmart.DAXon.Core.MemoryLedger.ListBytes((List<T>)o);
 
         // copy.
         public int Size()

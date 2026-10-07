@@ -27,16 +27,19 @@ namespace OutSmart.DAXon.Values.Maps
         public DictionaryMap()
         {
             hashMap = new Dictionary<string, IGroundedValue>();
+            MemoryLedger.SampleSmall(this, 160);
         }
 
         public DictionaryMap(int size)
         {
             hashMap = new Dictionary<string, IGroundedValue>(size);
+            MemoryLedger.SampleSmall(this, 160);
         }
 
         public void InitialPut(string key, IGroundedValue value)
         {
             hashMap[key] = value;
+            MemoryLedger.SampleSmall(this, 64 + 2L * key.Length + MemoryLedger.MemberBytes(value));   // the entry, which the map holds
         }
 
         public override IGroundedValue Get(AtomicValue key)

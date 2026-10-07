@@ -54,14 +54,31 @@ namespace OutSmart.DAXon.Expressions.Flwor
             {
                 group.Add(objectToBeGrouped);
                 map[key] = group;
+                if (group.Count == Core.MemoryLedger.BigCount)
+                {
+                    Core.MemoryLedger.Hold(group, GroupSizer);   // a large group, summed as it grows
+                }
             }
             else
             {
                 var list = new List<GroupByClause.ObjectToBeGrouped>();
                 list.Add(objectToBeGrouped);
                 map[key] = list;
+                if (map.Count == Core.MemoryLedger.BigCount)
+                {
+                    Core.MemoryLedger.Hold(map, GroupsSizer);   // many groups, summed as they grow
+                }
             }
         }
+
+        // A group's tuples, and a map's groups with a tuple each: the records, their keys and their bindings.
+        private static readonly Func<object, long> GroupSizer = o =>
+        {
+            var group = (List<GroupByClause.ObjectToBeGrouped>)o;
+            return 24 + 8L * group.Capacity + 160L * group.Count;
+        };
+
+        private static readonly Func<object, long> GroupsSizer = o => 48 + 280L * ((Dictionary<object, List<GroupByClause.ObjectToBeGrouped>>)o).Count;
 
         internal static void CheckGroupingValues(ISequence[] groupingValues)
         {

@@ -47,6 +47,7 @@ namespace OutSmart.DAXon.Values.Maps
         {
             this.root = null;
             this.entries = 0;
+            MemoryLedger.SampleSmall(this, 72);   // its entries are sampled on their own
         }
 
         // type.
@@ -54,6 +55,7 @@ namespace OutSmart.DAXon.Values.Maps
         {
             this.root = root;
             entries = -1;
+            MemoryLedger.SampleSmall(this, 72);
         }
 
         // type.
@@ -245,7 +247,9 @@ namespace OutSmart.DAXon.Values.Maps
             IAtomicMatchKey amk = MakeKey(key);
             bool isNew = MapTrie.Get(root, amk) == null;
             bool empty = IsEmpty();
-            object root2 = MapTrie.Put(root, amk, new KeyValuePair(key, value, amk));
+            KeyValuePair pair = new KeyValuePair(key, value, amk);
+            object root2 = MapTrie.Put(root, amk, pair);
+            MemoryLedger.SampleEntry(pair, key, value);
             HashTrieMap t2 = new HashTrieMap(root2);
             t2.valueCardinality = this.valueCardinality;
             t2.keyUType = keyUType;
@@ -286,7 +290,9 @@ namespace OutSmart.DAXon.Values.Maps
             internal void Put(IAtomicMatchKey amk, AtomicValue key, IGroundedValue value, bool isNew)
             {
                 bool wasEmpty = count == 0;
-                trie = MapTrie.PutOwned(trie, amk, new KeyValuePair(key, value, amk));
+                KeyValuePair pair = new KeyValuePair(key, value, amk);
+                trie = MapTrie.PutOwned(trie, amk, pair);
+                MemoryLedger.SampleEntry(pair, key, value);
                 if (isNew)
                 {
                     count++;
@@ -307,6 +313,7 @@ namespace OutSmart.DAXon.Values.Maps
                 trie = MapTrie.PutIfAbsentOwned(trie, kvp.MatchKey, kvp, out bool inserted);
                 if (inserted)
                 {
+                    MemoryLedger.SampleEntry(kvp, key, value);
                     count++;
                     UpdateTypeInfoMemo(key, value, wasEmpty);
                 }
@@ -343,7 +350,9 @@ namespace OutSmart.DAXon.Values.Maps
             bool empty = IsEmpty();
             IAtomicMatchKey amk = MakeKey(key);
             bool exists = MapTrie.Get(root, amk) != null;
-            root = MapTrie.Put(root, amk, new KeyValuePair(key, value, amk));
+            KeyValuePair pair = new KeyValuePair(key, value, amk);
+            root = MapTrie.Put(root, amk, pair);
+            MemoryLedger.SampleEntry(pair, key, value);
             UpdateTypeInformation(key, value, empty);
             entries = -1;
             return exists;

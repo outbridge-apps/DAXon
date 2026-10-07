@@ -28,6 +28,10 @@ namespace OutSmart.DAXon.Trees.Linked
 {
     public sealed class DocumentImpl : ParentNodeImpl, ITreeInfo, IMutableDocumentInfo
     {
+        // What the tree holds, as its builder counts it, for the memory limit of the call building it.
+        internal long heldBytes;
+        internal static readonly Func<object, long> HeldSizer = d => ((DocumentImpl)d).heldBytes;
+
         private ElementImpl documentElement;
         private Dictionary<string, NodeInfo> idTable;
         private long documentNumber;

@@ -34,6 +34,18 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private IXPathContext keyContext;
         private int position = 0;
         protected IList<IList<IItem>> groups = new List<IList<IItem>>(40);
+
+        // Many groups: the iterator is entered in the ledger of the call grouping, which sums them as they grow.
+        private void GroupAdded()
+        {
+            if (groups.Count == Core.MemoryLedger.BigCount)
+            {
+                Core.MemoryLedger.Hold(this, GroupsSizer);
+            }
+        }
+
+        private static readonly Func<object, long> GroupsSizer = o => 48 + 200L * ((GroupByIterator)o).groups.Count;   // a group, its key, its slot
+
         protected IList<IAtomicSequence> groupKeys = new List<IAtomicSequence>(40);
         protected bool composite;
 
@@ -177,6 +189,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                                     UnicodeString keyString = spanBytes != null ? new Slice8(spanBytes, spanOff, spanOff + spanLen) : genericKey;
                                     grp = new TinyGrp(tree, row);
                                     groups.Add(grp);
+                                    GroupAdded();
                                     groupKeys.Add(StringValue.MakeUntypedAtomic(keyString));
                                     tHash[slot] = h;
                                     tKey[slot] = keyString;
@@ -390,6 +403,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             {
                 IList<IItem> newGroup = new Grp(item);
                 groups.Add(newGroup);
+                GroupAdded();
                 groupKeys.Add(key);
                 index[comparisonKey] = newGroup;
             }
@@ -455,6 +469,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 {
                     IList<IItem> newGroup = new Grp(item);
                     groups.Add(newGroup);
+                    GroupAdded();
                     groupKeys.Add(new AtomicArray(compositeKey));
                     index[cak] = newGroup;
                 }

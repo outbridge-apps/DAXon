@@ -180,6 +180,16 @@ namespace OutSmart.DAXon.Model
             }
         }
 
+        private static readonly Func<object, long> Sizer = o => ((MemoSequence)o).HeldBytes();
+
+        // The items read so far: their references, and their own bytes as the first chunk tells.
+        private long HeldBytes()
+        {
+            IItem[][] c = chunks;
+            int n = used;
+            return c == null ? 0 : 24 + 8L * n + OutSmart.DAXon.Core.MemoryLedger.MembersBytes(c[0], Chunk) / Chunk * n;
+        }
+
         private IItem Get(int i)
         {
             IItem[] r = reservoir;
@@ -207,6 +217,7 @@ namespace OutSmart.DAXon.Model
                 chunks = new IItem[8][];
                 chunks[0] = reservoir;
                 reservoir = null;
+                OutSmart.DAXon.Core.MemoryLedger.Hold(this, Sizer);   // summed as it grows
             }
 
             int ci = used >> 13;

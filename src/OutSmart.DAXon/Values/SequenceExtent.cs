@@ -28,10 +28,14 @@ namespace OutSmart.DAXon.Values
         public abstract UnicodeString UnicodeStringValue { get; }
         public static Of<IItem> From(ISequenceIterator iter)
         {
-            IList<IItem> list = new List<IItem>(!SequenceTool.SupportsGetLength(iter) ? 20 : ((ILastPositionFinder)iter).GetLength());
+            List<IItem> list = new List<IItem>(!SequenceTool.SupportsGetLength(iter) ? 20 : ((ILastPositionFinder)iter).GetLength());
             for (IItem item; (item = iter.Next()) != null;)
             {
                 list.Add(item);
+                if (list.Count == MemoryLedger.BigCount)
+                {
+                    MemoryLedger.HoldOnce(list, -1, MemoryLedger.ItemListSizer);   // summed as it grows
+                }
             }
 
             return new Of<IItem>(list);
@@ -121,7 +125,13 @@ namespace OutSmart.DAXon.Values
             public Of(IList<T> list)
             {
                 this.items = list;
+                if (list.Count >= MemoryLedger.BigCount)
+                {
+                    MemoryLedger.HoldOnce(list, -1, ListSizer);
+                }
             }
+
+            private static readonly Func<object, long> ListSizer = o => MemoryLedger.ListBytes((IList<T>)o);
 
             // Java stores Arrays.asList(items) — a view; a T[] already implements IList<T>
             public Of(T[] items) : this((IList<T>)items)

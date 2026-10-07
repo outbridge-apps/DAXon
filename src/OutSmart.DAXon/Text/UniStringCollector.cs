@@ -43,6 +43,7 @@ namespace OutSmart.DAXon.Text
             if (wide != null)
             {
                 wide.Append(chars.ToString());
+                WideGrown();
                 return this;
             }
 
@@ -103,6 +104,7 @@ namespace OutSmart.DAXon.Text
             if (wide != null)
             {
                 wide.Append(chars);
+                WideGrown();
                 return;
             }
 
@@ -118,6 +120,7 @@ namespace OutSmart.DAXon.Text
                     wide.Append((char)b);
                 }
 
+                WideGrown();
                 return;
             }
 
@@ -150,6 +153,8 @@ namespace OutSmart.DAXon.Text
             {
                 wide.Append(char.ConvertFromUtf32(codepoint));
             }
+
+            WideGrown();
         }
 
         public void WriteRepeatedAscii(byte asciiChar, int count)
@@ -189,6 +194,7 @@ namespace OutSmart.DAXon.Text
                         used = u;
                         SwitchToWide();
                         wide.Append(s, i, n - i);
+                        WideGrown();
                         return;
                     }
 
@@ -221,6 +227,33 @@ namespace OutSmart.DAXon.Text
             sealedLength += bytes.Length;
             bytes = new byte[CHUNK];
             used = 0;
+            Enter();
+        }
+
+        // A result grown large is entered in the ledger of the call building it, which then sums it as it grows.
+        private bool inLedger;
+        private static readonly Func<object, long> Sizer = o => ((UniStringCollector)o).HeldBytes();
+
+        private long HeldBytes()
+        {
+            return bytes.Length + (wide != null ? 2L * wide.Capacity : sealedLength);
+        }
+
+        private void Enter()
+        {
+            if (!inLedger)
+            {
+                inLedger = true;
+                OutSmart.DAXon.Core.MemoryLedger.Hold(this, Sizer);
+            }
+        }
+
+        private void WideGrown()
+        {
+            if (!inLedger && wide.Length >= OutSmart.DAXon.Core.MemoryLedger.BigChars)
+            {
+                Enter();
+            }
         }
 
         private void SwitchToWide()

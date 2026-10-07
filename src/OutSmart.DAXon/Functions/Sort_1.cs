@@ -34,6 +34,14 @@ namespace OutSmart.DAXon.Functions
             return DoSort(inputList, collation, context);
         }
 
+        // The items being sorted, with their keys: a record each, the key, and the item as the middle one tells.
+        internal static readonly Func<object, long> SortListSizer = o =>
+        {
+            var items = (List<ItemToBeSorted>)o;
+            int n = items.Count;
+            return n == 0 ? 0 : 24 + 8L * items.Capacity + (88 + Core.MemoryLedger.MemberBytes(items[n / 2].value)) * n;
+        };
+
         protected virtual List<ItemToBeSorted> GetItemsToBeSorted(ISequence input)
         {
             List<ItemToBeSorted> inputList = new List<ItemToBeSorted>();
@@ -47,6 +55,10 @@ namespace OutSmart.DAXon.Functions
                 member.originalPosition = i++;
                 member.sortKey = item.Atomize();
                 inputList.Add(member);
+                if (inputList.Count == Core.MemoryLedger.BigCount)
+                {
+                    Core.MemoryLedger.Hold(inputList, SortListSizer);   // summed as it grows
+                }
             }
 
             return inputList;

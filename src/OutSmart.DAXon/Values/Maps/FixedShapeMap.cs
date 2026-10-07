@@ -37,6 +37,7 @@ namespace OutSmart.DAXon.Values.Maps
         {
             this.shape = shape;
             this.values = values;
+            MemoryLedger.SampleSmall(this, MemoryLedger.RecordBytes(values));   // its keys are its shape's
         }
 
         // All keys are xs:string literals, so the key UType is constant.

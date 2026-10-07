@@ -63,14 +63,13 @@ namespace OutSmart.DAXon.Api
         }
 
         /// <summary>
-        /// Memory one engine call may take, in bytes: <see cref="Processor.DefaultMaxMemoryBytes"/> (500 MB) unless set,
+        /// Memory one engine call may hold, in bytes: <see cref="Processor.DefaultMaxMemoryBytes"/> (500 MB) unless set,
         /// null for no limit at all. A call - a compile, a document build, a transformation, a query, an XPath evaluation -
-        /// is counted from nothing, so calls running at once on one Processor do not add up. Counted are the trees the
-        /// host hands the call, by their size, and every byte the call allocates, including what it has already released
-        /// (a transformation typically allocates 3-5 times what it holds). Over the limit the call stops with SXLM0003,
-        /// which xsl:try does not catch. It is also the largest input accepted: a larger one is refused before it is read,
-        /// with the fetch's own error code. Allocations are counted on .NET and .NET Framework 4.8; the 4.7.2 runtime
-        /// checks only input sizes.
+        /// counts only what it holds itself, so calls running at once on one Processor do not add up. Counted are the trees
+        /// the host hands the call, by their size, and what the call builds and still holds - trees, strings, sequences,
+        /// maps, arrays, the buffers of sorts and groups - estimated; what it allocates and drops does not count. Over the
+        /// limit the call stops with SXLM0003, which xsl:try does not catch. It is also the largest input accepted: a larger
+        /// one is refused before it is read, with the fetch's own error code.
         /// </summary>
         public long? MaxMemoryBytes
         {

@@ -50,6 +50,10 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
             itbs.originalPosition = ++position;
             tupleArray.Add(itbs);
+            if (tupleArray.Count == Core.MemoryLedger.BigCount)
+            {
+                Core.MemoryLedger.Hold(tupleArray, OrderByClausePull.TupleListSizer);   // summed as it grows
+            }
         }
 
         public override void Dispose()
