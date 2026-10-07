@@ -385,7 +385,7 @@ namespace OutSmart.DAXon.Resources
             public string encoding;
             public ParseOptions parseOptions;
             public int onError = URIQueryParameters.ON_ERROR_FAIL;
-            // Capped like doc(): UrlStream holds only compressed bytes to the policy's MaxInputBytes.
+            // Capped like doc(): UrlStream holds only compressed bytes to the input cap (MaxMemoryBytes).
             public virtual System.IO.Stream GetInputStream(Configuration config)
             {
                 return InputSizeLimit.Apply(ResourceLoader.UrlStream(config, resourceUri, OutSmart.DAXon.Api.ResourceKind.Collection),

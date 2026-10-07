@@ -22,8 +22,8 @@ namespace OutSmart.DAXon.Resources
 {
     // Port of net.sf.saxon.resource.JarCollection (Saxon 12.9): the files of a ZIP archive (.zip, .jar,
     // .docx, .xlsx, or a jar: URI) as a collection, each member typed like a file in a directory and
-    // named jar:<archive>!/<entry>. The archive and every member it inflates are held to the policy's
-    // MaxInputBytes, so a small archive cannot inflate past the cap, and its ReadFilter is asked about
+    // named jar:<archive>!/<entry>. The archive and every member it inflates are held to the
+    // input cap (MaxMemoryBytes), so a small archive cannot inflate past it, and its ReadFilter is asked about
     // every member by that name. Upstream's URI listing read every other entry (it advanced twice per
     // loop); here every file entry is listed.
     internal sealed class JarCollection : AbstractResourceCollection

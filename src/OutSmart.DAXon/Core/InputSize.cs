@@ -14,6 +14,10 @@ namespace OutSmart.DAXon.Core
     // models (a DOM the host wraps) are not measured, and atomic values, maps and arrays are left out.
     internal static class InputSize
     {
+        // A sequence's trees are looked for among its first items. A host hands a document or a few; walking a million
+        // atomic values it hands took every call 100 ms and more, with the memory limit on by default.
+        private const int Scanned = 1024;
+
         // seen: the document numbers counted already - numbers, so the call keeps no tree reachable. A tree numbered
         // from firstOfCall on was made by the call itself, and its allocations count it already.
         internal static long Of(ISequence value, HashSet<long> seen, long firstOfCall)
@@ -24,10 +28,13 @@ namespace OutSmart.DAXon.Core
             }
 
             long bytes = 0;
-            ISequenceIterator iter = value.Iterate();
-            for (IItem item; (item = iter.Next()) != null;)
+            using (ISequenceIterator iter = value.Iterate())
             {
-                bytes += OfItem(item, seen, firstOfCall);
+                IItem item;
+                for (int n = 0; n < Scanned && (item = iter.Next()) != null; n++)
+                {
+                    bytes += OfItem(item, seen, firstOfCall);
+                }
             }
 
             return bytes;

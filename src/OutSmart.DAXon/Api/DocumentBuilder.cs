@@ -241,7 +241,7 @@ namespace OutSmart.DAXon.Api
                 InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), null, systemId, null, DtdUse, config), systemId, length);
         }
 
-        // Round B1: MaxInputBytes reads as a Processor-wide cap, but only resolver-routed fetches
+        // Round B1: the input cap reads as Processor-wide, but only resolver-routed fetches
         // and DocumentCache honoured it - a host feeding the builder directly had no cap at all.
         private long MaxInput => InputSizeLimit.MaxFor(config);
 

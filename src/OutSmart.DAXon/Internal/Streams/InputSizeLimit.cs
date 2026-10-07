@@ -5,7 +5,7 @@ using OutSmart.DAXon.Transformation;
 namespace OutSmart.DAXon.Internal.Streams
 {
     /// <summary>
-    /// Enforces the Processor's MaxInputBytes on resolver-fetched resources (doc/document/
+    /// Enforces the Processor's largest input (ProcessorOptions.MaxMemoryBytes) on resolver-fetched resources (doc/document/
     /// collection/unparsed-text/json-doc and compile-time includes): a seekable source is
     /// rejected up front by its exact length; an unseekable one (e.g. an HTTP response)
     /// aborts as soon as the running byte count crosses the cap. The error carries the
@@ -136,8 +136,8 @@ namespace OutSmart.DAXon.Internal.Streams
         internal static XPathException Oversized(long size, long max, string uri, string errorCode)
         {
             string sizePart = size >= 0 ? " (" + size + " bytes)" : "";
-            return new XPathException("Input resource" + sizePart + " exceeds the Processor's MaxInputBytes limit of "
-                + max + " bytes: " + uri).WithErrorCode(errorCode);
+            return new XPathException("Input resource" + sizePart + " exceeds the memory limit of "
+                + max + " bytes (ProcessorOptions.MaxMemoryBytes): " + uri).WithErrorCode(errorCode);
         }
 
         // Read-only pass-through counting wrapper for sources whose length is unknown up front.

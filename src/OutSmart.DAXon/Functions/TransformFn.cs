@@ -645,7 +645,7 @@ namespace OutSmart.DAXon.Functions
 
             // vendor-options (saxon:configuration / saxon:schema-validation) are not supported in this HE
             // port; the option is accepted and ignored.
-            Processor processor = new Processor(context.GetConfiguration());
+            Processor processor = new Processor(new ProcessorOptions { Configuration = context.GetConfiguration() });
             int languageVersion = GetRetainedStaticContext().GetPackageData().HostLanguageVersion;
             if (languageVersion == 0)
             {

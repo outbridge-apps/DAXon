@@ -116,7 +116,7 @@ namespace OutSmart.DAXon.Json
             int next = start;
             do
             {
-                // The tree can be far larger than the 150 MB *input* cap (temp trees are built
+                // The tree can be far larger than the input cap (temp trees are built
                 // in memory), so this long loop honours the transformation deadline like every
                 // other hot loop; CheckTimeout itself is stride-throttled.
                 controller?.CheckTimeout();

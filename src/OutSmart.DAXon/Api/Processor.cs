@@ -33,9 +33,18 @@ namespace OutSmart.DAXon.Api
         // this Processor. Both are PER ENGINE CALL, not per host request - see the doc comments.
         public static readonly TimeSpan DefaultTransformTimeout = TimeSpan.FromMinutes(1);
 
-        // A parsed tree retains roughly 3x the source text, so one 150 MB input alone holds
-        // ~450 MB; the cap keeps a single oversized document from exhausting the host.
-        public const long DefaultMaxInputBytes = 150L * 1024 * 1024;
+        /// <summary>
+        /// The memory limit of an engine call, and its largest input, when <see cref="ProcessorOptions.MaxMemoryBytes"/>
+        /// is not set: 500 MB.
+        /// </summary>
+        public const long DefaultMaxMemoryBytes = 500L * 1024 * 1024;
+
+        // 1.3.3's input cap and the default of its maxInputBytes parameters: from those constructors it means "not given".
+        private const long LegacyInputCap = 150L * 1024 * 1024;
+
+        /// <summary>1.3.3's default input cap. The largest input is <see cref="ProcessorOptions.MaxMemoryBytes"/> now.</summary>
+        [Obsolete("The largest input is ProcessorOptions.MaxMemoryBytes, by default DefaultMaxMemoryBytes.")]
+        public const long DefaultMaxInputBytes = LegacyInputCap;
 
         private const string ObsoleteLimits = "Use Processor(ProcessorOptions): TransformTimeout and MaxMemoryBytes.";
         private const string ObsoleteEdition = "licensedEdition has no effect (DAXon has one edition): use new Processor(), or Processor(ProcessorOptions) for limits.";
@@ -55,11 +64,10 @@ namespace OutSmart.DAXon.Api
         public TimeSpan TransformTimeout { get; }
 
         /// <summary>
-        /// Largest input accepted, in BYTES, on every entry point: DocumentBuilder, JsonBuilder,
-        /// XsltCompiler, DocumentCache, and everything the resolver fetches (doc/document/
-        /// collection/unparsed-text/json-doc, compile-time includes). long.MaxValue disables it.
-        /// <see cref="ProcessorOptions.MaxMemoryBytes"/> when set, else 150 MB or what an obsolete constructor was given.
+        /// Largest input accepted, in bytes, on every entry point: <see cref="ProcessorOptions.MaxMemoryBytes"/>, or
+        /// long.MaxValue when that is null.
         /// </summary>
+        [Obsolete("The largest input is Options.MaxMemoryBytes.")]
         public long MaxInputBytes => Options.InputCap;
 
         /// <summary>
@@ -69,11 +77,7 @@ namespace OutSmart.DAXon.Api
         /// </summary>
         public ProcessorOptions Options { get; }
 
-        // For a Processor over a fresh Configuration: allows everything, 150 MB - as in 1.3.3.
-        private static readonly ProcessorOptions DefaultOptions = FrozenDefaultOptions();
-
         private Configuration config;
-        private SchemaManager schemaManager;
 
         // Saxon-base engine version (tracks the 12.9 base: SEF/fn:transform/xsl:product-version compat).
         public virtual string DAXonProductVersion => Core.Version.ProductVersion;
@@ -120,117 +124,38 @@ namespace OutSmart.DAXon.Api
         // a zero-parameter one and do not fill defaults in. This is that constructor; C# overload
         // resolution prefers it for `new Processor()` because it substitutes no defaults.
         public Processor()
-            : this(LegacyOptions(null, DefaultMaxInputBytes), Configuration.NewLicensedConfiguration())
+            : this(new ProcessorOptions())
         {
         }
 
         /// <summary>Kept for compatibility; use <see cref="Processor(ProcessorOptions)"/>.</summary>
         /// <param name="transformTimeout">Wall-clock limit per transformation; null for the
         /// default (1 minute), TimeSpan.Zero (or negative) for no limit.</param>
-        /// <param name="maxInputBytes">Largest input DocumentCache accepts; long.MaxValue
-        /// effectively disables the check.</param>
+        /// <param name="maxInputBytes">The memory limit of a call, and its largest input: see
+        /// <see cref="ProcessorOptions.MaxMemoryBytes"/>. 150 MB, the default, stands for the default
+        /// limit; long.MaxValue for none.</param>
         [Obsolete(ObsoleteLimits)]
-        public Processor(TimeSpan? transformTimeout = null, long maxInputBytes = DefaultMaxInputBytes)
-            : this(LegacyOptions(transformTimeout, maxInputBytes), Configuration.NewLicensedConfiguration())
-        {
-        }
-
-        /// <summary>A Processor with the given options, which it freezes (options and policy).</summary>
-        public Processor(ProcessorOptions options)
-            : this(Frozen(options), Configuration.NewLicensedConfiguration())
+        public Processor(TimeSpan? transformTimeout = null, long maxInputBytes = LegacyInputCap)
+            : this(LimitsOf(transformTimeout, maxInputBytes))
         {
         }
 
         /// <summary>
-        /// The s9api form, kept for compatibility. This port has one edition, so both values of
-        /// <paramref name="licensedEdition"/> give the same configuration.
+        /// A Processor with the given options, which it takes (they can no longer change): on a new engine core, or on
+        /// the one <see cref="ProcessorOptions.Configuration"/> or <see cref="ProcessorOptions.ConfigurationFile"/> names.
+        /// Every other constructor ends here.
         /// </summary>
-        [Obsolete(ObsoleteEdition)]
-        public Processor(bool licensedEdition, TimeSpan? transformTimeout = null, long maxInputBytes = DefaultMaxInputBytes)
-            : this(LegacyOptions(transformTimeout, maxInputBytes), licensedEdition ? Configuration.NewConfiguration() : new Configuration())
-        {
-        }
-
-        public Processor(Configuration config)
-        {
-            this.config = config;
-            if (config.EditionCode.Equals("EE"))
-            {
-                schemaManager = MakeSchemaManager();
-            }
-
-            // A configuration already serving a Processor keeps that one's options, so a nested
-            // fn:transform or xsl:evaluate cannot widen them; a fresh one gets the default.
-            Options = config.ProcessorOptions ?? DefaultOptions;
-
-            // Make the Processor discoverable from its Configuration (so config.GetProcessor()
-            // yields it, e.g. to read TransformTimeout when a query builds its Controller). Don't
-            // clobber a processor already registered on an externally-supplied config.
-            if (config.GetProcessor() == null)
-            {
-                config.SetProcessor(this);
-            }
-
-            TransformTimeout = DefaultTransformTimeout;
-        }
-
-        // Every constructor that makes its own Configuration ends here.
-        private Processor(ProcessorOptions options, Configuration config)
-        {
-            this.config = config;
-            if (config.EditionCode.Equals("EE"))
-            {
-                schemaManager = MakeSchemaManager();
-            }
-
-            TransformTimeout = options.TransformTimeout ?? DefaultTransformTimeout;
-            Options = options;
-            if (config.GetProcessor() == null)
-            {
-                config.SetProcessor(this);
-            }
-        }
-
-        private static ProcessorOptions Frozen(ProcessorOptions options)
+        public Processor(ProcessorOptions options)
         {
             if (options == null)
             {
                 throw new ArgumentNullException(nameof(options));
             }
 
-            options.Freeze();
-            return options;
-        }
-
-        private static ProcessorOptions LegacyOptions(TimeSpan? transformTimeout, long maxInputBytes)
-        {
-            if (maxInputBytes <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(maxInputBytes));
-            }
-
-            var options = new ProcessorOptions
-            {
-                TransformTimeout = transformTimeout,
-                MaxInputBytes = maxInputBytes,
-            };
-            options.Freeze();
-            return options;
-        }
-
-        private static ProcessorOptions FrozenDefaultOptions()
-        {
-            var options = new ProcessorOptions();
-            options.Freeze();
-            return options;
-        }
-
-        public Processor(ResolvedResource source)
-        {
+            Configuration core;
             try
             {
-                config = Configuration.ReadConfiguration(source);
-                schemaManager = MakeSchemaManager();
+                core = options.TakeCore();
             }
             catch (XPathException e)
             {
@@ -241,9 +166,61 @@ namespace OutSmart.DAXon.Api
                 throw new DAXonApiException(e.ToXPathException());
             }
 
-            Options = DefaultOptions;
-            config.SetProcessor(this);
-            TransformTimeout = DefaultTransformTimeout;
+            config = core ?? Configuration.NewLicensedConfiguration();
+
+            // A core already serving a Processor keeps that one's options, so a nested fn:transform or xsl:evaluate
+            // cannot widen them.
+            Options = config.ProcessorOptions ?? options;
+            TransformTimeout = Options.TransformTimeout ?? DefaultTransformTimeout;
+
+            // Make the Processor discoverable from its Configuration (so config.GetProcessor()
+            // yields it, e.g. to read TransformTimeout when a query builds its Controller). Don't
+            // clobber a processor already registered on the core.
+            if (config.GetProcessor() == null)
+            {
+                config.SetProcessor(this);
+            }
+        }
+
+        /// <summary>
+        /// The s9api form, kept for compatibility. This port has one edition, so both values of
+        /// <paramref name="licensedEdition"/> give the same configuration.
+        /// </summary>
+        [Obsolete(ObsoleteEdition)]
+        public Processor(bool licensedEdition, TimeSpan? transformTimeout = null, long maxInputBytes = LegacyInputCap)
+            : this(LimitsOf(transformTimeout, maxInputBytes))
+        {
+        }
+
+        /// <summary>Kept for compatibility: a Processor on the given engine core.</summary>
+        [Obsolete("Use Processor(ProcessorOptions) with ProcessorOptions.Configuration.")]
+        public Processor(Configuration config)
+            : this(new ProcessorOptions { Configuration = config ?? throw new ArgumentNullException(nameof(config)) })
+        {
+        }
+
+        /// <summary>Kept for compatibility: a Processor on an engine core built from a Saxon configuration file.</summary>
+        [Obsolete("Use Processor(ProcessorOptions) with ProcessorOptions.ConfigurationFile.")]
+        public Processor(ResolvedResource source)
+            : this(new ProcessorOptions { ConfigurationFile = source ?? throw new ArgumentNullException(nameof(source)) })
+        {
+        }
+
+        // 1.3.3's limits as options: its input cap is the memory limit now, and its default - what every call that gave
+        // none passes - the default memory limit.
+        private static ProcessorOptions LimitsOf(TimeSpan? transformTimeout, long maxInputBytes)
+        {
+            if (maxInputBytes <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxInputBytes));
+            }
+
+            return new ProcessorOptions
+            {
+                TransformTimeout = transformTimeout,
+                MaxMemoryBytes = maxInputBytes == LegacyInputCap ? DefaultMaxMemoryBytes
+                    : maxInputBytes == long.MaxValue ? (long?)null : maxInputBytes,
+            };
         }
 
         public virtual DocumentBuilder NewDocumentBuilder()
@@ -331,7 +308,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual SchemaManager GetSchemaManager()
         {
-            return schemaManager;
+            return null;   // a schema manager is Saxon-EE's; this port is HE
         }
 
         public virtual bool IsSchemaAware()
@@ -463,12 +440,6 @@ namespace OutSmart.DAXon.Api
                     DestinationHelper.ReleaseUnclosed(destination);
                 }
             }
-        }
-
-        private SchemaManager MakeSchemaManager()
-        {
-            SchemaManager manager = null;
-            return manager;
         }
 
         private sealed class ExtensionFunctionDefinitionWrapper : ExtensionFunctionDefinition

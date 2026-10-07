@@ -26,8 +26,8 @@ namespace OutSmart.DAXon.Api
     /// A concurrent miss on the same key may parse twice; the trees are equivalent and the
     /// last one wins - correct, at the cost of transiently duplicated work.
     ///
-    /// Inputs larger than the Processor's MaxInputBytes (default 150 MB, set at Processor
-    /// construction) are rejected with DAXonApiException before parsing, so one oversized
+    /// Inputs larger than the Processor's memory limit (ProcessorOptions.MaxMemoryBytes, 500 MB
+    /// by default) are rejected with DAXonApiException before parsing, so one oversized
     /// document cannot exhaust the host's memory.
     /// </summary>
     public sealed class DocumentCache
@@ -45,7 +45,7 @@ namespace OutSmart.DAXon.Api
 
             this.processor = processor;
             this.cache = new ClockCache<Key, XdmNode>(capacity);
-            this.maxInputBytes = processor.MaxInputBytes;
+            this.maxInputBytes = processor.Options.InputCap;
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace OutSmart.DAXon.Api
                 if (info.Length > maxInputBytes)
                 {
                     throw new DAXonApiException(
-                        $"Input document too large: {full} is {info.Length} bytes, exceeds the Processor's MaxInputBytes limit of {maxInputBytes} bytes");
+                        $"Input document too large: {full} is {info.Length} bytes, exceeds the memory limit of {maxInputBytes} bytes (ProcessorOptions.MaxMemoryBytes)");
                 }
 
                 // Windows paths: normalize case in the key so the same file hits the same entry
@@ -106,7 +106,7 @@ namespace OutSmart.DAXon.Api
             if (bytes > maxInputBytes)
             {
                 throw new DAXonApiException(
-                    $"Input document too large: content is {bytes} bytes, exceeds the Processor's MaxInputBytes limit of {maxInputBytes} bytes");
+                    $"Input document too large: content is {bytes} bytes, exceeds the memory limit of {maxInputBytes} bytes (ProcessorOptions.MaxMemoryBytes)");
             }
 
             var key = Key.ForContent(content, baseUri);

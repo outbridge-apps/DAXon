@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Api
     /// <summary>
     /// Everything fixed when a <see cref="Processor"/> is created: the limits of an engine call, and what a stylesheet
     /// or query may reach through the engine's built-in resolvers - local files, the network, environment variables,
-    /// file output. The defaults are the behaviour of 1.3.3: everything allowed, 150 MB of input, a minute a call.
+    /// file output. By default everything is allowed, as in 1.3.3, and a call may take a minute and 500 MB.
     /// Resolvers and handlers the host installs are the host's own code and are not gated. A Processor takes the
     /// options: from then on a setter throws, and the same options can serve further processors.
     /// <para>
@@ -32,8 +32,11 @@ namespace OutSmart.DAXon.Api
         private static readonly IReadOnlyList<IPAddress> NoAddresses = new IPAddress[0];
 
         private TimeSpan? transformTimeout;
-        private long maxInputBytes = Processor.DefaultMaxInputBytes;
-        private long? maxMemoryBytes;
+        private long? maxMemoryBytes = Processor.DefaultMaxMemoryBytes;
+        private OutSmart.DAXon.Core.Configuration configuration;
+        private OutSmart.DAXon.Lib.ResolvedResource configurationFile;
+        private OutSmart.DAXon.Core.Configuration fileCore;   // read from configurationFile by the first Processor
+        private readonly object coreLock = new object();
         private int stackSizeThreshold = StackGuard.MinThreshold;
         private bool allowFileRead = true;
         private bool allowFileWrite = true;
@@ -45,7 +48,7 @@ namespace OutSmart.DAXon.Api
         private volatile bool frozen;
         private bool unrestricted;
 
-        /// <summary>Options that allow everything, with the limits of 1.3.3.</summary>
+        /// <summary>Options that allow everything, with the default limits: a minute and 500 MB a call.</summary>
         public ProcessorOptions()
         {
             AllowedHosts = new HostRuleCollection();
@@ -60,13 +63,14 @@ namespace OutSmart.DAXon.Api
         }
 
         /// <summary>
-        /// Memory one engine call may take, in bytes; null (the default) for no limit. A call - a compile, a document build,
-        /// a transformation, a query, an XPath evaluation - is counted from nothing, so calls running at once on one
-        /// Processor do not add up. Counted are the trees the host hands the call, by their size, and every byte the call
-        /// allocates, including what it has already released (a transformation typically allocates 3-5 times what it
-        /// holds). Over the limit the call stops with SXLM0003, which xsl:try does not catch. Also the largest input
-        /// accepted (150 MB when null). Allocations are counted on .NET and .NET Framework 4.8; the 4.7.2 runtime checks
-        /// only input sizes.
+        /// Memory one engine call may take, in bytes: <see cref="Processor.DefaultMaxMemoryBytes"/> (500 MB) unless set,
+        /// null for no limit at all. A call - a compile, a document build, a transformation, a query, an XPath evaluation -
+        /// is counted from nothing, so calls running at once on one Processor do not add up. Counted are the trees the
+        /// host hands the call, by their size, and every byte the call allocates, including what it has already released
+        /// (a transformation typically allocates 3-5 times what it holds). Over the limit the call stops with SXLM0003,
+        /// which xsl:try does not catch. It is also the largest input accepted: a larger one is refused before it is read,
+        /// with the fetch's own error code. Allocations are counted on .NET and .NET Framework 4.8; the 4.7.2 runtime
+        /// checks only input sizes.
         /// </summary>
         public long? MaxMemoryBytes
         {
@@ -83,25 +87,64 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        // The input cap when MaxMemoryBytes is not set: 150 MB, or what an obsolete Processor constructor was given.
-        // Internal, as one memory option replaces two; the tests of the cap on each input channel set it.
-        internal long MaxInputBytes
+        // The largest input accepted: no input can be larger than the memory of the call that reads it.
+        internal long InputCap => maxMemoryBytes ?? long.MaxValue;
+
+        /// <summary>
+        /// An engine core for the Processor to run on, instead of a new one. A core that already serves a Processor keeps
+        /// that Processor's options, which the new one then reports and applies: a Processor made over the core of a
+        /// running transformation cannot widen its limits. Every Processor made with these options runs on this core.
+        /// Not with <see cref="ConfigurationFile"/>.
+        /// </summary>
+        public OutSmart.DAXon.Core.Configuration Configuration
         {
-            get => maxInputBytes;
+            get => configuration;
             set
             {
                 ThrowIfFrozen();
-                if (value <= 0)
+                if (value != null && configurationFile != null)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(value));
+                    throw new InvalidOperationException("Configuration and ConfigurationFile exclude each other.");
                 }
 
-                maxInputBytes = value;
+                configuration = value;
             }
         }
 
-        // The largest input accepted: no input can be larger than the memory of the call that reads it.
-        internal long InputCap => maxMemoryBytes ?? maxInputBytes;
+        /// <summary>
+        /// A Saxon configuration file to build the engine core from. The first Processor made with these options reads
+        /// it, and the ones made with them later run on that core. Not with <see cref="Configuration"/>.
+        /// </summary>
+        public OutSmart.DAXon.Lib.ResolvedResource ConfigurationFile
+        {
+            get => configurationFile;
+            set
+            {
+                ThrowIfFrozen();
+                if (value != null && configuration != null)
+                {
+                    throw new InvalidOperationException("Configuration and ConfigurationFile exclude each other.");
+                }
+
+                configurationFile = value;
+            }
+        }
+
+        // Takes the options for a Processor: freezes them and gives the core they name, reading the configuration file
+        // the first time; null for a new core.
+        internal OutSmart.DAXon.Core.Configuration TakeCore()
+        {
+            lock (coreLock)
+            {
+                Freeze();
+                if (configurationFile != null && fileCore == null)
+                {
+                    fileCore = OutSmart.DAXon.Core.Configuration.ReadConfiguration(configurationFile);
+                }
+
+                return configuration ?? fileCore;
+            }
+        }
 
         /// <summary>
         /// Bytes of the running thread's stack a recursion must leave free, or it stops with SXLM0001 (deep input with

@@ -138,7 +138,7 @@ namespace OutSmart.DAXon.Api
             }
             else
             {
-                return new Processor(config);
+                return new Processor(new ProcessorOptions { Configuration = config });
             }
         }
 
