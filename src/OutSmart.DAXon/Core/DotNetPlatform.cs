@@ -274,7 +274,17 @@ namespace OutSmart.DAXon.Core
                     // identical strength: the value's own UTF-16 bytes are the key (equal strings -> equal keys)
                     return new Base64BinaryValue(Encoding.BigEndianUnicode.GetBytes(value));
                 }
-                SortKey sk = cic.CompareInfo.GetSortKey(cic.Visible(value), cic.Options);
+                SortKey sk;
+                try
+                {
+                    sk = cic.CompareInfo.GetSortKey(cic.Visible(value), cic.Options);
+                }
+                catch (ArgumentException)
+                {
+                    // .NET Framework cannot make the key of a long string (45 million characters) and says the flags are invalid
+                    throw new XPathException("The collation cannot make a collation key of a string of " + value.Length + " characters", "FOCH0004");
+                }
+
                 return new Base64BinaryValue(sk.KeyData);
             }
             // Fallback: codepoint-equal key (equal strings -> equal keys). Not a locale sort key, but

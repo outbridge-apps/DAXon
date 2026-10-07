@@ -37,8 +37,10 @@ namespace OutSmart.DAXon.Values
             {
                 string digits = "0123456789ABCDEF";
                 UnicodeBuilder sb = new UnicodeBuilder(binaryValue.Length * 2);
-                foreach (byte aBinaryValue in binaryValue)
+                for (int i = 0; i < binaryValue.Length; i++)
                 {
+                    OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);   // millions of bytes, one call
+                    byte aBinaryValue = binaryValue[i];
                     sb.Append(digits[(aBinaryValue >> 4) & 0xf]);
                     sb.Append(digits[aBinaryValue & 0xf]);
                 }
@@ -60,6 +62,7 @@ namespace OutSmart.DAXon.Values
             binaryValue = new byte[len32 / 2];
             for (int i = 0; i < binaryValue.Length; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 binaryValue[i] = (byte)((FromHex(s.CodePointAt(2 * i)) << 4) + FromHex(s.CodePointAt(2 * i + 1)));
             }
         }

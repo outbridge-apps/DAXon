@@ -381,6 +381,19 @@ namespace OutSmart.DAXon.Core
         }
 
         /// <summary>
+        /// <see cref="CheckActiveTimeoutNow"/> once in 64K steps of a loop over one string, which a single call can spend
+        /// seconds in with nothing else looking: pass the loop's index (a loop whose index jumps keeps a threshold instead).
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal static void CheckActiveTimeoutEvery64K(long index)
+        {
+            if ((index & 0xFFFF) == 0xFFFF)
+            {
+                activeOnThread?.CheckNow();
+            }
+        }
+
+        /// <summary>
         /// The memory limit alone, from every buffer an input stream reads: a huge text node grows inside the XML reader,
         /// where no check of the parse runs until the node is complete.
         /// </summary>

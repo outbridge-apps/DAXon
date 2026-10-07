@@ -63,7 +63,20 @@ namespace OutSmart.DAXon.Text
         public override long IndexOf(int codePoint) => _s.IndexOf((char)codePoint);
         public override long IndexOf(int codePoint, long from) => _s.IndexOf((char)codePoint, (int)from);
         public override IIntIterator CodePoints() => new StrCodePointIterator(ToString());
-        public override long IndexWhere(Func<int, bool> predicate, long from) { for (int i = (int)from; i < _s.Length; i++) { if (predicate(_s[i])) return i; } return -1; }
+        // The serializer scans every text node with it: a long string is one call, which looks at the limits as it goes.
+        public override long IndexWhere(Func<int, bool> predicate, long from)
+        {
+            for (int i = (int)from; i < _s.Length; i++)
+            {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
+                if (predicate(_s[i]))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
         public override string ToString() => _s;
         public override void Copy16bit(char[] target, int offset) { _s.CopyTo(0, target, offset, _s.Length); }
         public override void Copy24bit(byte[] target, int offset) { }

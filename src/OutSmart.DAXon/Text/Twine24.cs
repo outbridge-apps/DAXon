@@ -270,6 +270,7 @@ namespace OutSmart.DAXon.Text
         {
             for (int i = requireNonNegativeInt(from); i < bytes.Length / 3; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 int offset = i * 3;
                 int cp = ((bytes[offset] << 16 | (bytes[offset + 1] & 0xff) << 8) | (bytes[offset + 2] & 0xff)) & 0xffffff;
                 if (predicate(cp))

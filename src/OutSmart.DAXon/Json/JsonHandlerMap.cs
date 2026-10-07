@@ -97,6 +97,11 @@ namespace OutSmart.DAXon.Json
 
         private StringValue InternValue(string val)
         {
+            if (val.Length > 64)
+            {
+                return new StringValue(val);   // the repeated values are short; two hashes of a long one cost what its parse did
+            }
+
             if (valuePool == null)
             {
                 valuePool = new Dictionary<string, StringValue>();

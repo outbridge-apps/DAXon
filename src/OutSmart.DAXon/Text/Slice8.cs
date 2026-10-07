@@ -101,6 +101,7 @@ namespace OutSmart.DAXon.Text
         {
             for (int i = requireNonNegativeInt(from) + start; i < end; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 if (predicate(bytes[i] & 0xff))
                 {
                     return i - start;

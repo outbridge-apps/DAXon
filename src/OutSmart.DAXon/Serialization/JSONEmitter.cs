@@ -247,6 +247,7 @@ namespace OutSmart.DAXon.Serialization
                 bool[] d = DirtyTable();
                 for (int i = sl.Start; i < se; i++)
                 {
+                    OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);   // all three scans: a string value can be the whole input
                     char c = str[i];
                     if (c >= 128 || d[c])
                     {
@@ -265,6 +266,7 @@ namespace OutSmart.DAXon.Serialization
             bool[] dirty = DirtyTable();
             for (int i = s; i < e; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 byte c = b[i];
                 if (c >= 128 || dirty[c])
                 {
@@ -471,6 +473,7 @@ namespace OutSmart.DAXon.Serialization
             int i = 0;
             while (i < n)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 char c = cs[i];
                 if (c < 128 ? dirty[c] : (!allEncodable || c <= 159))
                 {

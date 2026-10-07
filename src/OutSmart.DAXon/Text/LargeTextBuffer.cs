@@ -107,7 +107,7 @@ namespace OutSmart.DAXon.Text
                 start += spaceAvailableInLastSegment;
                 while (charsSupplied > SEGLEN)
                 {
-
+                    OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();   // a text node of a long string, one segment at a time
                     ExtendLastSegment(chars.Substring(start, start + SEGLEN));
                     charsSupplied -= SEGLEN;
                     start += SEGLEN;

@@ -38,6 +38,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             int i = 0;
             while (i < s.Length && !Is(s[i]))
             {
+                Core.Controller.CheckActiveTimeoutEvery64K(i);   // both loops: the strings a collation compares can be long
                 i++;
             }
 
@@ -50,6 +51,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             kept.Append(s, 0, i);
             for (; i < s.Length; i++)
             {
+                Core.Controller.CheckActiveTimeoutEvery64K(i);
                 if (!Is(s[i]))
                 {
                     kept.Append(s[i]);

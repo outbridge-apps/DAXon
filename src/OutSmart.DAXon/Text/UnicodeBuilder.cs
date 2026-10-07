@@ -129,6 +129,23 @@ namespace OutSmart.DAXon.Text
                 return this;
             }
 
+            // A long string joins the archive as it is. Copied in, it took 4 bytes a character in an array that doubled
+            // to hold it, and as many seconds of one call, unchecked, as it has hundreds of millions of characters.
+            // A rope joins as one flat copy: its segments, shared, made $a || $a twice as long holding nothing more,
+            // and a string doubled in a loop past every limit.
+            if (len > 65535)
+            {
+                if (used > 0)
+                {
+                    archive = (ZenoString)archive.Concat(ActivePart);
+                    used = 0;
+                    bits = 0xff;
+                }
+
+                archive = (ZenoString)archive.Concat(str is ZenoString ? StringTool.FromCharSequence(str.ToString()) : str);
+                return this;
+            }
+
             EnsureCapacity(len);
             str.Copy32bit(codepoints, used);
             used += len;

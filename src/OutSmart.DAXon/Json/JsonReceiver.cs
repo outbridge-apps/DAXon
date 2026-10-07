@@ -340,17 +340,12 @@ namespace OutSmart.DAXon.Json
                 return IsCleanBytes(twine.ByteArray, 0, twine.ByteArray.Length);
             }
 
-            long len = s.Length();
-            for (long i = 0; i < len; i++)
-            {
-                if (!IsPlainJsonChar(s.CodePointAt(i)))
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            // Segment by segment: the text of a long node is a ZenoString, where CodePointAt searched for the segment of
+            // every character (80 ns a character, 23 s for 200 million).
+            return s.IndexWhere(NotPlainJsonChar, 0) < 0;
         }
+
+        private static readonly Func<int, bool> NotPlainJsonChar = c => !IsPlainJsonChar(c);
 
         private static bool IsCleanBytes(byte[] bytes, int start, int end)
         {
@@ -540,6 +535,7 @@ namespace OutSmart.DAXon.Json
             bool clean = true;
             for (int i = 0; i < @in.Length; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 char c = @in[i];
                 if (c == '\\' || c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\t'
                     || (c == '"' && !retainQuot) || (c == '/' && !retainSlash) || hexEscapes(c))
@@ -557,6 +553,7 @@ namespace OutSmart.DAXon.Json
             StringBuilder @out = new StringBuilder(@in.Length);
             for (int i = 0; i < @in.Length; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 int c = @in[i];
                 switch (c)
                 {

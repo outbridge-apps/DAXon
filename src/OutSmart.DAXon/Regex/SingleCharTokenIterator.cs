@@ -22,6 +22,7 @@ namespace OutSmart.DAXon.Regex
         private readonly UnicodeString input;
         private readonly int separator;
         private int prevEnd;   // -1 after the last token has been delivered
+        private int tokens;    // every 1024 tokens it looks at the limits, which count() pulling millions never does
 
         public SingleCharTokenIterator(UnicodeString input, int separator)
         {
@@ -37,6 +38,7 @@ namespace OutSmart.DAXon.Regex
                 return null;
             }
 
+            Tick();
             long sep = input.IndexOf(separator, prevEnd);
             StringValue current;
             if (sep >= 0)
@@ -66,6 +68,14 @@ namespace OutSmart.DAXon.Regex
             return input.Substring(from, to);
         }
 
+        private void Tick()
+        {
+            if ((++tokens & 1023) == 0)
+            {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();
+            }
+        }
+
         AtomicValue IAtomicIterator.Next() => Next();
         IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
         public void Dispose() { }
@@ -88,11 +98,13 @@ namespace OutSmart.DAXon.Regex
             for (long p = input.IndexOf(separator, prevEnd); p >= 0; p = input.IndexOf(separator, (int)p + 1))
             {
                 count++;
+                Tick();
             }
 
             list.Capacity = count;
             while (prevEnd >= 0)
             {
+                Tick();
                 long sep = input.IndexOf(separator, prevEnd);
                 if (sep >= 0)
                 {

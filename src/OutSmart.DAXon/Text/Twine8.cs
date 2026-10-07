@@ -390,6 +390,7 @@ namespace OutSmart.DAXon.Text
         {
             for (int i = requireNonNegativeInt(from); i < bytes.Length; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 if (predicate(bytes[i] & 0xff))
                 {
                     return i;

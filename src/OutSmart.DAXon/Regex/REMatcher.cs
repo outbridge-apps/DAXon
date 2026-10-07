@@ -233,6 +233,16 @@ namespace OutSmart.DAXon.Regex
             return MatchAt(0, true);
         }
 
+        // A fast shape scans the subject in one call, with no attempt for MatchAt to count: every 64K characters it
+        // looks at the limits itself (a long run of a class, or a subject the class never matches).
+        private const int LookStride = 1 << 16;
+
+        private static int Look(int at)
+        {
+            OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();
+            return at + LookStride;
+        }
+
         // Flat matcher for REProgram.GetFastKind() shapes (fk=1 single class, fk=2 greedy class repeat).
         // Finds the first position whose codepoint satisfies the predicate, extends the run, caps by max,
         // requires min. Byte-identical to the NFA for these shapes: as the whole pattern the greedy longest
@@ -271,8 +281,14 @@ namespace OutSmart.DAXon.Regex
                 cb = t8.ByteArray;
             }
 
+            int look = i + LookStride;
             while (i < len)
             {
+                if (i >= look)
+                {
+                    look = Look(i);
+                }
+
                 int c = cs != null ? cs[off + i] : cb != null ? (cb[off + i] & 0xff) : s.CodePointAt(i);
                 if (!pred.Test(c))
                 {
@@ -290,6 +306,10 @@ namespace OutSmart.DAXon.Regex
                     }
 
                     k++;
+                    if (k >= look)
+                    {
+                        look = Look(k);
+                    }
                 }
 
                 int run = k - i;
@@ -356,6 +376,11 @@ namespace OutSmart.DAXon.Regex
 
             for (int k = 1; k < len; k++)
             {
+                if ((k & (LookStride - 1)) == 0)
+                {
+                    Look(k);
+                }
+
                 int c = cs != null ? cs[off + k] : cb != null ? (cb[off + k] & 0xff) : s.CodePointAt(k);
                 if (!fast.Pred2.Test(c))
                 {
@@ -379,6 +404,7 @@ namespace OutSmart.DAXon.Regex
         private bool FastCaptures2Match(int i, REProgram.FastShape fast)
         {
             anchoredMatch = false;
+            int look = i + LookStride;
             UnicodeString s = search;
             int len = s.Length32();
             IIntPredicateProxy p1 = fast.Pred1;
@@ -408,6 +434,11 @@ namespace OutSmart.DAXon.Regex
 
             while (i < len)
             {
+                if (i >= look)
+                {
+                    look = Look(i);
+                }
+
                 int c = cs != null ? cs[off + i] : cb != null ? (cb[off + i] & 0xff) : s.CodePointAt(i);
                 if (!p1.Test(c))
                 {
@@ -425,6 +456,10 @@ namespace OutSmart.DAXon.Regex
                     }
 
                     j++;
+                    if (j >= look)
+                    {
+                        look = Look(j);
+                    }
                 }
 
                 if (j >= len || !p2.Test(cs != null ? cs[off + j] : cb != null ? (cb[off + j] & 0xff) : s.CodePointAt(j)))
@@ -443,6 +478,10 @@ namespace OutSmart.DAXon.Regex
                     }
 
                     k++;
+                    if (k >= look)
+                    {
+                        look = Look(k);
+                    }
                 }
 
                 _captureState.parenCount = 3;
@@ -466,6 +505,7 @@ namespace OutSmart.DAXon.Regex
         private bool FastSeq2Match(int i, REProgram.FastShape fast)
         {
             anchoredMatch = false;
+            int look = i + LookStride;
             UnicodeString s = search;
             int len = s.Length32();
             IIntPredicateProxy p1 = fast.Pred1;
@@ -497,6 +537,11 @@ namespace OutSmart.DAXon.Regex
 
             for (; i < len - 1; i++)
             {
+                if (i >= look)
+                {
+                    look = Look(i);
+                }
+
                 int c = cs != null ? cs[off + i] : cb != null ? (cb[off + i] & 0xff) : s.CodePointAt(i);
                 if (!p1.Test(c))
                 {
@@ -513,6 +558,10 @@ namespace OutSmart.DAXon.Regex
                     }
 
                     k++;
+                    if (k >= look)
+                    {
+                        look = Look(k);
+                    }
                 }
 
                 if (k - i - 1 < min)
@@ -545,6 +594,7 @@ namespace OutSmart.DAXon.Regex
 
             // Save string to search
             this.search = search.Tidy();
+            OutSmart.DAXon.Core.Controller.CheckActiveTimeout();   // one call per token of tokenize, per match of analyze-string
 
             // Clear the captured group state
             _captureState = new State();

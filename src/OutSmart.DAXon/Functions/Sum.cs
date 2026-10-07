@@ -591,8 +591,10 @@ namespace OutSmart.DAXon.Functions
                         Collections.IIntIterator cps = cpi.RawCodepoints;
                         long total = 0;
                         bool any = false;
+                        int steps = 0;
                         while (cps.MoveNext())
                         {
+                            Core.Controller.CheckActiveTimeoutEvery64K(steps++);
                             total += cps.Current;
                             any = true;
                         }

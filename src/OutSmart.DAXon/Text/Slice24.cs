@@ -76,6 +76,7 @@ namespace OutSmart.DAXon.Text
         {
             for (int i = (start + RequireInt(from)) * 3; i < end * 3; i += 3)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 int cp = ((bytes[i] << 16 | (bytes[i + 1] & 0xff) << 8) | (bytes[i + 2] & 0xff)) & 0xffffff;
                 if (predicate(cp))
                 {

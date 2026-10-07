@@ -263,6 +263,7 @@ namespace OutSmart.DAXon.Values
             bool alreadyCollapsed = true;
             for (long i = 0; i < length; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);   // these scans and rebuilds: one string, one call
                 int c = @in.CodePointAt(i);
                 if (c == ' ')
                 {
@@ -300,6 +301,7 @@ namespace OutSmart.DAXon.Values
             bool prevSpace = true; // start-of-string counts as a preceding space
             for (int i = start; i < end; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 int c = bytes[i];
                 if (c == ' ')
                 {
@@ -331,6 +333,7 @@ namespace OutSmart.DAXon.Values
             bool inWhitespace = true;
             for (long i = 0; i < len; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 int c = @in.CodePointAt(i);
                 switch (c)
                 {
@@ -370,6 +373,7 @@ namespace OutSmart.DAXon.Values
             long len = @in.Length();
             for (int i = 0; i < len; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 if (!IsWhite(@in.CodePointAt(i)))
                 {
                     return i;
@@ -384,6 +388,7 @@ namespace OutSmart.DAXon.Values
             long len = @in.Length();
             for (long i = len - 1; i >= 0; i--)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 if (!IsWhite(@in.CodePointAt(i)))
                 {
                     return i + 1;
@@ -524,6 +529,7 @@ namespace OutSmart.DAXon.Values
         {
             private readonly UnicodeString input;
             private long position;
+            private long look = 65536;   // every 64K characters scanned - many tokens or one long run - it looks at the limits
 
             public Tokenizer(UnicodeString input)
             {
@@ -538,6 +544,10 @@ namespace OutSmart.DAXon.Values
                 while (start < eol && IsWhite(input.CodePointAt(start)))
                 {
                     start++;
+                    if (start >= look)
+                    {
+                        Look(start);
+                    }
                 }
 
                 if (start >= eol)
@@ -549,10 +559,20 @@ namespace OutSmart.DAXon.Values
                 while (end < eol && !IsWhite(input.CodePointAt(end)))
                 {
                     end++;
+                    if (end >= look)
+                    {
+                        Look(end);
+                    }
                 }
 
                 position = end;
                 return new StringValue(input.Substring(start, end));
+            }
+
+            private void Look(long at)
+            {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();
+                look = at + 65536;
             }
             AtomicValue IAtomicIterator.Next() => Next();
             IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration

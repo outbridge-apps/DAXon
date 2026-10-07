@@ -154,8 +154,10 @@ namespace OutSmart.DAXon.Serialization
 
             // optimize for the common case where the string is all ASCII characters
             IIntIterator iter = StringTool.CodePoints(url);
+            long steps = 0;
             while (iter.MoveNext())
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(steps++);   // both loops: one call, millions of characters
                 int ch = iter.Current;
                 if (ch < 32 || ch > 126)
                 {
@@ -180,8 +182,10 @@ namespace OutSmart.DAXon.Serialization
             string hex = "0123456789ABCDEF";
             byte[] array;
             IIntIterator iter = StringTool.CodePoints(url);
+            long steps = 0;
             while (iter.MoveNext())
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(steps++);
                 int ch = iter.Current;
                 if (ch < 32 || ch > 126)
                 {

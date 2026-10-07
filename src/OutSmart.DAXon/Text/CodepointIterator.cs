@@ -24,6 +24,7 @@ namespace OutSmart.DAXon.Text
     internal sealed class CodepointIterator : IAtomicIterator
     {
         readonly IIntIterator codepoints;
+        private int steps;
         public CodepointIterator(IIntIterator codepoints)
         {
             this.codepoints = codepoints;
@@ -33,8 +34,14 @@ namespace OutSmart.DAXon.Text
         // instead of boxing an Int64Value per character. Valid only before the first Next().
         internal IIntIterator RawCodepoints => codepoints;
 
+        // A long string gives millions of items, and count() or [last()] pull them all without a look at the limits.
         public AtomicValue Next()
         {
+            if ((++steps & 1023) == 0)
+            {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();
+            }
+
             return codepoints.MoveNext() ? new Int64Value(codepoints.Current) : null;
         }
         IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration

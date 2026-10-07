@@ -228,6 +228,7 @@ namespace OutSmart.DAXon.Text
             bytes = new byte[CHUNK];
             used = 0;
             Enter();
+            OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();   // one append of a long string seals thousands of chunks
         }
 
         // A result grown large is entered in the ledger of the call building it, which then sums it as it grows.

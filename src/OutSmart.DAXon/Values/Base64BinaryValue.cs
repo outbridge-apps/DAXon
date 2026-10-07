@@ -109,6 +109,7 @@ namespace OutSmart.DAXon.Values
             // process bytes 3 at a time: 3 bytes => 4 characters
             for (int i = 0; i < whole; i += 3)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);   // millions of bytes, one call
 
                 // 3 bytes = 24 bits = 4 characters
                 int val = ((((int)value[i]) & 0xff) << 16) + ((((int)value[i + 1]) & 0xff) << 8) + ((((int)value[i + 2]) & 0xff));
@@ -168,6 +169,7 @@ namespace OutSmart.DAXon.Values
             // process characters 4 at a time: 4 characters => 3 bytes
             while (i < @in.Length())
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 int c = @in.CodePointAt(i++);
                 if (!Whitespace.IsWhite(c))
                 {

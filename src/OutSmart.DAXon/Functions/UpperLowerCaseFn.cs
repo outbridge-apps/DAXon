@@ -182,7 +182,7 @@ namespace OutSmart.DAXon.Functions
                     break;
                 }
 
-                start++;
+                Core.Controller.CheckActiveTimeoutEvery64K(start++);   // both loops look at the limits every 64K characters
             }
 
             if (start == s.Length)
@@ -193,8 +193,15 @@ namespace OutSmart.DAXon.Functions
             var sb = new StringBuilder(s.Length + 2);
             sb.Append(s, 0, start);
             int i = start;
+            int look = i + 65536;
             while (i < s.Length)
             {
+                if (i >= look)
+                {
+                    Core.Controller.CheckActiveTimeoutNow();
+                    look = i + 65536;
+                }
+
                 char c = s[i];
                 if (!char.IsSurrogate(c))
                 {

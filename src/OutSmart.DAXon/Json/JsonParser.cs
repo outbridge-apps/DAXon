@@ -397,6 +397,7 @@ namespace OutSmart.DAXon.Json
             StringBuilder buffer = new StringBuilder(literal.Length);
             for (int i = 0; i < literal.Length; i++)
             {
+                Controller.CheckActiveTimeoutEvery64K(i);
                 char c = literal[i];
                 if (c == '\\')
                 {
@@ -615,6 +616,7 @@ namespace OutSmart.DAXon.Json
                 bool breakLoop = false;
                 do
                 {
+                    Controller.CheckActiveTimeoutEvery64K(position);   // a run of whitespace as long as the input
                     char c = input[position];
                     switch (c)
                     {
@@ -677,7 +679,7 @@ namespace OutSmart.DAXon.Json
                                 break;   // rare: escape or control char -> the general loop below
                             }
 
-                            position++;
+                            Controller.CheckActiveTimeoutEvery64K(position++);   // one literal can be the whole input
                         }
 
                         currentTokenString = null;
@@ -691,6 +693,7 @@ namespace OutSmart.DAXon.Json
                                 InvalidJSON("Unclosed quotes in string literal", ERR_GRAMMAR, lineNumber);
                             }
 
+                            Controller.CheckActiveTimeoutEvery64K(position);
                             char c = input[position++];
                             if (c < 32)
                             {

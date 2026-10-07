@@ -68,6 +68,7 @@ namespace OutSmart.DAXon.Text
         {
             for (int i = _start + (int)from; i < _end; i++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
                 if (predicate(_s[i]))
                 {
                     return i - _start;
