@@ -60,6 +60,8 @@ namespace OutSmart.DAXon.Functions
         // an int[] holds no references (the GC never scans it) and the wrappers stay gen0-short-lived,
         // where a List<IItem> retaining ~300k wrappers makes every gen0 collection walk the list and
         // puts the pointer array itself on the LOH — the dominant cost of reverse() on big inputs.
+        // A stored sequence's iterator does not look at the clock, so one item in 1024 of the copy does: fold-right over
+        // a stored sequence spent most of its time here.
         private static ISequenceIterator MaterializeReversed(ISequenceIterator forwards)
         {
             IItem item = forwards.Next();
@@ -80,6 +82,10 @@ namespace OutSmart.DAXon.Functions
                         Array.Resize(ref nrs, n << 1);
 
                     nrs[n++] = tn.nodeNr;
+                    if ((n & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeoutNow();
+                    }
                 }
 
                 if (item == null)
@@ -97,6 +103,10 @@ namespace OutSmart.DAXon.Functions
                 while ((item = forwards.Next()) != null)
                 {
                     mixed.Add(item);
+                    if ((mixed.Count & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeoutNow();
+                    }
                 }
 
                 return new ReverseListIterator(mixed);
@@ -106,6 +116,11 @@ namespace OutSmart.DAXon.Functions
             while (item != null)
             {
                 list.Add(item);
+                if ((list.Count & 1023) == 0)
+                {
+                    Core.Controller.CheckActiveTimeoutNow();
+                }
+
                 item = forwards.Next();
             }
 

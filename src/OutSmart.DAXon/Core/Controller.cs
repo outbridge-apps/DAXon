@@ -879,12 +879,19 @@ namespace OutSmart.DAXon.Core
             if (val != null)
             {
 
-                // Check that any nodes belong to the right configuration
+                // Check that any nodes belong to the right configuration. A value handed in can run to millions of items,
+                // and the run's limits hold from its first item on: one in 1024 looks at them.
                 Configuration config = GetConfiguration();
                 ISequenceIterator iter = val.Iterate();
                 IItem next;
+                int seen = 0;
                 while ((next = iter.Next()) != null)
                 {
+                    if ((++seen & 1023) == 0)
+                    {
+                        CheckActiveTimeoutNow();
+                    }
+
                     if (next is NodeInfo && !config.IsCompatible(((NodeInfo)next).GetConfiguration()))
                     {
                         throw new XPathException("A node supplied in a global parameter must be built using the same Configuration " + "that was used to compile the stylesheet or query", DAXonErrorCode.SXXP0004);
