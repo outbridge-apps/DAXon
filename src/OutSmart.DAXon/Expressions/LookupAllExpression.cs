@@ -228,24 +228,55 @@ namespace OutSmart.DAXon.Expressions
 
             public IItem Next()
             {
-                if (level2 == null)
+                // A loop, not a call per entry: a map or array of empty values once cost a stack frame each.
+                while (true)
                 {
-                    if (level1forArrays == null && level1forMaps == null)
+                    if (level2 != null)
+                    {
+                        IItem nextItem = level2.Next();
+                        if (nextItem != null)
+                        {
+                            return nextItem;
+                        }
+
+                        level2 = null;
+                    }
+                    else if (level1forArrays != null)
+                    {
+                        if (level1forArrays.MoveNext())
+                        {
+                            level2 = level1forArrays.Current.Iterate();
+                        }
+                        else
+                        {
+                            level1forArrays = null;
+                        }
+                    }
+                    else if (level1forMaps != null)
+                    {
+                        if (level1forMaps.MoveNext())
+                        {
+                            level2 = level1forMaps.Current.value.Iterate();
+                        }
+                        else
+                        {
+                            level1forMaps = null;
+                        }
+                    }
+                    else
                     {
                         IItem lhs = level0.Next();
                         if (lhs == null)
                         {
                             return null;
                         }
-                        else if (lhs is ArrayItem)
+                        else if (lhs is ArrayItem array)
                         {
-                            level1forArrays = ((ArrayItem)lhs).Members().GetEnumerator();
-                            return Next();
+                            level1forArrays = array.Members().GetEnumerator();
                         }
-                        else if (lhs is MapItem)
+                        else if (lhs is MapItem map)
                         {
-                            level1forMaps = ((MapItem)lhs).KeyValuePairs().GetEnumerator();
-                            return Next();
+                            level1forMaps = map.KeyValuePairs().GetEnumerator();
                         }
                         else
                         {
@@ -260,37 +291,6 @@ namespace OutSmart.DAXon.Expressions
 
                             return null;
                         }
-                    }
-                    else if (level1forArrays != null && level1forArrays.MoveNext())
-                    {
-                        IGroundedValue nextEntry = level1forArrays.Current;
-                        level2 = nextEntry.Iterate();
-                    }
-                    else if (level1forMaps != null && level1forMaps.MoveNext())
-                    {
-                        OutSmart.DAXon.Values.Maps.KeyValuePair nextEntry = level1forMaps.Current;
-                        IGroundedValue value = nextEntry.value;
-                        level2 = value.Iterate();
-                    }
-                    else
-                    {
-                        level1forMaps = null;
-                        level1forArrays = null;
-                    }
-
-                    return Next();
-                }
-                else
-                {
-                    IItem nextItem = level2.Next();
-                    if (nextItem == null)
-                    {
-                        level2 = null;
-                        return Next();
-                    }
-                    else
-                    {
-                        return nextItem;
                     }
                 }
             }

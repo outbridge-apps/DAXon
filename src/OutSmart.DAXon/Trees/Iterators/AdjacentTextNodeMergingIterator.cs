@@ -36,15 +36,21 @@ namespace OutSmart.DAXon.Trees.Iterators
 
         public IItem Next()
         {
-            IItem current = _next;
-            if (current == null)
+            // A loop, not a call per node: a run of empty text nodes once cost a stack frame each.
+            while (true)
             {
-                return null;
-            }
-            _next = @base.Next();
+                IItem current = _next;
+                if (current == null)
+                {
+                    return null;
+                }
+                _next = @base.Next();
 
-            if (AdjacentTextNodeMerger.IsTextNode(current))
-            {
+                if (!AdjacentTextNodeMerger.IsTextNode(current))
+                {
+                    return current;
+                }
+
                 UnicodeBuilder ub = new UnicodeBuilder();
                 ub.Accept(current.UnicodeStringValue);
                 while (AdjacentTextNodeMerger.IsTextNode(_next))
@@ -52,22 +58,14 @@ namespace OutSmart.DAXon.Trees.Iterators
                     ub.Accept(_next.UnicodeStringValue);
                     _next = @base.Next();
                 }
-                if (ub.IsEmpty())
-                {
-                    return Next();
-                }
-                else
+
+                if (!ub.IsEmpty())
                 {
                     Orphan o = new Orphan(((NodeInfo)current).GetConfiguration());
                     o.SetNodeKind(Types.Type.TEXT);
                     o.SetStringValue(ub.ToUnicodeString());
-                    current = o;
-                    return current;
+                    return o;
                 }
-            }
-            else
-            {
-                return current;
             }
         }
 
