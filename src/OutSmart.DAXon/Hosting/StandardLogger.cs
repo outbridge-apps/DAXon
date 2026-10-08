@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Lib
     {
         private TextWriter writer = Console.Error;
         private readonly int threshold = Logger.INFO;
-        private readonly bool mustClose = false;
+        private readonly bool mustClose;
 
         public TextWriter PrintWriter
         {

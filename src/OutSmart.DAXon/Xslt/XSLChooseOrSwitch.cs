@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Xslt
     internal abstract class XSLChooseOrSwitch : StyleElement
     {
         private StyleElement otherwise;
-        private int numberOfWhens = 0;
+        private int numberOfWhens;
         public override bool IsInstruction()
         {
             return true;

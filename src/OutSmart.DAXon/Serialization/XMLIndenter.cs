@@ -20,15 +20,15 @@ namespace OutSmart.DAXon.Serialization
 {
     internal sealed class XMLIndenter : ProxyReceiver
     {
-        private int level = 0;
-        private bool sameline = false;
-        private bool afterStartTag = false;
+        private int level;
+        private bool sameline;
+        private bool afterStartTag;
         private bool afterEndTag = true;
-        private Events.Event.Text pendingWhitespace = null;
-        private int line = 0; // line and column measure the number of lines and columns
-        private int column = 0; // .. in whitespace text nodes between tags
+        private Events.Event.Text pendingWhitespace;
+        private int line; // line and column measure the number of lines and columns
+        private int column; // .. in whitespace text nodes between tags
         private int suppressedAtLevel = -1;
-        private HashSet<INodeName> suppressedElements = null;
+        private HashSet<INodeName> suppressedElements;
         private readonly XMLEmitter emitter;
 
         protected int Indentation => 3;

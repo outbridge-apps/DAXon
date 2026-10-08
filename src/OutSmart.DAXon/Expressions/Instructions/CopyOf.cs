@@ -35,11 +35,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private bool copyAccumulators;
         private readonly int validation;
         private readonly ISchemaType schemaType;
-        private bool requireDocumentOrElement = false;
+        private bool requireDocumentOrElement;
         private readonly bool rejectDuplicateAttributes;
         private readonly bool validating;
-        private bool copyLineNumbers = false;
-        private bool copyForUpdate = false;
+        private bool copyLineNumbers;
+        private bool copyForUpdate;
         private bool isSchemaAware = true;
         private double invocations = 1;
         private double numberOfItems = 20;

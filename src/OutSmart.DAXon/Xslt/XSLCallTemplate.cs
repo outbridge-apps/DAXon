@@ -21,8 +21,8 @@ namespace OutSmart.DAXon.Xslt
     {
         private static readonly StructuredQName ERROR_TEMPLATE_NAME = new StructuredQName("saxon", NamespaceUri.SAXON, "error-template");
         private StructuredQName calledTemplateName; // the name of the called template
-        private NamedTemplate template = null; // the template to be called (which may subsequently be overridden in another package)
-        private bool useTailRecursion = false;
+        private NamedTemplate template; // the template to be called (which may subsequently be overridden in another package)
+        private bool useTailRecursion;
         public override bool IsInstruction()
         {
             return true;

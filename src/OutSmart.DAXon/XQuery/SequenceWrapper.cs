@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.XQuery
     {
         public static readonly NamespaceUri RESULT_NS = NamespaceUri.Of(QueryResult.RESULT_NS);
         private readonly ComplexContentOutputter @out;
-        private int depth = 0;
+        private int depth;
         private FingerprintedQName resultDocument;
         private FingerprintedQName resultElement;
         private FingerprintedQName resultAttribute;

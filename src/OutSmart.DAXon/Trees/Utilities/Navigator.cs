@@ -1161,7 +1161,7 @@ namespace OutSmart.DAXon.Trees.Utilities
         internal sealed class ChildrenAsIterable : IEnumerable<NodeInfo>
         {
             private readonly NodeInfo parent;
-            private readonly INodePredicate filter = null;
+            private readonly INodePredicate filter;
             public ChildrenAsIterable(NodeInfo parent)
             {
                 this.parent = parent;
@@ -1276,7 +1276,7 @@ namespace OutSmart.DAXon.Trees.Utilities
             private readonly NodeInfo start;
             private readonly bool includeSelf;
             private readonly bool forwards;
-            private bool started = false;
+            private bool started;
             public DescendantEnumeration(NodeInfo start, bool includeSelf, bool forwards)
             {
                 this.start = start;
@@ -1348,7 +1348,7 @@ namespace OutSmart.DAXon.Trees.Utilities
         {
             private readonly IAxisIterator ancestorEnum;
             private IAxisIterator siblingEnum;
-            private IAxisIterator descendEnum = null;
+            private IAxisIterator descendEnum;
             public FollowingEnumeration(NodeInfo start)
             {
                 ancestorEnum = new AncestorEnumeration(start, false);
@@ -1447,7 +1447,7 @@ namespace OutSmart.DAXon.Trees.Utilities
         {
             private readonly IAxisIterator ancestorEnum;
             private IAxisIterator siblingEnum;
-            private IAxisIterator descendEnum = null;
+            private IAxisIterator descendEnum;
             private readonly bool includeAncestors;
             public PrecedingEnumeration(NodeInfo start, bool includeAncestors)
             {

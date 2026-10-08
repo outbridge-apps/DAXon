@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Serialization
         private int inScript;
         protected int version = 5;
         private string parentElement;
-        private bool escapeNonAscii = false;
+        private bool escapeNonAscii;
         private readonly Stack<INodeName> nodeNameStack = new Stack<INodeName>();
         static HTMLEmitter()
         {

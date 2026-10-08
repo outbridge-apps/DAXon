@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Functions
     /// </summary>
     internal sealed class Outermost : SystemFunction
     {
-        bool presorted = false;
+        bool presorted;
 
         public override string StreamerName => "Outermost";
         public override Expression MakeOptimizedFunctionCall(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo, params Expression[] arguments)
@@ -71,7 +71,7 @@ namespace OutSmart.DAXon.Functions
         private sealed class OutermostIterator : ISequenceIterator
         {
             readonly ISequenceIterator @in;
-            NodeInfo current = null;
+            NodeInfo current;
             public OutermostIterator(ISequenceIterator @in)
             {
                 this.@in = @in;

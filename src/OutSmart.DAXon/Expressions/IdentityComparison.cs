@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Expressions
     {
         // Set for an "X is Y" comparison emulating generate-id(X) = generate-id(Y): the empty-sequence
         // handling differs (both empty -> true for generate-id, () for is).
-        private bool generateIdEmulation = false;
+        private bool generateIdEmulation;
 
         public override string ExpressionName => "nodeComparison";
 

@@ -35,7 +35,7 @@ namespace OutSmart.DAXon.Trees.Iterators
 
         internal class Of<T> : ListIterator, ISequenceIterator, IFocusIterator, ILastPositionFinder, ILookaheadIterator, IGroundedIterator, IReversibleIterator
         {
-            private int index = 0;
+            private int index;
             protected IList<T> list;
 
             public Of(IList<T> list)

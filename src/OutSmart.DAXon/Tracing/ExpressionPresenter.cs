@@ -28,9 +28,9 @@ namespace OutSmart.DAXon.Tracing
         private Configuration config;
         private IReceiver receiver;
         private ComplexContentOutputter cco;
-        private int depth = 0;
-        private bool inStartTag = false;
-        private string nextRole = null;
+        private int depth;
+        private bool inStartTag;
+        private string nextRole;
         private readonly Stack<Expression> expressionStack = new Stack<Expression>();
         private readonly Stack<string> nameStack = new Stack<string>();
         private NamespaceMap namespaceMap = NamespaceMap.EmptyMap();
@@ -543,8 +543,8 @@ namespace OutSmart.DAXon.Tracing
         public class ExportOptions
         {
             public string target = "";
-            public int targetVersion = 0;
-            public bool relocatable = false;
+            public int targetVersion;
+            public bool relocatable;
             public StylesheetPackage rootPackage;
             public Dictionary<Component, int> componentMap;
             public Dictionary<StylesheetPackage, int> packageMap;

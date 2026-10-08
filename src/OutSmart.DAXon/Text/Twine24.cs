@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Text
     internal sealed class Twine24 : UnicodeString
     {
         protected byte[] bytes;
-        protected int cachedHash = 0;
+        protected int cachedHash;
 
         public override int Width => 24;
         public Twine24(byte[] bytes)
@@ -279,7 +279,7 @@ namespace OutSmart.DAXon.Text
         {
 
             private readonly Twine24 parent;
-            int i = 0;
+            int i;
             public AnonymousIntIterator(Twine24 parent)
             {
                 this.parent = parent;

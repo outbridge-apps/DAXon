@@ -27,16 +27,16 @@ namespace OutSmart.DAXon.Serialization
         // is anywhere near this deep; a bomb is thousands of levels, so it loses nothing.
         private const int ProbeFreeDepth = 32;
 
-        private bool allowDuplicateKeys = false;
+        private bool allowDuplicateKeys;
         private string nodeOutputMethod = "xml";
-        private int level = 0;
-        private int topLevelCount = 0;
+        private int level;
+        private int topLevelCount;
         private int maxLineLength = 80;
         private readonly JSONEmitter emitter;
         private Properties outputProperties;
         private bool isIndenting;
         private IComparer<AtomicValue> propertySorter;
-        private bool unfailing = false;
+        private bool unfailing;
         public JSONSerializer(PipelineConfiguration pipe, JSONEmitter emitter, Properties outputProperties) : base(pipe)
         {
             SetOutputProperties(outputProperties);

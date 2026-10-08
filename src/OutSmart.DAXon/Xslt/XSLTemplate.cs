@@ -29,12 +29,12 @@ namespace OutSmart.DAXon.Xslt
     public sealed class XSLTemplate : StyleElement, IStylesheetComponent
     {
         private readonly object syncLock = new object();
-        private string matchAtt = null;
-        private string modeAtt = null;
-        private string nameAtt = null;
-        private string priorityAtt = null;
-        private string asAtt = null;
-        private string visibilityAtt = null;
+        private string matchAtt;
+        private string modeAtt;
+        private string nameAtt;
+        private string priorityAtt;
+        private string asAtt;
+        private string visibilityAtt;
         private StructuredQName[] modeNames;
         private string diagnosticId;
         private Patterns.Pattern match;
@@ -44,12 +44,12 @@ namespace OutSmart.DAXon.Xslt
         private NamedTemplate compiledNamedTemplate;
         private readonly IList<TemplateRule> compiledTemplateRules = new List<TemplateRule>();
         private SequenceType requiredType = SequenceType.ANY_SEQUENCE;
-        private bool declaresRequiredType = false;
+        private bool declaresRequiredType;
         private Visibility visibility = Visibility.PRIVATE;
         private ItemType requiredContextItemType = AnyItemType.GetInstance();
         private bool mayOmitContextItem = true;
-        private bool absentFocus = false;
-        private bool jitCompilationDone = false;
+        private bool absentFocus;
+        private bool jitCompilationDone;
         private bool explaining;
         private IList<Patterns.Pattern> subPatterns;
 

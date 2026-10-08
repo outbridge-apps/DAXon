@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.XQuery
         private IList<IUserFunctionResolvable> unboundFunctionReferences = new List<IUserFunctionResolvable>(20);
         private IList<QueryModule> correspondingQueryModule = new List<QueryModule>(20);
         private readonly IList<IList<string>> correspondingReasons = new List<IList<string>>();
-        private bool resolving = false;
+        private bool resolving;
         public UnboundFunctionLibrary()
         {
         }

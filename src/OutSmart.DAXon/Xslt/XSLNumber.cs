@@ -21,18 +21,18 @@ namespace OutSmart.DAXon.Xslt
     internal sealed class XSLNumber : StyleElement
     {
         private int level;
-        private Patterns.Pattern count = null;
-        private Patterns.Pattern from = null;
-        private Expression select = null;
-        private Expression value = null;
-        private Expression format = null;
-        private Expression groupSize = null;
-        private Expression groupSeparator = null;
-        private Expression letterValue = null;
-        private Expression lang = null;
-        private Expression ordinal = null;
-        private Expression startAt = null;
-        private NumberFormatter formatter = null;
+        private Patterns.Pattern count;
+        private Patterns.Pattern from;
+        private Expression select;
+        private Expression value;
+        private Expression format;
+        private Expression groupSize;
+        private Expression groupSeparator;
+        private Expression letterValue;
+        private Expression lang;
+        private Expression ordinal;
+        private Expression startAt;
+        private NumberFormatter formatter;
         public override bool IsInstruction()
         {
             return true;

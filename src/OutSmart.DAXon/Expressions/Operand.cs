@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Expressions
     public sealed class Operand : IEnumerable<Operand>, IExpressionOwner
     {
 
-        private static readonly bool DEBUG = false;
+        private static readonly bool DEBUG;
         private readonly Expression parentExpression;
         private Expression childExpression;
         private OperandRole role;

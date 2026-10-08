@@ -23,8 +23,8 @@ namespace OutSmart.DAXon.Resources
     {
         protected Configuration config;
         protected string collectionURI;
-        protected URIQueryParameters @params = null;
-        protected bool noExceptions = false;
+        protected URIQueryParameters @params;
+        protected bool noExceptions;
 
         public virtual string CollectionURI => collectionURI;
         public AbstractResourceCollection(Configuration config)

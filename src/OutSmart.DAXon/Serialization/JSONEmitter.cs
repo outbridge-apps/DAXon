@@ -34,12 +34,12 @@ namespace OutSmart.DAXon.Serialization
         private bool isIndenting;
         private int indentSpaces = 2;   // as Saxon 12.9; 1.3.3 indented by three
         private bool first = true;
-        private bool afterKey = false;
+        private bool afterKey;
         private int level;
         private readonly Stack<bool> oneLinerStack = new Stack<bool>();
         private bool mustClose = true;
         private bool escapeSolidus = true;
-        private bool unfailing = false;
+        private bool unfailing;
         // ASCII escape decisions folded into one table (structural JSON escapes + the hex-escape
         // predicate of SimpleEscape): one bounds-checked lookup per char on the clean scan instead
         // of a delegate plus an ICharacterSet call. Chars >= 128 keep the generic path.

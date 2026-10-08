@@ -31,7 +31,7 @@ namespace OutSmart.DAXon.Serialization
         private System.IO.Stream outputStream;
         private ICharacterSet characterSet;
         private readonly string encoding;
-        private bool mustCloseAfterUse = false;
+        private bool mustCloseAfterUse;
         // set when the writer made here over a stream begins the bytes with their mark itself (see Marked)
         private bool marksItself;
 

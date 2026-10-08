@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Expressions
         private readonly Types.ItemType requiredItemType;
         private readonly Func<RoleDiagnostic> roleSupplier;
         private readonly ILocation location;
-        private readonly Configuration config = null;
+        private readonly Configuration config;
         public ItemTypeCheckingFunction(Types.ItemType requiredItemType, Func<RoleDiagnostic> roleSupplier, ILocation locator, Configuration config)
         {
             this.requiredItemType = requiredItemType;

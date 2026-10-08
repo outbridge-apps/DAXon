@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Api
         // Thread-safe when caching is on: an XPathCompiler may be shared and Compile() called
         // concurrently. (Was Expr.Sort.LFUCache(concurrent:true), which the port silently backed with
         // a plain Dictionary -- not actually thread-safe; Internal.Caching.ClockCache is.)
-        private ClockCache<string, XPathExecutable> cache = null;
+        private ClockCache<string, XPathExecutable> cache;
 
         public virtual string LanguageVersion
         {

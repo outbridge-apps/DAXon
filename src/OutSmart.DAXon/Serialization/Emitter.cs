@@ -19,8 +19,8 @@ namespace OutSmart.DAXon.Serialization
         protected IUnicodeWriter writer;
         protected Properties outputProperties;
         protected ICharacterSet characterSet;
-        protected bool allCharactersEncodable = false;
-        private bool mustClose = false;
+        protected bool allCharactersEncodable;
+        private bool mustClose;
         public Emitter() : base(null)
         {
         }

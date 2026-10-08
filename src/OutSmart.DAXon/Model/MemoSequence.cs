@@ -17,12 +17,12 @@ namespace OutSmart.DAXon.Model
     internal sealed class MemoSequence : ISequence
     {
         private readonly ISequenceIterator inputIterator;
-        private IItem[] reservoir = null;
+        private IItem[] reservoir;
         // Above Chunk items the reservoir becomes IItem[][] (64KB chunks): a single flat pointer
         // array of 300k+ refs lives on the LOH and background GC re-marks it wholesale — the
         // dominant cost of materializing big variables. Small sequences keep the flat array path.
         private const int Chunk = 8192;
-        private IItem[][] chunks = null;
+        private IItem[][] chunks;
         private int used;
         private LearningEvaluator learningEvaluator;
         private int serialNumber;

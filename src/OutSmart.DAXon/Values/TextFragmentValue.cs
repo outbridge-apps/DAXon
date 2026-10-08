@@ -31,7 +31,7 @@ namespace OutSmart.DAXon.Values
         private readonly string baseURI;
         private string documentURI;
         private readonly GenericTreeInfo treeInfo;
-        private TextFragmentTextNode textNode = null; // created on demand
+        private TextFragmentTextNode textNode; // created on demand
         public UnicodeString UnicodeStringValue => text;
 
         public int Fingerprint => -1;

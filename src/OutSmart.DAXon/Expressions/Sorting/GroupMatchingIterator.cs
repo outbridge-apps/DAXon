@@ -26,8 +26,8 @@ namespace OutSmart.DAXon.Expressions.Sorting
         protected IXPathContext runningContext;
         protected IList<IItem> currentMembers;
         protected IItem nextItem;
-        protected IItem current = null;
-        protected int position = 0;
+        protected IItem current;
+        protected int position;
 
         public virtual bool HasNext => nextItem != null;
         protected abstract void Advance();

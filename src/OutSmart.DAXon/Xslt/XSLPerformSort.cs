@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal sealed class XSLPerformSort : StyleElement
     {
-        Expression select = null;
+        Expression select;
         public override bool IsInstruction()
         {
             return true;

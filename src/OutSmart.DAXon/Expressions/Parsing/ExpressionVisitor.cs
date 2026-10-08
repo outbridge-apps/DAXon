@@ -24,15 +24,15 @@ namespace OutSmart.DAXon.Expressions.Parsing
         // pipeline. Raise a static XPST0003 at the same bound as the parser, far below the stack wall.
         // (MAX_DEPTH above is the separate, milder optimizer-only cap that merely STOPS optimizing.)
         public const int MAX_STATIC_TREE_DEPTH = 3000;
-        private int staticTreeDepth = 0;
+        private int staticTreeDepth;
         private IStaticContext staticContext;
-        private bool optimizeForStreaming = false;
-        private bool optimizeForPatternMatching = false;
+        private bool optimizeForStreaming;
+        private bool optimizeForPatternMatching;
         private readonly Configuration config;
         private Optimizer optimizer;
-        private int depth = 0;
-        private bool inliningFunctions = false;
-        private bool suppressWarnings = false;
+        private int depth;
+        private bool inliningFunctions;
+        private bool suppressWarnings;
 
         public virtual IStaticContext StaticContext
         {

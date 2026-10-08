@@ -44,7 +44,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         };
         public readonly TinyTree tree;
         public readonly int nodeNr;
-        protected internal TinyNodeImpl parent = null;
+        protected internal TinyNodeImpl parent;
 
         public virtual long SequenceNumber => (long)nodeNr << 32;
 

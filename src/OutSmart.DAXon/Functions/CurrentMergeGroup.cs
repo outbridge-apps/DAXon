@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Functions
     /// </summary>
     internal sealed class CurrentMergeGroup : SystemFunction
     {
-        private MergeInstr controllingInstruction = null; // may be unknown, when current group has dynamic scope
+        private MergeInstr controllingInstruction; // may be unknown, when current group has dynamic scope
         private readonly HashSet<string> allowedNames = new HashSet<string>();
 
         public MergeInstr ControllingInstruction => controllingInstruction;

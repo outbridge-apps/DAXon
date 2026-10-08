@@ -370,7 +370,7 @@ namespace OutSmart.DAXon.Text
         {
 
             private readonly string value;
-            int i = 0;
+            int i;
             public AnonymousIntIterator(StringTool parent, string value)
             {
                 this.value = value;

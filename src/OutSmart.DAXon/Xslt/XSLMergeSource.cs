@@ -22,12 +22,12 @@ namespace OutSmart.DAXon.Xslt
         private Expression forEachItem;
         private Expression forEachSource;
         private Expression select;
-        private bool sortBeforeMerge = false;
-        private int mergeKeyCount = 0;
+        private bool sortBeforeMerge;
+        private int mergeKeyCount;
         private string sourceName;
         private int validationAction = Validation.STRIP;
-        private ISchemaType schemaType = null;
-        private bool streamable = false;
+        private ISchemaType schemaType;
+        private bool streamable;
         private HashSet<Accumulator> accumulators = new HashSet<Accumulator>();
 
         public Expression Select => select;

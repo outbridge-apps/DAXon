@@ -16,10 +16,10 @@ namespace OutSmart.DAXon.Expressions
     internal sealed class SubsequenceIterator : ISequenceIterator, ILastPositionFinder, ILookaheadIterator
     {
         private readonly ISequenceIterator @base;
-        private int basePosition = 0;
+        private int basePosition;
         private readonly int min;
         private readonly int max;
-        private IItem nextItem = null;
+        private IItem nextItem;
 
         /// <summary>
         /// Test whether there are any more items available in the sequence

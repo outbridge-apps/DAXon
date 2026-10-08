@@ -20,9 +20,9 @@ namespace OutSmart.DAXon.Expressions
         private HostLanguage hostLanguage;
         protected int hostLanguageVersion;
         private bool schemaAware;
-        private DecimalFormatManager decimalFormatManager = null;
-        protected KeyManager keyManager = null;
-        private AccumulatorRegistry accumulatorRegistry = null;
+        private DecimalFormatManager decimalFormatManager;
+        protected KeyManager keyManager;
+        private AccumulatorRegistry accumulatorRegistry;
         private readonly IList<GlobalVariable> globalVariables = new List<GlobalVariable>();
         private SlotManager globalSlotManager;
         private int localLicenseId = -1;

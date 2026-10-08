@@ -20,9 +20,9 @@ namespace OutSmart.DAXon.Functions
     /// </summary>
     internal sealed class CurrentGroupCall : Expression, ICallable
     {
-        private bool inHigherOrderOperand = false;
+        private bool inHigherOrderOperand;
         private ItemType itemType = AnyItemType.GetInstance();
-        private ForEachGroup controllingInstruction = null; // may be unknown, when current group has dynamic scope
+        private ForEachGroup controllingInstruction; // may be unknown, when current group has dynamic scope
         public override Expression ScopingExpression => ControllingInstruction;
 
         public ForEachGroup ControllingInstruction

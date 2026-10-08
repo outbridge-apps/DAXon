@@ -12,7 +12,7 @@ namespace OutSmart.DAXon.Expressions
     {
         private readonly IGroundedValue baseValue;
         private readonly int start; // zero-based
-        private int pos = 0;
+        private int pos;
 
         public bool HasNext => baseValue.ItemAt(start + pos) != null;
         public ValueTailIterator(IGroundedValue @base, int start)

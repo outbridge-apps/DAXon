@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal sealed class XSLDecimalFormat : StyleElement
     {
-        bool prepared = false;
+        bool prepared;
         string name;
         string decimalSeparator;
         string groupingSeparator;

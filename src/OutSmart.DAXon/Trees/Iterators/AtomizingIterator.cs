@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Trees.Iterators
     internal sealed class AtomizingIterator : ISequenceIterator
     {
         private readonly ISequenceIterator @base;
-        private IAtomicSequence currentValue = null;
+        private IAtomicSequence currentValue;
         private int currentValuePosition = 1;
         private int currentValueSize = 1;
         private readonly RoleDiagnostic roleDiagnostic;

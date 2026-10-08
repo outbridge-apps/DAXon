@@ -23,13 +23,13 @@ namespace OutSmart.DAXon.Xslt
     internal sealed class XSLCopy : StyleElement
     {
         private string use; // value of use-attribute-sets attribute
-        private StructuredQName[] attributeSets = null;
+        private StructuredQName[] attributeSets;
         private bool copyNamespaces = true;
         private bool inheritNamespaces = true;
         private int validationAction = Validation.PRESERVE;
-        private ISchemaType schemaType = null;
-        private Expression select = null;
-        private bool selectSpecified = false;
+        private ISchemaType schemaType;
+        private Expression select;
+        private bool selectSpecified;
         public override bool IsInstruction()
         {
             return true;

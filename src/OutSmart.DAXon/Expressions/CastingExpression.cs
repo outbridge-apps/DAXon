@@ -19,9 +19,9 @@ namespace OutSmart.DAXon.Expressions
     {
         private IAtomicType targetType;
         private readonly IAtomicType targetPrimitiveType;
-        private bool allowEmpty = false;
+        private bool allowEmpty;
         protected Converter converter;
-        private bool operandIsStringLiteral = false;
+        private bool operandIsStringLiteral;
 
         public virtual IAtomicType TargetPrimitiveType => targetPrimitiveType;
 

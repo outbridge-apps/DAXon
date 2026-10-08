@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Functions
         private readonly Dictionary<string, HashSet<string>> allowedValues = new Dictionary<string, HashSet<string>>(8);
         private string errorCodeForDisallowedValue;
         private string errorCodeForAbsentValue = "SXJE9999";
-        private bool allowCastFromString = false;
+        private bool allowCastFromString;
 
         public virtual Dictionary<string, IGroundedValue> DefaultOptions => new Dictionary<string, IGroundedValue>(defaultValues);
 

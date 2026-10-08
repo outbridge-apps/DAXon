@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// </summary>
     internal abstract class AttributeCreator : SimpleNodeConstructor, IValidatingInstruction
     {
-        ISimpleType schemaType = null;
+        ISimpleType schemaType;
         private int validationAction;
         private int options = ReceiverOption.NONE;
         private bool _isInstruction;

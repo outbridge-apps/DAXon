@@ -36,10 +36,10 @@ namespace OutSmart.DAXon.Expressions
         /// Node kinds whose typed value is untypedAtomic if the configuration is untyped
         /// </summary>
         public static readonly UType UNTYPED_IF_UNTYPED_KINDS = UType.TEXT.Union(UType.ELEMENT).Union(UType.DOCUMENT).Union(UType.ATTRIBUTE);
-        private bool untyped = false; //set to true if it is known that the nodes being atomized will be untyped
-        private bool singleValued = false; // set to true if all atomized nodes will atomize to a single atomic value
-        private ItemType operandItemType = null;
-        private readonly Func<RoleDiagnostic> roleSupplier = null;
+        private bool untyped; //set to true if it is known that the nodes being atomized will be untyped
+        private bool singleValued; // set to true if all atomized nodes will atomize to a single atomic value
+        private ItemType operandItemType;
+        private readonly Func<RoleDiagnostic> roleSupplier;
 
         public override int ImplementationMethod => ITERATE_METHOD | WATCH_METHOD;
 

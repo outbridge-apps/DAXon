@@ -26,16 +26,16 @@ namespace OutSmart.DAXon.XQuery
         private StructuredQName functionName;
         private readonly IList<UserFunctionParameter> parameters;
         private Values.SequenceType resultType;
-        private Expression body = null;
+        private Expression body;
         private IList<IUserFunctionResolvable> references = new List<IUserFunctionResolvable>(10);
         private ILocation location;
-        private UserFunction compiledFunction = null;
+        private UserFunction compiledFunction;
         private bool memoFunction;
         private INamespaceResolver namespaceResolver;
         private QueryModule staticContext;
-        private bool updating = false;
+        private bool updating;
         private AnnotationList annotations = AnnotationList.EMPTY;
-        private int mandatoryParams = 0;
+        private int mandatoryParams;
 
         public virtual Expression Body
         {

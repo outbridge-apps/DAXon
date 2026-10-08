@@ -50,23 +50,23 @@ namespace OutSmart.DAXon.Xslt
             "true",
             "yes"
         };
-        protected NamespaceUri[] extensionNamespaces = null; // a list of URIs
-        private NamespaceUri[] excludedNamespaces = null; // a list of URIs
+        protected NamespaceUri[] extensionNamespaces; // a list of URIs
+        private NamespaceUri[] excludedNamespaces; // a list of URIs
         protected int version = -1; // the effective version of this element
-        protected ExpressionContext staticContext = null;
-        public XmlProcessingIncident validationError = null;
+        protected ExpressionContext staticContext;
+        public XmlProcessingIncident validationError;
         public OnFailure reportingCircumstances = OnFailure.REPORT_ALWAYS;
-        protected NamespaceUri defaultXPathNamespace = null;
-        protected string defaultCollationName = null;
+        protected NamespaceUri defaultXPathNamespace;
+        protected string defaultCollationName;
         protected StructuredQName defaultMode;
-        protected bool expandText = false;
+        protected bool expandText;
         private StructuredQName objectName; // for instructions that define an XSLT named object, the name of that object
         private string baseURI;
         private Compilation compilation;
-        private Loc savedLocation = null;
+        private Loc savedLocation;
         private int defaultValidation = Validation.DEFAULT;
 
-        protected int actionsCompleted = 0;
+        protected int actionsCompleted;
 
         public virtual Visibility DeclaredVisibility
         {

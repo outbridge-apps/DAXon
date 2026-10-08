@@ -186,7 +186,7 @@ namespace OutSmart.DAXon.Collections.Zeno
             private readonly IEnumerator<IItem> chainIterator;
             private IItem lookahead;
             private bool lookaheadFilled;
-            private int position = 0;
+            private int position;
 
             public bool HasNext
             {

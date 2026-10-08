@@ -82,8 +82,8 @@ namespace OutSmart.DAXon.Xslt
             private readonly string display;
             private readonly PackageVersion low;
             private readonly PackageVersion high;
-            private readonly bool all = false;
-            private readonly bool prefix = false;
+            private readonly bool all;
+            private readonly bool prefix;
 
             public PackageVersionRange(string s)
             {

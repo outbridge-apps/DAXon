@@ -12,8 +12,8 @@ namespace OutSmart.DAXon.Expressions
     internal sealed class AxisAtomizingIterator : ISequenceIterator
     {
         private readonly IAtomizedValueIterator @base;
-        private IAtomicSequence results = null;
-        private int atomicPosition = 0;
+        private IAtomicSequence results;
+        private int atomicPosition;
         public AxisAtomizingIterator(IAtomizedValueIterator @base)
         {
             this.@base = @base;

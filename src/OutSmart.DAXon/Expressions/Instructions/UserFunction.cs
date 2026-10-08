@@ -36,23 +36,23 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         private static readonly string saxonDotEqName = "Q{" + NamespaceUri.SAXON + "}dot";
         private StructuredQName functionName; // null for an anonymous function
-        private bool tailCalls = false;
-        private bool tailRecursive = false;
+        private bool tailCalls;
+        private bool tailRecursive;
         private UserFunctionParameter[] parameterDefinitions;
         private SequenceType resultType;
         private SequenceType declaredResultType;
-        protected volatile ISequenceEvaluator bodyEvaluator = null; // set once (fully built), then read lock-free per call
-        protected volatile IPushEvaluator pushEvaluator = null;     // ditto
-        private bool updating = false;
-        private bool ixslUpdating = false;
+        protected volatile ISequenceEvaluator bodyEvaluator; // set once (fully built), then read lock-free per call
+        protected volatile IPushEvaluator pushEvaluator;     // ditto
+        private bool updating;
+        private bool ixslUpdating;
         private int inlineable = -1; // 0:no 1:yes -1:don't know
-        private int inliningCount = 0;
+        private int inliningCount;
         private bool overrideExtensionFunction = true;
         private AnnotationList annotations = AnnotationList.EMPTY;
         private FunctionStreamability declaredStreamability = FunctionStreamability.UNCLASSIFIED;
         private Determinism determinism = Determinism.PROACTIVE;
-        private int refCount = 0;
-        private int minimumArity = 0;
+        private int refCount;
+        private int minimumArity;
 
         public string Description
         {

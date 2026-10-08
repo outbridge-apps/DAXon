@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal abstract class XSLBreakOrContinue : StyleElement
     {
-        protected XSLIterate xslIterate = null;
+        protected XSLIterate xslIterate;
         public override bool IsInstruction()
         {
             return true;

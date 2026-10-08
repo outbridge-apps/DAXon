@@ -44,15 +44,15 @@ namespace OutSmart.DAXon.Expressions.Instructions
         // if there is a need for it: that @is, if there is a call on xsl:result-document
         // with a format attribute computed at run-time. The key is a StructuredQName object,
         // the value is a Properties object
-        private Dictionary<StructuredQName, Properties> outputDeclarations = null;
+        private Dictionary<StructuredQName, Properties> outputDeclarations;
         // a boolean, true if the executable represents a stylesheet that uses xsl:result-document
-        private bool _createsSecondaryResult = false;
+        private bool _createsSecondaryResult;
         // a boolean, indicates that the executable is schema-aware. This will true by default only
         // if it statically imports a schema. If the executable is not schema-aware, then
         // all input documents must be untyped.
-        protected bool schemaAware = false;
+        protected bool schemaAware;
         // Requirements for the initial context item
-        private GlobalContextRequirement globalContextRequirement = null;
+        private GlobalContextRequirement globalContextRequirement;
 
         public virtual PackageData TopLevelPackage
         {

@@ -37,8 +37,8 @@ namespace OutSmart.DAXon.Xslt
         private readonly KeyManager keyManager;
         private readonly DecimalFormatManager decimalFormatManager;
         private readonly RuleManager ruleManager;
-        private AccumulatorRegistry accumulatorManager = null;
-        private int numberOfAliases = 0;
+        private AccumulatorRegistry accumulatorManager;
+        private int numberOfAliases;
         private IList<ComponentDeclaration> namespaceAliasList = new List<ComponentDeclaration>(5);
         private Dictionary<NamespaceUri, NamespaceBinding> namespaceAliasMap;
         private HashSet<NamespaceUri> aliasResultUriSet;
@@ -47,7 +47,7 @@ namespace OutSmart.DAXon.Xslt
         private readonly TypeAliasManager typeAliasManager;
         private readonly CharacterMapIndex characterMapIndex;
         private readonly IList<IAction> fixupActions = new List<IAction>();
-        private bool needsDynamicOutputProperties = false;
+        private bool needsDynamicOutputProperties;
 
         public virtual HashSet<NamespaceUri> ImportedSchemaTable => stylesheetPackage.SchemaNamespaces;
         public PrincipalStylesheetModule(XSLPackage sourceElement) : base(sourceElement, 0)

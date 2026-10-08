@@ -103,13 +103,13 @@ namespace OutSmart.DAXon.Serialization
         };
         private static readonly HashSet<string> inlineTable = new HashSet<string>();
         private static readonly HashSet<string> formattedTable = new HashSet<string>();
-        private int level = 0;
-        private bool sameLine = false;
-        private bool inFormattedTag = false;
-        private bool afterInline = false;
-        private bool afterEndElement = false;
+        private int level;
+        private bool sameLine;
+        private bool inFormattedTag;
+        private bool afterInline;
+        private bool afterEndElement;
         private int[] propertyStack = new int[20];
-        private HashSet<string> suppressed = null;
+        private HashSet<string> suppressed;
 
         /*!afterFormatted &&*/
         protected int LineLength => 80;

@@ -32,9 +32,9 @@ namespace OutSmart.DAXon.Transformation
     public class ConfigurationReader : IReceiver
     {
         private const int OBSOLETE_PROPERTY = -9999;
-        private int level = 0;
-        private string section = null;
-        private string subsection = null;
+        private int level;
+        private string section;
+        private string subsection;
         private readonly StringBuilder buffer = new StringBuilder(100);
         protected Configuration targetConfig;
         private readonly IList<IXmlProcessingError> errors = new List<IXmlProcessingError>();
@@ -43,8 +43,8 @@ namespace OutSmart.DAXon.Transformation
         private Configuration baseConfiguration;
         private PipelineConfiguration pipe;
         private readonly Stack<string> localNameStack = new Stack<string>();
-        private string systemId = null;
-        private List<string> catalogFiles = null;
+        private string systemId;
+        private List<string> catalogFiles;
         public ConfigurationReader()
         {
         }

@@ -28,18 +28,18 @@ namespace OutSmart.DAXon.Events
     public sealed class ComplexContentOutputter : Outputter, IReceiver, IResultTarget
     {
         private IReceiver nextReceiver;
-        private INodeName pendingStartTag = null;
+        private INodeName pendingStartTag;
         private int level = -1;
         private bool[] currentLevelIsDocument = new bool[20];
         private readonly IList<AttributeInfo> pendingAttributes = new List<AttributeInfo>();
         private NamespaceMap pendingNSMap;
         private readonly Stack<NamespaceMap> inheritedNamespaces = new Stack<NamespaceMap>();
-        private ISchemaType currentSimpleType = null; // any other value means we are currently writing an
+        private ISchemaType currentSimpleType; // any other value means we are currently writing an
         private int startElementProperties;
         private ILocation startElementLocationId = Loc.NONE;
         private HostLanguage hostLanguage = HostLanguage.XSLT;
         private RegularSequenceChecker.State state = INITIAL;
-        private bool previousAtomic = false;
+        private bool previousAtomic;
         private UnicodeStringReceiver cachedStringReceiver;
 
         // Direct-mapped memo of the StartContent namespace pipeline. A repeating instruction

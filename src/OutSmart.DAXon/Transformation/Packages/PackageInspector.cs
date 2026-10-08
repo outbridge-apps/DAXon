@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Transformation.Packages
         private bool isSefFile;
         private string packageName;
         private string packageVersion = "1";
-        private int elementCount = 0;
+        private int elementCount;
         private string diagnostics;
 
         private VersionedPackageName NameAndVersion

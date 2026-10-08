@@ -584,12 +584,12 @@ namespace OutSmart.DAXon.Expressions.Sorting
         {
             private readonly MergeInstr instruction;
             public ILocation location;
-            public Operand forEachItemOp = null;
-            public Operand forEachStreamOp = null;
-            public Operand rowSelectOp = null;
-            public string sourceName = null;
-            public SortKeyDefinitionList mergeKeyDefinitions = null;
-            public string baseURI = null;
+            public Operand forEachItemOp;
+            public Operand forEachStreamOp;
+            public Operand rowSelectOp;
+            public string sourceName;
+            public SortKeyDefinitionList mergeKeyDefinitions;
+            public string baseURI;
             public int validation;
             public ISchemaType schemaType;
             public bool streamable;

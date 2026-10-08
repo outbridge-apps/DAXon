@@ -15,9 +15,9 @@ namespace OutSmart.DAXon.Events
 {
     public abstract class SequenceNormalizer : ProxyReceiver
     {
-        protected int level = 0;
+        protected int level;
         private IList<IAction> actionList;
-        private bool failed = false;
+        private bool failed;
         public SequenceNormalizer(IReceiver next) : base(next)
         {
         }

@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Json
         public bool escape;
         protected IIntPredicateProxy charChecker;
         private IXPathContext context;
-        private IFunctionItem fallbackFunction = null;
+        private IFunctionItem fallbackFunction;
         // Set by ReEscape: true when the returned string is provably BMP with no substitutions
         // (every char in [0x20..0xD7FF] plus TAB/LF/CR), so a downstream consumer can skip a
         // second surrogate scan. False on the escape path and whenever a char needed handling.

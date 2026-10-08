@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Xslt
 {
     internal abstract class XSLLeafNodeConstructor : StyleElement
     {
-        protected Expression select = null;
+        protected Expression select;
 
         protected abstract string ErrorCodeForSelectPlusContent { get; }
         protected virtual Expression PrepareAttributesNameAndSelect()

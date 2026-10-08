@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Xslt
 {
     internal sealed class XSLValueOf : XSLLeafNodeConstructor
     {
-        private bool disable = false;
+        private bool disable;
         private Expression separator;
 
         protected override string ErrorCodeForSelectPlusContent => "XTSE0870";

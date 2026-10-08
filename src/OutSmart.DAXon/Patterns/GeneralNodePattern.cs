@@ -22,10 +22,10 @@ namespace OutSmart.DAXon.Patterns
     {
         private Expression equivalentExpr;
         private readonly NodeTest itemType;
-        private Expression topNodeEquivalent = null;
+        private Expression topNodeEquivalent;
         private volatile IPullEvaluator equivalentExprEvaluator;   // volatile: published once, read hot (round 11)
         private volatile IPullEvaluator equivalentTopNodeEvaluator;
-        private Pattern precondition = null;
+        private Pattern precondition;
 
         public override int Dependencies => equivalentExpr.Dependencies & (StaticProperty.DEPENDS_ON_LOCAL_VARIABLES | StaticProperty.DEPENDS_ON_USER_FUNCTIONS);
 

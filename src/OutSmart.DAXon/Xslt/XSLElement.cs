@@ -19,11 +19,11 @@ namespace OutSmart.DAXon.Xslt
     internal sealed class XSLElement : StyleElement
     {
         private Expression elementName;
-        private Expression @namespace = null;
+        private Expression @namespace;
         private string use;
-        private StructuredQName[] attributeSets = null;
+        private StructuredQName[] attributeSets;
         private int validation;
-        private ISchemaType schemaType = null;
+        private ISchemaType schemaType;
         private bool inheritNamespaces = true;
         public override bool IsInstruction()
         {

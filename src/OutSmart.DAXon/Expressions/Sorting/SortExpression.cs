@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
     {
         private readonly Operand selectOp;
         private readonly Operand sortOp;
-        private IAtomicComparer[] comparators = null;
+        private IAtomicComparer[] comparators;
         private IItemEvaluator[] sortKeyEvaluators;
 
         public override string ExpressionName => "sort";

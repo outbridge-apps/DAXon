@@ -18,9 +18,9 @@ namespace OutSmart.DAXon.Expressions
 {
     public class LetExpression : Assignation
     {
-        private ISequenceEvaluator evaluator = null;
-        private bool needsEagerEvaluation = false;
-        private bool needsLazyEvaluation = false;
+        private ISequenceEvaluator evaluator;
+        private bool needsEagerEvaluation;
+        private bool needsLazyEvaluation;
         private bool _isInstruction;
 
         public override string ExpressionName => "let";

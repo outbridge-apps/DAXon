@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     {
         private static readonly OperandRole SAME_FOCUS_CONTENT = new OperandRole(0, OperandUsage.ABSORPTION, SequenceType.ANY_SEQUENCE);
         protected Operand contentOp;
-        private ParseOptions validationOptions = null;
+        private ParseOptions validationOptions;
         protected bool preservingTypes = true;
 
         public virtual ParseOptions ValidationOptions

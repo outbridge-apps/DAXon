@@ -36,7 +36,7 @@ namespace OutSmart.DAXon.Trees.Iterators
         private readonly WeakReference<IDisposable> ticket;
         private readonly IIntPredicateProxy checker;
         private readonly URI uri;
-        private int position = 0;   // lines delivered so far; -1 after end
+        private int position;   // lines delivered so far; -1 after end
 
         /// <summary>Streaming form: resolve the URI to a reader and iterate straight off the file.</summary>
         public UnparsedTextIterator(URI absoluteURI, IXPathContext context, string encoding)

@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal sealed class XSLMerge : StyleElement
     {
-        private int numberOfMergeSources = 0;
+        private int numberOfMergeSources;
         public override bool IsInstruction()
         {
             return true;

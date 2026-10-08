@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Api
     public class RawDestination : AbstractDestination
     {
         private SequenceCollector sequenceOutputter;
-        private bool closed = false;
+        private bool closed;
         public RawDestination()
         {
         }

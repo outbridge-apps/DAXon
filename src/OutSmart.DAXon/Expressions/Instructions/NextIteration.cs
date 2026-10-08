@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// </summary>
     internal sealed class NextIteration : Instruction, TailCallLoop.ITailCallInfo
     {
-        private WithParam[] actualParams = null;
+        private WithParam[] actualParams;
 
         public WithParam[] Parameters
         {

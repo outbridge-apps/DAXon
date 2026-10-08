@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Xslt
         protected SortKeyDefinition sortKeyDefinition;
         protected Expression select;
         protected Expression order;
-        protected Expression dataType = null;
+        protected Expression dataType;
         protected Expression caseOrder;
         protected Expression lang;
         protected Expression collationName;

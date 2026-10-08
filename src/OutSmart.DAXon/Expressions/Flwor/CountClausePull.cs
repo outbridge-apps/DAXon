@@ -11,7 +11,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
     {
         private readonly TuplePull @base;
         private readonly int slot;
-        private int count = 0;
+        private int count;
         public CountClausePull(TuplePull @base, CountClause countClause)
         {
             this.@base = @base;

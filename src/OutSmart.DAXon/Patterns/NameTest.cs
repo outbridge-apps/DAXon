@@ -17,8 +17,8 @@ namespace OutSmart.DAXon.Patterns
         private readonly int fingerprint;
         private readonly UType uType;
         private readonly NamePool namePool;
-        private NamespaceUri uri = null; // the URI corresponding to the fingerprint - computed lazily
-        private string localName = null; //the local name corresponding to the fingerprint - computed lazily
+        private NamespaceUri uri; // the URI corresponding to the fingerprint - computed lazily
+        private string localName; //the local name corresponding to the fingerprint - computed lazily
 
         /// <summary>
         /// Determine the default priority of this node test when used on its own as a Pattern

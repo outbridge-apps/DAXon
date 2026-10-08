@@ -27,17 +27,17 @@ namespace OutSmart.DAXon.Expressions.Sorting
         protected Operand sortKey;
         private CachedEvaluator<IItemEvaluator> sortKeyEvaluator;
         protected Operand order;
-        protected Operand dataTypeExpression = null;
+        protected Operand dataTypeExpression;
         protected Operand caseOrder;
         protected Operand language;
-        protected Operand collationName = null;
-        protected Operand stable = null; // not actually used, but present so it can be validated
+        protected Operand collationName;
+        protected Operand stable; // not actually used, but present so it can be validated
         protected IStringCollator collation;
         protected string baseURI; // needed in case collation URI is relative
         protected bool emptyLeast = true;
-        protected bool backwardsCompatible = false;
-        protected bool setContextForSortKey = false;
-        private IAtomicComparer finalComparator = null;
+        protected bool backwardsCompatible;
+        protected bool setContextForSortKey;
+        private IAtomicComparer finalComparator;
 
         public virtual Expression SortKey => sortKey.GetChildExpression();
 

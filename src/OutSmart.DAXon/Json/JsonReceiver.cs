@@ -57,11 +57,11 @@ namespace OutSmart.DAXon.Json
         private UnicodeString pendingChunk;
         private readonly Stack<string> stack = new Stack<string>();   // local names of open elements
         private bool atStart = true;
-        private bool indenting = false;
-        private bool escaped = false;
+        private bool indenting;
+        private bool escaped;
         private readonly Stack<KeyChecker> keyChecker = new Stack<KeyChecker>();
         private readonly List<KeyChecker> spareKeyCheckers = new List<KeyChecker>();
-        private IFunctionItem numberFormatter = null;
+        private IFunctionItem numberFormatter;
 
         public IFunctionItem NumberFormatter
         {

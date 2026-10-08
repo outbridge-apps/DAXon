@@ -31,8 +31,8 @@ namespace OutSmart.DAXon.XQuery
         protected SlotManager stackFrameMap;
         protected Executable executable;
         protected QueryModule mainModule;
-        protected IPullEvaluator pullEvaluator = null;
-        protected IPushEvaluator pushEvaluator = null;
+        protected IPullEvaluator pullEvaluator;
+        protected IPushEvaluator pushEvaluator;
 
         public virtual string TracingTag => "query";
 

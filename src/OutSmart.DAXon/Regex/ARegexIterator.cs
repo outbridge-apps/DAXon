@@ -21,9 +21,9 @@ namespace OutSmart.DAXon.Regex
         private readonly REMatcher _matcher; // the Matcher object that does the matching, and holds the state
         private UnicodeString current; // the string most recently returned by the iterator
         private UnicodeString nextSubstring; // if the last string was a matching string, null; otherwise the next substring
-        private int prevEnd = 0; // the position in the input string of the end of the last match or non-match
-        private IntToIntHashMap nestingTable = null;
-        private bool skip = false; // indicates the last match was zero length
+        private int prevEnd; // the position in the input string of the end of the last match or non-match
+        private IntToIntHashMap nestingTable;
+        private bool skip; // indicates the last match was zero length
 
         public int NumberOfGroups => _matcher.ParenCount;
         public ARegexIterator(UnicodeString str, UnicodeString regex, REMatcher matcher)

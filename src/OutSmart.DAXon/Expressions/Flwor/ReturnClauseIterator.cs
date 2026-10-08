@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
         private readonly TuplePull @base;
         private readonly IPullEvaluator action;
         private readonly IXPathContext context;
-        private ISequenceIterator results = null;
+        private ISequenceIterator results;
 
         public ReturnClauseIterator(TuplePull @base, IPullEvaluator returnAction, IXPathContext context)
         {

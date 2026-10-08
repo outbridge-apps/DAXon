@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Events
     internal class TreeReceiver : SequenceReceiver
     {
         private readonly IReceiver nextReceiver;
-        private int level = 0;
+        private int level;
         private bool[] isDocumentLevel = new bool[20];
         public TreeReceiver(IReceiver nextInChain) : base(nextInChain.GetPipelineConfiguration())
         {

@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Xslt
     {
         private ItemType requiredType = AnyItemType.GetInstance();
         private bool mayBeOmitted = true;
-        private bool absentFocus = false;
+        private bool absentFocus;
         public override void PrepareAttributes()
         {
             string asAtt = null;

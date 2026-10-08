@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
     internal sealed class MergeGroupingIterator : IGroupIterator, ILookaheadIterator, ILastPositionFinder
     {
         private readonly ISequenceIterator baseItr;
-        private ObjectValue<ItemWithMergeKeys> currenti = null;
+        private ObjectValue<ItemWithMergeKeys> currenti;
         private ObjectValue<ItemWithMergeKeys> nextItem;
         private List<IItem> currentMembers;
         private Dictionary<string, List<IItem>> currentSourceMembers;

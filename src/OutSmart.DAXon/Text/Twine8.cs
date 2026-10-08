@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Text
 
         private static readonly bool CHECKING = Configuration.IsAssertionsEnabled();
         protected byte[] bytes;
-        protected int cachedHash = 0;
+        protected int cachedHash;
 
         public byte[] ByteArray => bytes;
 
@@ -388,7 +388,7 @@ namespace OutSmart.DAXon.Text
         {
 
             private readonly Twine8 parent;
-            int i = 0;
+            int i;
             public AnonymousIntIterator(Twine8 parent)
             {
                 this.parent = parent;

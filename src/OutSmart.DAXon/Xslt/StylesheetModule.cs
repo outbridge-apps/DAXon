@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Xslt
         // the value of the inputTypeAnnotations attribute on this module, combined with the values
         // on all imported/included modules. This is a combination of the bit-significant values
         // ANNOTATION_STRIP and ANNOTATION_PRESERVE.
-        private int inputTypeAnnotations = 0;
+        private int inputTypeAnnotations;
         // A list of all the declarations in the stylesheet and its descendants, in increasing precedence order
         protected IList<ComponentDeclaration> topLevel = new List<ComponentDeclaration>();
 

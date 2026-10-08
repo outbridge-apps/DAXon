@@ -25,10 +25,10 @@ namespace OutSmart.DAXon.Expressions
     {
         private int axis;
         private NodeTest test;
-        private Types.ItemType itemType = null;
+        private Types.ItemType itemType;
         private ContextItemStaticInfo staticInfo = ContextItemStaticInfo.DEFAULT;
-        private bool doneTypeCheck = false;
-        private bool doneOptimize = false;
+        private bool doneTypeCheck;
+        private bool doneOptimize;
 
         public override string ExpressionName => "axisStep";
 

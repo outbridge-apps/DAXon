@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Xslt
     internal sealed class XSLItemType : StyleElement
     {
         private StructuredQName itemTypeName;
-        private bool resolved = false;
+        private bool resolved;
         public override bool IsDeclaration()
         {
             return true;

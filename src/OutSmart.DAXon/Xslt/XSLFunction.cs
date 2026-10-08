@@ -20,14 +20,14 @@ namespace OutSmart.DAXon.Xslt
 {
     public class XSLFunction : StyleElement, IStylesheetComponent
     {
-        private bool doneAttributes = false;
-        private string nameAtt = null;
-        private string asAtt = null;
-        private string extraAsAtt = null;
+        private bool doneAttributes;
+        private string nameAtt;
+        private string asAtt;
+        private string extraAsAtt;
         private SequenceType resultType = SequenceType.ANY_SEQUENCE;
         private SlotManager stackFrameMap;
-        private bool memoFunction = false;
-        private string overrideExtensionFunctionAtt = null;
+        private bool memoFunction;
+        private string overrideExtensionFunctionAtt;
         private bool overrideExtensionFunction = true;
         private int numberOfParameters = -1; // -1 means not yet known
         private int numberOfOptionalParameters = -1; // -1 means not yet known
@@ -36,7 +36,7 @@ namespace OutSmart.DAXon.Xslt
         private FunctionStreamability streamability;
         private UserFunction.Determinism determinism = UserFunction.Determinism.PROACTIVE;
         private bool explaining;
-        private bool updating = false;
+        private bool updating;
 
         public virtual SequenceType ResultType
         {

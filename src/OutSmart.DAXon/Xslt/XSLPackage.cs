@@ -14,10 +14,10 @@ namespace OutSmart.DAXon.Xslt
 {
     public class XSLPackage : XSLModuleRoot
     {
-        private string nameAtt = null;
-        private PackageVersion packageVersion = null;
+        private string nameAtt;
+        private PackageVersion packageVersion;
         private bool declaredModes = true;
-        private bool prepared = false;
+        private bool prepared;
 
         public virtual string Name
         {

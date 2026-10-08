@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Trees.Utilities
         // Changed to a long in Saxon 9.4, because a user reported an int overflowing
         // on a system that had been in live operation for several months. The effect wasn't fatal,
         // but could cause incorrect node identity tests.
-        private long nextDocumentNumber = 0;
+        private long nextDocumentNumber;
         // Negative document numbers are used for streamed documents. This means that streamed
         // nodes always precede unstreamed nodes in document order. We take advantage of this
         // when sorting a sequence that contains both streamed and unstreamed nodes.

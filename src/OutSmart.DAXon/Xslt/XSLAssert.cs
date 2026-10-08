@@ -16,9 +16,9 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal sealed class XSLAssert : StyleElement
     {
-        private Expression test = null;
-        private Expression select = null;
-        private Expression errorCode = null;
+        private Expression test;
+        private Expression select;
+        private Expression errorCode;
         public override bool IsInstruction()
         {
             return true;

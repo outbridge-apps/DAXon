@@ -47,7 +47,7 @@ namespace OutSmart.DAXon.Functions
 
         private sealed class IndexIterator : ISequenceIterator
         {
-            private int index = 0;
+            private int index;
             private readonly ISequenceIterator @base;
             private readonly BuiltInAtomicType searchType;
             private readonly IAtomicComparer comparer;

@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         protected IAtomicComparer[] comparators;
         protected ObjectToBeSorted[] values;
         protected int count = -1;
-        protected int position = 0;
+        protected int position;
         protected readonly IXPathContext context;
         private HostLanguage hostLanguage;
         protected virtual ISequenceIterator BaseIterator => @base;

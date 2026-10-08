@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Xslt
     internal sealed class XSLOutputCharacter : StyleElement
     {
         private int codepoint = -1;
-        private string replacementString = null;
+        private string replacementString;
 
         public int CodePoint => codepoint;
 

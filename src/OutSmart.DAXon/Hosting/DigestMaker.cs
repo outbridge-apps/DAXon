@@ -12,7 +12,7 @@ namespace OutSmart.DAXon.Lib
 {
     internal sealed class DigestMaker
     {
-        private string hexDigest = null;
+        private string hexDigest;
         private readonly System.Security.Cryptography.SHA256 digest = System.Security.Cryptography.SHA256.Create();
 
         public string Digest

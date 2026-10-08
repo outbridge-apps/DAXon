@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Expressions
     internal sealed class SwitchCaseComparison : BinaryExpression, IComparisonExpression
     {
         private IAtomicComparer comparer;
-        private bool knownToBeComparable = false;
+        private bool knownToBeComparable;
         private readonly bool allowMultiple;
 
         public IStringCollator StringCollator => comparer.Collator;

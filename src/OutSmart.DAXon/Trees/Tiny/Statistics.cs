@@ -24,8 +24,8 @@ namespace OutSmart.DAXon.Trees.Tiny
         // are combined by a bitwise "or" of these values, yielding a value that is typically a bit higher
         // than their maximum. So we're generally allocating more space than we need, but not by too much.
         // The algorithm works best when all the trees have similar sizes.
-        private int treesCreated = 0;
-        private int nextSlot = 0;
+        private int treesCreated;
+        private int nextSlot;
         private readonly int[] last10Nodes = new int[10];
         private readonly int[] last10Attributes = new int[10];
         private readonly int[] last10Namespaces = new int[10];

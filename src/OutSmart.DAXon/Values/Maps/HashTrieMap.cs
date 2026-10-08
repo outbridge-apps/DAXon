@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Values.Maps
         // type.
         private ItemType valueItemType = ErrorType.GetInstance();
         // type.
-        private int valueCardinality = 0;
+        private int valueCardinality;
         // type.
         private int entries = -1;
 

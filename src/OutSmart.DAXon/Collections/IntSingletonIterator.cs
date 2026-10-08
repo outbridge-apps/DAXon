@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Collections
     internal sealed class IntSingletonIterator : AbstractIntIterator
     {
         private readonly int value;
-        bool gone = false;
+        bool gone;
         public IntSingletonIterator(int value)
         {
             this.value = value;

@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.XPath
 {
     public abstract class AbstractStaticContext : IStaticContext
     {
-        private string baseURI = null;
+        private string baseURI;
         private Configuration config;
         private PackageData packageData;
         private ILocation containingLocation = Loc.NONE;
@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.XPath
         private FunctionLibraryList libraryList = new FunctionLibraryList();
         private NamespaceUri defaultFunctionNamespace = NamespaceUri.FN;
         private NamespaceUri defaultElementNamespace = NamespaceUri.NULL;
-        private bool backwardsCompatible = false;
+        private bool backwardsCompatible;
         private int xpathLanguageLevel = 31;
         private readonly Dictionary<StructuredQName, Types.ItemType> typeAliases = new Dictionary<StructuredQName, Types.ItemType>();
         private UnprefixedElementMatchingPolicy unprefixedElementPolicy = UnprefixedElementMatchingPolicy.DEFAULT_NAMESPACE;

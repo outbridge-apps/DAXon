@@ -17,10 +17,10 @@ namespace OutSmart.DAXon.Model
 {
     internal sealed class SelectedElementsSpaceStrippingRule : ISpaceStrippingRule
     {
-        private Rule anyElementRule = null;
-        private Rule unnamedElementRuleChain = null;
+        private Rule anyElementRule;
+        private Rule unnamedElementRuleChain;
         private readonly Dictionary<INodeName, Rule> namedElementRules = new Dictionary<INodeName, Rule>(32);
-        private int sequence = 0;
+        private int sequence;
         private readonly bool rejectDuplicates; // in XSLT 3.0, duplicate conflicting rules are a static error
         public SelectedElementsSpaceStrippingRule(bool rejectDuplicates)
         {

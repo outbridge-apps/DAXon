@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Events
     public abstract class Outputter : IReceiver
     {
         protected PipelineConfiguration pipelineConfiguration;
-        protected string systemId = null;
+        protected string systemId;
         public virtual void SetPipelineConfiguration(PipelineConfiguration pipe)
         {
             this.pipelineConfiguration = pipe;

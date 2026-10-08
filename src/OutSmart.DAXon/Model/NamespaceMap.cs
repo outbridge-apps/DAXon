@@ -742,7 +742,7 @@ namespace OutSmart.DAXon.Model
         {
 
             private readonly NamespaceMap parent;
-            int i = 0;
+            int i;
 
 
 

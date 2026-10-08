@@ -21,15 +21,15 @@ namespace OutSmart.DAXon.Events
     {
         public const string SIGMA = "Σ";
         public const string SIGMA2 = "Σ2";
-        private readonly DigestMaker digest = null;
-        private int checksum = 0;
-        private int sequence = 0;
-        private bool checkExistingChecksum = false;
-        private bool checksumCorrect = false;
-        private bool digestCorrect = false;
-        private bool requireDigest = false;
+        private readonly DigestMaker digest;
+        private int checksum;
+        private int sequence;
+        private bool checkExistingChecksum;
+        private bool checksumCorrect;
+        private bool digestCorrect;
+        private bool requireDigest;
         private bool rootElement = true;
-        private int depth = 0;
+        private int depth;
         private string target = "unknown";
 
         //

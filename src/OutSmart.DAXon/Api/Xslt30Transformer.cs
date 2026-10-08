@@ -23,8 +23,8 @@ namespace OutSmart.DAXon.Api
     public class Xslt30Transformer : AbstractXsltTransformer
     {
         private GlobalParameterSet globalParameterSet;
-        private bool primed = false;
-        private IItem globalContextItem = null;
+        private bool primed;
+        private IItem globalContextItem;
         private bool alreadyStripped;
 
         /*staticParameters*/

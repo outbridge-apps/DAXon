@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Functions
     internal abstract class Minimax : CollatingFunctionFixed
     {
         private IPlainType argumentType = BuiltInAtomicType.ANY_ATOMIC;
-        private bool ignoreNaN = false;
+        private bool ignoreNaN;
 
         public override string StreamerName => "Minimax";
         public abstract bool IsMaxFunction();

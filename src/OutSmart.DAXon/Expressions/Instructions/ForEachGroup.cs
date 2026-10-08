@@ -31,10 +31,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public const int GROUP_SPLIT_WHEN = 4;
         private readonly byte algorithm;
         private IStringCollator collator; // collation used for the grouping comparisons
-        private IAtomicComparer[] sortComparators = null; // comparators used for sorting the groups
-        private IItemEvaluator[] sortKeyEvaluators = null;
-        private bool composite = false;
-        private bool inFork = false;
+        private IAtomicComparer[] sortComparators; // comparators used for sorting the groups
+        private IItemEvaluator[] sortKeyEvaluators;
+        private bool composite;
+        private bool inFork;
         private readonly Operand selectOp;
         private readonly Operand actionOp;
         private readonly Operand keyOp;

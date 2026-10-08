@@ -19,8 +19,8 @@ namespace OutSmart.DAXon.Functions
     public abstract class CollatingFunctionFixed : SystemFunction, IStatefulSystemFunction
     {
         private string collationName;
-        private IStringCollator stringCollator = null;
-        private IAtomicComparer atomicComparer = null;
+        private IStringCollator stringCollator;
+        private IAtomicComparer atomicComparer;
 
         public virtual IStringCollator StringCollator => stringCollator;
 

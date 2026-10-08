@@ -12,7 +12,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
     {
         private readonly TuplePush destination;
         private readonly int slot;
-        private int count = 0;
+        private int count;
         public CountClausePush(Outputter outputter, TuplePush destination, CountClause countClause) : base(outputter)
         {
             this.destination = destination;

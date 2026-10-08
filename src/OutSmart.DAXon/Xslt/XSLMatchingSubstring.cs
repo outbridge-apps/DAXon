@@ -11,7 +11,7 @@ namespace OutSmart.DAXon.Xslt
 {
     internal sealed class XSLMatchingSubstring : StyleElement
     {
-        private Expression select = null;
+        private Expression select;
         public override void PrepareAttributes()
         {
             foreach (AttributeInfo att in Attributes())

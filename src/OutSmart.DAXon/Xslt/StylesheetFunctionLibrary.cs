@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Xslt
     {
         private readonly StylesheetPackage pack;
         private readonly bool overrideExtensionFunction;
-        private Dictionary<StructuredQName, IList<Component>> functionIndex = null;
+        private Dictionary<StructuredQName, IList<Component>> functionIndex;
         public StylesheetFunctionLibrary(StylesheetPackage sheet, bool overrideExtensionFunction)
         {
             this.pack = sheet;

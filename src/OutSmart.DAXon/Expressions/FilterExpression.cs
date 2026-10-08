@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Expressions
         private bool filterIsPositional; // true if the value of the filter might depend on
         private bool filterIsSingletonBoolean; // true if the filter expression always returns a single boolean
         private bool filterIsIndependent; // true if the filter expression does not
-        public bool doneReorderingPredicates = false;
+        public bool doneReorderingPredicates;
         private bool indexingDisabled;
 
         public Expression Base

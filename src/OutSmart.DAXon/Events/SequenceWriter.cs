@@ -15,9 +15,9 @@ namespace OutSmart.DAXon.Events
 {
     public abstract class SequenceWriter : SequenceReceiver
     {
-        private TreeModel treeModel = null;
-        private Builder builder = null;
-        private int level = 0;
+        private TreeModel treeModel;
+        private Builder builder;
+        private int level;
         public SequenceWriter(PipelineConfiguration pipe) : base(pipe)
         {
         }

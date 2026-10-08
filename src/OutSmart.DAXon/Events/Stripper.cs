@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Events
         protected ISpaceStrippingRule rule;
 
         private int[] stripStack = new int[100];
-        private int top = 0;
+        private int top;
         public Stripper(ISpaceStrippingRule rule, IReceiver next) : base(next)
         {
             this.rule = rule;

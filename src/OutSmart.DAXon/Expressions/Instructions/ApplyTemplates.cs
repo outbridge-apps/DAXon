@@ -29,11 +29,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private Operand separatorOp;
         private WithParam[] actualParams;
         private WithParam[] tunnelParams;
-        protected bool useCurrentMode = false;
-        protected bool _useTailRecursion = false;
+        protected bool useCurrentMode;
+        protected bool _useTailRecursion;
         protected Mode mode;
         protected bool implicitSelect;
-        protected bool inStreamableConstruct = false;
+        protected bool inStreamableConstruct;
         protected RuleManager ruleManager;
         private int bindingSlot = -1; // for binding the mode
 

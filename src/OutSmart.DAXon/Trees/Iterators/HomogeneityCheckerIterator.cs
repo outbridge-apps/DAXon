@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Trees.Iterators
     /// </summary>
     internal sealed class HomogeneityCheckerIterator : ISequenceIterator
     {
-        private ISequenceIterator @base = null;
+        private ISequenceIterator @base;
         private readonly ILocation loc;
         private int state;
         // state = 0: initial state, will accept either nodes or atomic values

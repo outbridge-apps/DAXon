@@ -133,7 +133,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// </summary>
         internal sealed class MapGet : SystemFunction
         {
-            string pendingWarning = null;
+            string pendingWarning;
             public override void SupplyTypeInformation(ExpressionVisitor visitor, ContextItemStaticInfo contextItemType, Expression[] arguments)
             {
                 ItemType it = arguments[0].GetItemType();
@@ -571,9 +571,9 @@ namespace OutSmart.DAXon.Values.Maps
             public static readonly string errorCodeKey = "Q{" + NamespaceConstant.SAXON + "}duplicates-error-code";
             private string duplicates = "use-first";
             private string duplicatesErrorCode = "FOJS0003";
-            private IFunctionItem onDuplicates = null;
-            private bool allStringKeys = false;
-            private bool treatAsFinal = false;
+            private IFunctionItem onDuplicates;
+            private bool allStringKeys;
+            private bool treatAsFinal;
 
             public override string StreamerName => "NewMap";
             public override Expression MakeOptimizedFunctionCall(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo, params Expression[] arguments)

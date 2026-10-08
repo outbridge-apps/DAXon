@@ -32,8 +32,8 @@ namespace OutSmart.DAXon.Types
         private int cardinality;
         private RoleDiagnostic roleDiagnostic;
         private ILocation locator;
-        private int count = 0;
-        private int level = 0;
+        private int count;
+        private int level;
         // used to avoid repeated checking when a template creates large numbers of elements of the same type
         // The key is a (namecode, typecode) pair, packed into a single long
         private readonly HashSet<long> checkedElements = new HashSet<long>();

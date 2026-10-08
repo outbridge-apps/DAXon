@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     // A user-defined function that remembers the results of previous calls.
     internal sealed class MemoFunction : UserFunction
     {
-        private bool lookForNodes = false;  // true if the function signature allows nodes within argument values
+        private bool lookForNodes;  // true if the function signature allows nodes within argument values
 
         public override void SetParameterDefinitions(UserFunctionParameter[] @params)
         {

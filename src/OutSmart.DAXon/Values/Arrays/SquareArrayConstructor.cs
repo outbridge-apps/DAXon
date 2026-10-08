@@ -19,8 +19,8 @@ namespace OutSmart.DAXon.Values.Arrays
     internal sealed class SquareArrayConstructor : Expression, IPingable
     {
         private OperandArray operanda;
-        private double numberOfCalls = 0;
-        private double numberOfConversions = 0;
+        private double numberOfCalls;
+        private double numberOfConversions;
 
         public override string ExpressionName => "SquareArrayConstructor";
 

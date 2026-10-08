@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Functions
 {
     internal sealed class KeyFn : SystemFunction, IStatefulSystemFunction
     {
-        private KeyDefinitionSet staticKeySet = null;
+        private KeyDefinitionSet staticKeySet;
         public KeyManager GetKeyManager()
         {
             return GetRetainedStaticContext().GetPackageData().GetKeyManager();

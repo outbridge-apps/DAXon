@@ -24,10 +24,10 @@ namespace OutSmart.DAXon.XPath
     {
         protected Dictionary<string, NamespaceUri> namespaces = new Dictionary<string, NamespaceUri>(10);
         protected Dictionary<StructuredQName, XPathVariable> variables = new Dictionary<StructuredQName, XPathVariable>(20);
-        protected INamespaceResolver externalResolver = null;
+        protected INamespaceResolver externalResolver;
         protected Types.ItemType requiredContextItemType = AnyItemType.GetInstance();
         protected HashSet<NamespaceUri> importedSchemaNamespaces = new HashSet<NamespaceUri>();
-        protected bool autoDeclare = false;
+        protected bool autoDeclare;
         protected Executable executable;
         protected RetainedStaticContext retainedStaticContext;
         protected OptimizerOptions optimizerOptions;

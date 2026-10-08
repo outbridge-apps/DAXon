@@ -25,8 +25,8 @@ namespace OutSmart.DAXon.Api
         private Processor processor; // never null
         private readonly Dictionary<StructuredQName, string> properties = new Dictionary<StructuredQName, string>(10);
         private readonly StreamResult result = new StreamResult();
-        private CharacterMapIndex characterMapIndex = null;
-        private bool mustClose = false;
+        private CharacterMapIndex characterMapIndex;
+        private bool mustClose;
 
         protected virtual Properties LocallyDefinedProperties
         {

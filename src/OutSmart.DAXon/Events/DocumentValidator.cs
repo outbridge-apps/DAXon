@@ -16,8 +16,8 @@ namespace OutSmart.DAXon.Events
 {
     internal sealed class DocumentValidator : ProxyReceiver
     {
-        private bool foundElement = false;
-        private int level = 0;
+        private bool foundElement;
+        private int level;
         private readonly string errorCode;
         public DocumentValidator(IReceiver next, string errorCode) : base(next)
         {

@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Expressions
 {
     public sealed class ValueComparison : BinaryExpression, IComparisonExpression, INegatable
     {
-        private BooleanValue resultWhenEmpty = null;
+        private BooleanValue resultWhenEmpty;
         private bool needsRuntimeCheck;
 
         public override string ExpressionName => "ValueComparison";

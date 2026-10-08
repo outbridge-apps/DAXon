@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
     /// </summary>
     internal sealed class FunctionLookup : ContextAccessorFunction
     {
-        private IXPathContext boundContext = null;
+        private IXPathContext boundContext;
 
         public FunctionLookup()
         {

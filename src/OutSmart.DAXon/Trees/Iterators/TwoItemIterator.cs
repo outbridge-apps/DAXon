@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Trees.Iterators
     {
         private readonly IItem one;
         private readonly IItem two;
-        private int pos = 0;
+        private int pos;
 
         public bool HasNext => pos < 2;
 

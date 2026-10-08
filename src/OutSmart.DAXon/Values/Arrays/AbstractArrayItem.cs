@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Values.Arrays
     /// </summary>
     internal abstract class AbstractArrayItem : ArrayItem
     {
-        private SequenceType memberType = null; // computed on demand
+        private SequenceType memberType; // computed on demand
         public override OperandRole[] OperandRoles => new OperandRole[]
             {
                 OperandRole.SINGLE_ATOMIC

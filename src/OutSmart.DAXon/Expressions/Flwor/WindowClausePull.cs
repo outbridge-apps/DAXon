@@ -20,10 +20,10 @@ namespace OutSmart.DAXon.Expressions.Flwor
         private readonly WindowClause windowClause;
         private readonly TuplePull source;
         private ISequenceIterator baseIterator;
-        private bool finished = false;
-        private IItem previous = null;
-        private IItem current = null;
-        private IItem next = null;
+        private bool finished;
+        private IItem previous;
+        private IItem current;
+        private IItem next;
         private int position = -1;
         private readonly List<WindowClause.Window> currentWindows = new List<WindowClause.Window>();
 

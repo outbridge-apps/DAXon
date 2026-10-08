@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private SequenceType requiredType;
         private ItemType requiredContextItemType = AnyItemType.GetInstance();
         private bool mayOmitContextItem = true;
-        private bool absentFocus = false;
+        private bool absentFocus;
         private IList<LocalParamInfo> localParamDetails = new List<LocalParamInfo>(4);
         private IPushEvaluator bodyEvaluator;
 

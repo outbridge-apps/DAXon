@@ -161,7 +161,7 @@ namespace OutSmart.DAXon.Functions
         private sealed class OuterElementStripper : ProxyReceiver
         {
 
-            private int level = 0;
+            private int level;
             public OuterElementStripper(IReceiver next) : base(next)
             {
             }

@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
         internal IAxisIterator @base;
         internal IVirtualNode parent;
         internal NodeInfo _current;
-        internal bool atomizing = false;
+        internal bool atomizing;
         internal IWrappingFunction wrappingFunction;
 
         public WrappingIterator(IAxisIterator @base, IWrappingFunction function, IVirtualNode parent)

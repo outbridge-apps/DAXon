@@ -35,21 +35,21 @@ namespace OutSmart.DAXon.Serialization
         private static readonly byte[] SYSTEM = StringConstants.Bytes("  SYSTEM ");
         private static readonly byte[] PUBLIC = StringConstants.Bytes("  PUBLIC ");
         protected static readonly byte[] RIGHT_ANGLE_NEWLINE = StringConstants.Bytes(">\n");
-        protected bool canonical = false;
-        protected bool started = false;
-        protected bool startedElement = false;
-        protected bool openStartTag = false;
-        protected bool declarationIsWritten = false;
+        protected bool canonical;
+        protected bool started;
+        protected bool startedElement;
+        protected bool openStartTag;
+        protected bool declarationIsWritten;
         protected INodeName elementCode;
         protected int indentForNextAttribute = -1;
-        protected bool undeclareNamespaces = false;
-        protected bool unfailing = false;
-        protected string internalSubset = null;
+        protected bool undeclareNamespaces;
+        protected bool unfailing;
+        protected string internalSubset;
         protected char delimiter = '"';
         protected bool[] attSpecials = specialInAtt;
         protected Stack<string> elementStack = new Stack<string>();
-        private bool indenting = false;
-        private bool requireWellFormed = false;
+        private bool indenting;
+        private bool requireWellFormed;
         protected ICharacterReferenceGenerator characterReferenceGenerator = HexCharacterReferenceGenerator.THE_INSTANCE;
 
         // True while the value being written carries the character map expander's marks: only there does U+0000

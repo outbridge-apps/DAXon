@@ -13,8 +13,8 @@ namespace OutSmart.DAXon.Values
 {
     internal sealed class SingletonClosure : Closure, ISequence
     {
-        private bool built = false;
-        private IItem value = null;
+        private bool built;
+        private IItem value;
         public SingletonClosure(Expression exp, IPullEvaluator inputEvaluator, IXPathContext context)
         {
             SetInputEvaluator(inputEvaluator);

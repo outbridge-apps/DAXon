@@ -13,8 +13,8 @@ namespace OutSmart.DAXon.Model
     {
         private const int LIMIT = 2047;
         string[] prefixes = new string[8];
-        int used = 0;
-        Dictionary<string, int> index = null;
+        int used;
+        Dictionary<string, int> index;
         public PrefixPool()
         {
             prefixes[0] = "";

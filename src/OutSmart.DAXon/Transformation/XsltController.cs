@@ -29,14 +29,14 @@ namespace OutSmart.DAXon.Transformation
         private bool assertionsEnabled = true;
         private IResultDocumentResolver resultDocumentResolver;
         private HashSet<DocumentKey> allOutputDestinations;
-        private Component.M initialMode = null;
+        private Component.M initialMode;
         private Dictionary<StructuredQName, ISequence> initialTemplateParams;
         private Dictionary<StructuredQName, ISequence> initialTemplateTunnelParams;
         private readonly Dictionary<long, Stack<AttributeSet>> attributeSetEvaluationStacks = new Dictionary<long, Stack<AttributeSet>>();
         private AccumulatorManager accumulatorManager = new AccumulatorManager();
-        private PrincipalOutputGatekeeper gatekeeper = null;
+        private PrincipalOutputGatekeeper gatekeeper;
         private IDestination principalDestination;
-        private TemplateRuleTraceListener templateRuleTraceListener = null;
+        private TemplateRuleTraceListener templateRuleTraceListener;
         private Action<Message> messageHandler;
 
         public virtual StructuredQName InitialModeName => initialMode == null ? null : initialMode.GetActor().ModeName;

@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Expressions
         private readonly IContextMappingFunction action;
         private readonly IXPathContext context;
         private readonly OutSmart.DAXon.Core.Controller controller;
-        private ISequenceIterator stepIterator = null;
+        private ISequenceIterator stepIterator;
         public ContextMappingIterator(IContextMappingFunction action, IXPathContext context)
         {
             @base = context.GetCurrentIterator();

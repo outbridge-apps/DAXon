@@ -22,8 +22,8 @@ namespace OutSmart.DAXon.Xslt
     {
         private readonly StyleElement element;
         private readonly StructuredQName attributeName;
-        private ILocation containingLocation = null;
-        private RetainedStaticContext retainedStaticContext = null;
+        private ILocation containingLocation;
+        private RetainedStaticContext retainedStaticContext;
 
         public virtual StructuredQName AttributeName => attributeName;
 

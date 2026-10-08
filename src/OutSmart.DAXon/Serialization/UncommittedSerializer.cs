@@ -18,8 +18,8 @@ namespace OutSmart.DAXon.Serialization
 {
     public class UncommittedSerializer : ProxyReceiver
     {
-        private bool committed = false;
-        private EventBuffer pending = null;
+        private bool committed;
+        private EventBuffer pending;
         private readonly IResultTarget finalResult;
         private readonly SerializationProperties properties;
         public UncommittedSerializer(IResultTarget finalResult, IReceiver next, SerializationProperties @params) : base(next)

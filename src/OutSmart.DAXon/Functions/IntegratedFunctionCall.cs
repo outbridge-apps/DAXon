@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
         private readonly StructuredQName name;
         private readonly ExtensionFunctionCall function;
         private SequenceType resultType = SequenceType.ANY_SEQUENCE;
-        private int state = 0;
+        private int state;
 
         public override int IntrinsicDependencies
         {

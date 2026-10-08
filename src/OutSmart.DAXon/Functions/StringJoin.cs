@@ -346,7 +346,7 @@ namespace OutSmart.DAXon.Functions
 
         private sealed class StringJoinFold : IFold
         {
-            private int position = 0;
+            private int position;
             private readonly UnicodeString separator;
             private readonly UniStringCollector data;
             private readonly bool returnEmptyIfEmpty;

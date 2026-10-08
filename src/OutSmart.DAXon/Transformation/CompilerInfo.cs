@@ -34,15 +34,15 @@ namespace OutSmart.DAXon.Transformation
         private GlobalParameterSet suppliedParameters = new GlobalParameterSet();
         private string defaultCollation;
         private PackageLibrary packageLibrary;
-        private bool assertionsEnabled = false;
+        private bool assertionsEnabled;
         private string targetEdition = "HE";
-        private bool relocatable = false;
+        private bool relocatable;
         private IEnumerable<QueryLibrary> queryLibraries;
         private OptimizerOptions optimizerOptions;
         private NamespaceUri defaultNamespaceForElementsAndTypes = NamespaceUri.NULL;
         private UnprefixedElementMatchingPolicy unprefixedElementMatchingPolicy = UnprefixedElementMatchingPolicy.DEFAULT_NAMESPACE;
         private int languageVersion = 30;
-        private IFunctionLibrary stubFunctionLibrary = null;
+        private IFunctionLibrary stubFunctionLibrary;
         private IOutputURIResolver outputURIResolver = StandardOutputResolver.GetInstance();
 
         public virtual GlobalParameterSet Parameters => suppliedParameters;

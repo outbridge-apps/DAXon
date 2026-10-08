@@ -12,15 +12,15 @@ namespace OutSmart.DAXon.Transformation
 {
     public class XPathException : Exception
     {
-        private bool _isTypeError = false;
-        private bool _isSyntaxError = false;
-        private bool _isStaticError = false;
-        private bool _isGlobalError = false;
-        private string hostLanguage = null;
+        private bool _isTypeError;
+        private bool _isSyntaxError;
+        private bool _isStaticError;
+        private bool _isGlobalError;
+        private string hostLanguage;
         private StructuredQName errorCode;
         private ISequence errorObject;
         private Expression failingExpression;
-        private bool _hasBeenReported = false;
+        private bool _hasBeenReported;
         IXPathContext context;
         // Native error locus. Replaces routing through the base JAXP TransformerException.SetLocator/GetLocator
         // (a no-op stub); ILocation no longer extends the JAXP SourceLocator.

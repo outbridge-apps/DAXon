@@ -28,8 +28,8 @@ namespace OutSmart.DAXon.Trees.Tiny
         private int nodeHint, attributeHint, namespaceHint;
         private readonly long inputLength;   // of the parsed input, when known: sizes this tree and teaches the next
         public LargeTextBuffer textBuffer;
-        public UnicodeString commentBuffer = null; // created when needed
-        public int numberOfNodes = 0; // excluding attributes and namespaces
+        public UnicodeString commentBuffer; // created when needed
+        public int numberOfNodes; // excluding attributes and namespaces
 
         // Whether any text (or textual-element inline text) is whitespace-only. When none is, a
         // space-stripping view of this tree is an identity view (rules only ever preserve more),
@@ -144,36 +144,36 @@ namespace OutSmart.DAXon.Trees.Tiny
         public int[] alpha;
         public int[] beta;
         public int[] nameCode;
-        internal int[] prior = null;
-        ISchemaType[] typeArray = null;
-        IAtomicSequence[] typedValueArray = null;
-        IntSet idRefAttributes = null;
-        IntSet nilledElements = null;
-        IntSet defaultedAttributes = null;
-        IntSet topWithinEntity = null;
+        internal int[] prior;
+        ISchemaType[] typeArray;
+        IAtomicSequence[] typedValueArray;
+        IntSet idRefAttributes;
+        IntSet nilledElements;
+        IntSet defaultedAttributes;
+        IntSet topWithinEntity;
         private bool allowTypedValueCache = true;
-        private Dictionary<string, IntSet> localNameIndex = null;
-        public int numberOfAttributes = 0;
+        private Dictionary<string, IntSet> localNameIndex;
+        public int numberOfAttributes;
         public int[] attParent;
         public int[] attCode;
         public string[] attValue;
         IAtomicSequence[] attTypedValue;
         public ISimpleType[] attType;
-        int numberOfNamespaces = 0;
+        int numberOfNamespaces;
         public NamespaceMap[] namespaceMaps;
         private NamespaceMap lastAddedNsMap; // memo: elements overwhelmingly share one map instance
         private int lastAddedNsIndex;
-        private int[] lineNumbers = null;
-        private int[] columnNumbers = null;
-        private SystemIdMap systemIdMap = null;
-        public bool usesNamespaces = false;
+        private int[] lineNumbers;
+        private int[] columnNumbers;
+        private SystemIdMap systemIdMap;
+        public bool usesNamespaces;
         public PrefixPool prefixPool = new PrefixPool();
         private TinyDocumentImpl documentRoot;
         private Dictionary<string, NodeInfo> idTable;
         public Dictionary<string, string[]> entityTable;
         private NodeInfo copiedFrom;
         public IntHashMap<string> knownBaseUris;
-        private string uniformBaseUri = null;
+        private string uniformBaseUri;
 
         public NodeInfo CopiedFrom { get => this.copiedFrom; set => this.copiedFrom = value; }
 

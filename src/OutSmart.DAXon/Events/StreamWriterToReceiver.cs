@@ -24,13 +24,13 @@ namespace OutSmart.DAXon.Events
     // XPathException from the pipeline propagates as-is — no checked-exception wrapper.
     public class StreamWriterToReceiver : XmlWriter
     {
-        private StartTag pendingTag = null;
+        private StartTag pendingTag;
         private readonly Stack<NamespaceMap> namespaceStack = new Stack<NamespaceMap>();
         private readonly IReceiver receiver;
         private readonly IIntPredicateProxy charChecker;
-        private bool isChecking = false;
+        private bool isChecking;
         private int depth = -1;
-        private bool closed = false;
+        private bool closed;
         private readonly NamespaceReducer inScopeNamespaces;
 
         // Attribute values stream in between WriteStartAttribute and WriteEndAttribute.

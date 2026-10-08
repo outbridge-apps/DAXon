@@ -24,9 +24,9 @@ namespace OutSmart.DAXon.Trees.Utilities
     internal sealed class Orphan : IMutableNodeInfo
     {
         private short kind;
-        private INodeName nodeName = null;
+        private INodeName nodeName;
         private UnicodeString stringValue;
-        private ISchemaType typeAnnotation = null;
+        private ISchemaType typeAnnotation;
         private int options = ReceiverOption.NONE;
         private readonly GenericTreeInfo treeInfo;
 

@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Model
     {
         private ISequenceIterator @base;
         private IItem curr;
-        private int pos = 0;
+        private int pos;
         private int last = -1;
         private SiblingMemory siblingMemory;
 
@@ -164,8 +164,8 @@ namespace OutSmart.DAXon.Model
         /// </summary>
         private sealed class SiblingMemory
         {
-            public NodeTest mostRecentNodeTest = null;
-            public NodeInfo mostRecentNode = null;
+            public NodeTest mostRecentNodeTest;
+            public NodeInfo mostRecentNode;
             public int mostRecentPosition = -1;
         }
     }

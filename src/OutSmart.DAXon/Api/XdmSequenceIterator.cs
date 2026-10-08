@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Api
         private readonly ILookaheadIterator @base;
         private readonly RunResources scope;   // what the lazy evaluation opens; closed when it ends
         private readonly Core.Controller.DeadlineToken limits;   // of the call that made the lazy result; null for none
-        private bool closed = false;
+        private bool closed;
         private T current;
 
         public T Current => current;

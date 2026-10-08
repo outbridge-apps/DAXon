@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Expressions
         private readonly ISequenceIterator @base;
         private readonly IMappingFunction action;
         private readonly OutSmart.DAXon.Core.Controller controller;   // null: no deadline check
-        private ISequenceIterator results = null;
+        private ISequenceIterator results;
         public MappingIterator(ISequenceIterator @base, IMappingFunction action)
         {
             this.@base = @base;

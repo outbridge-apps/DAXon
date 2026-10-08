@@ -16,8 +16,8 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal sealed class XSLMapEntry : StyleElement
     {
-        Expression key = null;
-        Expression select = null;
+        Expression key;
+        Expression select;
         public override bool IsInstruction()
         {
             return true;

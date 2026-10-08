@@ -19,11 +19,11 @@ namespace OutSmart.DAXon.Transformation
         private readonly string message;
         private string errorCode;
         private Exception cause;
-        private ILocation locator = null;
+        private ILocation locator;
         private bool _isWarning;
         private bool _isTypeError;
         private string fatalErrorMessage;
-        private bool _hasBeenReported = false;
+        private bool _hasBeenReported;
         private HostLanguage hostLanguage = HostLanguage.UNKNOWN;
         private bool _isStaticError;
         private Expression failingExpression;

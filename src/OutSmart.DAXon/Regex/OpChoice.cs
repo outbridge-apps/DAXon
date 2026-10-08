@@ -160,8 +160,8 @@ namespace OutSmart.DAXon.Regex
             private readonly REMatcher matcher;
             private readonly int position;
             readonly IEnumerator<Operation> branchIter;
-            IIntIterator currentIter = null;
-            Operation currentOp = null;
+            IIntIterator currentIter;
+            Operation currentOp;
             public AnonymousIntIterator(OpChoice parent, REMatcher matcher, int position)
             {
                 this.matcher = matcher;

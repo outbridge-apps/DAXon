@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Xslt
     {
         private Expression attributeName;
         private Expression separator;
-        private Expression @namespace = null;
+        private Expression @namespace;
         private int validationAction = Validation.PRESERVE;
         private ISimpleType schemaType;
 

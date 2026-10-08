@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Xslt
         private bool toplevel;
         private NamespaceMap retainedNamespaces = NamespaceMap.EmptyMap();
         private StructuredQName[] attributeSets;
-        private ISchemaType schemaType = null;
+        private ISchemaType schemaType;
         private int validation = Validation.STRIP;
         private bool inheritNamespaces = true;
         public LiteralResultElement()

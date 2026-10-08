@@ -27,12 +27,12 @@ namespace OutSmart.DAXon.Xslt
     {
         private readonly StyleElement sourceElement;
         private StructuredQName name;
-        private Expression select = null;
-        private Values.SequenceType declaredType = null;
-        private Values.SequenceType inferredType = null;
-        protected SlotManager slotManager = null; // used only for global variable declarations
+        private Expression select;
+        private Values.SequenceType declaredType;
+        private Values.SequenceType inferredType;
+        protected SlotManager slotManager; // used only for global variable declarations
         private Visibility visibility;
-        private IGroundedValue constantValue = null;
+        private IGroundedValue constantValue;
 
         private readonly HashSet<BindingProperty> properties = new HashSet<BindingProperty>();
         // List of VariableReference objects that reference this XSLVariableDeclaration

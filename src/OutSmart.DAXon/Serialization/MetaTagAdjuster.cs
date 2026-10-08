@@ -19,11 +19,11 @@ namespace OutSmart.DAXon.Serialization
     {
         private bool seekingHead = true;
         private int droppingMetaTags = -1;
-        private bool inMetaTag = false;
+        private bool inMetaTag;
         string encoding;
         private string mediaType;
-        private int level = 0;
-        private bool isXHTML = false;
+        private int level;
+        private bool isXHTML;
         private int htmlVersion = 4;
         public MetaTagAdjuster(IReceiver next) : base(next)
         {

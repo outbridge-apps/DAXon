@@ -13,9 +13,9 @@ namespace OutSmart.DAXon.Collections
     {
         private int[] startPoints;
         private int[] endPoints;
-        private int used = 0;
+        private int used;
         private int _hashCode = -1;
-        private int count = 0;
+        private int count;
 
         public int[] StartPoints => startPoints;
 
@@ -411,8 +411,8 @@ namespace OutSmart.DAXon.Collections
         private sealed class IntRangeSetIterator : AbstractIntIterator
         {
             private readonly IntRangeSet intRangeSet;
-            private int i = 0;
-            private int current = 0;
+            private int i;
+            private int current;
             public IntRangeSetIterator(IntRangeSet intRangeSet)
             {
                 this.intRangeSet = intRangeSet;

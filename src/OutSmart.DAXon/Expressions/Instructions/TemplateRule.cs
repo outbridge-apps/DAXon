@@ -36,7 +36,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private int columnNumber;
         private readonly IList<Rule> rules = new List<Rule>();
 
-        private volatile IPushEvaluator atomicBodyEvaluator = null;
+        private volatile IPushEvaluator atomicBodyEvaluator;
 
         public virtual int ComponentKind => StandardNames.XSL_TEMPLATE;
 

@@ -19,10 +19,10 @@ namespace OutSmart.DAXon.Xslt
     {
         private SlotManager slotManager; // used to manage local variables declared inside this global variable
         protected SourceBinding sourceBinding;
-        protected GlobalVariable compiledVariable = null;
+        protected GlobalVariable compiledVariable;
 
-        private int state = 0;
-        protected bool redundant = false;
+        private int state;
+        protected bool redundant;
 
         public virtual GlobalVariable CompiledVariable => compiledVariable;
 

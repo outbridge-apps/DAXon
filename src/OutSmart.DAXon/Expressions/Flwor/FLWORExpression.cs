@@ -797,7 +797,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         private sealed class WhereClauseStruct
         {
-            public int whereIndex = 0;
+            public int whereIndex;
             public WhereClause whereClause;
         }
 

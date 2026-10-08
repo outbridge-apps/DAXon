@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         private int nextAncestorDepth;
         private readonly bool includeAncestors;
         private readonly IIntPredicateProxy matcher;
-        private NodeInfo pending = null;
+        private NodeInfo pending;
         private readonly NodeTest nodeTest;
         private readonly bool matchesTextNodes;
         public PrecedingIterator(TinyTree doc, TinyNodeImpl node, NodeTest nodeTest, bool includeAncestors)

@@ -33,7 +33,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
         protected internal VirtualCopy parent;
         protected internal VirtualTreeInfo tree;
         protected internal NodeInfo root; // the node forming the root of the subtree that was copied
-        private bool dropNamespaces = false;
+        private bool dropNamespaces;
 
         public virtual NodeInfo OriginalNode => original;
 

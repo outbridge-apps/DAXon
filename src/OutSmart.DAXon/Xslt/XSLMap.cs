@@ -21,8 +21,8 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal sealed class XSLMap : StyleElement
     {
-        private Expression select = null;
-        private Expression onDuplicates = null;
+        private Expression select;
+        private Expression onDuplicates;
         public override bool IsInstruction()
         {
             return true;

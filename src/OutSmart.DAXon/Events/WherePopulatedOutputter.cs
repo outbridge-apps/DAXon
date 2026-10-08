@@ -15,8 +15,8 @@ namespace OutSmart.DAXon.Events
 {
     internal sealed class WherePopulatedOutputter : ProxyOutputter
     {
-        private int level = 0;
-        private bool pendingStartTag = false;
+        private int level;
+        private bool pendingStartTag;
         private INodeName pendingElemName;
         private ISchemaType pendingSchemaType;
         private ILocation pendingLocationId;

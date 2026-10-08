@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Trees.Linked
         private ParentNodeImpl currentNode;
         private INodeFactory nodeFactory;
         private int[] size = new int[100]; // stack of number of children for each open node
-        private int depth = 0;
+        private int depth;
         private List<NodeImpl[]> arrays = new List<NodeImpl[]>(20); // reusable arrays for creating nodes
         private readonly Stack<NamespaceMap> namespaceStack = new Stack<NamespaceMap>();
         private bool allocateSequenceNumbers = true;

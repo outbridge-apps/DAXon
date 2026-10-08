@@ -27,8 +27,8 @@ namespace OutSmart.DAXon.Xslt
         private Expression select;
         private Expression separator;
         private StructuredQName modeName; // null if no name specified or if conventional values such as #current used
-        private bool useCurrentMode = false;
-        private bool useTailRecursion = false;
+        private bool useCurrentMode;
+        private bool useTailRecursion;
         private bool defaultedSelectExpression = true;
         private Mode mode;
         private string modeAttribute;

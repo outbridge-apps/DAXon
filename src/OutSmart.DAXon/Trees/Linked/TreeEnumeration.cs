@@ -15,8 +15,8 @@ namespace OutSmart.DAXon.Trees.Linked
         protected NodeImpl start;
         protected NodeImpl nextNode;
         protected INodePredicate nodeTest;
-        protected NodeImpl current = null;
-        protected int position = 0;
+        protected NodeImpl current;
+        protected int position;
         public virtual bool HasNext => nextNode != null;
         public TreeEnumeration(NodeImpl origin, INodePredicate nodeTest)
         {

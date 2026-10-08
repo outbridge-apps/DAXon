@@ -42,12 +42,12 @@ namespace OutSmart.DAXon.XQuery
         private NamespaceUri defaultFunctionNamespace = NamespaceUri.FN;
         private NamespaceUri defaultElementNamespace = NamespaceUri.NULL;
         private Types.ItemType requiredContextItemType = AnyItemType.GetInstance();
-        private bool preserveSpace = false;
+        private bool preserveSpace;
         private bool defaultEmptyLeast = true;
         private IModuleURIResolver moduleURIResolver;
         private IErrorReporter errorReporter;
         private ICodeInjector codeInjector;
-        private bool updating = false;
+        private bool updating;
         private string defaultCollationName;
         private ILocation moduleLocation;
         private OptimizerOptions optimizerOptions;

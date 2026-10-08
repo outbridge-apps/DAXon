@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Functions
     /// </summary>
     internal sealed class Translate : SystemFunction, ICallable, IStatefulSystemFunction
     {
-        private IIntToIntMap staticMap = null;
+        private IIntToIntMap staticMap;
 
         public IIntToIntMap StaticMap => staticMap;
         public override Expression FixArguments(params Expression[] arguments)

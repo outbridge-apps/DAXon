@@ -12,7 +12,7 @@ namespace OutSmart.DAXon.Events
 {
     internal sealed class Valve : ProxyReceiver
     {
-        private bool started = false;
+        private bool started;
         private readonly NamespaceUri testNamespace;
         private readonly IReceiver alternativeReceiver;
         public Valve(NamespaceUri testNamespace, IReceiver primary, IReceiver secondary) : base(primary)

@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Events
     internal sealed class IgnorableWhitespaceStripper : ProxyReceiver
     {
         private bool[] stripStack = new bool[100];
-        private int top = 0;
+        private int top;
         public IgnorableWhitespaceStripper(IReceiver next) : base(next)
         {
         }

@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private HashSet<NamespaceUri> importedSchemaNamespaces = new HashSet<NamespaceUri>();
         private WithParam[] actualParams;
         private Operand dynamicParamsOp;
-        private NamespaceUri defaultXPathNamespace = null;
+        private NamespaceUri defaultXPathNamespace;
 
         public override int IntrinsicDependencies => StaticProperty.DEPENDS_ON_FOCUS | StaticProperty.DEPENDS_ON_XSLT_CONTEXT;
 

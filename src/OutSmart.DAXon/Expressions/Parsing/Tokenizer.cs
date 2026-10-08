@@ -43,11 +43,11 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /// <summary>
         /// The string value of the most recently read token
         /// </summary>
-        public string currentTokenValue = null;
+        public string currentTokenValue;
         /// <summary>
         /// The position in the input expression where the current token starts
         /// </summary>
-        public int currentTokenStartOffset = 0;
+        public int currentTokenStartOffset;
         /// <summary>
         /// The number of the next token to be returned
         /// </summary>
@@ -55,11 +55,11 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /// <summary>
         /// The string value of the next token to be returned
         /// </summary>
-        private string nextTokenValue = null;
+        private string nextTokenValue;
         /// <summary>
         /// The position in the expression of the start of the next token
         /// </summary>
-        private int nextTokenStartOffset = 0;
+        private int nextTokenStartOffset;
         /// <summary>
         /// The string being parsed
         /// </summary>
@@ -67,7 +67,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /// <summary>
         /// The current position within the input string
         /// </summary>
-        public int inputOffset = 0;
+        public int inputOffset;
         /// <summary>
         /// The length of the input string (in 2-byte chars)
         /// </summary>
@@ -80,7 +80,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /// The line number (within the expression) of the next token
         /// </summary>
         private int nextLineNumber = 1;
-        private IList<int> newlineOffsets = null;
+        private IList<int> newlineOffsets;
         /// <summary>
         /// The token number of the token that preceded the current token
         /// </summary>
@@ -96,7 +96,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /// <summary>
         /// Flag to indicate that this is XQuery as distinct from XPath
         /// </summary>
-        public bool isXQuery = false;
+        public bool isXQuery;
         /// <summary>
         /// XPath language level: e.g. 2.0, 3.0, or 3.1
         /// </summary>
@@ -104,7 +104,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /// <summary>
         /// Flag to allow Saxon extensions
         /// </summary>
-        public bool allowSaxonExtensions = false;
+        public bool allowSaxonExtensions;
 
         public int State
         {

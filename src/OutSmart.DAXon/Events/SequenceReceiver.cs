@@ -20,9 +20,9 @@ namespace OutSmart.DAXon.Events
 {
     public abstract class SequenceReceiver : IReceiver
     {
-        protected bool previousAtomic = false;
+        protected bool previousAtomic;
         protected PipelineConfiguration pipelineConfiguration;
-        protected string systemId = null;
+        protected string systemId;
 
         protected virtual string ErrorCodeForDecomposingFunctionItems => GetPipelineConfiguration().IsXSLT() ? "XTDE0450" : "XQTY0105";
         public SequenceReceiver(PipelineConfiguration pipe)

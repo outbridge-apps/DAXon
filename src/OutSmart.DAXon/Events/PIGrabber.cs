@@ -25,13 +25,13 @@ namespace OutSmart.DAXon.Events
     // for those that do, it creates a ResolvedResource referring to the relevant stylesheet.
     internal sealed class PIGrabber : ProxyReceiver
     {
-        private Configuration config = null;
-        private string reqMedia = null;
-        private string reqTitle = null;
-        private string baseURI = null;
-        private IResourceResolver resourceResolver = null;
+        private Configuration config;
+        private string reqMedia;
+        private string reqTitle;
+        private string baseURI;
+        private IResourceResolver resourceResolver;
         private readonly List<string> stylesheets = new List<string>();
-        private bool terminated = false;
+        private bool terminated;
 
         /// <summary>
         /// Return the list of stylesheets that matched, as an array of ResolvedResource objects

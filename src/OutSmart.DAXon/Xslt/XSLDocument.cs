@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Xslt
     internal sealed class XSLDocument : StyleElement
     {
         private int validationAction = Validation.STRIP;
-        private ISchemaType schemaType = null;
+        private ISchemaType schemaType;
         public override bool IsInstruction()
         {
             return true;

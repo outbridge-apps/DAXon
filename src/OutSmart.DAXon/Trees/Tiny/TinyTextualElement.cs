@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Trees.Tiny
 {
     internal sealed class TinyTextualElement : TinyElementImpl
     {
-        private TinyTextualElementText textNode = null;
+        private TinyTextualElementText textNode;
 
         public override NamespaceMap AllNamespaces
         {

@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Patterns
     /// </summary>
     internal sealed class PatternParser : XPathParser
     {
-        int inPredicate = 0;
+        int inPredicate;
         public PatternParser(IStaticContext env) : base(env)
         {
         }

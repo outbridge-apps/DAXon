@@ -52,16 +52,16 @@ namespace OutSmart.DAXon.XQuery
         private int constructionMode = Validation.PRESERVE;
         private NamespaceUri defaultFunctionNamespace;
         private NamespaceUri defaultElementNamespace;
-        private bool preserveSpace = false;
+        private bool preserveSpace;
         private bool defaultEmptyLeast = true;
         private string defaultCollationName;
         private int revalidationMode = Validation.SKIP;
-        private bool updating = false;
+        private bool updating;
         private Types.ItemType requiredContextItemType = AnyItemType.GetInstance(); // must be the same for all modules
-        private DecimalFormatManager decimalFormatManager = null; // used only in XQuery 3.0
+        private DecimalFormatManager decimalFormatManager; // used only in XQuery 3.0
         private ICodeInjector codeInjector;
         private PackageData packageData;
-        private RetainedStaticContext moduleStaticContext = null;
+        private RetainedStaticContext moduleStaticContext;
         private ILocation moduleLocation;
         private OptimizerOptions optimizerOptions;
         private int languageLevel;

@@ -10,8 +10,8 @@ namespace OutSmart.DAXon.Collections.Zeno
 {
     internal sealed class ZenoChainIterator<U> : IEnumerator<U>
     {
-        private int majorIndex = 0;
-        private int minorIndex = 0;
+        private int majorIndex;
+        private int minorIndex;
         private readonly List<List<U>> masterList;
         private U __cur;
         public U Current => __cur;

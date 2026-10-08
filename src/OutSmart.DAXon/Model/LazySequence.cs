@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Model
     internal sealed class LazySequence : ISequence
     {
         readonly ISequenceIterator iterator;
-        bool used = false;
+        bool used;
         public LazySequence(ISequenceIterator iterator)
         {
             this.iterator = iterator;

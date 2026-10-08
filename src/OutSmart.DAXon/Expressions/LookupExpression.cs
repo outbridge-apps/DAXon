@@ -20,11 +20,11 @@ namespace OutSmart.DAXon.Expressions
 {
     internal sealed class LookupExpression : BinaryExpression
     {
-        private bool isClassified = false;
-        protected bool isArrayLookup = false;
-        protected bool isMapLookup = false;
-        protected bool isSingleContainer = false;
-        protected bool isSingleEntry = false;
+        private bool isClassified;
+        protected bool isArrayLookup;
+        protected bool isMapLookup;
+        protected bool isSingleContainer;
+        protected bool isSingleEntry;
 
         public override string ExpressionName => "lookupExp";
 

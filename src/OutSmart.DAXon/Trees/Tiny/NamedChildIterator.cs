@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         private int nextNodeNr;
         private readonly int fingerprint;
         private readonly TinyNodeImpl startNode;
-        private bool needToAdvance = false;
+        private bool needToAdvance;
 
         public bool HasNext
         {

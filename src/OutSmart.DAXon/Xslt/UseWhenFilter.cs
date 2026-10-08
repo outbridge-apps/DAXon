@@ -31,8 +31,8 @@ namespace OutSmart.DAXon.Xslt
 {
     internal sealed class UseWhenFilter : ProxyReceiver
     {
-        private int depthOfHole = 0;
-        private bool emptyStylesheetElement = false;
+        private int depthOfHole;
+        private bool emptyStylesheetElement;
         private readonly Stack<NamespaceUri> defaultNamespaceStack = new Stack<NamespaceUri>();
         private readonly Stack<int> versionStack = new Stack<int>();
         private readonly DateTimeValue currentDateTime = DateTimeValue.GetCurrentDateTime(null);
@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Xslt
         private readonly Stack<string> systemIdStack = new Stack<string>();
         private readonly Stack<URI> baseUriStack = new Stack<URI>();
         private readonly NestedIntegerValue precedence;
-        private int importCount = 0;
+        private int importCount;
         private readonly LinkedTreeBuilder treeBuilder;
         public UseWhenFilter(Compilation compilation, IReceiver next, NestedIntegerValue precedence) : base(next)
         {
@@ -822,12 +822,12 @@ namespace OutSmart.DAXon.Xslt
 
         private sealed class ParsedAttributes
         {
-            public NamespaceUri xpathDefaultNamespaceAtt = null;
-            public string versionAtt = null;
-            public string xmlBaseAtt = null;
-            public string useWhenAtt = null;
-            public string staticAtt = null;
-            public bool hasShadowAttributes = false;
+            public NamespaceUri xpathDefaultNamespaceAtt;
+            public string versionAtt;
+            public string xmlBaseAtt;
+            public string useWhenAtt;
+            public string staticAtt;
+            public bool hasShadowAttributes;
         }
     }
 }

@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Xslt
         private StructuredQName keyName;
         private SlotManager stackFrameMap;
         private bool rangeKey;
-        private bool composite = false;
+        private bool composite;
         private KeyDefinition keyDefinition;
 
         public StructuredQName KeyName

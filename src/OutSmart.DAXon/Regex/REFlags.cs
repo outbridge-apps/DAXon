@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Regex
         private readonly bool xpath20;
         private readonly bool xpath30;
         private readonly bool xsd11;
-        private readonly bool allowUnknownBlockNames = false; //flags = ";k"
+        private readonly bool allowUnknownBlockNames; //flags = ";k"
         public REFlags(string flags, string language)
         {
             if (language.Equals("XSD10"))

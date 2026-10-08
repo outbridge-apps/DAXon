@@ -15,9 +15,9 @@ namespace OutSmart.DAXon.Events
 {
     internal sealed class CommentStripper : ProxyReceiver
     {
-        private UnicodeString currentTextNode = null;
+        private UnicodeString currentTextNode;
         private Func<INodeName, bool> skippedElementTest = (INodeName name) => false;
-        private int depthOfHole = 0;
+        private int depthOfHole;
         public CommentStripper(IReceiver next) : base(next)
         {
         }

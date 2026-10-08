@@ -30,13 +30,13 @@ namespace OutSmart.DAXon.Transformation
         protected StructuredQName modeName;
         private bool streamable;
         private RecoveryPolicy recoveryPolicy = RecoveryPolicy.RECOVER_WITH_WARNINGS;
-        public bool mustBeTyped = false;
-        public bool mustBeUntyped = false;
-        public bool hasRules = false;
-        public bool bindingSlotsAllocated = false;
-        bool modeTracing = false;
-        Values.SequenceType defaultResultType = null;
-        bool enclosingMode = false;
+        public bool mustBeTyped;
+        public bool mustBeUntyped;
+        public bool hasRules;
+        public bool bindingSlotsAllocated;
+        bool modeTracing;
+        Values.SequenceType defaultResultType;
+        bool enclosingMode;
         private HashSet<Accumulator> accumulators;
 
         public virtual StructuredQName ModeName => modeName;

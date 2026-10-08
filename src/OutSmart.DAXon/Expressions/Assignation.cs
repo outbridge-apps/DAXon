@@ -20,9 +20,9 @@ namespace OutSmart.DAXon.Expressions
         protected int slotNumber = -999; // slot number for range variable
         protected StructuredQName variableName;
         protected SequenceType requiredType;
-        public bool indexedVariable = false;
-        protected bool hasLoopingReference = false;
-        protected IList<VariableReference> references = null;
+        public bool indexedVariable;
+        protected bool hasLoopingReference;
+        protected IList<VariableReference> references;
 
         public virtual Operand SequenceOp => sequenceOp;
 

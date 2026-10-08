@@ -27,18 +27,18 @@ namespace OutSmart.DAXon.Xslt
 {
     public class StylesheetPackage : PackageData
     {
-        private PackageVersion packageVersion = null;
+        private PackageVersion packageVersion;
         private string packageName;
         private readonly IList<StylesheetPackage> usedPackages = new List<StylesheetPackage>();
         private RuleManager ruleManager;
         private CharacterMapIndex characterMapIndex;
         private bool createsSecondaryResultDocuments;
         private readonly IList<IAction> completionActions = new List<IAction>();
-        protected GlobalContextRequirement globalContextRequirement = null;
-        private bool containsGlobalContextItemDeclaration = false;
+        protected GlobalContextRequirement globalContextRequirement;
+        private bool containsGlobalContextItemDeclaration;
         protected ISpaceStrippingRule stripperRules;
-        private bool stripsWhitespace = false;
-        private bool stripsTypeAnnotations = false;
+        private bool stripsWhitespace;
+        private bool stripsTypeAnnotations;
         protected Properties defaultOutputProperties;
         private StructuredQName defaultMode;
         private bool declaredModes;
@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Xslt
         private ExecutableFunctionLibrary overriding;
         private ExecutableFunctionLibrary underriding;
         private int maxFunctionArity = -1;
-        private bool retainUnusedFunctions = false;
+        private bool retainUnusedFunctions;
         private bool implicitPackage;
         private readonly Dictionary<SymbolicName, Component> componentIndex = new Dictionary<SymbolicName, Component>(20);
         protected IList<Component> hiddenComponents = new List<Component>();

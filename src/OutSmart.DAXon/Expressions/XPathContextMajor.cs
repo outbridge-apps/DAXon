@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Expressions
         private IGroupIterator currentMergeGroupIterator;
         private IRegexIterator currentRegexIterator;
         private IContextOriginator origin;
-        private ThreadManager threadManager = null;
+        private ThreadManager threadManager;
         private IResourceResolver resourceResolver;
         private IErrorReporter errorReporter;
         private Component currentComponent;

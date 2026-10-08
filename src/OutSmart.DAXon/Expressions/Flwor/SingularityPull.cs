@@ -10,7 +10,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
     // exhaustion. The previous stub always returned false, so every FLWOR tuple stream yielded ZERO tuples.
     internal sealed class SingularityPull : TuplePull
     {
-        private bool done = false;
+        private bool done;
         public SingularityPull() { }
         public override bool NextTuple(IXPathContext context)
         {

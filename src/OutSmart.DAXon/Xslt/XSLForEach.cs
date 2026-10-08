@@ -17,10 +17,10 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal sealed class XSLForEach : StyleElement
     {
-        private Expression select = null;
-        private bool containsTailCall = false;
-        private Expression threads = null;
-        private Expression separator = null;
+        private Expression select;
+        private bool containsTailCall;
+        private Expression threads;
+        private Expression separator;
         public override bool IsInstruction()
         {
             return true;

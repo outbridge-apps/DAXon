@@ -246,7 +246,7 @@ namespace OutSmart.DAXon.Regex
             private readonly REMatcher matcher;
             private readonly int position;
             private readonly int[] savedState;
-            private bool primed = false;
+            private bool primed;
             private int nextPos;
             // Phase5: closure-captured locals from IterateMatches
             public AnonymousIntIterator(OpSequence parent, Stack<IIntIterator> iterators, REMatcher matcher, int position, int[] savedState)

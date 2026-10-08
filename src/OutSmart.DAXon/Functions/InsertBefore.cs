@@ -47,7 +47,7 @@ namespace OutSmart.DAXon.Functions
             private readonly ISequenceIterator @base;
             private readonly ISequenceIterator insert;
             private readonly int insertPosition;
-            private int position = 0;
+            private int position;
             private bool inserting;
             public InsertIterator(ISequenceIterator @base, ISequenceIterator insert, int insertPosition)
             {

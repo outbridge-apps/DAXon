@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Serialization
         private byte[] _outBuffer;
         private readonly int _outBufferLast;
         private int _outPtr;
-        int _surrogate = 0;
+        int _surrogate;
         public override Encoding Encoding => Encoding.UTF8;
         public UTF8Writer(System.IO.Stream @out) : this(@out, DEFAULT_BUF_LEN)
         {

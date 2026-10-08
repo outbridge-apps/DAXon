@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Json
         private static readonly string ERR_SCHEMA = "FOJS0004";
         private static readonly string ERR_OPTIONS = "FOJS0005";
         private static readonly string ERR_LIMITS = "FOJS0001"; // No specific code in spec
-        private IFunctionItem numberParser = null;
+        private IFunctionItem numberParser;
         /// <summary>
         /// Create a JSON parser
         /// </summary>

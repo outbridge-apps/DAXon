@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private readonly int level;
         private readonly Operand countOp;
         private readonly Operand fromOp;
-        private readonly bool hasVariablesInPatterns = false;
+        private readonly bool hasVariablesInPatterns;
 
         public virtual int Level => level;
 

@@ -22,21 +22,21 @@ namespace OutSmart.DAXon.Expressions
 {
     public abstract class VariableReference : Expression, IBindingReference
     {
-        protected IBinding binding = null; // This will be null until fixup() is called; it will also be null
-        protected Values.SequenceType staticType = null;
-        protected IGroundedValue constantValue = null;
-        private StructuredQName variableName = null;
-        private bool flattened = false;
-        private bool inLoop = false;
-        private bool filtered = false;
+        protected IBinding binding; // This will be null until fixup() is called; it will also be null
+        protected Values.SequenceType staticType;
+        protected IGroundedValue constantValue;
+        private StructuredQName variableName;
+        private bool flattened;
+        private bool inLoop;
+        private bool filtered;
         // Nodeset-shape special properties (ORDERED/PEER/SUBTREE/SINGLE_DOCUMENT/…) inferred from the
         // binding's select expression via SetStaticType. Persisted separately from the resettable
         // `staticProperties` cache so ResetLocalStaticProperties() (during optimize) does not drop them;
         // without this, `$v/child` under sum/count/distinct kept a redundant DocumentSorter that Java-HE
         // elides (the binding's ORDERED/PEER property was lost after the first reset). CONTEXT_DOCUMENT is
         // excluded (context at the point of use may differ from the point of definition).
-        protected int refinedSpecialProps = 0;
-        private bool computingBindingProps = false; // re-entrancy guard for the lazy binding-body property read
+        protected int refinedSpecialProps;
+        private bool computingBindingProps; // re-entrancy guard for the lazy binding-body property read
 
         public virtual StructuredQName VariableName
         {

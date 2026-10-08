@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Expressions
 {
     internal sealed class RootExpression : Expression
     {
-        private bool doneWarnings = false;
+        private bool doneWarnings;
 
         public override int ImplementationMethod => EVALUATE_METHOD;
 

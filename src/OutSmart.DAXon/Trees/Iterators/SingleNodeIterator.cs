@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Trees.Iterators
     internal sealed class SingleNodeIterator : IAxisIterator, IReversibleIterator, ILastPositionFinder, IGroundedIterator, ILookaheadIterator
     {
         private readonly NodeInfo item;
-        private int position = 0;
+        private int position;
 
         public bool HasNext => position == 0;
 

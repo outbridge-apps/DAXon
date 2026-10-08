@@ -61,16 +61,16 @@ namespace OutSmart.DAXon.Core
         private DocumentPool sourceDocumentPool;
         private IntHashMap<Dictionary<long, KeyIndex>> localIndexes;
         private Dictionary<string, object> userDataTable;
-        private NodeInfo lastRememberedNode = null;
+        private NodeInfo lastRememberedNode;
         private int lastRememberedNumber = -1;
         private DateTimeValue currentDateTime;
-        private bool dateTimePreset = false;
-        private PathMap pathMap = null;
+        private bool dateTimePreset;
+        private PathMap pathMap;
         protected int validationMode = Validation.DEFAULT;
-        protected bool inUse = false;
+        protected bool inUse;
         private bool stripSourceTrees = true;
-        private ICollectionFinder collectionFinder = null;
-        private StylesheetCache stylesheetCache = null;
+        private ICollectionFinder collectionFinder;
+        private StylesheetCache stylesheetCache;
         private Func<ISequenceIterator, FocusTrackingIterator> focusTrackerFactory = (iter => new FocusTrackingIterator(iter));
         private Func<ISequenceIterator, FocusTrackingIterator> multiThreadedFocusTrackerFactory;
 

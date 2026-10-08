@@ -104,9 +104,9 @@ namespace OutSmart.DAXon.Values.Arrays
 
         internal abstract class ArrayGeneratingFunction : SystemFunction, IPingable
         {
-            private double numberOfCalls = 0;
-            private double numberOfConversions = 0;
-            private double totalSize = 0;
+            private double numberOfCalls;
+            private double numberOfConversions;
+            private double totalSize;
             public void Ping()
             {
                 numberOfConversions++;
@@ -593,8 +593,8 @@ namespace OutSmart.DAXon.Values.Arrays
 
         internal sealed class ArrayFromSequence : FoldingFunction, IPingable
         {
-            private double numberOfCalls = 0;
-            private double numberOfConversions = 0;
+            private double numberOfCalls;
+            private double numberOfConversions;
             public void Ping()
             {
                 numberOfConversions++;

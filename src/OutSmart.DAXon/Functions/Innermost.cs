@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Functions
     /// </summary>
     internal sealed class Innermost : SystemFunction
     {
-        bool presorted = false;
+        bool presorted;
         public override int GetSpecialProperties(Expression[] arguments)
         {
             return StaticProperty.ORDERED_NODESET | StaticProperty.PEER_NODESET;
@@ -76,7 +76,7 @@ namespace OutSmart.DAXon.Functions
         private sealed class InnermostIterator : ISequenceIterator
         {
             readonly ISequenceIterator @in;
-            NodeInfo pending = null;
+            NodeInfo pending;
             public InnermostIterator(ISequenceIterator @in)
             {
                 this.@in = @in;

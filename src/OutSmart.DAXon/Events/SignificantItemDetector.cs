@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Events
 {
     internal sealed class SignificantItemDetector : ProxyOutputter
     {
-        private int level = 0;
+        private int level;
         private bool empty = true;
         private readonly IAction trigger;
         public SignificantItemDetector(Outputter next, IAction trigger) : base(next)

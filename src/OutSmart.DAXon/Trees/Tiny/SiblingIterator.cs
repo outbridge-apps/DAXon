@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         private int nextNodeNr;
         private readonly NodeTest test;
         private readonly TinyNodeImpl parentNode;
-        private bool needToAdvance = false;
+        private bool needToAdvance;
         private readonly IIntPredicateProxy matcher;
 
         public bool HasNext

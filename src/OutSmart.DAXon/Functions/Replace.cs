@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Functions
     {
         private int version = 20;
 
-        private bool replacementChecked = false;
+        private bool replacementChecked;
         public static Replace Make20()
         {
             Replace rep = new Replace();

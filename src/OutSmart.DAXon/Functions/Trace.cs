@@ -150,7 +150,7 @@ namespace OutSmart.DAXon.Functions
             private readonly string label;
             private readonly Logger @out;
             private bool empty = true;
-            private int position = 0;
+            private int position;
             public TracingIterator(ISequenceIterator @base, string label, Logger @out)
             {
                 this.@base = @base;

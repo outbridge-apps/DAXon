@@ -37,8 +37,8 @@ namespace OutSmart.DAXon.Expressions
         private int bindingSlot = -1;
         private int tailCall = NOT_TAIL_CALL;
         private StructuredQName name;
-        private bool beingInlined = false;
-        private volatile ISequenceEvaluator[] argumentEvaluators = null; // built once under lock, then read lock-free
+        private bool beingInlined;
+        private volatile ISequenceEvaluator[] argumentEvaluators; // built once under lock, then read lock-free
         private UnboundFunctionLibrary.UnboundFunctionCallDetails unboundCallDetails;
 
         public int BindingSlot

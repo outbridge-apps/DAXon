@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
     {
         private readonly ISequenceIterator iterator;
         private readonly List<NodeInfo> sequence; // explicit type ArrayList used so C# List.Sort() is available
-        private NodeInfo current = null;
+        private NodeInfo current;
 
         // Peeked factory for the hot docOrder sites: 0/1-item inputs return the Empty/Singleton
         // iterator ITSELF - no wrapper allocation and no per-item dedup Equals on the way out

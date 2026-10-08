@@ -50,7 +50,7 @@ namespace OutSmart.DAXon.Regex
         {
             private readonly IIntIterator @base;
             private readonly REMatcher matcher;
-            int countZeroLength = 0;
+            int countZeroLength;
             int currentPos = -1;
             readonly int loopingDepth = 1;
             int maxTries = 10;

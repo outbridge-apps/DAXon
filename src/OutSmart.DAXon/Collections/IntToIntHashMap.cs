@@ -243,7 +243,7 @@ namespace OutSmart.DAXon.Collections
         private sealed class IntToIntHashMapKeyIterator : AbstractIntIterator
         {
             private readonly IntToIntHashMap map;
-            private int i = 0;
+            private int i;
             public IntToIntHashMapKeyIterator(IntToIntHashMap map)
             {
                 this.map = map;

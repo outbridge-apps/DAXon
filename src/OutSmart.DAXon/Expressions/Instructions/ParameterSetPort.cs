@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private StructuredQName[] keys;
         private ISequence[] values;
         private bool[] typeChecked;
-        private int used = 0;
+        private int used;
 
         public virtual StructuredQName[] ParameterNames => keys;
 

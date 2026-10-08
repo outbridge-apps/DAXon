@@ -21,11 +21,11 @@ namespace OutSmart.DAXon.Expressions
     {
         public Controller controller;
         public IFocusIterator currentIterator;
-        public LastValue last = null;
-        public IXPathContext caller = null;
+        public LastValue last;
+        public IXPathContext caller;
         public StackFrame stackFrame;
         public string currentDestination = "";
-        internal int temporaryOutputState = 0;   // TemporaryOutputState is the public spelling
+        internal int temporaryOutputState;   // TemporaryOutputState is the public spelling
 
         public XPathContextMajor MajorContext
         {

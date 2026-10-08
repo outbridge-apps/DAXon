@@ -42,7 +42,7 @@ namespace OutSmart.DAXon.Regex
         public UnicodeString prefix; // Prefix string optimization
         public IIntPredicateProxy initialCharClass;
         public IList<RegexPrecondition> preconditions = new List<RegexPrecondition>();
-        public int minimumLength = 0;
+        public int minimumLength;
         protected int fixedLength = -1;
         public int optimizationFlags; // Optimization flags (REProgram.OPT_*)
         public int maxParens = -1;

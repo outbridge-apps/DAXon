@@ -18,8 +18,8 @@ namespace OutSmart.DAXon.Xslt
     internal sealed class XSLCharacterMap : StyleElement
     {
         string use;
-        IList<XSLCharacterMap> characterMapElements = null;
-        bool validated = false;
+        IList<XSLCharacterMap> characterMapElements;
+        bool validated;
 
         public StructuredQName CharacterMapName
         {

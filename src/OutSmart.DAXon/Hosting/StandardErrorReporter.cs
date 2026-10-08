@@ -18,9 +18,9 @@ namespace OutSmart.DAXon.Lib
 {
     internal sealed class StandardErrorReporter : StandardDiagnostics, IErrorReporter
     {
-        private int warningCount = 0;
+        private int warningCount;
         private readonly int maximumNumberOfWarnings = 25;
-        private int errorCount = 0;
+        private int errorCount;
         private readonly int maximumNumberOfErrors = 1000;
         private readonly int maxOrdinaryCharacter = 255;
         private readonly int stackTraceDetail = 2;

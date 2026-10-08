@@ -20,9 +20,9 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private const int REQUIRED = 4;
         private const int TUNNEL = 8;
         private const int IMPLICITLY_REQUIRED = 16; // a parameter that is required because the fallback
-        private Operand conversionOp = null;
-        private int properties = 0;
-        private Operand selectOp = null;
+        private Operand conversionOp;
+        private int properties;
+        private Operand selectOp;
         private StructuredQName variableQName;
         private SequenceType requiredType;
         private int slotNumber = -999;

@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
         private StructuredQName variableName;
         private SequenceType requiredType;
         private int slotNumber = -999;
-        private int refCount = 0;
+        private int refCount;
 
         public virtual IntegerValue[] IntegerBoundsForVariable => null;
 

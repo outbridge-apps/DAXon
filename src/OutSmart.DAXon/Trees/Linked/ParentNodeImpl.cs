@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Trees.Linked
 {
     public abstract class ParentNodeImpl : NodeImpl
     {
-        private object _children = null; // null for no _children
+        private object _children; // null for no _children
         private int sequence; // sequence number allocated during original tree creation.
         protected internal override long SequenceNumber => GetRawSequenceNumber() == -1 ? -1 : (long)GetRawSequenceNumber() << 32;
 

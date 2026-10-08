@@ -25,8 +25,8 @@ namespace OutSmart.DAXon.Functions.HigherOrder
         private readonly SymbolicName.F functionName;
         private UserFunction nominalTarget;
         private int bindingSlot = -1;
-        private int optimizeCounter = 0;
-        private int typeCheckCounter = 0;
+        private int optimizeCounter;
+        private int typeCheckCounter;
 
         public int BindingSlot
         {

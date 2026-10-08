@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         protected Expression keyExpression;
         private readonly IStringCollator collator;
         private readonly IXPathContext keyContext;
-        private int position = 0;
+        private int position;
         protected IList<IList<IItem>> groups = new List<IList<IItem>>(40);
 
         // Many groups: the iterator is entered in the ledger of the call grouping, which sums them as they grow.

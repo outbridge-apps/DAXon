@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
         private readonly TupleExpression tupleExpr;
         private readonly IAtomicComparer[] comparers;
         private readonly IXPathContext context;
-        private int position = 0;
+        private int position;
         private readonly List<ObjectToBeSorted> tupleArray = new List<ObjectToBeSorted>(100);
 
         public OrderByClausePush(Outputter outputter, TuplePush destination, TupleExpression tupleExpr, OrderByClause orderBy, IXPathContext context) : base(outputter)

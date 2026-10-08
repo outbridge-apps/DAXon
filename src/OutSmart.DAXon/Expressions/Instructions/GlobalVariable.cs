@@ -29,8 +29,8 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private StructuredQName variableQName;
         private Values.SequenceType requiredType;
         private bool _indexed;
-        private bool _isPrivate = false;
-        private bool _isAssignable = false;
+        private bool _isPrivate;
+        private bool _isAssignable;
         private GlobalVariable originalVariable;
         private int binderySlotNumber;
         private bool _isRequiredParam;

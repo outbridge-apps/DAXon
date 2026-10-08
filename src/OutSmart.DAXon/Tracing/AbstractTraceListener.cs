@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.Tracing
 {
     internal abstract class AbstractTraceListener : StandardDiagnostics, ITraceListener
     {
-        protected int indent = 0;
+        protected int indent;
         protected int detail = TraceLevel.NORMAL;
         protected Logger @out = new StandardLogger();
         private readonly Stack<object> stack = new Stack<object>();

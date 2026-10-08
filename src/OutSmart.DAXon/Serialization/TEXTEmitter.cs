@@ -19,8 +19,8 @@ namespace OutSmart.DAXon.Serialization
 {
     internal sealed class TEXTEmitter : XMLEmitter
     {
-        private OutSmart.DAXon.Internal.Regex.Pattern newlineMatcher = null;
-        private string newlineRepresentation = null;
+        private OutSmart.DAXon.Internal.Regex.Pattern newlineMatcher;
+        private string newlineRepresentation;
         /// <summary>
         /// Start of the document.
         /// </summary>

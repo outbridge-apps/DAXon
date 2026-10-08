@@ -31,15 +31,15 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private IAtomicSequence currentKey;
         private IList<IItem> currentMembers;
         private CompositeAtomicKey nextComparisonKey;
-        private IList<AtomicValue> nextKey = null;
+        private IList<AtomicValue> nextKey;
         // Non-composite groups compare exactly one match key per item; holding it directly skips
         // the two per-item lists, the CompositeAtomicKey wrapper and its SequenceEqual enumerators.
         private IAtomicMatchKey currentMatchKey;
         private IAtomicMatchKey nextMatchKey;
         private AtomicValue nextSingleKey;
         private IItem nextItem;
-        private IItem current = null;
-        private readonly bool composite = false;
+        private IItem current;
+        private readonly bool composite;
 
         public bool HasNext => nextItem != null;
         public GroupAdjacentIterator(IPullEvaluator select, Expression keyExpression, IXPathContext baseContext, IStringCollator collator, bool composite)

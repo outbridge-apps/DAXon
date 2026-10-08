@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private bool absentFocus;
         private bool external; // XQuery only
         private readonly IList<ItemType> requiredItemTypes = new List<ItemType>();
-        private Expression defaultValue = null; // Used in XQuery only
+        private Expression defaultValue; // Used in XQuery only
         public virtual ItemType RequiredItemType
         {
             get

@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Transformation.Rules
         //private SimpleMode omniMode = null;       //template rules that specify mode="all"
         private bool unnamedModeExplicit;
         private CompilerInfo compilerInfo; // We may need access to information on the compilation as distinct from the configuration
-        private int nextSequenceNumber = 0;
+        private int nextSequenceNumber;
 
         public ICollection<Mode> AllNamedModes => modes.Values;
 

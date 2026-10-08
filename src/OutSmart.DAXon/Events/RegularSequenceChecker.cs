@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Events
         private readonly Stack<int> stack = new Stack<int>();
 
         private State state;
-        private readonly bool fullChecking = false;
+        private readonly bool fullChecking;
 
         // for C#
         static RegularSequenceChecker()

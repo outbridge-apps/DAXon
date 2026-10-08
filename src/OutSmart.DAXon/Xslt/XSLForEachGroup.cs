@@ -19,14 +19,14 @@ namespace OutSmart.DAXon.Xslt
 {
     internal sealed class XSLForEachGroup : StyleElement
     {
-        private Expression select = null;
-        private Expression groupBy = null;
-        private Expression groupAdjacent = null;
-        private Expression splitWhen = null;
-        private Patterns.Pattern starting = null;
-        private Patterns.Pattern ending = null;
+        private Expression select;
+        private Expression groupBy;
+        private Expression groupAdjacent;
+        private Expression splitWhen;
+        private Patterns.Pattern starting;
+        private Patterns.Pattern ending;
         private Expression collationName;
-        private bool composite = false;
+        private bool composite;
         public override bool IsInstruction()
         {
             return true;

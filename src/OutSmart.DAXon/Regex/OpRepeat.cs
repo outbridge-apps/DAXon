@@ -244,7 +244,7 @@ namespace OutSmart.DAXon.Regex
             private readonly Operation op;
             private readonly REMatcher matcher;
             private int pos;
-            private int counter = 0;
+            private int counter;
             public AnonymousIntIterator1(OpRepeat parent, int position, Operation op, REMatcher matcher)
             {
                 this.parent = parent;

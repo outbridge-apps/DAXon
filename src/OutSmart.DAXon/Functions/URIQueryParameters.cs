@@ -23,15 +23,15 @@ namespace OutSmart.DAXon.Functions
         public const int ON_ERROR_FAIL = 1;
         public const int ON_ERROR_WARNING = 2;
         public const int ON_ERROR_IGNORE = 3;
-        Func<string, string, bool> filter = null;
-        bool? recurse = null;
-        int? validation = null;
-        ISpaceStrippingRule strippingRule = null;
-        int? onError = null;
-        bool? xinclude = null;
-        bool? stable = null;
-        bool? metadata = null;
-        string contentType = null;
+        Func<string, string, bool> filter;
+        bool? recurse;
+        int? validation;
+        ISpaceStrippingRule strippingRule;
+        int? onError;
+        bool? xinclude;
+        bool? stable;
+        bool? metadata;
+        string contentType;
 
         public virtual ISpaceStrippingRule SpaceStrippingRule => strippingRule;
 

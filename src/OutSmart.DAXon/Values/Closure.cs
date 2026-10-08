@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Values
     {
         protected IPullEvaluator inputEvaluator;
         protected XPathContextMajor savedXPathContext;
-        protected int depth = 0;
+        protected int depth;
         protected LearningEvaluator learningEvaluator;
         protected int serialNumber;
         protected Expression expression; // for diagnostics only

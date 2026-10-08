@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Expressions
     {
         private ContextItemStaticInfo staticInfo = ContextItemStaticInfo.DEFAULT;
         private string errorCodeForAbsentContext = "XPDY0002";
-        private bool absentContextIsTypeError = false; // absurdly, but that's what the spec says
+        private bool absentContextIsTypeError; // absurdly, but that's what the spec says
 
         public override string ExpressionName => "dot";
 

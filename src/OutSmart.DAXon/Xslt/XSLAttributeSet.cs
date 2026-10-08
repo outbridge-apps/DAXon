@@ -26,9 +26,9 @@ namespace OutSmart.DAXon.Xslt
         private readonly IList<ComponentDeclaration> attributeSetElements = new List<ComponentDeclaration>();
         private StructuredQName[] useAttributeSetNames;
         private readonly IList<Expression> containedInstructions = new List<Expression>();
-        private bool validated = false;
+        private bool validated;
         private Visibility visibility;
-        private bool streamable = false;
+        private bool streamable;
 
         public StructuredQName AttributeSetName => GetObjectName();
 

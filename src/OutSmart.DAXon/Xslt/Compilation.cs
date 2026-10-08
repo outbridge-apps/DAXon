@@ -28,11 +28,11 @@ namespace OutSmart.DAXon.Xslt
     public class Compilation
     {
         // diagnostic switch to control output of timing information
-        public static bool TIMING = false;
+        public static bool TIMING;
         private readonly Configuration config;
         private readonly CompilerInfo compilerInfo;
         private PrincipalStylesheetModule principalStylesheetModule;
-        private int errorCount = 0;
+        private int errorCount;
         // Round C1: the reported diagnostics are also kept here so MakeCompilationFailure can
         // hand them to the caller. Capped - a stylesheet can report thousands, and the exception
         // is a diagnostic, not a transcript; errorCount stays the true total.
@@ -45,14 +45,14 @@ namespace OutSmart.DAXon.Xslt
         private readonly Stack<DocumentKey> importStack = new Stack<DocumentKey>(); // handles both include and import
         private PackageData packageData;
         private bool preScan = true;
-        private bool createsSecondaryResultDocuments = false;
-        private bool libraryPackage = false;
+        private bool createsSecondaryResultDocuments;
+        private bool libraryPackage;
         private readonly IList<UsePack> packageDependencies = new List<UsePack>();
         private IList<VersionedPackageName> usingPackages = new List<VersionedPackageName>();
         private GlobalParameterSet suppliedParameters;
-        private bool fallbackToNonStreaming = false;
+        private bool fallbackToNonStreaming;
         private readonly HashSet<StructuredQName> referencedModes = new HashSet<StructuredQName>();
-        public Timer timer = null;
+        public Timer timer;
 
         public virtual int ErrorCount => errorCount;
 

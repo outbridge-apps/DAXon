@@ -16,10 +16,10 @@ namespace OutSmart.DAXon.Serialization
     {
         private readonly object syncLock = new object();
         private readonly XsltController controller;
-        private bool usedAsPrimaryResult = false;
-        private bool usedAsSecondaryResult = false;
-        private bool opened = false;
-        private bool closed = false;
+        private bool usedAsPrimaryResult;
+        private bool usedAsSecondaryResult;
+        private bool opened;
+        private bool closed;
         public PrincipalOutputGatekeeper(XsltController controller, IReceiver next) : base(next)
         {
             this.controller = controller;

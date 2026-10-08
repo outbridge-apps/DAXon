@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Xslt
         private StructuredQName formatQName; // used when format is a literal string
         private Expression formatExpression; // used when format is an AVT
         private int validationAction = Validation.STRIP;
-        private ISchemaType schemaType = null;
+        private ISchemaType schemaType;
         private readonly Dictionary<StructuredQName, Expression> serializationAttributes = new Dictionary<StructuredQName, Expression>(10);
         private bool async = true;
         static XSLResultDocument()

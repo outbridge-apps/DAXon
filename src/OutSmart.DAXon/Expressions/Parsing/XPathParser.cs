@@ -72,27 +72,27 @@ namespace OutSmart.DAXon.Expressions.Parsing
         protected QNameParser qNameParser;
         protected ParserExtension parserExtension = new ParserExtension();
         protected IIntPredicateProxy charChecker;
-        protected bool allowXPath30Syntax = false;
-        protected bool allowXPath30XSLTExtensions = false;
-        protected bool allowXPath31Syntax = false;
-        protected bool allowXPath40Syntax = false;
-        protected bool allowSaxonExtensions = false;
-        protected bool scanOnly = false;
+        protected bool allowXPath30Syntax;
+        protected bool allowXPath30XSLTExtensions;
+        protected bool allowXPath31Syntax;
+        protected bool allowXPath40Syntax;
+        protected bool allowSaxonExtensions;
+        protected bool scanOnly;
         // scanOnly is set to true while attributes in direct element constructors
         // are being processed. We need to parse enclosed expressions in the attribute
         // in order to find the end of the attribute value, but we don't yet know the
         // full namespace context at this stage.
-        private bool allowAbsentExpression = false;
+        private bool allowAbsentExpression;
         // allowAbsentExpression is a flag that indicates that it is acceptable
         // for the expression to be empty (that is, to consist solely of whitespace and
         // comments). The result of parsing such an expression is equivalent to the
         // result of parsing an empty sequence literal, "()"
-        protected ICodeInjector codeInjector = null;
-        private IAccelerator accelerator = null;
+        protected ICodeInjector codeInjector;
+        private IAccelerator accelerator;
 
         protected ParsedLanguage language = ParsedLanguage.XPATH; // know which language we are parsing, for diagnostics
         protected int languageVersion = 20;
-        protected int catchDepth = 0;
+        protected int catchDepth;
 
         // .NET hardening (no upstream equivalent): Java's StackOverflowError is catchable, so upstream
         // relies on the JVM to turn a pathologically deep parse into a recoverable error. .NET's
@@ -100,7 +100,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         // nesting explicitly and raise XPST0003. The counter is the deterministic ceiling; the
         // StackGuard probe in ParseExprSingle covers threads too small to reach it (round AR).
         public const int MAX_EXPRESSION_NESTING = 3000;
-        private int expressionDepth = 0;
+        private int expressionDepth;
 
         // Companion to the recursion guard above: the operator/postfix/path loops build a left-leaning
         // tree one level deeper per ITERATION without recursing, so a 300k-term chain (1+1+..., a[.][.]...,

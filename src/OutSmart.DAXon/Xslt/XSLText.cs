@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal sealed class XSLText : XSLLeafNodeConstructor
     {
-        private bool disable = false;
+        private bool disable;
         private StringValue value;
 
         protected override string ErrorCodeForSelectPlusContent => null;

@@ -45,8 +45,8 @@ namespace OutSmart.DAXon.Regex
             private readonly OpReluctantFixed parent;
             private readonly REMatcher matcher;
             private int pos;
-            private int count = 0;
-            private bool started = false;
+            private int count;
+            private bool started;
             private int min => parent.min; private int max => parent.max; private Operation op => parent.op;
             public AnonymousIntIterator(OpReluctantFixed parent, REMatcher matcher, int position)
             {

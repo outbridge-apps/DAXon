@@ -21,10 +21,10 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal sealed class XSLUsePackage : StyleElement
     {
-        private string nameAtt = null;
-        private PackageVersionRanges versionRanges = null;
+        private string nameAtt;
+        private PackageVersionRanges versionRanges;
         private StylesheetPackage usedPackage;
-        private IList<XSLAccept> acceptors = null;
+        private IList<XSLAccept> acceptors;
 
         public override StylesheetPackage UsedPackage => usedPackage;
 

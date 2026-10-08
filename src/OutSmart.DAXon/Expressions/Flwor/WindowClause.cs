@@ -372,11 +372,11 @@ namespace OutSmart.DAXon.Expressions.Flwor
             public IItem startPreviousItem;
             public IItem startNextItem;
             public IItem endItem;
-            public int endPosition = 0;
+            public int endPosition;
             public IItem endPreviousItem;
             public IItem endNextItem;
             public IList<IItem> contents;
-            public bool despatched = false;
+            public bool despatched;
             public bool IsFinished()
             {
                 return endPosition > 0;

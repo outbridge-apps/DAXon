@@ -21,9 +21,9 @@ namespace OutSmart.DAXon.Xslt
     {
         private SimpleMode mode;
         private HashSet<Accumulator> accumulators;
-        private bool prepared = false;
-        private bool streamable = false;
-        private bool traceMatching = false;
+        private bool prepared;
+        private bool streamable;
+        private bool traceMatching;
         public override bool IsDeclaration()
         {
             return true;

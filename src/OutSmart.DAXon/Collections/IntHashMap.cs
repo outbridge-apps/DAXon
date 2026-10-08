@@ -256,7 +256,7 @@ namespace OutSmart.DAXon.Collections
 
         private sealed class IntHashMapKeyIterator<V> : AbstractIntIterator where V : class
         {
-            private int i = 0;
+            private int i;
             private readonly IntHashMap<V> map;
             public IntHashMapKeyIterator(IntHashMap<V> map)
             {
@@ -289,7 +289,7 @@ namespace OutSmart.DAXon.Collections
 
         private sealed class IntHashMapValueIterator<W> : IEnumerator<W> where W : class
         {
-            private int i = 0;
+            private int i;
             private readonly IntHashMap<W> map;
 
 

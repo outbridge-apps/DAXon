@@ -20,8 +20,8 @@ namespace OutSmart.DAXon.Events
     internal sealed class IDFilter : ProxyReceiver
     {
         private readonly string requiredId;
-        private int activeDepth = 0;
-        private bool matched = false;
+        private int activeDepth;
+        private bool matched;
 
         public IDFilter(IReceiver next, string id) : base(next)
         {

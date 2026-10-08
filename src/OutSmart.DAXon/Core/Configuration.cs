@@ -81,7 +81,7 @@ namespace OutSmart.DAXon.Core
         private static readonly ClockCache<RegexCacheKey, RegexCacheEntry> CompiledRegexCache
             = new ClockCache<RegexCacheKey, RegexCacheEntry>(256);
         private static readonly string[] NoWarnings = new string[0];
-        private IApiProvider apiProcessor = null;
+        private IApiProvider apiProcessor;
         private CharacterSetFactory characterSetFactory;
         private readonly Dictionary<string, IStringCollator> collationMap = new Dictionary<string, IStringCollator>(10);
         private ICollationURIResolver collationResolver = new StandardCollationURIResolver();
@@ -89,7 +89,7 @@ namespace OutSmart.DAXon.Core
         private readonly Dictionary<string, IResourceCollection> registeredCollections = new Dictionary<string, IResourceCollection>();
         private ICollectionFinder collectionFinder;
         private IEnvironmentVariableResolver environmentVariableResolver = new StandardEnvironmentVariableResolver();
-        private string defaultCollection = null;
+        private string defaultCollection;
         private ParseOptions defaultParseOptions = new ParseOptions();
         protected StaticQueryContext defaultStaticQueryContext;
         private StaticQueryContextFactory staticQueryContextFactory = new StaticQueryContextFactory();
@@ -97,9 +97,9 @@ namespace OutSmart.DAXon.Core
         protected CompilerInfo defaultXsltCompilerInfo;
         private Func<Configuration, IErrorReporter> errorReporterFactory;
         protected IndependentContext staticContextForSystemFunctions;
-        private string label = null;
+        private string label;
         private DocumentNumberAllocator documentNumberAllocator = new DocumentNumberAllocator();
-        private IDebugger debugger = null;
+        private IDebugger debugger;
         private string defaultLanguage = Version.platform.GetDefaultLanguage();
         private string defaultCountry = Version.platform.DefaultCountry;
         private Properties defaultOutputProperties = new Properties();
@@ -114,18 +114,18 @@ namespace OutSmart.DAXon.Core
         private readonly IntegratedFunctionLibrary integratedFunctionLibrary = new IntegratedFunctionLibrary();
         private LocalizerFactory localizerFactory;
         private NamePool namePool = new NamePool();
-        protected Optimizer optimizer = null;
+        protected Optimizer optimizer;
         private SerializerFactory serializerFactory;
         private string sourceParserClass;
         private Logger traceOutput = new StandardLogger();
         private IModuleURIResolver standardModuleURIResolver;
         private string styleParserClass;
         private IUnparsedTextURIResolver unparsedTextURIResolver;
-        private IXPathContext theConversionContext = null;
-        private ConversionRules theConversionRules = null;
-        private ITraceListener traceListener = null;
-        private string traceListenerClass = null;
-        private string traceListenerOutput = null;
+        private IXPathContext theConversionContext;
+        private ConversionRules theConversionRules;
+        private ITraceListener traceListener;
+        private string traceListenerClass;
+        private string traceListenerOutput;
         private string defaultRegexEngine = "S";
         protected TypeHierarchy typeHierarchy;
         private readonly TypeChecker typeChecker = new TypeChecker();
@@ -147,7 +147,7 @@ namespace OutSmart.DAXon.Core
         // XSLT document() retrieval failure is a RECOVERABLE dynamic error (the recovery action is to return an
         // empty sequence). Off by default so fn:doc / document() raise FODC0002/FODC0005 (error-FODC0002a); the
         // QT3 driver turns it on for test-cases declaring <ignore_doc_failure satisfied="true"/>.
-        private bool recoverFromDocFailures = false;
+        private bool recoverFromDocFailures;
 
         public virtual string EditionCode => "HE";
 

@@ -23,9 +23,9 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal sealed class XSLSourceDocument : StyleElement
     {
-        private Expression href = null;
+        private Expression href;
         private HashSet<Accumulator> accumulators = new HashSet<Accumulator>();
-        private bool streaming = false;
+        private bool streaming;
         private ParseOptions parseOptions;
         public override bool IsInstruction()
         {

@@ -41,12 +41,12 @@ namespace OutSmart.DAXon.Events
         protected string baseURI;
         protected bool uniformBaseURI = true;
         protected NodeInfo currentRoot;
-        protected bool lineNumbering = false;
+        protected bool lineNumbering;
         protected bool useEventLocation = true;
         protected Durability durability = Durability.LASTING;
-        protected bool started = false;
-        protected bool timing = false;
-        protected bool opened = false;
+        protected bool started;
+        protected bool timing;
+        protected bool opened;
         private long startTime;
 
         public virtual string BaseURI

@@ -29,12 +29,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private readonly Operand hrefOp;
         private readonly Operand formatOp; // null if format was known at compile time
         private Operand contentOp;
-        private bool async = false;
+        private bool async;
         private readonly Properties globalProperties;
         private readonly Properties localProperties;
         private ParseOptions validationOptions;
         private readonly Dictionary<StructuredQName, Operand> serializationAttributes;
-        private bool resolveAgainstStaticBase = false; // used with fn:put()
+        private bool resolveAgainstStaticBase; // used with fn:put()
         private readonly CharacterMapIndex characterMapIndex;
 
         public virtual ParseOptions ValidationOptions => validationOptions;

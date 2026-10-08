@@ -10,7 +10,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 {
     public class RebindingMap
     {
-        private Dictionary<IBinding, IBinding> map = null; // created lazily
+        private Dictionary<IBinding, IBinding> map; // created lazily
         // Indexer for `rebindings[binding]` syntax
         public virtual IBinding this[IBinding key]
         {

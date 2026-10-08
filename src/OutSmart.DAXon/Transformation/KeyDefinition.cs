@@ -27,11 +27,11 @@ namespace OutSmart.DAXon.Transformation
         private BuiltInAtomicType useType; // the type of the values returned by the atomized use expression
         private readonly IStringCollator collation; // the collating sequence, when type=string
         private readonly string collationName; // the collation URI
-        private bool backwardsCompatible = false;
-        private bool strictComparison = false;
-        private bool convertUntypedToOther = false;
-        private bool rangeKey = false;
-        private bool composite = false;
+        private bool backwardsCompatible;
+        private bool strictComparison;
+        private bool convertUntypedToOther;
+        private bool rangeKey;
+        private bool composite;
         private IPullEvaluator useExpressionEvaluator;
 
         public virtual BuiltInAtomicType IndexedItemType

@@ -323,7 +323,7 @@ namespace OutSmart.DAXon.Collections
         {
             private readonly int[] contents;
             private readonly int limit;
-            private int i = 0;
+            private int i;
             public IntArrayIterator(int[] contents, int limit)
             {
                 i = 0;

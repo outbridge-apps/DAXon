@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
     {
         private readonly Accumulator accumulator;
         private readonly IList<DataPoint> values = new List<DataPoint>();
-        private bool building = false;
+        private bool building;
         public AccumulatorData(Accumulator acc)
         {
             this.accumulator = acc;

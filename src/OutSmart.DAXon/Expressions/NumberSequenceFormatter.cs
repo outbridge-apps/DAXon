@@ -33,8 +33,8 @@ namespace OutSmart.DAXon.Expressions
         private readonly Operand ordinalOp;
         private readonly Operand startAtOp;
         private readonly Operand langOp;
-        private readonly NumberFormatter formatter = null;
-        private INumberer numberer = null;
+        private readonly NumberFormatter formatter;
+        private INumberer numberer;
         private readonly bool backwardsCompatible;
 
         public override int ImplementationMethod => EVALUATE_METHOD;

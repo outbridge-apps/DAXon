@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Functions
 {
     internal sealed class EventMonitor : Outputter
     {
-        private bool written = false;
+        private bool written;
         private readonly Outputter next;
 
         public EventMonitor(Outputter next)

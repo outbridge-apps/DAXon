@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Api
         protected readonly object syncLock = new object();
         protected Processor processor;
         protected XsltController controller;
-        protected bool baseOutputUriWasSet = false;
+        protected bool baseOutputUriWasSet;
         private IMessageListener2 messageListener2;
 
         public virtual IMessageListener2 MessageListener2 => messageListener2;
@@ -361,7 +361,7 @@ namespace OutSmart.DAXon.Api
             private readonly IDestination finalDestination;
             private readonly Builder sourceTreeBuilder;
             private readonly Controller.DeadlineToken limitsBefore;   // the thread's limits before the receiver was made
-            bool closed = false;
+            bool closed;
             public AnonymousTreeReceiver(AbstractXsltTransformer parent, IReceiver stripper, XsltController controller, GlobalParameterSet parameters, IDestination finalDestination, Builder sourceTreeBuilder, Controller.DeadlineToken limitsBefore) : base(stripper)
             {
                 this.limitsBefore = limitsBefore;

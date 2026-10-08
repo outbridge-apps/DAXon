@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Serialization
         private CharacterMap characterMap;
         private Properties outputProperties;
         private string itemSeparator = "\n";
-        private bool started = false;
+        private bool started;
         private bool mustClose = true;
         public AdaptiveEmitter(PipelineConfiguration pipe, IUnicodeWriter writer) : base(pipe)
         {

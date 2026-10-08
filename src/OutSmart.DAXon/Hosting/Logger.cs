@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Lib
         public const int WARNING = 1;
         public const int ERROR = 2;
         public const int DISASTER = 3;
-        private bool unicodeAware = false;
+        private bool unicodeAware;
         public virtual void Info(string message)
         {
             Println(message, INFO);

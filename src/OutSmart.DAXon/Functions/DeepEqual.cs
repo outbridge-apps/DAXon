@@ -962,21 +962,21 @@ namespace OutSmart.DAXon.Functions
                 "type-variety",
                 "typed-values"
             };
-            public bool baseUriSignificant = false;
-            public bool commentsSignificant = false;
-            public bool debug = false;
-            public bool falseOnError = false;
-            public bool idSignificant = false;
-            public bool idrefSignificant = false;
-            public bool inScopeNamespacesSignificant = false;
-            public bool namespacePrefixesSignificant = false;
-            public string normalizationForm = null;
-            public bool nilledSignificant = false;
-            public bool normalizeSpace = false;
-            public bool processingInstructionsSignificant = false;
+            public bool baseUriSignificant;
+            public bool commentsSignificant;
+            public bool debug;
+            public bool falseOnError;
+            public bool idSignificant;
+            public bool idrefSignificant;
+            public bool inScopeNamespacesSignificant;
+            public bool namespacePrefixesSignificant;
+            public string normalizationForm;
+            public bool nilledSignificant;
+            public bool normalizeSpace;
+            public bool processingInstructionsSignificant;
             public bool textBoundariesSignificant = true;
-            public bool timezonesSignificant = false;
-            public bool typeAnnotationsSignificant = false;
+            public bool timezonesSignificant;
+            public bool typeAnnotationsSignificant;
             public bool typeVarietySignificant = true;
             public bool typedValuesSignificant = true;
             public HashSet<StructuredQName> unorderedElements = new HashSet<StructuredQName>();

@@ -74,7 +74,7 @@ namespace OutSmart.DAXon.Types
         private int primitiveFingerprint;
         private UType uType;
         private string alphaCode;
-        private bool ordered = false;
+        private bool ordered;
         public StringConverter stringConverter; // may be null for types where conversion rules can vary
         private SequenceType _one;
         private SequenceType _oneOrMore;

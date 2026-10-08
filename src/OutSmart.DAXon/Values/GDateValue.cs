@@ -495,7 +495,7 @@ namespace OutSmart.DAXon.Values
             public bool hasNoYearZero; // true if XSD 1.0 rules apply for negative years
             public int tzMinutes = NO_TIMEZONE;
             public IAtomicType typeLabel = BuiltInAtomicType.DATE_TIME;
-            public ValidationFailure error = null;
+            public ValidationFailure error;
             public MutableGDateValue()
             {
             }

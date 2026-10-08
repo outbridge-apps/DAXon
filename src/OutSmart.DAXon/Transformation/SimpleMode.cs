@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Transformation
         private readonly object syncLock = new object();
         protected readonly RuleChain genericRuleChain = new RuleChain();
         // Real template rules registered (hasRules is also true for a merely DECLARED mode)
-        private int templateRuleCount = 0;
+        private int templateRuleCount;
         protected RuleChain atomicValueRuleChain = new RuleChain();
         protected RuleChain functionItemRuleChain = new RuleChain();
         protected RuleChain documentRuleChain = new RuleChain();
@@ -44,7 +44,7 @@ namespace OutSmart.DAXon.Transformation
         protected Dictionary<StructuredQName, RuleChain> qNamedElementRuleChains;
         protected Dictionary<StructuredQName, RuleChain> qNamedAttributeRuleChains;
         private IBuiltInRuleSet builtInRuleSet = TextOnlyCopyRuleSet.GetInstance();
-        private int stackFrameSlotsNeeded = 0;
+        private int stackFrameSlotsNeeded;
         private int highestRank;
         private readonly Dictionary<string, int> explicitPropertyPrecedences = new Dictionary<string, int>();
         private readonly Dictionary<string, string> explicitPropertyValues = new Dictionary<string, string>();

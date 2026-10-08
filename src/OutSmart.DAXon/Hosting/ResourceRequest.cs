@@ -26,8 +26,8 @@ namespace OutSmart.DAXon.Lib
         // The whole nature/purpose thing never got fleshed out as completely as it might have. For things
         // where there isn't a defined purpose, just use any purpose...the catalog lookup allows any
         // value to match null.
-        public static readonly string ANY_PURPOSE = null;
-        public static readonly string ANY_NATURE = null;
+        public static readonly string ANY_PURPOSE;
+        public static readonly string ANY_NATURE;
         public string uri;
         /// <summary>
         ///  The base URI that was used to resolve any relative URI, if known.

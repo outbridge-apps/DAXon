@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private StructuredQName variableQName;
         private int slotNumber;
         private readonly int referenceCount = 999;
-        private bool isIndexed = false;
+        private bool isIndexed;
         private bool isRequiredParam = true;
         private FunctionStreamability functionStreamability = FunctionStreamability.UNCLASSIFIED;
         private Expression defaultValue; // In 4.0, function parameters can have a default value

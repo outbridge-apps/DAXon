@@ -92,8 +92,8 @@ namespace OutSmart.DAXon.Functions
         {
             readonly ISequenceIterator @base;
             readonly IntSet removePositions;
-            int basePosition = 0;
-            IItem current = null;
+            int basePosition;
+            IItem current;
             public RemoveIterator(ISequenceIterator @base, IntSet removePosition)
             {
                 this.@base = @base;

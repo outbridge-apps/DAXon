@@ -520,20 +520,20 @@ namespace OutSmart.DAXon.Functions
 
         internal sealed class SubPicture
         {
-            protected int minWholePartSize = 0;
-            protected int maxWholePartSize = 0;
-            protected int minFractionPartSize = 0;
-            protected int maxFractionPartSize = 0;
-            protected int minExponentSize = 0;
-            protected int scalingFactor = 0;
-            protected bool isPercent = false;
-            protected bool isPerMille = false;
+            protected int minWholePartSize;
+            protected int maxWholePartSize;
+            protected int minFractionPartSize;
+            protected int maxFractionPartSize;
+            protected int minExponentSize;
+            protected int scalingFactor;
+            protected bool isPercent;
+            protected bool isPerMille;
             protected string prefix = "";
             protected string suffix = "";
-            protected int[] wholePartGroupingPositions = null;
-            protected int[] fractionalPartGroupingPositions = null;
+            protected int[] wholePartGroupingPositions;
+            protected int[] fractionalPartGroupingPositions;
             protected bool regular;
-            protected bool is31 = false;
+            protected bool is31;
             public SubPicture(int[] pic, DecimalSymbols dfs)
             {
                 is31 = true;

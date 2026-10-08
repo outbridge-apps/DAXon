@@ -25,14 +25,14 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     public class XSLEvaluate : StyleElement
     {
-        Expression xpath = null;
+        Expression xpath;
         SequenceType requiredType = SequenceType.ANY_SEQUENCE;
-        Expression namespaceContext = null;
-        Expression contextItem = null;
-        Expression baseUri = null;
-        Expression schemaAware = null;
-        Expression withParams = null;
-        Expression options = null;
+        Expression namespaceContext;
+        Expression contextItem;
+        Expression baseUri;
+        Expression schemaAware;
+        Expression withParams;
+        Expression options;
         bool hasFallbackChildren;
 
         protected virtual ItemType ReturnedItemType => AnyItemType.GetInstance();

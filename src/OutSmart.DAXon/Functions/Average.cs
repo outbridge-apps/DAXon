@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Functions
             private bool atStart = true;
             private readonly ConversionRules rules;
             private readonly StringConverter toDouble;
-            private int count = 0;
+            private int count;
             public AverageFold(IXPathContext context)
             {
                 this.context = context;

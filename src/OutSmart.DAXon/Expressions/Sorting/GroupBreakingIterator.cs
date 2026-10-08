@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private readonly IXPathContext runningContext;
         private IList<IItem> currentMembers;
         private IItem nextItem;
-        private IItem current = null;
+        private IItem current;
 
         public bool HasNext => nextItem != null;
         public GroupBreakingIterator(IPullEvaluator select, IFunctionItem breakWhen, IXPathContext baseContext)

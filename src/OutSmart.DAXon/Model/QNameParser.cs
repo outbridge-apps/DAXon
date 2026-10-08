@@ -13,10 +13,10 @@ namespace OutSmart.DAXon.Model
     public class QNameParser
     {
         private INamespaceResolver resolver;
-        private bool acceptEQName = false;
+        private bool acceptEQName;
         private string errorOnBadSyntax = "XPST0003";
         private string errorOnUnresolvedPrefix = "XPST0081";
-        private XQueryParser.Unescaper unescaper = null;
+        private XQueryParser.Unescaper unescaper;
         public QNameParser(INamespaceResolver resolver)
         {
             this.resolver = resolver;

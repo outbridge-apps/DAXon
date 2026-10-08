@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Functions
         private static readonly IRegularExpression modifierPattern = ARegularExpression.Compile("([co](\\(.*\\))?)?[at]?", "");
         private static readonly IRegularExpression decimalDigitPattern = ARegularExpression.Compile("^((\\p{Nd}|#|[^\\p{N}\\p{L}])+?)$", "");
         private static readonly IRegularExpression nonDecimalDigitPattern = ARegularExpression.Compile("^(([Xx#]|[^\\p{N}\\p{L}])+?)$", "");
-        private Func<IntegerValue, string> formatter = null;
+        private Func<IntegerValue, string> formatter;
 
         // Per-call-site memo: the resolved formatter for the last-seen (picture, language) pair
         // plus a bounded long -> formatted-string cache. format-integer is a pure function of

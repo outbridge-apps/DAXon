@@ -25,11 +25,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public static WithParam[] EMPTY_ARRAY = new WithParam[0];
 
         private Operand selectOp;
-        private bool typeChecked = false;
+        private bool typeChecked;
         private int slotNumber = -1;
         private SequenceType requiredType;
         private StructuredQName variableQName;
-        private ISequenceEvaluator evaluator = null;
+        private ISequenceEvaluator evaluator;
 
         public virtual Operand SelectOperand => selectOp;
 

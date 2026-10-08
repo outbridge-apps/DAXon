@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         private int nextNodeNr;
         private readonly int startDepth;
         private readonly IIntPredicateProxy matcher;
-        private NodeInfo pending = null;
+        private NodeInfo pending;
         internal DescendantIterator(TinyTree doc, TinyNodeImpl node, NodeTest nodeTest)
         {
             tree = doc;

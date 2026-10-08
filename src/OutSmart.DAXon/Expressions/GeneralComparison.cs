@@ -28,7 +28,7 @@ namespace OutSmart.DAXon.Expressions
         protected IAtomicComparer comparer;
         protected bool runtimeCheckNeeded = true;
         protected ComparisonCardinality comparisonCardinality = ComparisonCardinality.MANY_TO_MANY;
-        protected bool doneWarnings = false;
+        protected bool doneWarnings;
 
         public override string ExpressionName => "GeneralComparison";
 

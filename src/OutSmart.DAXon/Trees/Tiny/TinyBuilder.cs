@@ -21,19 +21,19 @@ namespace OutSmart.DAXon.Trees.Tiny
         private const int PARENT_POINTER_INTERVAL = 10;
         private TinyTree tree;
         private readonly Stack<NamespaceMap> namespaceStack = new Stack<NamespaceMap>();
-        private int currentDepth = 0;
-        private int nodeNr = 0; // this is the local sequence within this document
-        private bool ended = false;
+        private int currentDepth;
+        private int nodeNr; // this is the local sequence within this document
+        private bool ended;
         private bool noNewNamespaces = true;
         private Statistics statistics;
         private long inputLength = -1;
-        private readonly bool markDefaultedAttributes = false;
+        private readonly bool markDefaultedAttributes;
         private Eligibility textualElementEligibilityState = Eligibility.INELIGIBLE;
         private readonly UnicodeBuilder commentBuilder = new UnicodeBuilder();
 
         private int[] prevAtDepth = new int[100];
         private int[] siblingsAtDepth = new int[100];
-        private bool isIDElement = false;
+        private bool isIDElement;
         private string lastElementSystemId;   // last systemId INSTANCE seen by StartElementLocalSystemId
         public TinyBuilder(PipelineConfiguration pipe) : base(pipe)
         {

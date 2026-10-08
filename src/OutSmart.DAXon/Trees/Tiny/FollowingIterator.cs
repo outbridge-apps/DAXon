@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         private NodeInfo current;
         private readonly NodeTest test;
         private readonly bool includeDescendants;
-        int position = 0;
+        int position;
         private readonly IIntPredicateProxy matcher;
         private NodeInfo pending;
         public FollowingIterator(TinyTree doc, TinyNodeImpl node, NodeTest nodeTest, bool includeDescendants)

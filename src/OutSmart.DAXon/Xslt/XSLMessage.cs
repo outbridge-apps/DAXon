@@ -16,10 +16,10 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     internal sealed class XSLMessage : StyleElement
     {
-        private Expression terminate = null;
-        private Expression select = null;
-        private Expression errorCode = null;
-        private Expression timer = null;
+        private Expression terminate;
+        private Expression select;
+        private Expression errorCode;
+        private Expression timer;
         public override bool IsInstruction()
         {
             return true;
