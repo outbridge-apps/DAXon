@@ -708,8 +708,22 @@ namespace OutSmart.DAXon.Trees.Tiny
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual string GetURI() => GetNamespaceUri() == null ? "" : GetNamespaceUri().ToString();
-        public virtual IEnumerable<NodeInfo> Children() { var __it = IterateAxis(AxisInfo.CHILD); for (var __n = __it.Next(); __n != null; __n = __it.Next()) { yield return __n; } }
-        public virtual IEnumerable<NodeInfo> Children(INodePredicate filter) { var __it = IterateAxis(AxisInfo.CHILD, filter); for (var __n = __it.Next(); __n != null; __n = __it.Next()) { yield return __n; } }
+        public virtual IEnumerable<NodeInfo> Children()
+        {
+            var __it = IterateAxis(AxisInfo.CHILD);
+            for (var __n = __it.Next(); __n != null; __n = __it.Next())
+            {
+                yield return __n;
+            }
+        }
+        public virtual IEnumerable<NodeInfo> Children(INodePredicate filter)
+        {
+            var __it = IterateAxis(AxisInfo.CHILD, filter);
+            for (var __n = __it.Next(); __n != null; __n = __it.Next())
+            {
+                yield return __n;
+            }
+        }
         public virtual IAttributeMap Attributes() // upstream NodeInfo default method
         {
             if (GetNodeKind() != Types.Type.ELEMENT)

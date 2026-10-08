@@ -59,6 +59,6 @@ namespace OutSmart.DAXon.Trees.Iterators
         {
             return @base is ILookaheadIterator && ((ILookaheadIterator)@base).SupportsHasNext();
         }
-        IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow: must delegate to the real covariant AtomicValue Next(), NOT default(null) = silent empty atomization
+        IItem ISequenceIterator.Next() => Next();
     }
 }

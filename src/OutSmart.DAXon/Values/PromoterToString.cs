@@ -17,11 +17,7 @@ namespace OutSmart.DAXon.Values
     internal sealed class PromoterToString : Converter
     {
         public PromoterToString() { }
-        // net472 port: the real OutSmart.DAXon.Types.Converter (poc/output/full/Converter.cs) is EXCLUDED from the
-        // build (re-including cascades errors), so the active base is the OutSmart.DAXon.Internal Converter stub
-        // whose `Convert(object) => null` made fn:string-argument atomization yield an empty sequence
-        // (FinDim normalize-space(DIMENSIONVALUE) -> ""). Override Convert with the real xs:string promotion
-        // rules (mirrors the excluded Converter.PromoterToString.Convert).
+        // The promotion of an argument to xs:string (Saxon's Converter.PromoterToString); the base Convert returns null.
         public override IConversionResult Convert(object value)
         {
             AtomicValue input = (AtomicValue)value;

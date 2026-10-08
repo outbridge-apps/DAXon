@@ -75,7 +75,17 @@ namespace OutSmart.DAXon.Values
         public virtual IGroundedValue Reduce() => this; // upstream GroundedValue default method
         public virtual IGroundedValue Materialize() => this; // upstream GroundedValue default method
         public virtual string ToShortString() => OutSmart.DAXon.Transformation.Err.DepictSequence(this); // upstream GroundedValue default
-        public virtual IEnumerable<IItem> AsIterable() { var list = new List<IItem>(); var it = Iterate(); for (IItem i = it.Next(); i != null; i = it.Next()) { list.Add(i); } return list; }
+        public virtual IEnumerable<IItem> AsIterable()
+        {
+            var list = new List<IItem>();
+            var it = Iterate();
+            for (IItem i = it.Next(); i != null; i = it.Next())
+            {
+                list.Add(i);
+            }
+
+            return list;
+        }
         public virtual bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
         public virtual IGroundedValue Concatenate(IGroundedValue[] others)
         {

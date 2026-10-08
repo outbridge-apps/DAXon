@@ -39,7 +39,16 @@ namespace OutSmart.DAXon.Collections.Zeno
             return result;
         }
         void IDisposable.Dispose() { }
-        bool System.Collections.IEnumerator.MoveNext() { if (HasNext()) { __cur = Next(); return true; } return false; }
+        bool System.Collections.IEnumerator.MoveNext()
+        {
+            if (HasNext())
+            {
+                __cur = Next();
+                return true;
+            }
+
+            return false;
+        }
         void System.Collections.IEnumerator.Reset() { }
     }
 }

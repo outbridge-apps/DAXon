@@ -123,8 +123,16 @@ namespace OutSmart.DAXon.Model
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public string GetValue(NamespaceUri uri, string local) { AttributeInfo att = Get(uri, local); return att == null ? null : att.Value; }
-        public string GetValue(string local) { AttributeInfo att = Get(NamespaceUri.NULL, local); return att == null ? null : att.Value; }
+        public string GetValue(NamespaceUri uri, string local)
+        {
+            AttributeInfo att = Get(uri, local);
+            return att == null ? null : att.Value;
+        }
+        public string GetValue(string local)
+        {
+            AttributeInfo att = Get(NamespaceUri.NULL, local);
+            return att == null ? null : att.Value;
+        }
         public void Verify() { }
     }
 }

@@ -357,7 +357,11 @@ namespace OutSmart.DAXon.Collections
 
             }
 
-            public void Reset() { i = 0; _current = default; }
+            public void Reset()
+            {
+                i = 0;
+                _current = default;
+            }
 
             public void Dispose() { }
 

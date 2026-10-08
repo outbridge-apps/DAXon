@@ -4,7 +4,8 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-using OutSmart.DAXon.Events;namespace OutSmart.DAXon.Lib
+using OutSmart.DAXon.Events;
+namespace OutSmart.DAXon.Lib
 {
     /// <summary>
     /// An IActiveSource is capable of delivering an XML document to a IReceiver. P5: this is a native Saxon

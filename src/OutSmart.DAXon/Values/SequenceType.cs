@@ -73,8 +73,7 @@ namespace OutSmart.DAXon.Values
         private static SequenceType _optHexBinary;
         private static SequenceType _optNumeric;
         private static SequenceType _singleNumeric;
-        // batch6d: OPTIONAL_NODE/SINGLE_NODE were hollow (null _primaryType) -> the same TypeChecker
-        // null-guard NRE as NODE_SEQUENCE, hit by xsl:number's select check against node(). Lazy-reflective.
+        // Made on first use, like NODE_SEQUENCE: the type checker reads their primary type (xsl:number's select).
         private static SequenceType _optionalNode;
         private static SequenceType _singleNode;
         public static readonly SequenceType OPTIONAL_DOCUMENT_NODE = new SequenceType();

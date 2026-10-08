@@ -24,7 +24,12 @@ namespace OutSmart.DAXon.Internal.Collections
             return _defaults?.GetProperty(key);
         }
         public string GetProperty(string key, string defaultValue) => GetProperty(key) ?? defaultValue;
-        public object SetProperty(string key, string value) { TryGetValue(key, out var prev); this[key] = value; return prev; }
+        public object SetProperty(string key, string value)
+        {
+            TryGetValue(key, out var prev);
+            this[key] = value;
+            return prev;
+        }
 
         // Includes keys inherited from the defaults chain, as in Java — enumerating an
         // instance whose values all live in its defaults must not come back empty.

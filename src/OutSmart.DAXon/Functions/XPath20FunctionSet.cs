@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Functions
 
             Register("tokenize", 1, (e) => e.Populate(Tokenize_1.New(), BuiltInAtomicType.STRING, STAR, 0).Arg(0, BuiltInAtomicType.STRING, OPT, EMPTY));
 
-            Register("string-to-codepoints", 1, (e) => e.Populate(() => new StringToCodepoints(), BuiltInAtomicType.INTEGER, STAR, 0).Arg(0, BuiltInAtomicType.STRING, OPT, EMPTY)); // runtime: lambda form (not .New()) so Fix-Phase7-CtorRef-To-Lambda doesn't botch the global:: prefix
+            Register("string-to-codepoints", 1, (e) => e.Populate(() => new StringToCodepoints(), BuiltInAtomicType.INTEGER, STAR, 0).Arg(0, BuiltInAtomicType.STRING, OPT, EMPTY));
 
             Register("QName", 2, (e) => e.Populate(() => new QNameFn(), BuiltInAtomicType.QNAME, ONE, 0).Arg(0, BuiltInAtomicType.STRING, OPT, null).Arg(1, BuiltInAtomicType.STRING, ONE, null));
 

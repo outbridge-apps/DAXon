@@ -19,7 +19,11 @@ namespace OutSmart.DAXon.Trees.Iterators
     {
         private IItem start;
         private readonly ISequenceIterator @base;
-        public PrependAxisIterator(NodeInfo start, ISequenceIterator @base) { this.start = start; this.@base = @base; }
+        public PrependAxisIterator(NodeInfo start, ISequenceIterator @base)
+        {
+            this.start = start;
+            this.@base = @base;
+        }
         public NodeInfo Next()
         {
             if (start != null)

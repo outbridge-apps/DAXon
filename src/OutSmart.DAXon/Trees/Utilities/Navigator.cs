@@ -1220,7 +1220,7 @@ namespace OutSmart.DAXon.Trees.Utilities
                     }
                 }
             }
-            IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
+            IItem ISequenceIterator.Next() => Next();
             public void Dispose() { }
         }
 
@@ -1252,7 +1252,7 @@ namespace OutSmart.DAXon.Trees.Utilities
 
                 return current = current == null ? null : current.GetParent();
             }
-            IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
+            IItem ISequenceIterator.Next() => Next();
             public void Dispose() { }
         } // end of class AncestorEnumeration
 
@@ -1340,7 +1340,7 @@ namespace OutSmart.DAXon.Trees.Utilities
 
                 return null;
             }
-            IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
+            IItem ISequenceIterator.Next() => Next();
             public void Dispose() { }
         } // end of class DescendantEnumeration
 
@@ -1439,7 +1439,7 @@ namespace OutSmart.DAXon.Trees.Utilities
                     }
                 }
             }
-            IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
+            IItem ISequenceIterator.Next() => Next();
             public void Dispose() { }
         } // end of class FollowingEnumeration
 
@@ -1531,7 +1531,7 @@ namespace OutSmart.DAXon.Trees.Utilities
                     }
                 }
             }
-            IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
+            IItem ISequenceIterator.Next() => Next();
             public void Dispose() { }
         } // end of class PrecedingEnumeration
     }

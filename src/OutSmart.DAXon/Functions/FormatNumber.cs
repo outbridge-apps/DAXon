@@ -37,7 +37,11 @@ namespace OutSmart.DAXon.Functions
         {
             internal readonly long bits;
             internal readonly string result;
-            internal FmtEntry(long bits, string result) { this.bits = bits; this.result = result; }
+            internal FmtEntry(long bits, string result)
+            {
+                this.bits = bits;
+                this.result = result;
+            }
         }
 
         private sealed class PicsMemo

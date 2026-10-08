@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Text
     internal sealed class Twine16 : UnicodeString
     {
         private readonly string _s;
-        public char[] CharArray => _s.ToCharArray(); // batch6: real UTF8Writer fast path
+        public char[] CharArray => _s.ToCharArray(); // UTF8Writer's fast path
         public override int Width => 16;
         public Twine16(string s)
         {
@@ -98,6 +98,12 @@ namespace OutSmart.DAXon.Text
                 target[offset++] = (byte)c;
             }
         }
-        public override void Copy32bit(int[] target, int offset) { for (int i = 0; i < _s.Length; i++) target[offset + i] = _s[i]; }
+        public override void Copy32bit(int[] target, int offset)
+        {
+            for (int i = 0; i < _s.Length; i++)
+            {
+                target[offset + i] = _s[i];
+            }
+        }
     }
 }

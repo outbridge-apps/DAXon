@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Trees.Iterators
         {
             return (NodeInfo)base.Next();
         }
-        IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
+        IItem ISequenceIterator.Next() => Next();
         public override void Dispose() { }
     }
 }

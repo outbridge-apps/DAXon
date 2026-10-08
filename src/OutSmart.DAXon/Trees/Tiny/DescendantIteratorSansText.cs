@@ -67,7 +67,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             count = c;
             return true;
         }
-        IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
+        IItem ISequenceIterator.Next() => Next();
         public void Dispose() { }
     }
 }

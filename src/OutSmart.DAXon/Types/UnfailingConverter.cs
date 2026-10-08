@@ -27,7 +27,11 @@ namespace OutSmart.DAXon.Types
             private readonly IAtomicType newType;
             private readonly string errorCode;
             public new ISimpleType TargetType => newType;
-            public DownCastingConverter(object target, object rules) { newType = (IAtomicType)target; SetConversionRules(rules); }
+            public DownCastingConverter(object target, object rules)
+            {
+                newType = (IAtomicType)target;
+                SetConversionRules(rules);
+            }
             public DownCastingConverter(object target, object rules, object errorCode) { newType = (IAtomicType)target; SetConversionRules(rules); this.errorCode = (string)errorCode; } // ASC.MakeDownCaster 3-arg form (target, rules, "XPTY0004")
 
             public override IConversionResult Convert(object value)

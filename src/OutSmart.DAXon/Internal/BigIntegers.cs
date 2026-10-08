@@ -72,11 +72,21 @@ namespace OutSmart.DAXon.Internal
                 char c = s[i];
                 int d;
                 if (c >= '0' && c <= '9')
+                {
                     d = c - '0';
-                else if (c >= 'a' && c <= 'z') d = c - 'a' + 10;
-                else if (c >= 'A' && c <= 'Z') d = c - 'A' + 10;
+                }
+                else if (c >= 'a' && c <= 'z')
+                {
+                    d = c - 'a' + 10;
+                }
+                else if (c >= 'A' && c <= 'Z')
+                {
+                    d = c - 'A' + 10;
+                }
                 else
+                {
                     d = -1;
+                }
                 if (d < 0 || d >= radix)
                     throw new System.FormatException("For input string: \"" + s + "\"");
                 v = v * r + d;

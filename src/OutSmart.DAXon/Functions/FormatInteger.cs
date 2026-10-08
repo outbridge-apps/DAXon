@@ -48,7 +48,11 @@ namespace OutSmart.DAXon.Functions
         {
             internal readonly long value;
             internal readonly string result;
-            internal IntFmtEntry(long value, string result) { this.value = value; this.result = result; }
+            internal IntFmtEntry(long value, string result)
+            {
+                this.value = value;
+                this.result = result;
+            }
         }
 
         private sealed class IntFmtMemo

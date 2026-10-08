@@ -36,7 +36,7 @@ namespace OutSmart.DAXon.Functions
 
             Register("collation-key", 2, (e) => e.Populate(() => new CollatingFunctionFree(), BuiltInAtomicType.BASE64_BINARY, ONE, DCOLL).Arg(0, BuiltInAtomicType.STRING, ONE, null).Arg(1, BuiltInAtomicType.STRING, ONE, null));
 
-            Register("xml-to-json", 1, (e) => e.Populate(() => new XMLToJsonFn(), BuiltInAtomicType.STRING, OPT, LATE).Arg(0, AnyNodeTest.GetInstance(), OPT | ABS, EMPTY)); // runtime: lambda form (not .New()) so Fix-Phase7-CtorRef-To-Lambda doesn't botch the global:: prefix on early-probe CS0117
+            Register("xml-to-json", 1, (e) => e.Populate(() => new XMLToJsonFn(), BuiltInAtomicType.STRING, OPT, LATE).Arg(0, AnyNodeTest.GetInstance(), OPT | ABS, EMPTY));
 
             Register("xml-to-json", 2, (e) => e.Populate(() => new XMLToJsonFn(), BuiltInAtomicType.STRING, OPT, LATE).Arg(0, AnyNodeTest.GetInstance(), OPT | ABS, EMPTY).Arg(1, MapType.ANY_MAP_TYPE, ONE | ABS, null).SetOptionDetails(XMLToJsonFn.MakeOptionsParameter()));
 

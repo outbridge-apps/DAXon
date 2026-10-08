@@ -137,7 +137,17 @@ namespace OutSmart.DAXon.Serialization
         // IO-removal W2: write the BMP char via Write(char) — compat Writer.Write(int) had char semantics,
         // but BCL TextWriter.Write(int) writes the integer as text. UTF8Writer overrides Write(char) to keep
         // char semantics; for the non-UTF8 StreamWriter sink, Write(char) is the correct codepoint write.
-        public void WriteCodePoint(int codepoint) { if (codepoint <= 0xFFFF) _w.Write((char)codepoint); else _w.Write(char.ConvertFromUtf32(codepoint)); }
+        public void WriteCodePoint(int codepoint)
+        {
+            if (codepoint <= 0xFFFF)
+            {
+                _w.Write((char)codepoint);
+            }
+            else
+            {
+                _w.Write(char.ConvertFromUtf32(codepoint));
+            }
+        }
         public void Dispose() { _w.Dispose(); }
         public void Flush() { _w.Flush(); }
     }

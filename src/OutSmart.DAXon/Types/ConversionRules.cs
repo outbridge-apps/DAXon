@@ -349,7 +349,7 @@ namespace OutSmart.DAXon.Lib
                         case StandardNames.XS_STRING:
                             return new StringToGYearMonth(this);
                         case StandardNames.XS_DATE:
-                            return Converter.TwoPhaseConverter.MakeTwoPhaseConverter(BuiltInAtomicType.DATE, BuiltInAtomicType.DATE_TIME, BuiltInAtomicType.G_YEAR_MONTH, this);
+                            return new TwoPhaseConverter(GetConverter(BuiltInAtomicType.DATE, BuiltInAtomicType.DATE_TIME), GetConverter(BuiltInAtomicType.DATE_TIME, BuiltInAtomicType.G_YEAR_MONTH));
                         case StandardNames.XS_DATE_TIME:
                             return Converter.DateTimeToGYearMonth.INSTANCE;
                         default:
@@ -363,7 +363,7 @@ namespace OutSmart.DAXon.Lib
                         case StandardNames.XS_STRING:
                             return new StringToGYear(this);
                         case StandardNames.XS_DATE:
-                            return Converter.TwoPhaseConverter.MakeTwoPhaseConverter(BuiltInAtomicType.DATE, BuiltInAtomicType.DATE_TIME, BuiltInAtomicType.G_YEAR, this);
+                            return new TwoPhaseConverter(GetConverter(BuiltInAtomicType.DATE, BuiltInAtomicType.DATE_TIME), GetConverter(BuiltInAtomicType.DATE_TIME, BuiltInAtomicType.G_YEAR));
                         case StandardNames.XS_DATE_TIME:
                             return Converter.DateTimeToGYear.INSTANCE;
                         default:
@@ -377,7 +377,7 @@ namespace OutSmart.DAXon.Lib
                         case StandardNames.XS_STRING:
                             return StringConverter.StringToGMonthDay.INSTANCE;
                         case StandardNames.XS_DATE:
-                            return Converter.TwoPhaseConverter.MakeTwoPhaseConverter(BuiltInAtomicType.DATE, BuiltInAtomicType.DATE_TIME, BuiltInAtomicType.G_MONTH_DAY, this);
+                            return new TwoPhaseConverter(GetConverter(BuiltInAtomicType.DATE, BuiltInAtomicType.DATE_TIME), GetConverter(BuiltInAtomicType.DATE_TIME, BuiltInAtomicType.G_MONTH_DAY));
                         case StandardNames.XS_DATE_TIME:
                             return Converter.DateTimeToGMonthDay.INSTANCE;
                         default:
@@ -391,7 +391,7 @@ namespace OutSmart.DAXon.Lib
                         case StandardNames.XS_STRING:
                             return StringConverter.StringToGDay.INSTANCE;
                         case StandardNames.XS_DATE:
-                            return Converter.TwoPhaseConverter.MakeTwoPhaseConverter(BuiltInAtomicType.DATE, BuiltInAtomicType.DATE_TIME, BuiltInAtomicType.G_DAY, this);
+                            return new TwoPhaseConverter(GetConverter(BuiltInAtomicType.DATE, BuiltInAtomicType.DATE_TIME), GetConverter(BuiltInAtomicType.DATE_TIME, BuiltInAtomicType.G_DAY));
                         case StandardNames.XS_DATE_TIME:
                             return Converter.DateTimeToGDay.INSTANCE;
                         default:
@@ -405,7 +405,7 @@ namespace OutSmart.DAXon.Lib
                         case StandardNames.XS_STRING:
                             return StringConverter.StringToGMonth.INSTANCE;
                         case StandardNames.XS_DATE:
-                            return Converter.TwoPhaseConverter.MakeTwoPhaseConverter(BuiltInAtomicType.DATE, BuiltInAtomicType.DATE_TIME, BuiltInAtomicType.G_MONTH, this);
+                            return new TwoPhaseConverter(GetConverter(BuiltInAtomicType.DATE, BuiltInAtomicType.DATE_TIME), GetConverter(BuiltInAtomicType.DATE_TIME, BuiltInAtomicType.G_MONTH));
                         case StandardNames.XS_DATE_TIME:
                             return Converter.DateTimeToGMonth.INSTANCE;
                         default:

@@ -15,9 +15,18 @@ namespace OutSmart.DAXon.Internal.Regex
         private SysMatch _current;
         private int _searchStart;
 
-        internal Matcher(Pattern pattern, string input) { _pattern = pattern; _input = input; _searchStart = 0; }
+        internal Matcher(Pattern pattern, string input)
+        {
+            _pattern = pattern;
+            _input = input;
+            _searchStart = 0;
+        }
 
-        public bool Matches() { _current = _pattern.Regex.Match(_input); return _current.Success && _current.Length == _input.Length; }
+        public bool Matches()
+        {
+            _current = _pattern.Regex.Match(_input);
+            return _current.Success && _current.Length == _input.Length;
+        }
 
         public bool Find()
         {

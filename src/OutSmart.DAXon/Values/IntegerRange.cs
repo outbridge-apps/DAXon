@@ -193,7 +193,7 @@ namespace OutSmart.DAXon.Values
             return "(" + start + (step == 1 ? "" : (" by " + step)) + " to " + end + ")";
         }
 
-        AtomicValue IAtomicSequence.Head() => Head(); // redirect StubGen hollow to the real typed member; default = silent null
+        AtomicValue IAtomicSequence.Head() => Head();
         AtomicValue IAtomicSequence.ItemAt(int arg0) => ItemAt(arg0);
         ISequenceIterator IGroundedValue.Iterate() => Iterate();
         IItem IGroundedValue.ItemAt(int arg0) => ItemAt(arg0);

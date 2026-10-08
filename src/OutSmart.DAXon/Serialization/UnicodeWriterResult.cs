@@ -18,7 +18,11 @@ namespace OutSmart.DAXon.Serialization
         private readonly IUnicodeWriter _writer;
         private string _systemId;
         public IUnicodeWriter UnicodeWriter => _writer;
-        public UnicodeWriterResult(IUnicodeWriter unicodeWriter, string systemId) { _writer = unicodeWriter; _systemId = systemId; }
+        public UnicodeWriterResult(IUnicodeWriter unicodeWriter, string systemId)
+        {
+            _writer = unicodeWriter;
+            _systemId = systemId;
+        }
         public string GetSystemId() => _systemId;
         public void SetSystemId(string systemId) { _systemId = systemId; }
     }

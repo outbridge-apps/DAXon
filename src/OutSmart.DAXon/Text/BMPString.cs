@@ -113,7 +113,13 @@ namespace OutSmart.DAXon.Text
         public override void Copy16bit(char[] target, int offset) { _s.CopyTo(0, target, offset, _s.Length); }
         // NOTE: no Copy24bit override - the former empty-body override shadowed the base
         // implementation, so appending a BMPString to a 24-bit segment wrote nothing
-        public override void Copy32bit(int[] target, int offset) { for (int i = 0; i < _s.Length; i++) target[offset + i] = _s[i]; }
+        public override void Copy32bit(int[] target, int offset)
+        {
+            for (int i = 0; i < _s.Length; i++)
+            {
+                target[offset + i] = _s[i];
+            }
+        }
 
         // Byte-identical to the base codepoint hash but without the per-char CodePoints() iterator:
         // BMPString is surrogate-free, so each UTF-16 unit IS its codepoint (< 0x10000). Cached because

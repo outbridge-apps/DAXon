@@ -139,7 +139,11 @@ namespace OutSmart.DAXon.Trees.Linked
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
         // Formerly NIE stubs; every one is expressible via the existing Get/Add/Set helpers.
-        public string GetValue(NamespaceUri uri, string local) { AttributeInfo a = Get(uri, local); return a == null ? null : a.Value; }
+        public string GetValue(NamespaceUri uri, string local)
+        {
+            AttributeInfo a = Get(uri, local);
+            return a == null ? null : a.Value;
+        }
         public string GetValue(string local) => GetValue(NamespaceUri.NULL, local);
         public IAttributeMap Put(AttributeInfo att)
         {

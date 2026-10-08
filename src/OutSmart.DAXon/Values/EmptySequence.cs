@@ -11,8 +11,6 @@ using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Trees.Iterators;
 using System.Linq;
 
-// EmptyIterator stub removed -- real source at poc/output/full/EmptyIterator.cs
-
 namespace OutSmart.DAXon.Values
 {
 

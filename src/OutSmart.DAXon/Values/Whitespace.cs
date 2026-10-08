@@ -565,7 +565,7 @@ namespace OutSmart.DAXon.Values
                 look = at + 65536;
             }
             AtomicValue IAtomicIterator.Next() => Next();
-            IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
+            IItem ISequenceIterator.Next() => Next();
             public void Dispose() { }
         }
     }

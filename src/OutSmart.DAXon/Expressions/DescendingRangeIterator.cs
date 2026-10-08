@@ -118,7 +118,7 @@ namespace OutSmart.DAXon.Expressions
         }
         AtomicValue IAtomicIterator.Next() => Next();
         ISequenceIterator IReversibleIterator.GetReverseIterator() => GetReverseIterator();
-        IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
+        IItem ISequenceIterator.Next() => Next();
     }
 }
 

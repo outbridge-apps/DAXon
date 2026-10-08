@@ -80,6 +80,6 @@ namespace OutSmart.DAXon.Trees.Iterators
         {
             @base.Dispose();
         }
-        IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow: must delegate to the real covariant AtomicValue Next(), NOT default(null) = silent empty atomization
+        IItem ISequenceIterator.Next() => Next();
     }
 }

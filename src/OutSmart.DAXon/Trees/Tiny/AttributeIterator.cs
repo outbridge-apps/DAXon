@@ -11,13 +11,8 @@ using System;
 
 namespace OutSmart.DAXon.Trees.Tiny
 {
-    // Real TinyTree attribute-axis iterator (was a hollow Next()=>null stub -> the attribute axis @id/@* yielded
-    // ZERO attributes -> empty string(@id), and the bare @id pull path stack-overflowed). Constructed at
-    // TinyNodeImpl.IteratorATTRIBUTE (poc/output/full/TinyNodeImpl.cs:512) with (tree, elementNodeNr, nodeTest).
-    // Faithful to upstream net/sf/saxon/tree/tiny/AttributeIterator.java: walk tree.attParent while it equals the
-    // element, build TinyAttributeImpl, filter by the NodeTest. Depends only on already-public TinyTree members
-    // (alpha/numberOfAttributes/attParent are public) + the public TinyAttributeImpl(tree,nr) ctor, so it avoids
-    // the CS0122 cascade that re-including the real file would hit (TinyTree.GetAttributeNode is private).
+    // The attribute axis of a TinyTree element, as Saxon's: the attributes whose attParent is the element, filtered
+    // by the node test.
     internal sealed class AttributeIterator : IAxisIterator
     {
         private readonly TinyTree _tree;

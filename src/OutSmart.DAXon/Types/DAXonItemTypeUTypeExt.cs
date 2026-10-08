@@ -15,16 +15,8 @@ namespace OutSmart.DAXon.Types
 {
     internal static class DAXonItemTypeUTypeExt
     {
-        // runtime 2026-06-04: dispatch via IItemTypeWithSequenceTypeCache (was the hollow `=> UType.VOID`).
-        // Extension methods bind to the receiver's COMPILE-TIME type; the Fix-PhaseB-ItemType-GetUType-Dispatch
-        // keystone added GetUType to IItemTypeWithSequenceTypeCache/NodeTest so interface-typed receivers
-        // dispatch correctly, but bare-`ItemType`-typed receivers still bound here. At
-        // AxisExpression.CheckPlausibility (`UType originUType = contextType.GetUType()`, contextType typed bare
-        // ItemType) the VOID fallback made AxisInfo.GetTargetUType(VOID, CHILD)=VOID -> spurious SXWN9037
-        // "axis ... will never select anything" -> the real axis step was replaced by Literal.MakeEmptySequence()
-        // -> degenerate tree (FinDim: null child operand in a text value template; Trans: null GetItemType() in
-        // an xsl:if test -> NRE). Route bare-ItemType calls to the concrete type's real GetUType (no recursion --
-        // the interface member, not this extension, runs for IItemTypeWithSequenceTypeCache receivers).
+        // A receiver typed as bare ItemType binds here, not to the interface member: route it to its own GetUType.
+        // VOID for one would make every axis step from it "select nothing" (SXWN9037) and drop the step.
         public static UType GetUType(this ItemType t) => t is IItemTypeWithSequenceTypeCache __c ? __c.GetUType() : UType.VOID;
         // runtime 2026-06-04: Genre-typed shim replacing OutSmart.DAXon.Internal's hollow `GetGenre(this ItemType) => null`
         // (which made `(Genre)itemType.GetGenre()` unbox null -> NRE in AxisExpression.TypeCheck:134, hit by

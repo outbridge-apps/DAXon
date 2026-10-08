@@ -203,7 +203,12 @@ namespace OutSmart.DAXon.Internal.Numerics
             return TryAddLong(a, b, out ru);
         }
 
-        public BigDecimal(SysBigInt unscaled, int scale) { _compact = ComputeCompact(unscaled); _big = unscaled; _scale = scale; }
+        public BigDecimal(SysBigInt unscaled, int scale)
+        {
+            _compact = ComputeCompact(unscaled);
+            _big = unscaled;
+            _scale = scale;
+        }
         // Java BigDecimal(BigInteger): the value with scale 0. Added with the biginteger
         // idiomatization family - before it, `new BigDecimal(javaBigIntegerWrapper)` could
         // only bind BigDecimal(long) through the wrapper's implicit->long conversion, which

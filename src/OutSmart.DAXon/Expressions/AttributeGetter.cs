@@ -15,15 +15,8 @@ using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Expressions
 {
-    // Faithful runtime port of poc/output/full/AttributeGetter.cs (the real file is excluded because its
-    // GetElaborator()/AttributeGetterElaborator : ItemElaborator drags the ItemElaborator compile cluster).
-    // The prior stub overrode NEITHER EvaluateItem NOR Iterate and returned GetImplementationMethod()=>0, so it
-    // inherited the mutually-recursive base Expression.Iterate<->EvaluateItem -> StackOverflow whenever the
-    // optimizer atomized an attribute-axis @name/@id NameTest (Atomizer.cs:397-413) -- library cases 01 (xs:integer($o/@id))
-    // and 04 (value-of @name). Fix: store the FingerprintedQName, return EVALUATE_METHOD, and implement the real
-    // EvaluateItem fast-path (TinyElementImpl attribute value, else element attribute by name). Elaborator omitted
-    // (String_1 pattern); never-hit XPDY0002 error branches dropped. Copy returns base Expression (covariant
-    // AttributeGetter return would be CS8830 on net472).
+    // An attribute of the context element by name, read straight from the element (Saxon's AttributeGetter). It must
+    // evaluate itself: Expression's own Iterate and EvaluateItem call each other.
     internal sealed class AttributeGetter : Expression
     {
         private readonly FingerprintedQName attributeName;

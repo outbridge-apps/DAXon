@@ -49,6 +49,16 @@ namespace OutSmart.DAXon.Model
         }
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public IGroundedValue Materialize() { var __it = Iterate(); var __l = new List<IItem>(); for (IItem __x; (__x = __it.Next()) != null;) { __l.Add(__x); } return SequenceExtent.MakeSequenceExtent(__l); }
+        public IGroundedValue Materialize()
+        {
+            var __it = Iterate();
+            var __l = new List<IItem>();
+            for (IItem __x; (__x = __it.Next()) != null;)
+            {
+                __l.Add(__x);
+            }
+
+            return SequenceExtent.MakeSequenceExtent(__l);
+        }
     }
 }

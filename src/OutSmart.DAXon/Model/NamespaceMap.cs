@@ -735,7 +735,13 @@ namespace OutSmart.DAXon.Model
         {
             return this == obj || (obj is NamespaceMap && ArrayTools.Equals(prefixes, ((NamespaceMap)obj).prefixes) && ArrayTools.Equals(uris, ((NamespaceMap)obj).uris));
         }
-        public IEnumerator<NamespaceBinding> GetEnumerator() { for (int __i = 0; __i < prefixes.Length; __i++) { yield return new NamespaceBinding(prefixes[__i], uris[__i]); } }
+        public IEnumerator<NamespaceBinding> GetEnumerator()
+        {
+            for (int __i = 0; __i < prefixes.Length; __i++)
+            {
+                yield return new NamespaceBinding(prefixes[__i], uris[__i]);
+            }
+        }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
         private sealed class AnonymousIEnumerator : IEnumerator<NamespaceBinding>
@@ -787,7 +793,11 @@ namespace OutSmart.DAXon.Model
 
             }
 
-            public void Reset() { i = 0; _current = null; }
+            public void Reset()
+            {
+                i = 0;
+                _current = null;
+            }
 
         }
     }

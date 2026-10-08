@@ -19,7 +19,12 @@ namespace OutSmart.DAXon.Trees.Iterators
         private readonly NodeInfo startNode;
         private NodeInfo current;
         private readonly NodeTest test;
-        public AncestorIterator(NodeInfo node, NodeTest nodeTest) { test = nodeTest; startNode = node; current = startNode; }
+        public AncestorIterator(NodeInfo node, NodeTest nodeTest)
+        {
+            test = nodeTest;
+            startNode = node;
+            current = startNode;
+        }
         public NodeInfo Next()
         {
             if (current == null)

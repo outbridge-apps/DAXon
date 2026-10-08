@@ -334,7 +334,13 @@ namespace OutSmart.DAXon.Text
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public void Open() { }
         public void WriteCodePoint(int codepoint) { Append(codepoint); }
-        public void WriteRepeatedAscii(byte asciiChar, int count) { for (int __i = 0; __i < count; __i++) { Append((int)asciiChar); } }
+        public void WriteRepeatedAscii(byte asciiChar, int count)
+        {
+            for (int __i = 0; __i < count; __i++)
+            {
+                Append((int)asciiChar);
+            }
+        }
         public void Flush() { }
     }
 }

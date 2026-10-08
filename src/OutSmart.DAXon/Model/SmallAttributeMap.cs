@@ -77,11 +77,53 @@ namespace OutSmart.DAXon.Model
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => attributes.GetEnumerator();
 
         // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
-        public string GetValue(NamespaceUri uri, string local) { AttributeInfo att = Get(uri, local); return att == null ? null : att.Value; }
-        public string GetValue(string local) { AttributeInfo att = Get(NamespaceUri.NULL, local); return att == null ? null : att.Value; }
-        public IAttributeMap Put(AttributeInfo att) { List<AttributeInfo> list = new List<AttributeInfo>(Size() + 1); foreach (AttributeInfo a in attributes) { if (!a.GetNodeName().Equals(att.GetNodeName())) { list.Add(a); } } list.Add(att); return SequenceTool.AttributeMapFromList(list); }
-        public IAttributeMap Remove(INodeName name) { List<AttributeInfo> list = new List<AttributeInfo>(Size()); foreach (AttributeInfo a in attributes) { if (!a.GetNodeName().Equals(name)) { list.Add(a); } } return SequenceTool.AttributeMapFromList(list); }
+        public string GetValue(NamespaceUri uri, string local)
+        {
+            AttributeInfo att = Get(uri, local);
+            return att == null ? null : att.Value;
+        }
+        public string GetValue(string local)
+        {
+            AttributeInfo att = Get(NamespaceUri.NULL, local);
+            return att == null ? null : att.Value;
+        }
+        public IAttributeMap Put(AttributeInfo att)
+        {
+            List<AttributeInfo> list = new List<AttributeInfo>(Size() + 1);
+            foreach (AttributeInfo a in attributes)
+            {
+                if (!a.GetNodeName().Equals(att.GetNodeName()))
+                {
+                    list.Add(a);
+                }
+            }
+
+            list.Add(att);
+            return SequenceTool.AttributeMapFromList(list);
+        }
+        public IAttributeMap Remove(INodeName name)
+        {
+            List<AttributeInfo> list = new List<AttributeInfo>(Size());
+            foreach (AttributeInfo a in attributes)
+            {
+                if (!a.GetNodeName().Equals(name))
+                {
+                    list.Add(a);
+                }
+            }
+
+            return SequenceTool.AttributeMapFromList(list);
+        }
         public void Verify() { }
-        public IAttributeMap Apply(Func<AttributeInfo, AttributeInfo> mapper) { List<AttributeInfo> list = new List<AttributeInfo>(Size()); foreach (AttributeInfo a in attributes) { list.Add(mapper(a)); } return SequenceTool.AttributeMapFromList(list); }
+        public IAttributeMap Apply(Func<AttributeInfo, AttributeInfo> mapper)
+        {
+            List<AttributeInfo> list = new List<AttributeInfo>(Size());
+            foreach (AttributeInfo a in attributes)
+            {
+                list.Add(mapper(a));
+            }
+
+            return SequenceTool.AttributeMapFromList(list);
+        }
     }
 }

@@ -492,7 +492,11 @@ namespace OutSmart.DAXon.Types
             {
                 internal readonly UnicodeString key;
                 internal readonly BigDecimalValue value;
-                internal DecEntry(UnicodeString key, BigDecimalValue value) { this.key = key; this.value = value; }
+                internal DecEntry(UnicodeString key, BigDecimalValue value)
+                {
+                    this.key = key;
+                    this.value = value;
+                }
             }
 
             private readonly DecEntry[] cache = new DecEntry[1024];

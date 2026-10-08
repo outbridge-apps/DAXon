@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Patterns
         public TypeIsInstancePredicate(System.Type t) { _t = t; }
         public bool Test(NodeInfo node) => _t?.IsInstanceOfType(node) ?? false;
         public static implicit operator Predicate<NodeInfo>(TypeIsInstancePredicate p) => p.Test;
-        // batch5: real NodeSelector.Of takes the compat Java predicate delegate
+        // NodeSelector.Of takes a Func.
         public static implicit operator Func<NodeInfo, bool>(TypeIsInstancePredicate p) => p.Test;
     }
 }

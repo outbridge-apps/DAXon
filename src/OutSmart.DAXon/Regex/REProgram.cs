@@ -25,7 +25,8 @@
  * this file has been extensively modified for integration into Saxon by
  * Michael Kay, Saxonica.
  */
-using OutSmart.DAXon.Text;
+using OutSmart.DAXon.Text;
+
 using OutSmart.DAXon.Collections;
 using System.Collections.Generic;
 namespace OutSmart.DAXon.Regex

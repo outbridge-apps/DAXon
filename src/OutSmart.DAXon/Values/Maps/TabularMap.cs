@@ -177,7 +177,7 @@ namespace OutSmart.DAXon.Values.Maps
                 return position < keys.Length ? new StringValue(keys[position++]) : null;
             }
 
-            IItem ISequenceIterator.Next() => Next(); // redirect StubGen hollow to the real covariant Next(); default = silent empty iteration
+            IItem ISequenceIterator.Next() => Next();
             public void Dispose() { }
         }
     }

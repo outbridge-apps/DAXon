@@ -33,7 +33,8 @@ namespace OutSmart.DAXon.Regex.CharClass
             return comp == null ? null : new IntComplementSet(complement.GetIntSet());
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
+        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
+
         public IIntPredicateProxy Union(IIntPredicateProxy other) => OutSmart.DAXon.Collections.IntUnionPredicate.MakeUnion(this, other); // upstream IntPredicateProxy default
     }
 }

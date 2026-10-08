@@ -104,7 +104,10 @@ namespace OutSmart.DAXon.Text
             {
                 for (long i = Math.Max(from, 0); i < _cps.Length; i++)
                 {
-                    if (_cps[i] == codePoint) return i;
+                    if (_cps[i] == codePoint)
+                    {
+                        return i;
+                    }
                 }
                 return -1;
             }
@@ -120,14 +123,20 @@ namespace OutSmart.DAXon.Text
                 for (long i = Math.Max(from, 0); i < _cps.Length; i++)
                 {
                     OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
-                    if (predicate(_cps[i])) return i;
+                    if (predicate(_cps[i]))
+                    {
+                        return i;
+                    }
                 }
                 return -1;
             }
             for (int i = (int)from; i < _s.Length; i++)
             {
                 OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
-                if (predicate(_s[i])) return i;
+                if (predicate(_s[i]))
+                {
+                    return i;
+                }
             }
             return -1;
         }

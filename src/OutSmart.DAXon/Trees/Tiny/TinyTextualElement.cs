@@ -397,13 +397,8 @@ namespace OutSmart.DAXon.Trees.Tiny
                 @out.Characters(UnicodeStringValue, locationId, ReceiverOption.NONE);
             }
 
-            // [Fix-PhaseB-TinyTextualElement-Reinclude inner-class members]
-            // NodeInfo / IItem / IGroundedValue / ISequence / ILocation interface obligations. The C# port
-            // flattened the upstream Java `default` methods into plain abstract members, so this direct
-            // interface implementor must supply them. Bodies mirror the upstream default-method bodies /
-            // the equivalent TinyNodeImpl overrides, specialized for a text node (delegating to the parent
-            // element where the upstream default does). Lib/Expr.Parser types fully qualified (the file's
-            // usings do not import them).
+            // The interface members Java gives as default methods, which a direct implementor supplies in C#: as
+            // TinyNodeImpl has them, for a text node, delegating to the parent element where Saxon's defaults do.
             public Configuration GetConfiguration()
             {
                 return GetTreeInfo().GetConfiguration();
