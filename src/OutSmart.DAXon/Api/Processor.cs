@@ -31,7 +31,8 @@ namespace OutSmart.DAXon.Api
         /// The memory limit of an engine call, and its largest input, when <see cref="ProcessorOptions.MaxMemoryBytes"/>
         /// is not set: 500 MB.
         /// </summary>
-        public const long DefaultMaxMemoryBytes = 500L * 1024 * 1024;
+        // Not const: a host compiled against this version reads the default of the engine it runs on.
+        public static readonly long DefaultMaxMemoryBytes = 500L * 1024 * 1024;
 
         // 1.3.3's input cap and the default of its maxInputBytes parameters: from those constructors it means "not given".
         private const long LegacyInputCap = 150L * 1024 * 1024;
