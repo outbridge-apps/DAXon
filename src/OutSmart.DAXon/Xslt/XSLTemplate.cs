@@ -251,7 +251,7 @@ namespace OutSmart.DAXon.Xslt
                     }
                 }
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 return false;
             }
@@ -497,7 +497,7 @@ namespace OutSmart.DAXon.Xslt
                     // .NET Framework: a decimal beyond any double is the infinity later runtimes and Java round it to
                     priority = priorityAtt.TrimStart().StartsWith("-", StringComparison.Ordinal) ? double.NegativeInfinity : double.PositiveInfinity;
                 }
-                catch (FormatException err)
+                catch (FormatException)
                 {
 
                     // shouldn't happen

@@ -17,7 +17,6 @@ namespace OutSmart.DAXon.Expressions
 {
     internal sealed class RootExpression : Expression
     {
-        private bool contextMaybeUndefined = true;
         private bool doneWarnings = false;
 
         public override int ImplementationMethod => EVALUATE_METHOD;
@@ -44,7 +43,6 @@ namespace OutSmart.DAXon.Expressions
                 doneWarnings = true;
             }
 
-            contextMaybeUndefined = contextInfo.IsPossiblyAbsent();
             if (th.IsSubType(contextInfo.GetItemType(), NodeKindTest.DOCUMENT))
             {
 

@@ -157,7 +157,6 @@ namespace OutSmart.DAXon.Regex
         private sealed class AnonymousIntIterator : AbstractIntIterator
         {
 
-            private readonly OpChoice parent;
             private readonly REMatcher matcher;
             private readonly int position;
             readonly IEnumerator<Operation> branchIter;
@@ -165,7 +164,9 @@ namespace OutSmart.DAXon.Regex
             Operation currentOp = null;
             public AnonymousIntIterator(OpChoice parent, REMatcher matcher, int position)
             {
-                this.parent = parent; this.matcher = matcher; this.position = position; this.branchIter = parent.branches.GetEnumerator();
+                this.matcher = matcher;
+                this.position = position;
+                this.branchIter = parent.branches.GetEnumerator();
             }
             public override bool HasNext()
             {

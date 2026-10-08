@@ -81,7 +81,7 @@ namespace OutSmart.DAXon.Lib
                     return config.GetResourceResolver().Resolve(rr);
                 }
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
             }
 

@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Functions
                 UnparsedText.EvalUnparsedText(hrefVal, StaticBaseUriString, encoding, context);
                 return true;
             }
-            catch (XPathException err)
+            catch (XPathException)
             {
                 return false;
             }

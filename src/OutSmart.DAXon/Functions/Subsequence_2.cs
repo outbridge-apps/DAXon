@@ -102,7 +102,7 @@ namespace OutSmart.DAXon.Functions
                     return new TailExpression(arguments[0], (int)intStart);
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 

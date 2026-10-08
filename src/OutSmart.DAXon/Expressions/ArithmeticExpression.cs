@@ -101,7 +101,7 @@ namespace OutSmart.DAXon.Expressions
                                         bounds0[1].Idiv(val1)
                                         };
                                     }
-                                    catch (XPathException e)
+                                    catch (XPathException)
                                     {
                                         return null;
                                     }
@@ -273,7 +273,7 @@ namespace OutSmart.DAXon.Expressions
                     return Literal.MakeLiteral(EvaluateItem(visitor.StaticContext.MakeEarlyEvaluationContext()).Materialize(), this);
                 }
             }
-            catch (XPathException err)
+            catch (XPathException)
             {
             }
 

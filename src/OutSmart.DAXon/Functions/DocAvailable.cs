@@ -62,7 +62,7 @@ namespace OutSmart.DAXon.Functions
                     return false;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // fn:doc-available never propagates a failure to make the document available — it yields
                 // false (XP31 defines even an invalid URI such as ':/' as false). Java wraps resolution

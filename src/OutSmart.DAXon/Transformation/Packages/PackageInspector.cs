@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Transformation.Packages
                 {
                     return new VersionedPackageName(packageName, packageVersion);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     return null;
                 }

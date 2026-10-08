@@ -101,7 +101,7 @@ namespace OutSmart.DAXon.Api
                 {
                     return new URI(env.StaticBaseURI);
                 }
-                catch (URISyntaxException err)
+                catch (URISyntaxException)
                 {
                     throw new InvalidOperationException("Invalid base URI for XPath: " + env.StaticBaseURI);
                 }
@@ -268,7 +268,7 @@ namespace OutSmart.DAXon.Api
             {
                 c = GetProcessor().UnderlyingConfiguration.GetCollation(uri);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 c = null;
             }

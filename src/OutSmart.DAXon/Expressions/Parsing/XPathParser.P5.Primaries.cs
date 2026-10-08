@@ -151,7 +151,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 SetLocation(lit, offset);
                 return traceable ? MakeTracer(lit, null) : lit;
             }
-            catch (FormatException e)
+            catch (FormatException)
             {
                 Grumble("Invalid hex literal");
                 return null;
@@ -187,7 +187,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 SetLocation(lit, offset);
                 return traceable ? MakeTracer(lit, null) : lit;
             }
-            catch (FormatException e)
+            catch (FormatException)
             {
                 Grumble("Invalid binary literal");
                 return null;

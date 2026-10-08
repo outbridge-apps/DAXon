@@ -164,7 +164,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
             catch (SchemaException e)
             {
-                throw new XPathException(e?.Message);
+                throw new XPathException(e.Message);
             }
 
             if (type == null)

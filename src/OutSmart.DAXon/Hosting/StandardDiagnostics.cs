@@ -279,7 +279,7 @@ namespace OutSmart.DAXon.Lib
                     return "";
                 }
             }
-            catch (Exception err)
+            catch (Exception)
             {
                 return "";
             }
@@ -332,7 +332,7 @@ namespace OutSmart.DAXon.Lib
                     {
                         context.GetStackFrame().GetStackFrameMap().ShowStackFrame(context, @out);
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                     }
 

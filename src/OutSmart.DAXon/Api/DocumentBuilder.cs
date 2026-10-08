@@ -368,7 +368,7 @@ namespace OutSmart.DAXon.Api
                 {
                     throw new ArgumentException(e.Message);
                 }
-                catch (InvalidCastException e)
+                catch (InvalidCastException)
                 {
                     throw new ArgumentException("Class " + node.GetType() + " is not a recognized external node type");
                 }

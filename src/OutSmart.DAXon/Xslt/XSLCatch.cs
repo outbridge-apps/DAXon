@@ -168,7 +168,7 @@ namespace OutSmart.DAXon.Xslt
 
                         localName = parts[1];
                     }
-                    catch (QNameException err)
+                    catch (QNameException)
                     {
                         CompileErrorInAttribute("Error code " + s + " is not a valid QName", "XTSE0280", "errors");
                         result.Add(AnyNodeTest.GetInstance());

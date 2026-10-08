@@ -154,7 +154,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             {
                                 config.CheckTypeDerivationIsOK(xsiType, declaredType, 0);
                             }
-                            catch (SchemaException e)
+                            catch (SchemaException)
                             {
                                 ValidationFailure ve = new ValidationFailure("The specified xsi:type " + xsiType.Description + " is not validly derived from the required type " + declaredType.Description);
                                 ve.SetConstraintReference(1, "cvc-elt", "4.3");
@@ -325,7 +325,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
             catch (MissingComponentException e)
             {
-                throw new XPathException(e?.Message);
+                throw new XPathException(e.Message);
             }
 
             if (type == null)

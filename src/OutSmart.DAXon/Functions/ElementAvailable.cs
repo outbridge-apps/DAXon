@@ -124,7 +124,7 @@ namespace OutSmart.DAXon.Functions
                     }
                 }
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
             }
 

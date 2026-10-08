@@ -161,8 +161,6 @@ namespace OutSmart.DAXon.Trees.Utilities
                     {
                         return typeAnnotation.Atomize(this);
                     }
-
-                    break;
             }
         }
 

@@ -112,7 +112,7 @@ namespace OutSmart.DAXon.Expressions
                     return Literal.MakeLiteral(v, this);
                 }
             }
-            catch (XPathException err)
+            catch (XPathException)
             {
             }
 

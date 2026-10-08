@@ -637,7 +637,6 @@ namespace OutSmart.DAXon.Transformation
         {
             CheckReadiness();
             ComplexContentOutputter dest = PrepareOutputReceiver(@out);
-            bool close = false;
             try
             {
                 int validationMode = SchemaValidationMode;
@@ -693,7 +692,7 @@ namespace OutSmart.DAXon.Transformation
                         Sender.Send(underSource, despatcher, null);
                     }
                 }
-                catch (QuitParsingException e)
+                catch (QuitParsingException)
                 {
                     if (verbose)
                     {

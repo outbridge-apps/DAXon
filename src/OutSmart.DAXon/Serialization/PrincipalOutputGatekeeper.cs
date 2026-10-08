@@ -130,7 +130,7 @@ namespace OutSmart.DAXon.Serialization
                     return dest.GetReceiver(controller.MakePipelineConfiguration(), @params);
                 }
             }
-            catch (DAXonApiException e)
+            catch (DAXonApiException)
             {
                 return null;
             }

@@ -38,7 +38,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 {
                     dir = Environment.GetEnvironmentVariable("user.dir");
                 }
-                catch (Exception geterr)
+                catch (Exception)
                 {
 
                     // this doesn't work when running an applet
@@ -524,7 +524,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     {
                         err = exp.GetConfiguration().Logger;
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         err = new StandardLogger();
                     }
@@ -539,7 +539,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     {
                         decl.Explain(err);
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                     }
 
@@ -1291,7 +1291,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                             copy = replacement.Copy(new RebindingMap());
                             ExpressionTool.CopyLocationInfo(child, copy);
                         }
-                        catch (NotSupportedException err)
+                        catch (NotSupportedException)
                         {
 
                             // If we can't make a copy, return the original. This is safer than it seems,
@@ -1400,7 +1400,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     expressionBaseURI = new URI(@base);
                 }
             }
-            catch (URISyntaxException e)
+            catch (URISyntaxException)
             {
 
                 // perhaps escaping special characters will fix the problem
@@ -1409,7 +1409,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 {
                     expressionBaseURI = new URI(esc);
                 }
-                catch (URISyntaxException e2)
+                catch (URISyntaxException)
                 {
 
                     // don't fail unless the base URI is actually needed (it usually isn't)

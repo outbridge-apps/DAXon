@@ -258,7 +258,7 @@ namespace OutSmart.DAXon.Values
                 {
                     return CompareTo((DateValue)v2, MISSING_TIMEZONE);
                 }
-                catch (Exception err)
+                catch (Exception)
                 {
                     throw new InvalidCastException("Date comparison requires access to implicit timezone");
                 }

@@ -32,7 +32,6 @@ namespace OutSmart.DAXon.Json
         private readonly Builder builder;
         private Stack<string> keys;
         private readonly Stack<bool> inMap = new Stack<bool>();
-        private bool allowAnyTopLevel;
         public bool validate;
         private bool checkForDuplicates;
         private NamePool namePool;
@@ -82,7 +81,6 @@ namespace OutSmart.DAXon.Json
             Context = context;
             charChecker = context.GetConfiguration().ValidCharacterChecker;
             escape = (flags & JsonParser.ESCAPE) != 0;
-            allowAnyTopLevel = (flags & JsonParser.ALLOW_ANY_TOP_LEVEL) != 0;
             validate = (flags & JsonParser.VALIDATE) != 0;
             checkForDuplicates = validate || (flags & JsonParser.DUPLICATES_RETAINED) == 0;
             types = new Dictionary<string, ISchemaType>();
@@ -135,7 +133,7 @@ namespace OutSmart.DAXon.Json
                 }
                 catch (SchemaException e)
                 {
-                    throw new XPathException(e?.Message);
+                    throw new XPathException(e.Message);
                 }
             }
         }

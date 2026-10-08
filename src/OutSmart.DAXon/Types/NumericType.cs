@@ -137,7 +137,7 @@ namespace OutSmart.DAXon.Types
                 double d = StringToDouble.GetInstance().StringToNumber(value);
                 return new DoubleValue(d);
             }
-            catch (FormatException e)
+            catch (FormatException)
             {
                 string message = "Cannot convert string \"" + value + "\" to xs:numeric";
                 throw new ValidationFailure(message).MakeException();

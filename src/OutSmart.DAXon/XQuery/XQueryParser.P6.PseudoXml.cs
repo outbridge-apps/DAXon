@@ -411,7 +411,7 @@ namespace OutSmart.DAXon.XQuery
 
                     qName = new StructuredQName(parts[0], @namespace, parts[1]);
                 }
-                catch (QNameException e)
+                catch (QNameException)
                 {
                     Grumble("Invalid element name " + Err.Wrap(elname, Err.ELEMENT), "XPST0003", offset);
                     qName = StandardNames.GetStructuredQName(StandardNames.XSL_ELEMENT); // any name will do
@@ -470,7 +470,7 @@ namespace OutSmart.DAXon.XQuery
 
                         attFingerprints.Add(key);
                     }
-                    catch (QNameException e)
+                    catch (QNameException)
                     {
                         Grumble("Invalid attribute name " + Err.Wrap(attName, Err.ATTRIBUTE), "XPST0003", attOffset);
                     }

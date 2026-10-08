@@ -101,7 +101,7 @@ namespace OutSmart.DAXon.Patterns
                 {
                     return ((Pattern)PatternMaker.FromExpression(equivalentExpr, config, true)).TypeCheck(visitor, defaultInfo);
                 }
-                catch (XPathException err)
+                catch (XPathException)
                 {
                 }
             }
@@ -246,7 +246,7 @@ namespace OutSmart.DAXon.Patterns
                     }
                 }
             }
-            catch (XPathException.Circularity e)
+            catch (XPathException.Circularity)
             {
                 throw;
             }

@@ -74,7 +74,7 @@ namespace OutSmart.DAXon.Expressions
             {
                 return c.GetStackFrame().slots[slotNumber];
             }
-            catch (IndexOutOfRangeException err)
+            catch (IndexOutOfRangeException)
             {
                 if (slotNumber == -999)
                 {
@@ -85,7 +85,7 @@ namespace OutSmart.DAXon.Expressions
                             slotNumber = GetBinding().LocalSlotNumber;
                             return c.GetStackFrame().slots[slotNumber];
                         }
-                        catch (IndexOutOfRangeException err2)
+                        catch (IndexOutOfRangeException)
                         {
                         }
                     }

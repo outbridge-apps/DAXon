@@ -707,7 +707,7 @@ namespace OutSmart.DAXon.Trees.Linked
                 ISchemaType type = GetSchemaType();
                 return type.Fingerprint == StandardNames.XS_ID || type.IsIdType() && NameChecker.IsValidNCName(UnicodeStringValue.CodePoints());
             }
-            catch (MissingComponentException e)
+            catch (MissingComponentException)
             {
                 return false;
             }
@@ -740,12 +740,12 @@ namespace OutSmart.DAXon.Trees.Linked
                             }
                         }
                     }
-                    catch (XPathException err)
+                    catch (XPathException)
                     {
                     }
                 }
             }
-            catch (MissingComponentException e)
+            catch (MissingComponentException)
             {
                 return false;
             }

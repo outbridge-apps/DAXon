@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Functions
                 {
                     AllocateCollator();
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                 }
             }

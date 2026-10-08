@@ -523,8 +523,6 @@ namespace OutSmart.DAXon.Expressions
                                         MustBeArrayOrMap(expr, baseItem);
                                         return null;
                                     }
-
-                                    break;
                             }
                         });
                         return new MappingIterator(baseIterator, mappingFunction);

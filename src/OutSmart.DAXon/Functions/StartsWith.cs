@@ -66,10 +66,8 @@ namespace OutSmart.DAXon.Functions
         private sealed class AnonymousOptimized : SystemFunctionCall.Optimized
         {
 
-            private readonly StartsWith parent;
             public AnonymousOptimized(StartsWith parent, Expression[] arguments) : base(parent, arguments)
             {
-                this.parent = parent;
             }
             public override bool EffectiveBooleanValue(IXPathContext context)
             {

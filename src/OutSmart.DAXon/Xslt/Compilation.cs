@@ -47,7 +47,6 @@ namespace OutSmart.DAXon.Xslt
         private bool preScan = true;
         private bool createsSecondaryResultDocuments = false;
         private bool libraryPackage = false;
-        private VersionedPackageName expectedNameAndVersion = null;
         private readonly IList<UsePack> packageDependencies = new List<UsePack>();
         private IList<VersionedPackageName> usingPackages = new List<VersionedPackageName>();
         private GlobalParameterSet suppliedParameters;
@@ -162,7 +161,6 @@ namespace OutSmart.DAXon.Xslt
 
         public virtual void SetExpectedNameAndVersion(VersionedPackageName vpn)
         {
-            this.expectedNameAndVersion = vpn;
         }
 
         public virtual void RegisterPackageDependency(UsePack use)

@@ -99,7 +99,7 @@ namespace OutSmart.DAXon.Api
                     {
                         return ((NumericValue)av).LongValue();
                     }
-                    catch (XPathException e)
+                    catch (XPathException)
                     {
                         throw new DAXonApiException("Cannot cast item to an integer");
                     }
@@ -334,7 +334,7 @@ namespace OutSmart.DAXon.Api
                 {
                     return ((NumericValue)av).GetDecimalValue();
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     throw new DAXonApiException("Cannot cast item to a decimal");
                 }

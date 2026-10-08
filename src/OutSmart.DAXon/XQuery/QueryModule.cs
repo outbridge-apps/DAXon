@@ -52,7 +52,6 @@ namespace OutSmart.DAXon.XQuery
         private int constructionMode = Validation.PRESERVE;
         private NamespaceUri defaultFunctionNamespace;
         private NamespaceUri defaultElementNamespace;
-        private bool fixedDefaultElementNamespace;
         private bool preserveSpace = false;
         private bool defaultEmptyLeast = true;
         private string defaultCollationName;
@@ -193,7 +192,7 @@ namespace OutSmart.DAXon.XQuery
             {
                 locationURI = baseURI == null ? null : new URI(baseURI);
             }
-            catch (URISyntaxException err)
+            catch (URISyntaxException)
             {
                 throw new XPathException("Invalid location URI: " + baseURI);
             }
@@ -845,7 +844,7 @@ namespace OutSmart.DAXon.XQuery
                     URI abs = ResolveURI.MakeAbsolute(relative, baseURI);
                     entries.Add(abs.ToString());
                 }
-                catch (URISyntaxException e)
+                catch (URISyntaxException)
                 {
                 }
             }
@@ -1020,7 +1019,6 @@ namespace OutSmart.DAXon.XQuery
         public virtual void SetDefaultElementNamespace(NamespaceUri uri, bool isFixedDefault)
         {
             defaultElementNamespace = uri;
-            fixedDefaultElementNamespace = isFixedDefault;
         }
 
         public virtual NamespaceUri GetDefaultFunctionNamespace()

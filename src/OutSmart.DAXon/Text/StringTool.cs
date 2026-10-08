@@ -369,12 +369,10 @@ namespace OutSmart.DAXon.Text
         private sealed class AnonymousIntIterator : AbstractIntIterator
         {
 
-            private readonly StringTool parent;
             private readonly string value;
             int i = 0;
             public AnonymousIntIterator(StringTool parent, string value)
             {
-                this.parent = parent;
                 this.value = value;
             }
             public override bool HasNext()
@@ -397,7 +395,7 @@ namespace OutSmart.DAXon.Text
 
                         return UTF16CharacterSet.CombinePair((char)c, (char)d);
                     }
-                    catch (IndexOutOfRangeException e)
+                    catch (IndexOutOfRangeException)
                     {
                         throw new InvalidOperationException("Invalid surrogate at end of string");
                     }

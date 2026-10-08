@@ -212,7 +212,7 @@ namespace OutSmart.DAXon.Xslt
                         collationName = collationURI.ToString();
                     }
                 }
-                catch (URISyntaxException err)
+                catch (URISyntaxException)
                 {
                     CompileError("Collation name '" + collationName + "' is not a valid URI"); //collationName = NamespaceConstant.CODEPOINT_COLLATION_URI;
                 }

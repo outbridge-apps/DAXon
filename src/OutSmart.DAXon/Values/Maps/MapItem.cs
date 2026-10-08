@@ -196,7 +196,7 @@ namespace OutSmart.DAXon.Values.Maps
 
                 return true;
             }
-            catch (UncheckedXPathException e)
+            catch (UncheckedXPathException)
             {
                 return false;
             }
@@ -237,7 +237,7 @@ namespace OutSmart.DAXon.Values.Maps
                     }
                 }
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 return AnyItemType.GetInstance();
             }

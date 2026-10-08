@@ -231,7 +231,7 @@ namespace OutSmart.DAXon.Expressions
                             throw new InvalidOperationException(message);
                         }
                     }
-                    catch (Exception err)
+                    catch (Exception)
                     {
                         throw new InvalidOperationException(message);
                     }
@@ -785,7 +785,7 @@ namespace OutSmart.DAXon.Expressions
             {
                 return GetRetainedStaticContext().GetConfiguration();
             }
-            catch (NullReferenceException e)
+            catch (NullReferenceException)
             {
                 throw new NullReferenceException("Internal error: expression " + ToShortString() + " has no retained static context");
             }
@@ -798,7 +798,7 @@ namespace OutSmart.DAXon.Expressions
             {
                 return GetRetainedStaticContext().GetPackageData();
             }
-            catch (NullReferenceException e)
+            catch (NullReferenceException)
             {
                 throw new NullReferenceException("Internal error: expression " + ToShortString() + " has no retained static context");
             }

@@ -74,7 +74,7 @@ namespace OutSmart.DAXon.Events
                 TransitionFn(Transition.APPEND);
                 nextReceiver.Append(item, locationId, copyNamespaces);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 state = State.FAILED;
                 throw;
@@ -93,7 +93,7 @@ namespace OutSmart.DAXon.Events
             {
                 nextReceiver.Characters(chars, locationId, properties);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 state = State.FAILED;
                 throw;
@@ -129,7 +129,7 @@ namespace OutSmart.DAXon.Events
             {
                 nextReceiver.Comment(chars, locationId, properties);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 state = State.FAILED;
                 throw;
@@ -152,7 +152,7 @@ namespace OutSmart.DAXon.Events
             {
                 nextReceiver.EndDocument();
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 state = State.FAILED;
                 throw;
@@ -180,7 +180,7 @@ namespace OutSmart.DAXon.Events
             {
                 nextReceiver.EndElement();
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 state = State.FAILED;
                 throw;
@@ -198,7 +198,7 @@ namespace OutSmart.DAXon.Events
             {
                 nextReceiver.Open();
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 state = State.FAILED;
                 throw;
@@ -213,7 +213,7 @@ namespace OutSmart.DAXon.Events
             {
                 nextReceiver.ProcessingInstruction(target, data, locationId, properties);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 state = State.FAILED;
                 throw;
@@ -229,7 +229,7 @@ namespace OutSmart.DAXon.Events
             {
                 nextReceiver.StartDocument(properties);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 state = State.FAILED;
                 throw;
@@ -289,7 +289,7 @@ namespace OutSmart.DAXon.Events
             {
                 nextReceiver.StartElement(elemName, type, attributes, namespaces, location, properties);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 state = State.FAILED;
                 throw;

@@ -465,7 +465,7 @@ namespace OutSmart.DAXon.Expressions
                 context.TemporaryOutputState = savedOutputState;
                 return result;
             }
-            catch (InvalidCastException e)
+            catch (InvalidCastException)
             {
                 int savedOutputState = context.TemporaryOutputState;
                 context.TemporaryOutputState = StandardNames.XSL_VARIABLE;
@@ -719,8 +719,6 @@ namespace OutSmart.DAXon.Expressions
                                 return null;
                             };
                         }
-
-                        break;
                 }
             }
 

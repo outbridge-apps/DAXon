@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Values
                     // Double.parseDouble overflows to +/-INF, which is the correct xs:double literal value.
                     return new DoubleValue(@in[0] == '-' ? double.NegativeInfinity : double.PositiveInfinity);
                 }
-                catch (FormatException e)
+                catch (FormatException)
                 {
                     return DoubleValue.NaN;
                 }

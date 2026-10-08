@@ -71,7 +71,7 @@ namespace OutSmart.DAXon.Values
                 // Note, this gives a different result from BigDecimal.valueOf(@in) - it retains more precision.
                 value = d.StripTrailingZeros();
             }
-            catch (Exception err)
+            catch (Exception)
             {
 
                 // Must be a special value such as NaN or infinity
@@ -433,7 +433,7 @@ namespace OutSmart.DAXon.Values
             {
                 longVal = round.LongValue();
             }
-            catch (Exception e)
+            catch (Exception)
             {
 
                 // This path is for C#, where converting BigDecimal to long gives an OverflowException if out of range
@@ -777,7 +777,7 @@ namespace OutSmart.DAXon.Values
                 {
                     return (int)LongValue();
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     return -1;
                 }
@@ -820,7 +820,7 @@ namespace OutSmart.DAXon.Values
                     {
                         return value.CompareTo(((NumericValue)other).GetDecimalValue());
                     }
-                    catch (XPathException err)
+                    catch (XPathException)
                     {
                         throw new InvalidOperationException("Conversion of integer to decimal should never fail");
                     }

@@ -423,7 +423,7 @@ namespace OutSmart.DAXon.Json
                                 buffer.Append((char)code);
                                 i += 4;
                             }
-                            catch (Exception e)
+                            catch (Exception)
                             {
                                 if (liberal)
                                 {
@@ -690,7 +690,7 @@ namespace OutSmart.DAXon.Json
                                     string hex = input.Substring(position, 4);
                                     Convert.ToInt32(hex, 16);
                                 }
-                                catch (Exception e)
+                                catch (Exception)
                                 {
                                     InvalidJSON("\\u must be followed by four hex characters", ERR_GRAMMAR, lineNumber);
                                 }
@@ -791,8 +791,6 @@ namespace OutSmart.DAXon.Json
                                 return JsonToken.EOF;
                             }
                         }
-
-                        break;
                 }
             }
         }

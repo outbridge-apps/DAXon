@@ -80,7 +80,7 @@ namespace OutSmart.DAXon.Xslt
             {
                 InputTypeAnnotations = sourceElement.InputTypeAnnotationsAttribute;
             }
-            catch (XPathException err)
+            catch (XPathException)
             {
             }
         }
@@ -1309,7 +1309,7 @@ namespace OutSmart.DAXon.Xslt
                     timer.Report("allocate binding slots to accumulators");
                 }
             }
-            catch (Exception err)
+            catch (Exception)
             {
 
                 // if syntax errors were reported earlier, then exceptions may occur during this phase

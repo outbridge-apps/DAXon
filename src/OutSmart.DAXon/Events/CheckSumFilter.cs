@@ -26,9 +26,7 @@ namespace OutSmart.DAXon.Events
         private int sequence = 0;
         private bool checkExistingChecksum = false;
         private bool checksumCorrect = false;
-        private bool checksumFound = false;
         private bool digestCorrect = false;
-        private bool digestFound = false;
         private bool requireDigest = false;
         private bool rootElement = true;
         private int depth = 0;
@@ -191,7 +189,6 @@ namespace OutSmart.DAXon.Events
         {
             if (target.Equals(SIGMA))
             {
-                checksumFound = true;
                 if (checkExistingChecksum)
                 {
                     try
@@ -209,7 +206,6 @@ namespace OutSmart.DAXon.Events
 
                         // This case represents some point in the future when we've
                         // abandoned the checksum and the digest is stored in SIGMA
-                        digestFound = true;
                         digestCorrect = true;
                         checksumCorrect = true; // digest trumps checksum
                     }
@@ -218,7 +214,6 @@ namespace OutSmart.DAXon.Events
 
             if (target.Equals(SIGMA2))
             {
-                digestFound = true;
                 if (checkExistingChecksum)
                 {
                     digestCorrect = data.ToString().Equals(Digest);

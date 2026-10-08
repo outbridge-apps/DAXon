@@ -373,7 +373,7 @@ namespace OutSmart.DAXon.Api
                 {
                     return new Uri(new URI(systemId).ToString()).LocalPath;
                 }
-                catch (URISyntaxException e)
+                catch (URISyntaxException)
                 {
                     return null;
                 }

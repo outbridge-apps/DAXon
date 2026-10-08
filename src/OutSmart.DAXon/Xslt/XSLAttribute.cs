@@ -218,7 +218,7 @@ namespace OutSmart.DAXon.Xslt
                 {
                     parts = NameChecker.GetQNameParts(qName);
                 }
-                catch (QNameException e)
+                catch (QNameException)
                 {
 
                     // This can't happen, because of previous checks

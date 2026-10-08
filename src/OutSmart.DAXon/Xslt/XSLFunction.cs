@@ -53,7 +53,7 @@ namespace OutSmart.DAXon.Xslt
                         {
                             resultType = MakeSequenceType(asAtt);
                         }
-                        catch (XPathException err)
+                        catch (XPathException)
                         {
                         }
                     }
@@ -384,7 +384,7 @@ namespace OutSmart.DAXon.Xslt
             {
                 return FunctionStreamabilityExtensions.Of(s);
             }
-            catch (ArgumentException ill)
+            catch (ArgumentException)
             {
                 InvalidAttribute("streamability", "unclassified|absorbing|inspection|filter|shallow-descent|deep-descent|ascent");
                 return FunctionStreamability.UNCLASSIFIED;

@@ -163,7 +163,7 @@ namespace OutSmart.DAXon.Functions
                 {
                     absoluteURI = new URI(absoluteURI.Scheme, absoluteURI.UserInfo, absoluteURI.Host, absoluteURI.Port, "/", absoluteURI.GetQuery(), absoluteURI.Fragment);
                 }
-                catch (URISyntaxException e)
+                catch (URISyntaxException)
                 {
                     throw new XPathException("Failed to parse JAR scheme URI " + Err.Wrap(absoluteURI.ToASCIIString()), "FORG0002", context);
                 }
@@ -300,7 +300,7 @@ namespace OutSmart.DAXon.Functions
                 new Uri(systemId);
                 return systemId; // all is well
             }
-            catch (UriFormatException err)
+            catch (UriFormatException)
             {
                 return ResolveAgainstCurrentDirectory(systemId);
             }
@@ -317,7 +317,7 @@ namespace OutSmart.DAXon.Functions
                 // any relative/scheme-only base-uri (e.g. declare base-uri "http:/...").
                 dir = Environment.CurrentDirectory;
             }
-            catch (Exception geterr)
+            catch (Exception)
             {
 
                 // this doesn't work when running an applet
@@ -339,7 +339,7 @@ namespace OutSmart.DAXon.Functions
                 URI baseURI = currentDirectoryURI.Resolve(systemId);
                 return baseURI.ToString();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return systemId;
             }
@@ -506,7 +506,7 @@ namespace OutSmart.DAXon.Functions
                     }
                 }
             }
-            catch (ArgumentException err0)
+            catch (ArgumentException)
             {
 
                 // can be thrown by resolve() when given a bad URI

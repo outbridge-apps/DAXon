@@ -44,8 +44,6 @@ namespace OutSmart.DAXon.Transformation
         protected Dictionary<StructuredQName, RuleChain> qNamedElementRuleChains;
         protected Dictionary<StructuredQName, RuleChain> qNamedAttributeRuleChains;
         private IBuiltInRuleSet builtInRuleSet = TextOnlyCopyRuleSet.GetInstance();
-        private Rule mostRecentRule;
-        private int mostRecentModuleHash;
         private int stackFrameSlotsNeeded = 0;
         private int highestRank;
         private readonly Dictionary<string, int> explicitPropertyPrecedences = new Dictionary<string, int>();
@@ -317,8 +315,6 @@ namespace OutSmart.DAXon.Transformation
                 }
             }
 
-            mostRecentRule = newRule;
-            mostRecentModuleHash = moduleHash;
             AddRule(pattern, newRule);
         }
 
@@ -1203,7 +1199,7 @@ namespace OutSmart.DAXon.Transformation
             {
                 ProcessRules(action, new RuleGroupExplainAction(@out));
             }
-            catch (XPathException err)
+            catch (XPathException)
             {
             }
         }

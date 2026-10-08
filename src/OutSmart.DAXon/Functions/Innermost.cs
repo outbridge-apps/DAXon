@@ -77,7 +77,6 @@ namespace OutSmart.DAXon.Functions
         {
             ISequenceIterator @in;
             NodeInfo pending = null;
-            int position = 0;
             public InnermostIterator(ISequenceIterator @in)
             {
                 this.@in = @in;
@@ -90,7 +89,6 @@ namespace OutSmart.DAXon.Functions
                 {
 
                     // we're done
-                    position = -1;
                     return null;
                 }
                 else
@@ -101,7 +99,6 @@ namespace OutSmart.DAXon.Functions
                         if (next == null)
                         {
                             NodeInfo current = pending;
-                            position++;
                             pending = null;
                             return current;
                         }
@@ -116,7 +113,6 @@ namespace OutSmart.DAXon.Functions
                         {
 
                             // emit the pending node
-                            position++;
                             NodeInfo current = pending;
                             pending = next;
                             return current;

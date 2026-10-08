@@ -65,10 +65,8 @@ namespace OutSmart.DAXon.Functions
         private sealed class AnonymousSystemFunctionCall : SystemFunctionCall
         {
 
-            private readonly NotFn parent;
             public AnonymousSystemFunctionCall(NotFn parent, Expression[] arguments) : base(parent, arguments)
             {
-                this.parent = parent;
             }
             public override bool EffectiveBooleanValue(IXPathContext c)
             {

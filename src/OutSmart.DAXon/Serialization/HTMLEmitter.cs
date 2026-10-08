@@ -29,7 +29,6 @@ namespace OutSmart.DAXon.Serialization
         private int inScript;
         protected int version = 5;
         private string parentElement;
-        private NamespaceUri uri;
         private bool escapeNonAscii = false;
         private readonly Stack<INodeName> nodeNameStack = new Stack<INodeName>();
         static HTMLEmitter()
@@ -143,7 +142,7 @@ namespace OutSmart.DAXon.Serialization
                 {
                     WriteByteOrderMark();
                 }
-                catch (IOException err)
+                catch (IOException)
                 {
                 }
             }
@@ -164,7 +163,6 @@ namespace OutSmart.DAXon.Serialization
 
         public override void StartElement(INodeName elemName, ISchemaType type, IAttributeMap attributes, NamespaceMap namespaces, ILocation location, int properties)
         {
-            uri = elemName.GetNamespaceUri();
             base.StartElement(elemName, type, attributes, namespaces, location, properties);
             parentElement = elementStack.Peek();
             if (IsHTMLElement(elemName) && (parentElement.Equals("script", StringComparison.OrdinalIgnoreCase) || parentElement.Equals("style", StringComparison.OrdinalIgnoreCase)))

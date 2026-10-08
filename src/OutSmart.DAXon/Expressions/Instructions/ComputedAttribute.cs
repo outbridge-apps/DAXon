@@ -272,7 +272,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         prefix = parts[0];
                         localName = parts[1];
                     }
-                    catch (QNameException err)
+                    catch (QNameException)
                     {
                         string errorCode = IsXSLT() ? "XTDE0850" : "XQDY0074";
                         XPathException err1 = new XPathException("Invalid attribute name: " + rawName, errorCode, this.GetLocation());

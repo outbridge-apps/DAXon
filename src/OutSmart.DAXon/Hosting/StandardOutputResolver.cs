@@ -61,11 +61,11 @@ namespace OutSmart.DAXon.Lib
 
                 return CreateResult(absoluteURI);
             }
-            catch (URISyntaxException err)
+            catch (URISyntaxException)
             {
                 throw new XPathException("Invalid syntax for " + which + " URI", DAXonErrorCode.SXRD0001);
             }
-            catch (ArgumentException err2)
+            catch (ArgumentException)
             {
                 throw new XPathException("Invalid " + which + " URI syntax", DAXonErrorCode.SXRD0001);
             }

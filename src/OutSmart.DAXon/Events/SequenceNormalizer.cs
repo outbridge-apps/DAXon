@@ -62,7 +62,7 @@ namespace OutSmart.DAXon.Events
                 base.StartElement(elemName, type, attributes, namespaces, location, properties);
                 previousAtomic = false;
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 failed = true;
                 throw;
@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Events
                 base.Characters(chars, locationId, properties);
                 previousAtomic = false;
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 failed = true;
                 throw;
@@ -96,7 +96,7 @@ namespace OutSmart.DAXon.Events
                 base.ProcessingInstruction(target, data, locationId, properties);
                 previousAtomic = false;
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 failed = true;
                 throw;
@@ -113,7 +113,7 @@ namespace OutSmart.DAXon.Events
                 base.Comment(chars, locationId, properties);
                 previousAtomic = false;
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 failed = true;
                 throw;
@@ -128,7 +128,7 @@ namespace OutSmart.DAXon.Events
                 base.EndElement();
                 previousAtomic = false;
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 failed = true;
                 throw;

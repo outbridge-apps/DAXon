@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     {
                         this.staticBaseUri = new URI(value);
                     }
-                    catch (URISyntaxException e)
+                    catch (URISyntaxException)
                     {
                         staticBaseUri = null;
                     }
@@ -87,7 +87,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 {
                     this.staticBaseUri = ExpressionTool.GetBaseURI(sc, null, true);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     staticBaseUri = null;
                 }

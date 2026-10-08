@@ -53,10 +53,8 @@ namespace OutSmart.DAXon.Functions
         private sealed class AnonymousSystemFunctionCall : SystemFunctionCall
         {
 
-            private readonly AvailableSystemProperties parent;
             public AnonymousSystemFunctionCall(AvailableSystemProperties parent, Expression[] arguments) : base(parent, arguments)
             {
-                this.parent = parent;
             }
             // Suppress early evaluation
             public override Expression PreEvaluate(ExpressionVisitor visitor)

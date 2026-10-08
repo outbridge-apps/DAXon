@@ -634,7 +634,7 @@ namespace OutSmart.DAXon.Values.Maps
                                     maybeCombined = false;
                                 }
                             }
-                            catch (XPathException e)
+                            catch (XPathException)
                             {
                             }
                         }

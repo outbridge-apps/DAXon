@@ -61,7 +61,7 @@ namespace OutSmart.DAXon.Expressions
                     return e2;
                 } //return (Value)ExpressionTool.eagerEvaluate(this, env.makeEarlyEvaluationContext());
             }
-            catch (Exception err)
+            catch (Exception)
             {
             }
 
@@ -81,10 +81,10 @@ namespace OutSmart.DAXon.Expressions
                     return Literal.MakeLiteral(SequenceTool.ToGroundedValue(Iterate(visitor.StaticContext.MakeEarlyEvaluationContext())), this);
                 }
             }
-            catch (XPathException err)
+            catch (XPathException)
             {
             }
-            catch (UncheckedXPathException err)
+            catch (UncheckedXPathException)
             {
             }
 

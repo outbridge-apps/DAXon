@@ -44,7 +44,7 @@ namespace OutSmart.DAXon.Functions
                         staticRegex = null; // will cause a dynamic error
                     }
                 }
-                catch (XPathException err)
+                catch (XPathException)
                 {
                 }
             }

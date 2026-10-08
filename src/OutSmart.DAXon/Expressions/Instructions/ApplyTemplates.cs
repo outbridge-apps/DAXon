@@ -218,7 +218,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             throw new InvalidOperationException("Modes cannot be abstract");
                         }
                     }
-                    catch (InvalidCastException e)
+                    catch (InvalidCastException)
                     {
                         throw new InvalidOperationException("In apply-templates at " + GetLocation().GetSystemId() + "#" + GetLocation().GetLineNumber() + " target component for slot " + bindingSlot + " is " + context.GetTargetComponent(bindingSlot).GetActor().GetSymbolicName());
                     }

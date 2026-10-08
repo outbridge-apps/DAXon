@@ -19,13 +19,9 @@ namespace OutSmart.DAXon.Types
     /// </summary>
     internal sealed class AnyFunctionTypeWithAssertions : AnyFunctionType
     {
-        private readonly AnnotationList assertions;
-        private readonly Configuration config;
 
         public AnyFunctionTypeWithAssertions(AnnotationList assertions, Configuration config)
         {
-            this.assertions = assertions;
-            this.config = config;
         }
     }
 }

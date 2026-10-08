@@ -63,7 +63,7 @@ namespace OutSmart.DAXon.Expressions
                 Cast(value, context);
                 return true;
             }
-            catch (XPathException err)
+            catch (XPathException)
             {
                 return false;
             }

@@ -156,7 +156,7 @@ namespace OutSmart.DAXon.Expressions
                             return converter;
                         }
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         config.DeregisterExternalObjectModel(model);
                     }
@@ -229,7 +229,7 @@ namespace OutSmart.DAXon.Expressions
                                 System.Reflection.ConstructorInfo constructor = targetClass.GetConstructor(new System.Type[] { typeof(string) });
                                 return new AnonymousPJConverter(constructor);
                             }
-                            catch (MissingMethodException e)
+                            catch (MissingMethodException)
                             {
                                 throw CannotConvert(itemType, targetClass, config);
                             }
@@ -627,11 +627,11 @@ namespace OutSmart.DAXon.Expressions
                 }
                 catch (MissingMethodException e)
                 {
-                    throw new XPathException(e?.Message);
+                    throw new XPathException(e.Message);
                 }
                 catch (UnauthorizedAccessException e)
                 {
-                    throw new XPathException(e?.Message);
+                    throw new XPathException(e.Message);
                 }
                 catch (System.Reflection.TargetInvocationException e)
                 {
@@ -685,11 +685,11 @@ namespace OutSmart.DAXon.Expressions
                     {
                         list = (Collection<object>)Activator.CreateInstance(targetClass);
                     }
-                    catch (MissingMethodException e)
+                    catch (MissingMethodException)
                     {
                         throw new XPathException("Cannot instantiate collection class " + targetClass).WithXPathContext(context);
                     }
-                    catch (UnauthorizedAccessException e)
+                    catch (UnauthorizedAccessException)
                     {
                         throw new XPathException("Cannot access collection class " + targetClass).WithXPathContext(context);
                     }
@@ -1039,7 +1039,7 @@ namespace OutSmart.DAXon.Expressions
                 {
                     return av == null ? null : new URI(((AnyURIValue)value).GetStringValue());
                 }
-                catch (URISyntaxException err)
+                catch (URISyntaxException)
                 {
                     throw new XPathException("The anyURI value '" + value + "' is not an acceptable Java URI");
                 }
@@ -1056,7 +1056,7 @@ namespace OutSmart.DAXon.Expressions
                 {
                     return av == null ? null : new Uri(((AnyURIValue)value).GetStringValue());
                 }
-                catch (UriFormatException err)
+                catch (UriFormatException)
                 {
                     throw new XPathException("The anyURI value '" + value + "' is not an acceptable absolute URI");
                 }

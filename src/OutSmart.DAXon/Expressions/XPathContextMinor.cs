@@ -278,7 +278,7 @@ namespace OutSmart.DAXon.Expressions
             {
                 stackFrame.slots[slotNumber] = value;
             }
-            catch (IndexOutOfRangeException e)
+            catch (IndexOutOfRangeException)
             {
                 if (slotNumber == -999)
                 {

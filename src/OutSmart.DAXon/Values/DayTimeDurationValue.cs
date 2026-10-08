@@ -166,7 +166,7 @@ namespace OutSmart.DAXon.Values
             {
                 return new DayTimeDurationValue(sign, 0, 0, 0, milliseconds / 1000, (int)(milliseconds % 1000) * 1000);
             }
-            catch (ArgumentException err)
+            catch (ArgumentException)
             {
 
                 // limits exceeded
@@ -331,7 +331,7 @@ namespace OutSmart.DAXon.Values
                         BigDecimal v2 = other.TotalSeconds;
                         return FromSeconds(v1 + v2);
                     }
-                    catch (ArgumentException e)
+                    catch (ArgumentException)
                     {
                         throw new XPathException("Overflow when adding two durations", "FODT0002");
                     }
@@ -364,7 +364,7 @@ namespace OutSmart.DAXon.Values
                         BigDecimal v2 = other.TotalSeconds;
                         return FromSeconds(v1 - v2);
                     }
-                    catch (ArgumentException e)
+                    catch (ArgumentException)
                     {
                         throw new XPathException("Overflow when subtracting two durations", "FODT0002");
                     }

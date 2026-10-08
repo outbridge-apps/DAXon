@@ -96,7 +96,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     string className = JavaExternalObjectType.LocalNameToClassName(local);
                     theClass = config.GetType(className, false);
                 }
-                catch (XPathException err)
+                catch (XPathException)
                 {
                     Grumble("Unknown Java class " + local, "XPST0051");
                     return AnyItemType.GetInstance();

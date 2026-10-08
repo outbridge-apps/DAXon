@@ -221,7 +221,7 @@ namespace OutSmart.DAXon.Functions
             {
                 return new RegexFilter(new JavaRegularExpression(sb.ToUnicodeString(), "")).Accept;
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 throw new XPathException("Invalid glob " + value + " in collection URI", "FODC0004");
             }

@@ -20,7 +20,6 @@ namespace OutSmart.DAXon.Trees
         private readonly int columnNumber;
         private readonly StructuredQName elementName;
         private readonly StructuredQName attributeName;
-        private NodeInfo elementNode;
 
         public StructuredQName ElementName => elementName;
 
@@ -34,7 +33,6 @@ namespace OutSmart.DAXon.Trees
             this.attributeName = attributeName;
             if (element.GetConfiguration().GetBooleanProperty(Feature<bool>.RETAIN_NODE_FOR_DIAGNOSTICS))
             {
-                this.elementNode = element;
             }
         }
 

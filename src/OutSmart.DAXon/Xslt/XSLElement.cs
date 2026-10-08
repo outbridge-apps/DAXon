@@ -160,7 +160,7 @@ namespace OutSmart.DAXon.Xslt
                 {
                     parts = NameChecker.GetQNameParts(qName);
                 }
-                catch (QNameException e)
+                catch (QNameException)
                 {
                     CompileErrorInAttribute("Invalid element name: " + qName, "XTDE0820", "name");
                     return null;

@@ -23,7 +23,6 @@ namespace OutSmart.DAXon.Patterns
         public static readonly NodeKindTest PROCESSING_INSTRUCTION = new NodeKindTest(Types.Type.PROCESSING_INSTRUCTION);
         public static readonly NodeKindTest NAMESPACE = new NodeKindTest(Types.Type.NAMESPACE);
         private readonly int kind;
-        private readonly UType uType;
 
         public override double DefaultPriority => -0.5;
 
@@ -57,7 +56,6 @@ namespace OutSmart.DAXon.Patterns
         private NodeKindTest(int nodeKind)
         {
             kind = nodeKind;
-            uType = UType.FromTypeCode(nodeKind);
         }
 
         public int GetNodeKind()

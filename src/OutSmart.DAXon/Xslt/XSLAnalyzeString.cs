@@ -133,7 +133,7 @@ namespace OutSmart.DAXon.Xslt
             {
                 pattern = GetConfiguration().CompileRegularExpression(BMPString.Of("x"), "", "XP20", null);
             }
-            catch (XPathException err)
+            catch (XPathException)
             {
                 throw new InvalidOperationException();
             }

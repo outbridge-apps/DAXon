@@ -302,7 +302,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         }
                     }
                 }
-                catch (URISyntaxException err)
+                catch (URISyntaxException)
                 {
                     throw new XPathException("Collation name '" + CollationNameExpression + "' is not a valid URI").WithErrorCode("XTDE1110").WithLocation(GetLocation());
                 }

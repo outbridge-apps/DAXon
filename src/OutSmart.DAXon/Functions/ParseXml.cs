@@ -196,7 +196,7 @@ namespace OutSmart.DAXon.Functions
             var cause = err.InnerException;
             if (cause != null)
             {
-                msg += cause is Exception __ct ? __ct.Message : cause.Message;
+                msg += cause.Message;
             }
 
             return msg;

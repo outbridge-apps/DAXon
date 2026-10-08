@@ -148,7 +148,7 @@ namespace OutSmart.DAXon.Expressions
                     {
                         return PreEvaluate(visitor);
                     }
-                    catch (NoDynamicContextException err)
+                    catch (NoDynamicContextException)
                     {
 
                         // Early evaluation failed, typically because the implicit timezone is not yet known.
@@ -300,7 +300,7 @@ namespace OutSmart.DAXon.Expressions
                     throw e.GetXPathException();
                 }
             }
-            catch (NoDynamicContextException e)
+            catch (NoDynamicContextException)
             {
 
                 // early evaluation failed, usually because implicit timezone required

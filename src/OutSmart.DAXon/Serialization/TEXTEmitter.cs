@@ -61,7 +61,7 @@ namespace OutSmart.DAXon.Serialization
                 {
                     WriteByteOrderMark();
                 }
-                catch (IOException err)
+                catch (IOException)
                 {
                 }
             }

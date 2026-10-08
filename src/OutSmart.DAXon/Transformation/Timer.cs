@@ -62,7 +62,7 @@ namespace OutSmart.DAXon.Transformation
                     fsb.Append(seconds + "s");
                     return fsb.ToString() + " (" + nanosecs / 1000000 + "ms)";
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     return nanosecs / 1000000 + "ms";
                 }

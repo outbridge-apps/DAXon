@@ -690,7 +690,7 @@ namespace OutSmart.DAXon.Transformation
                 {
                     uri = ResolveURI.MakeAbsolute(location, GetSystemId());
                 }
-                catch (URISyntaxException e)
+                catch (URISyntaxException)
                 {
                     Error("package", attName, location, "Requires a valid URI.");
                 }
@@ -719,7 +719,7 @@ namespace OutSmart.DAXon.Transformation
                 {
                     vpn = new VersionedPackageName(name, version);
                 }
-                catch (XPathException err)
+                catch (XPathException)
                 {
                     Error("package", "version", version, null);
                 }
@@ -734,7 +734,7 @@ namespace OutSmart.DAXon.Transformation
                     {
                         source = new ResolvedResource { SystemId = ResolveURI.MakeAbsolute(sourceLoc, GetSystemId()).ToString() };
                     }
-                    catch (URISyntaxException e)
+                    catch (URISyntaxException)
                     {
                         Error("package", "sourceLocation", sourceLoc, "Requires a valid URI.");
                     }
@@ -749,7 +749,7 @@ namespace OutSmart.DAXon.Transformation
                     {
                         source = new ResolvedResource { SystemId = ResolveURI.MakeAbsolute(exportLoc, GetSystemId()).ToString() };
                     }
-                    catch (URISyntaxException e)
+                    catch (URISyntaxException)
                     {
                         Error("package", "exportLocation", exportLoc, "Requires a valid URI.");
                     }
@@ -795,7 +795,7 @@ namespace OutSmart.DAXon.Transformation
             {
                 qName = qp.Parse(name, NamespaceUri.NULL);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 Error("withParam", "name", name, "Requires valid QName");
             }
@@ -1091,7 +1091,7 @@ namespace OutSmart.DAXon.Transformation
             }
             catch (URISyntaxException e)
             {
-                throw new XPathException(e?.Message);
+                throw new XPathException(e.Message);
             }
         }
 

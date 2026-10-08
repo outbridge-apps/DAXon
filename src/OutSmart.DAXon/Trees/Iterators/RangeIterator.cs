@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Trees.Iterators
                 {
                     intVal = (IntegerValue)Converter.NumericToInteger.INSTANCE.Convert(val).AsAtomic();
                 }
-                catch (ValidationException e)
+                catch (ValidationException)
                 {
                     return false;
                 }

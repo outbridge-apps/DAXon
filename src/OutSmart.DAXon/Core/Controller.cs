@@ -999,7 +999,7 @@ namespace OutSmart.DAXon.Core
                             }
                         }
                     }
-                    catch (URISyntaxException err)
+                    catch (URISyntaxException)
                     {
                     }
                 }
@@ -1746,7 +1746,7 @@ namespace OutSmart.DAXon.Core
                         MemoSequence ms = new MemoSequence(@base);
                         fti = FocusTrackingIterator.Track(ms.Iterate());
                     }
-                    catch (UncheckedXPathException e)
+                    catch (UncheckedXPathException)
                     {
                         fti = FocusTrackingIterator.Track(@base);
                     }

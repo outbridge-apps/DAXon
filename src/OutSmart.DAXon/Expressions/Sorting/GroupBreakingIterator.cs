@@ -17,22 +17,17 @@ namespace OutSmart.DAXon.Expressions.Sorting
 {
     internal sealed class GroupBreakingIterator : ILookaheadIterator, IGroupIterator
     {
-        private readonly IPullEvaluator select;
         private readonly IFocusIterator population;
         private readonly IFunctionItem breakWhen;
-        private readonly IXPathContext baseContext;
         private readonly IXPathContext runningContext;
         private IList<IItem> currentMembers;
         private IItem nextItem;
         private IItem current = null;
-        private int position = 0;
 
         public bool HasNext => nextItem != null;
         public GroupBreakingIterator(IPullEvaluator select, IFunctionItem breakWhen, IXPathContext baseContext)
         {
-            this.select = select;
             this.breakWhen = breakWhen;
-            this.baseContext = baseContext;
             this.runningContext = baseContext.NewMinorContext();
             this.population = runningContext.TrackFocus(select.Iterate(baseContext));
             nextItem = population.Next();
@@ -63,7 +58,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                         return;
                     }
                 }
-                catch (InvalidCastException e)
+                catch (InvalidCastException)
                 {
                     throw new XPathException("Grouping key values are of non-comparable types").AsTypeError().WithXPathContext(runningContext);
                 }
@@ -94,12 +89,10 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 if (nextItem == null)
                 {
                     current = null;
-                    position = -1;
                     return null;
                 }
 
                 current = nextItem;
-                position++;
                 Advance();
                 return current;
             }

@@ -41,7 +41,6 @@ namespace OutSmart.DAXon.Xslt
         private readonly Stack<URI> baseUriStack = new Stack<URI>();
         private readonly NestedIntegerValue precedence;
         private int importCount = 0;
-        private bool dropUnderscoredAttributes;
         private readonly LinkedTreeBuilder treeBuilder;
         public UseWhenFilter(Compilation compilation, IReceiver next, NestedIntegerValue precedence) : base(next)
         {
@@ -69,13 +68,13 @@ namespace OutSmart.DAXon.Xslt
             {
                 baseUriStack.Push(new URI(sysId));
             }
-            catch (URISyntaxException e)
+            catch (URISyntaxException)
             {
                 try
                 {
                     baseUriStack.Push(new Uri(Path.GetFullPath(sysId)).AbsoluteUri);
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Neither a URI nor a path: with nothing pushed, the first element found the stack empty
                     throw new XPathException("Invalid URI for stylesheet: " + sysId);
@@ -133,7 +132,6 @@ namespace OutSmart.DAXon.Xslt
                     includedDoc = HandleXsltElement(elemName, baseUri, fp, pa, attributes, namespaces, location);
                 }
 
-                dropUnderscoredAttributes = inXsltNamespace;
                 nextReceiver.StartElement(elemName, type, attributes, namespaces, location, properties);
                 CheckTargetDocument(includedDoc);
             }
@@ -395,7 +393,7 @@ namespace OutSmart.DAXon.Xslt
                                 UsePack use = new UsePack(name, pversion, location.SaveLocation());
                                 compilation.RegisterPackageDependency(use);
                             }
-                            catch (XPathException err)
+                            catch (XPathException)
                             {
                             }
                         }
@@ -422,7 +420,7 @@ namespace OutSmart.DAXon.Xslt
                     StructuredQName qName = StructuredQName.FromLexicalQName((modeAtt), false, true, nsResolver);
                     compilation.AllKnownModeNames.Add(qName);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                 }
             }
@@ -623,7 +621,7 @@ namespace OutSmart.DAXon.Xslt
                 {
                     baseUri = new URI(systemId);
                 }
-                catch (URISyntaxException e)
+                catch (URISyntaxException)
                 {
                     throw new XPathException("Invalid URI for stylesheet entity: " + systemId);
                 }

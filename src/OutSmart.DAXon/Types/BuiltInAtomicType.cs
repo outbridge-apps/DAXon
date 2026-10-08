@@ -428,7 +428,7 @@ namespace OutSmart.DAXon.Types
                 {
                     @base.CheckTypeDerivationIsOK(type, block);
                 }
-                catch (SchemaException se)
+                catch (SchemaException)
                 {
                     throw new SchemaException("The type " + Description + " is not validly derived from the type " + type.Description);
                 }

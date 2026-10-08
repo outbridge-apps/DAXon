@@ -302,7 +302,7 @@ namespace OutSmart.DAXon.Functions
             {
                 throw uxe.GetXPathException();
             }
-            catch (InvalidCastException err)
+            catch (InvalidCastException)
             {
 
                 // this will happen if the sequences contain non-comparable values
@@ -795,7 +795,7 @@ namespace OutSmart.DAXon.Functions
                     s1 = NormalizeUnicode.Normalize(s1, options.normalizationForm);
                     s2 = NormalizeUnicode.Normalize(s2, options.normalizationForm);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     return false;
                 }
@@ -1161,7 +1161,7 @@ namespace OutSmart.DAXon.Functions
                         {
                             u1 = StringView.Of(NormalizeUnicode.Normalize(u1.ToString(), options.normalizationForm));
                         }
-                        catch (XPathException e)
+                        catch (XPathException)
                         {
                             throw new ArgumentException();
                         }

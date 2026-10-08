@@ -509,7 +509,7 @@ namespace OutSmart.DAXon.Expressions
             {
                 throw err.MaybeWithLocation(GetLocation());
             }
-            catch (NullReferenceException err)
+            catch (NullReferenceException)
             {
 
                 string msg = "Internal error: no value for variable $" + DisplayName + " at line " + GetLocation().GetLineNumber() + (GetLocation().GetSystemId() == null ? "" : " of " + GetLocation().GetSystemId());
@@ -562,7 +562,7 @@ namespace OutSmart.DAXon.Expressions
             {
                 return binding.EvaluateVariable(c);
             }
-            catch (NullReferenceException err)
+            catch (NullReferenceException)
             {
                 if (binding == null)
                 {

@@ -117,7 +117,7 @@ namespace OutSmart.DAXon.Functions
                                 actual = (IGroundedValue)Converter.Convert((StringValue)actual, (IAtomicType)required.PrimaryType, rules);
                                 ok = true;
                             }
-                            catch (XPathException err)
+                            catch (XPathException)
                             {
                                 ok = false;
                             }

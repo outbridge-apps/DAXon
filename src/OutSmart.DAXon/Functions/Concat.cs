@@ -99,10 +99,8 @@ namespace OutSmart.DAXon.Functions
         private sealed class AnonymousOptimized : SystemFunctionCall.Optimized
         {
 
-            private readonly Concat parent;
             public AnonymousOptimized(Concat parent, Expression[] arguments) : base(parent, arguments)
             {
-                this.parent = parent;
             }
             public override UnicodeString EvaluateAsString(IXPathContext context)
             {

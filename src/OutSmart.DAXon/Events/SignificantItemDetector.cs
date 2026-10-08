@@ -157,7 +157,7 @@ namespace OutSmart.DAXon.Events
                                     }
                                 }
                             }
-                            catch (UncheckedXPathException e)
+                            catch (UncheckedXPathException)
                             {
                                 return true;
                             }

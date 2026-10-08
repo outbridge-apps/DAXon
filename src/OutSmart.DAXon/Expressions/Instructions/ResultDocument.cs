@@ -267,7 +267,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     @out.Close();
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     if (!failed)
                     {
@@ -405,7 +405,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     CheckAcceptableUri(context, systemId);
                     return @out;
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     throw;
                 }
@@ -492,7 +492,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     {
                         parts = NameChecker.GetQNameParts(format);
                     }
-                    catch (QNameException e)
+                    catch (QNameException)
                     {
                         throw new XPathException("The requested output format " + Err.Wrap(format) + " is not a valid QName").WithErrorCode("XTDE1460").WithXPathContext(context).WithLocation(FormatExpression.GetLocation());
                     }

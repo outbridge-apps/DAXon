@@ -63,7 +63,7 @@ namespace OutSmart.DAXon.Functions
                         roles[i] = new OperandRole(0, usages[i], GetRequiredType(i));
                     }
                 }
-                catch (IndexOutOfRangeException e)
+                catch (IndexOutOfRangeException)
                 {
                     // ignored, as upstream does (it only printed the stack trace)
                 }

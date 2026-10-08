@@ -14,17 +14,13 @@ namespace OutSmart.DAXon.Trees.Tiny
     sealed class PrecedingSiblingIterator : IAxisIterator
     {
         private readonly TinyTree document;
-        private readonly TinyNodeImpl startNode;
         private int nextNodeNr;
-        private readonly NodeTest test;
         private readonly TinyNodeImpl parentNode;
         private readonly IIntPredicateProxy matcher;
         internal PrecedingSiblingIterator(TinyTree doc, TinyNodeImpl node, NodeTest nodeTest)
         {
             document = doc;
             document.EnsurePriorIndex();
-            test = nodeTest;
-            startNode = node;
             nextNodeNr = node.nodeNr;
             parentNode = node.parent; // doesn't matter if this is null (unknown)
             this.matcher = nodeTest.GetMatcher(doc);

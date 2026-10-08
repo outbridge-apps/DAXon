@@ -48,7 +48,7 @@ namespace OutSmart.DAXon.Functions
                         coll = collUri.ToASCIIString();
                     }
                 }
-                catch (URISyntaxException e)
+                catch (URISyntaxException)
                 {
                     visitor.StaticContext.IssueWarning("Cannot resolve relative collation URI " + coll, DAXonErrorCode.SXWN9034, c.GetLocation());
                 }
@@ -98,7 +98,7 @@ namespace OutSmart.DAXon.Functions
                     collationName = collationURI.ToString();
                 }
             }
-            catch (URISyntaxException e)
+            catch (URISyntaxException)
             {
                 throw new XPathException("Collation name '" + collationName + "' is not a valid URI", "FOCH0002");
             }

@@ -246,7 +246,7 @@ namespace OutSmart.DAXon.Values
                     m.error = BadDate("Non-existent date", s);
                 }
             }
-            catch (FormatException err)
+            catch (FormatException)
             {
                 m.error = BadDate("Non-numeric component", s);
             }

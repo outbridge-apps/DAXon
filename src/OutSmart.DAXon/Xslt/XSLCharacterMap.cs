@@ -20,7 +20,6 @@ namespace OutSmart.DAXon.Xslt
         string use;
         IList<XSLCharacterMap> characterMapElements = null;
         bool validated = false;
-        bool redundant = false;
 
         public StructuredQName CharacterMapName
         {
@@ -105,7 +104,6 @@ namespace OutSmart.DAXon.Xslt
                 }
                 else if (decl.Precedence < other.Precedence)
                 {
-                    redundant = true;
                 }
             }
 

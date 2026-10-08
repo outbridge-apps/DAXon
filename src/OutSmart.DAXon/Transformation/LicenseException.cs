@@ -14,10 +14,8 @@ namespace OutSmart.DAXon.Transformation
     {
         public const int NOT_FOUND = 3;
         public const int WRONG_CONFIGURATION = 6;
-        private int reason;
         public LicenseException(string message, int reason) : base(message)
         {
-            this.reason = reason;
         }
     }
 }

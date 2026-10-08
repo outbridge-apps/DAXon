@@ -809,7 +809,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                     isID = true;
                 }
             }
-            catch (MissingComponentException e)
+            catch (MissingComponentException)
             {
             }
 
@@ -863,12 +863,12 @@ namespace OutSmart.DAXon.Trees.Tiny
                             }
                         }
                     }
-                    catch (ValidationException ve)
+                    catch (ValidationException)
                     {
                     }
                 }
             }
-            catch (MissingComponentException e)
+            catch (MissingComponentException)
             {
             }
 
@@ -1083,7 +1083,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             {
                 return attType != null && GetAttributeType(nr).IsIdType();
             }
-            catch (MissingComponentException e)
+            catch (MissingComponentException)
             {
                 return false;
             }
@@ -1100,7 +1100,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             {
                 return GetSchemaType(nr).IsIdType() && GetTypedValueOfElement(nr).GetLength() == 1;
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 return false;
             }
@@ -1128,12 +1128,12 @@ namespace OutSmart.DAXon.Trees.Tiny
                             }
                         }
                     }
-                    catch (XPathException err)
+                    catch (XPathException)
                     {
                     }
                 }
             }
-            catch (MissingComponentException e)
+            catch (MissingComponentException)
             {
                 return false;
             }

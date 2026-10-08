@@ -671,7 +671,7 @@ namespace OutSmart.DAXon.Lib
                     resource.TextReader.Dispose();
                 }
             }
-            catch (IOException err)
+            catch (IOException)
             {
             }
         }

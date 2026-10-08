@@ -73,7 +73,7 @@ namespace OutSmart.DAXon.Core
                 {
                     c.SetInitialMode(defaultInitialMode);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                 }
             }
@@ -221,7 +221,7 @@ namespace OutSmart.DAXon.Core
             {
                 abs = ResolveURI.MakeAbsolute(href, baseURI);
             }
-            catch (URISyntaxException err)
+            catch (URISyntaxException)
             {
             }
 
@@ -244,7 +244,7 @@ namespace OutSmart.DAXon.Core
             {
                 abs = ResolveURI.MakeAbsolute(href, baseURI);
             }
-            catch (URISyntaxException err)
+            catch (URISyntaxException)
             {
             }
 

@@ -199,7 +199,7 @@ namespace OutSmart.DAXon.Expressions
                         return converter;
                     }
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     config.DeregisterExternalObjectModel(model);
                 }
@@ -621,7 +621,6 @@ namespace OutSmart.DAXon.Expressions
             public override IGroundedValue Convert(object @object, IXPathContext context)
             {
                 IList<IItem> list = new List<IItem>(((Collection<object>)@object).Count);
-                int a = 0;
                 foreach (object obj in (Collection<object>)@object)
                 {
                     JPConverter itemConverter = Allocate(obj.GetType(), context.GetConfiguration());
@@ -880,7 +879,6 @@ namespace OutSmart.DAXon.Expressions
             {
                 object[] arrayObject = (Object[])@object;
                 IList<IItem> newArray = new List<IItem>(arrayObject.Length);
-                int a = 0;
                 foreach (object member in arrayObject)
                 {
                     if (member != null)

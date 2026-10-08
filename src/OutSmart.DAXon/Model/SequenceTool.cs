@@ -91,7 +91,7 @@ namespace OutSmart.DAXon.Model
             {
                 return ((ILastPositionFinder)iterator).GetLength();
             }
-            catch (InvalidCastException e)
+            catch (InvalidCastException)
             {
                 throw new NotSupportedException("getLength() not available in " + iterator.GetType());
             }
@@ -312,7 +312,7 @@ namespace OutSmart.DAXon.Model
 
                         return type == null ? ErrorType.GetInstance() : type;
                     }
-                    catch (UncheckedXPathException err)
+                    catch (UncheckedXPathException)
                     {
                         return AnyItemType.GetInstance();
                     }
@@ -388,7 +388,7 @@ namespace OutSmart.DAXon.Model
                 item = iter.Next();
                 return item == null ? StaticProperty.EXACTLY_ONE : StaticProperty.ALLOWS_ONE_OR_MORE;
             }
-            catch (UncheckedXPathException err)
+            catch (UncheckedXPathException)
             {
                 return StaticProperty.ALLOWS_ONE_OR_MORE;
             }

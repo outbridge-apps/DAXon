@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Model
             {
                 return StandardNames.XML_ID_NAME.Equals(nodeName) || ReceiverOption.Contains(GetProperties(), ReceiverOption.IS_ID) || GetType().IsIdType();
             }
-            catch (MissingComponentException e)
+            catch (MissingComponentException)
             {
                 return false;
             }

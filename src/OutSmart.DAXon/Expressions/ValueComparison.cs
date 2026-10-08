@@ -277,7 +277,7 @@ namespace OutSmart.DAXon.Expressions
             {
                 throw err.GetReason();
             }
-            catch (InvalidCastException err)
+            catch (InvalidCastException)
             {
 
                 throw new XPathException("Cannot compare " + Types.Type.DisplayTypeName(v0) + " to " + Types.Type.DisplayTypeName(v1)).WithErrorCode("XPTY0004").AsTypeError();
@@ -350,7 +350,7 @@ namespace OutSmart.DAXon.Expressions
                 {
                     defaultCollation = expr.GetConfiguration().GetCollation(expr.GetRetainedStaticContext().DefaultCollationName);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     throw new InvalidOperationException("Unknown default collation in static context: " + expr.GetRetainedStaticContext().DefaultCollationName);
                 }
@@ -473,7 +473,7 @@ namespace OutSmart.DAXon.Expressions
                 {
                     defaultCollation = expr.GetConfiguration().GetCollation(expr.GetRetainedStaticContext().DefaultCollationName);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     throw new InvalidOperationException("Unknown default collation in static context: " + expr.GetRetainedStaticContext().DefaultCollationName);
                 }

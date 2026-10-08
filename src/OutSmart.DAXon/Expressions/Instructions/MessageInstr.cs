@@ -145,7 +145,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     base.Attribute(attName, typeCode, value, location, properties);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     Characters(StringView.Of(value), location, properties); //processingInstruction("attribute", StringView.of("name=\"" + attName.getDisplayName() + "\" value=\"" + value + "\""), location, ReceiverOption.NONE);
                 }
@@ -157,7 +157,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     base.Namespace(prefix, namespaceUri, properties);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     Characters(namespaceUri.ToUnicodeString(), Loc.NONE, properties); //processingInstruction("namespace", StringView.of("prefix=\"" + prefix + "\" uri=\"" + namespaceUri + "\""), Loc.NONE, ReceiverOption.NONE);
                 }
@@ -247,7 +247,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     {
                         errorCode = StructuredQName.FromLexicalQName(code, false, true, expr.GetRetainedStaticContext());
                     }
-                    catch (XPathException err)
+                    catch (XPathException)
                     {
 
                         // The spec says we fall back to XTMM9000
@@ -288,7 +288,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     {
                         controller.MessageHandler.Invoke(message);
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                     }
 

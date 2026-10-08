@@ -149,8 +149,6 @@ namespace OutSmart.DAXon.Collections.Zeno
                     {
                         return new ZenoSequence(chain.AddAll(items.AsIterable()));
                     }
-
-                    break;
             }
         }
 

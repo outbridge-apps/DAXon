@@ -80,7 +80,7 @@ namespace OutSmart.DAXon.Model
                         string cpath = GetCanonicalPath(uri);
                         uri = "file:" + cpath;
                     }
-                    catch (Exception ioe)
+                    catch (Exception)
                     {
                     }
                 }

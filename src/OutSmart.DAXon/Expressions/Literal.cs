@@ -837,7 +837,7 @@ namespace OutSmart.DAXon.Expressions
                 {
                     return value == ((Literal)exp).GroundedValue.EffectiveBooleanValue();
                 }
-                catch (XPathException err)
+                catch (XPathException)
                 {
                     return false;
                 }

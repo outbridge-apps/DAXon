@@ -968,7 +968,7 @@ namespace OutSmart.DAXon.Xslt
                                 uri = collationURI.ToString();
                             }
                         }
-                        catch (URISyntaxException err)
+                        catch (URISyntaxException)
                         {
                             CompileError("default collation '" + uri + "' is not a valid URI");
                             uri = NamespaceConstant.CODEPOINT_COLLATION_URI;

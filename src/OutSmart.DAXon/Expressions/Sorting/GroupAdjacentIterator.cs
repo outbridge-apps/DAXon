@@ -39,7 +39,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private AtomicValue nextSingleKey;
         private IItem nextItem;
         private IItem current = null;
-        private int position = 0;
         private bool composite = false;
 
         public bool HasNext => nextItem != null;
@@ -203,7 +202,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                             return;
                         }
                     }
-                    catch (InvalidCastException e)
+                    catch (InvalidCastException)
                     {
                         throw new XPathException("Grouping key values are of non-comparable types").AsTypeError().WithXPathContext(runningContext);
                     }
@@ -228,7 +227,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                             return;
                         }
                     }
-                    catch (InvalidCastException e)
+                    catch (InvalidCastException)
                     {
                         throw new XPathException("Grouping key values are of non-comparable types").AsTypeError().WithXPathContext(runningContext);
                     }
@@ -263,7 +262,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 if (nextItem == null)
                 {
                     current = null;
-                    position = -1;
                     return null;
                 }
 
@@ -287,7 +285,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     currentMatchKey = nextMatchKey;
                 }
 
-                position++;
                 Advance();
                 return current;
             }

@@ -607,15 +607,15 @@ namespace OutSmart.DAXon.Core
             }
             catch (TypeLoadException e)
             {
-                throw new InvalidOperationException(e?.Message, e);
+                throw new InvalidOperationException(e.Message, e);
             }
             catch (MissingMethodException e)
             {
-                throw new InvalidOperationException(e?.Message, e);
+                throw new InvalidOperationException(e.Message, e);
             }
             catch (UnauthorizedAccessException e)
             {
-                throw new InvalidOperationException(e?.Message, e);
+                throw new InvalidOperationException(e.Message, e);
             }
         }
 
@@ -890,7 +890,7 @@ namespace OutSmart.DAXon.Core
                 }
                 catch (InvalidCastException e)
                 {
-                    throw new XPathException(e?.Message);
+                    throw new XPathException(e.Message);
                 }
             }
             else
@@ -943,7 +943,7 @@ namespace OutSmart.DAXon.Core
                     }
                     catch (FileNotFoundException e)
                     {
-                        throw new XPathException(e?.Message);
+                        throw new XPathException(e.Message);
                     }
                 }
 
@@ -997,7 +997,7 @@ namespace OutSmart.DAXon.Core
             {
                 return GetXSLTFunctionSet(xpathVersion == 31 ? 30 : xpathVersion).MakeFunction(localName, arity);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 return null;
             }
@@ -1115,7 +1115,7 @@ namespace OutSmart.DAXon.Core
                 SymbolicName.F symbolicName = new SymbolicName.F(name, arity);
                 return lib.GetFunctionItem(symbolicName, staticContextForSystemFunctions);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 return null;
             }
@@ -1176,7 +1176,7 @@ namespace OutSmart.DAXon.Core
                 string absoluteURI = ResolveURI.MakeAbsolute(collationURI, baseURI).ToString();
                 return GetCollation(absoluteURI);
             }
-            catch (URISyntaxException e)
+            catch (URISyntaxException)
             {
                 throw new XPathException("Collation name is not a valid URI: " + collationURI + " (@base = " + baseURI + ")", "FOCH0002");
             }
@@ -1205,7 +1205,7 @@ namespace OutSmart.DAXon.Core
 
                 return collator;
             }
-            catch (URISyntaxException e)
+            catch (URISyntaxException)
             {
                 throw new XPathException("Collation name is not a valid URI: " + collationURI + " (@base = " + baseURI + ")", errorCode);
             }
@@ -2385,7 +2385,7 @@ namespace OutSmart.DAXon.Core
                         }
                         catch (FileNotFoundException fnf)
                         {
-                            throw new ArgumentException(fnf?.Message, fnf);
+                            throw new ArgumentException(fnf.Message, fnf);
                         }
 
                         break;

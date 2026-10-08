@@ -680,7 +680,7 @@ namespace OutSmart.DAXon.XQuery
                         collationName = collationURI.ToString();
                     }
                 }
-                catch (URISyntaxException err)
+                catch (URISyntaxException)
                 {
                     Grumble("Default collation name '" + collationName + "' is not a valid URI", "XQST0046");
                     collationName = NamespaceConstant.CODEPOINT_COLLATION_URI;
@@ -1319,7 +1319,7 @@ namespace OutSmart.DAXon.XQuery
                             ss.TextReader.Dispose();
                         }
                     }
-                    catch (IOException e)
+                    catch (IOException)
                     {
                         throw new XPathException("Failure while closing file for imported query module");
                     }
@@ -1364,7 +1364,7 @@ namespace OutSmart.DAXon.XQuery
 
                 ((QueryModule)env).SetBaseURI(uri);
             }
-            catch (URISyntaxException err)
+            catch (URISyntaxException)
             {
 
                 // The spec says this "is not intrinsically an error", but can cause a failure later
@@ -2198,8 +2198,6 @@ namespace OutSmart.DAXon.XQuery
                         ResultDocument.SetSerializationProperty(props, NamespaceUri.NULL, localName, value, env.GetNamespaceResolver(), false, env.GetConfiguration());
                         break;
                     }
-
-                    break;
             }
         }
 

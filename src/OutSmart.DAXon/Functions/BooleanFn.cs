@@ -109,10 +109,8 @@ namespace OutSmart.DAXon.Functions
         private sealed class AnonymousSystemFunctionCall : SystemFunctionCall
         {
 
-            private readonly BooleanFn parent;
             public AnonymousSystemFunctionCall(BooleanFn parent, Expression[] arguments) : base(parent, arguments)
             {
-                this.parent = parent;
             }
             public override Expression Optimize(ExpressionVisitor visitor, ContextItemStaticInfo contextItemType)
             {

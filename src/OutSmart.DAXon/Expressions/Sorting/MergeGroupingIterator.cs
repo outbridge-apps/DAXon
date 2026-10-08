@@ -25,7 +25,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private List<IItem> currentMembers;
         private Dictionary<string, List<IItem>> currentSourceMembers;
         private readonly IComparer<ObjectValue<ItemWithMergeKeys>> comparer;
-        private int position = 0;
         internal IList<AtomicValue> compositeMergeKey;
         private readonly ILastPositionFinder lastPositionFinder;
 
@@ -122,12 +121,10 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 if (nextItem == null)
                 {
                     currenti = null;
-                    position = -1;
                     return null;
                 }
 
                 currenti = nextItem;
-                position++;
                 compositeMergeKey = nextItem.GetObject().sortKeyValues;
                 Advance();
                 return currenti.GetObject().baseItem;

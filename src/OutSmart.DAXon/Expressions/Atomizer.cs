@@ -376,11 +376,11 @@ namespace OutSmart.DAXon.Expressions
                 ISequenceIterator @base = BaseExpression.Iterate(context);
                 return GetAtomizingIterator(@base, untyped && operandItemType is NodeTest);
             }
-            catch (TerminationException e)
+            catch (TerminationException)
             {
                 throw;
             }
-            catch (Error.UserDefinedXPathException e)
+            catch (Error.UserDefinedXPathException)
             {
                 throw;
             }
@@ -620,11 +620,11 @@ namespace OutSmart.DAXon.Expressions
                             ISequenceIterator parents = selectEval.Iterate(context);
                             return new Elaboration.FusedChildAtomizer.ChildSequenceAtomizeIterator(parents, childFp, childTest);
                         }
-                        catch (TerminationException e)
+                        catch (TerminationException)
                         {
                             throw;
                         }
-                        catch (Error.UserDefinedXPathException e)
+                        catch (Error.UserDefinedXPathException)
                         {
                             throw;
                         }
@@ -664,11 +664,11 @@ namespace OutSmart.DAXon.Expressions
                         ISequenceIterator @base = baseEval.Iterate(context);
                         return GetAtomizingIterator(@base, oneToOne);
                     }
-                    catch (TerminationException e)
+                    catch (TerminationException)
                     {
                         throw;
                     }
-                    catch (Error.UserDefinedXPathException e)
+                    catch (Error.UserDefinedXPathException)
                     {
                         throw;
                     }

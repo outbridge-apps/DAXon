@@ -496,7 +496,7 @@ namespace OutSmart.DAXon.Functions
                 SubPicture[] pics = GetSubPictures("0.0##########################e0", dfs);
                 return FormatNumberFn(value, pics, dfs);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 return value.GetStringValue();
             }
@@ -936,7 +936,7 @@ namespace OutSmart.DAXon.Functions
                     {
                         value = (NumericValue)ArithmeticExpression.Compute(value, Calculator.TIMES, new Int64Value(multiplier), null);
                     }
-                    catch (XPathException e)
+                    catch (XPathException)
                     {
                         value = new DoubleValue(double.PositiveInfinity);
                     }

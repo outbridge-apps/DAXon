@@ -244,7 +244,7 @@ namespace OutSmart.DAXon.Xslt
                 {
                     globalProps = GetPrincipalStylesheetModule().GatherOutputProperties(formatQName);
                 }
-                catch (XPathException err)
+                catch (XPathException)
                 {
                     CompileError("Named output format has not been defined", "XTDE1460");
                     return null;

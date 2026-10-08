@@ -124,7 +124,7 @@ namespace OutSmart.DAXon.Lib
             {
                 return htmlVersion != null && ((DecimalValue)BigDecimalValue.MakeDecimalValue(htmlVersion, false).AsAtomic()).GetDecimalValue().Equals(BigDecimal.ValueOf(5));
             }
-            catch (ValidationException e)
+            catch (ValidationException)
             {
                 return false;
             }
@@ -144,7 +144,7 @@ namespace OutSmart.DAXon.Lib
                 {
                     return ((DecimalValue)BigDecimalValue.MakeDecimalValue(htmlVersion, false).AsAtomic()).GetDecimalValue().Equals(BigDecimal.ValueOf(5));
                 }
-                catch (ValidationException e)
+                catch (ValidationException)
                 {
                     return false;
                 }

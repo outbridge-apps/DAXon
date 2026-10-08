@@ -262,7 +262,7 @@ namespace OutSmart.DAXon.Collections
                     Array.Copy(startPoints, i, startPoints, i + 1, used - i - 1);
                     Array.Copy(endPoints, i, endPoints, i + 1, used - i - 1);
                 }
-                catch (Exception err)
+                catch (Exception)
                 {
                     // ignored, as upstream does (it only printed the stack trace)
                 }

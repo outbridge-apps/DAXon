@@ -19,7 +19,6 @@ namespace OutSmart.DAXon.Functions.HigherOrder
     {
         private IFunctionItem targetFunction;
         private readonly SpecificFunctionType requiredType;
-        private readonly bool allowReducedArity;
 
         public IFunctionItem TargetFunction => targetFunction;
 
@@ -38,7 +37,6 @@ namespace OutSmart.DAXon.Functions.HigherOrder
 
             this.targetFunction = targetFunction;
             this.requiredType = requiredType;
-            this.allowReducedArity = allowReducedArity;
         }
 
         public override void TypeCheck(ExpressionVisitor visitor, ContextItemStaticInfo contextItemType)

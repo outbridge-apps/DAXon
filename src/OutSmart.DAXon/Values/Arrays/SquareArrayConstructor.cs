@@ -131,7 +131,7 @@ namespace OutSmart.DAXon.Values.Arrays
             {
                 return Literal.MakeLiteral(EvaluateItem(visitor.MakeDynamicContext()), this);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 return this;
             }

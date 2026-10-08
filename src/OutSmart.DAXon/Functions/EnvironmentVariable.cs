@@ -51,10 +51,10 @@ namespace OutSmart.DAXon.Functions
                         return null;
                     }
                 }
-                catch (SecurityException e)
+                catch (SecurityException)
                 {
                 }
-                catch (NullReferenceException e)
+                catch (NullReferenceException)
                 {
                 }
             }

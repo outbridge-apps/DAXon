@@ -105,19 +105,19 @@ namespace OutSmart.DAXon.Patterns
                         return SingletonIntersectExpression.ContainsNode(iter, (NodeInfo)item);
                     }
                 }
-                catch (XPathException.Circularity e)
+                catch (XPathException.Circularity)
                 {
                     throw;
                 }
                 // No StackOverflow catch: RecursionDepthError (a foreign type since round BC) is not
                 // an XPathException, so it propagates untouched; the old subtype is never thrown here.
-                catch (XPathException e)
+                catch (XPathException)
                 {
 
                     // treat pattern matching errors as a non-match
                     return false;
                 }
-                catch (UncheckedXPathException e)
+                catch (UncheckedXPathException)
                 {
 
                     // treat pattern matching errors as a non-match

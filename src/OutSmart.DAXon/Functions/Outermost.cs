@@ -72,7 +72,6 @@ namespace OutSmart.DAXon.Functions
         {
             ISequenceIterator @in;
             NodeInfo current = null;
-            int position = 0;
             public OutermostIterator(ISequenceIterator @in)
             {
                 this.@in = @in;
@@ -86,14 +85,12 @@ namespace OutSmart.DAXon.Functions
                     if (next == null)
                     {
                         current = null;
-                        position = -1;
                         return null;
                     }
 
                     if (current == null || !Navigator.IsAncestorOrSelf(current, next))
                     {
                         current = next;
-                        position++;
                         return current;
                     }
                 }

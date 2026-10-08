@@ -400,7 +400,7 @@ namespace OutSmart.DAXon.Expressions
                                             break;
                                         }
                                     }
-                                    catch (SchemaException e)
+                                    catch (SchemaException)
                                     {
                                     }
                                 }
@@ -496,7 +496,7 @@ namespace OutSmart.DAXon.Expressions
                                 itemType = new CombinedNodeTest(test, Token.INTERSECT, new ContentTypeTest(Types.Type.ATTRIBUTE, schemaType, config, false));
                             }
                         }
-                        catch (SchemaException e)
+                        catch (SchemaException)
                         {
                         }
                     }
@@ -598,7 +598,7 @@ namespace OutSmart.DAXon.Expressions
                             }
                         }
                     }
-                    catch (SchemaException e)
+                    catch (SchemaException)
                     {
                     }
                 }
@@ -693,7 +693,7 @@ namespace OutSmart.DAXon.Expressions
                     }
                     catch (SchemaException e)
                     {
-                        throw new InvalidOperationException(e?.Message, e);
+                        throw new InvalidOperationException(e.Message, e);
                     }
                 }
             }
@@ -896,8 +896,6 @@ namespace OutSmart.DAXon.Expressions
                     {
                         return test;
                     }
-
-                    break;
             }
         }
 
@@ -951,7 +949,7 @@ namespace OutSmart.DAXon.Expressions
                     {
                         return ((IComplexType)contentType).GetAttributeUseCardinality(nodeTest.MatchingNodeName);
                     }
-                    catch (SchemaException err)
+                    catch (SchemaException)
                     {
 
                         // shouldn't happen; play safe
@@ -986,7 +984,7 @@ namespace OutSmart.DAXon.Expressions
                     {
                         return ((IComplexType)contentType).GetDescendantElementCardinality(nodeTest.Fingerprint);
                     }
-                    catch (SchemaException err)
+                    catch (SchemaException)
                     {
 
                         // shouldn't happen; play safe
@@ -1151,7 +1149,7 @@ namespace OutSmart.DAXon.Expressions
                     return ((NodeInfo)item).IterateAxis(axis, test);
                 }
             }
-            catch (InvalidCastException cce)
+            catch (InvalidCastException)
             {
                 throw new XPathException("The context item for axis step " + this + " is not a node").WithErrorCode("XPTY0020").WithXPathContext(context).WithLocation(GetLocation()).AsTypeError();
             }

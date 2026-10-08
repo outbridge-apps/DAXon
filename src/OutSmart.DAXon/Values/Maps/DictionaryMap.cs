@@ -118,7 +118,6 @@ namespace OutSmart.DAXon.Values.Maps
 
             // we need to test the entries individually
             IAtomicIterator keyIter = Keys();
-            AtomicValue key;
             foreach (KeyValuePair<string, IGroundedValue> entry in hashMap)
             {
                 IGroundedValue val = entry.Value;

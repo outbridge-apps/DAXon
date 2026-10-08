@@ -215,7 +215,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                                         {
                                             return new ContentTypeTest(Types.Type.ELEMENT, elem.GetType(), config, false);
                                         }
-                                        catch (MissingComponentException e1)
+                                        catch (MissingComponentException)
                                         {
                                             return new ContentTypeTest(Types.Type.ELEMENT, AnyType.INSTANCE, config, false);
                                         }
@@ -238,7 +238,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                                         {
                                             return new ContentTypeTest(Types.Type.ATTRIBUTE, attr.GetType(), config, false);
                                         }
-                                        catch (MissingComponentException e1)
+                                        catch (MissingComponentException)
                                         {
                                             return new ContentTypeTest(Types.Type.ATTRIBUTE, AnySimpleType.INSTANCE, config, false);
                                         }
@@ -643,7 +643,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         newBaseUri = source.GetBaseURI();
                     }
                 }
-                catch (URISyntaxException err)
+                catch (URISyntaxException)
                 {
                     newBaseUri = source.GetBaseURI();
                 }

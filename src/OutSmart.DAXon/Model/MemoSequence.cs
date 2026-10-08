@@ -396,7 +396,7 @@ namespace OutSmart.DAXon.Model
                                 return null;
                             }
                         }
-                        catch (UncheckedXPathException e)
+                        catch (UncheckedXPathException)
                         {
                             container.state = State.ERROR;
                             throw;

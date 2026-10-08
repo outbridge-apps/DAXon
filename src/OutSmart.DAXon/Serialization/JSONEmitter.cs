@@ -33,7 +33,6 @@ namespace OutSmart.DAXon.Serialization
         private ICharacterSet characterSet;
         private bool isIndenting;
         private int indentSpaces = 2;   // as Saxon 12.9; 1.3.3 indented by three
-        private int maxLineLength;
         private bool first = true;
         private bool afterKey = false;
         private int level;
@@ -66,18 +65,6 @@ namespace OutSmart.DAXon.Serialization
                     escapeSolidus = false;
                 }
 
-                string max = value.GetProperty(DAXonOutputKeys.LINE_LENGTH);
-                if (max != null)
-                {
-                    try
-                    {
-                        maxLineLength = int.Parse(max, CultureInfo.InvariantCulture);
-                    }
-                    catch (Exception err) when (err is FormatException || err is OverflowException)
-                    {
-                    }
-                }
-
                 string spaces = value.GetProperty(DAXonOutputKeys.INDENT_SPACES);
                 if (spaces != null)
                 {
@@ -95,7 +82,7 @@ namespace OutSmart.DAXon.Serialization
                 {
                     characterSet = config.GetCharacterSetFactory().GetCharacterSet(encoding);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     characterSet = UTF8CharacterSet.GetInstance();
                 }

@@ -78,7 +78,7 @@ namespace OutSmart.DAXon.Xslt
                         {
                             declaredType = sourceElement.MakeSequenceType(asAtt);
                         }
-                        catch (XPathException err)
+                        catch (XPathException)
                         {
                         }
                     }

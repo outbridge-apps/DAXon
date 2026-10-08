@@ -267,7 +267,7 @@ namespace OutSmart.DAXon.Functions
             {
                 throw uxe.GetXPathException();
             }
-            catch (InvalidCastException err)
+            catch (InvalidCastException)
             {
 
                 // this will happen if the sequences contain non-comparable values

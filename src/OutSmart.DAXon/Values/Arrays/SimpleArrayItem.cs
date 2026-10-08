@@ -25,7 +25,6 @@ namespace OutSmart.DAXon.Values.Arrays
     {
         public static readonly SimpleArrayItem EMPTY_ARRAY = new SimpleArrayItem(new List<IGroundedValue>());
         private readonly IList<IGroundedValue> _members;
-        private bool knownToBeGrounded = false;
         private IPingable conversionPingable;
 
         public override OperandRole[] OperandRoles => new OperandRole[]
@@ -66,9 +65,7 @@ namespace OutSmart.DAXon.Values.Arrays
             IList<IGroundedValue> members = input is Regex.SingleCharTokenIterator tok
                 ? tok.DrainRemaining()               // exact-size fast path for array{tokenize(...)}
                 : Collect(input);
-            SimpleArrayItem result = new SimpleArrayItem(members);
-            result.knownToBeGrounded = true;
-            return result;
+            return new SimpleArrayItem(members);
         }
 
         // 64KB of refs per chunk: sub-LOH, so a large member sequence avoids the List doubling

@@ -283,14 +283,12 @@ namespace OutSmart.DAXon.Trees.Wrappers
             private readonly SpaceStrippedNode parent;
             private NodeInfo currentVirtualNode;
             private readonly SpaceStrippedDocument docWrapper;
-            private int position;
 
             public StrippingIterator(IAxisIterator @base, SpaceStrippedDocument docWrapper, SpaceStrippedNode parent)
             {
                 this.@base = @base;
                 this.docWrapper = docWrapper;
                 this.parent = parent;
-                position = 0;
             }
 
             public NodeInfo Next()
@@ -308,7 +306,6 @@ namespace OutSmart.DAXon.Trees.Wrappers
                 while (!IsPreserved(nextRealNode));
 
                 currentVirtualNode = MakeWrapper(nextRealNode, docWrapper, parent);
-                position++;
                 return currentVirtualNode;
             }
 

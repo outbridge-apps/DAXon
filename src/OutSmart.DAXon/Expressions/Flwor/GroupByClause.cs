@@ -235,7 +235,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                             h ^= i + val.GetXPathMatchKey(comparer.Collator, implicitTimezone).GetHashCode();
                         }
                     }
-                    catch (XPathException e)
+                    catch (XPathException)
                     {
                     }
                 }
@@ -264,7 +264,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                             return false;
                         }
                     }
-                    catch (XPathException e)
+                    catch (XPathException)
                     {
                         return false;
                     }

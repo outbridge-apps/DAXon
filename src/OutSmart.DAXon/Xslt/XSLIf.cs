@@ -103,7 +103,7 @@ namespace OutSmart.DAXon.Xslt
                         return null;
                     }
                 }
-                catch (XPathException err)
+                catch (XPathException)
                 {
                 }
             }

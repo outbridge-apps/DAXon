@@ -164,7 +164,7 @@ namespace OutSmart.DAXon.Patterns
             {
                 return Matches(item, context);
             }
-            catch (XPathException.Circularity e)
+            catch (XPathException.Circularity)
             {
                 throw;
             }

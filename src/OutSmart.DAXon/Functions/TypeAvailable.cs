@@ -47,7 +47,7 @@ namespace OutSmart.DAXon.Functions
                     config.GetType(className, false);
                     return true;
                 }
-                catch (XPathException err)
+                catch (XPathException)
                 {
                     return false;
                 }
@@ -80,7 +80,7 @@ namespace OutSmart.DAXon.Functions
                     return Literal.MakeLiteral(BooleanValue.Get(b));
                 }
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
             }
 

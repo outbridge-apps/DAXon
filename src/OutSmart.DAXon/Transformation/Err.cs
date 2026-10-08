@@ -101,7 +101,7 @@ namespace OutSmart.DAXon.Transformation
                         string uri = AbbreviateURI(qn.GetNamespaceUri());
                         s = "Q{" + uri + "}" + qn.GetLocalPart();
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         s = sb.ToString();
                     }
@@ -288,7 +288,7 @@ namespace OutSmart.DAXon.Transformation
                     return "(*lazily evaluated*)";
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // Swallows everything DELIBERATELY, RecursionDepthError included: a depiction
                 // runs while another error is being built, so degrading here beats replacing
@@ -375,7 +375,7 @@ namespace OutSmart.DAXon.Transformation
                 StructuredQName sq = StructuredQName.FromEQName(eqName);
                 return "Q{" + AbbreviateURI(sq.GetNamespaceUri()) + "}" + sq.GetLocalPart();
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return eqName;
             }

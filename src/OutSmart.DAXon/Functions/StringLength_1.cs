@@ -42,7 +42,7 @@ namespace OutSmart.DAXon.Functions
                 {
                     s = arg.UnicodeStringValue;
                 }
-                catch (NotSupportedException e)
+                catch (NotSupportedException)
                 {
                     throw new XPathException("Cannot get the string value of a function item", "FOTY0013");
                 }

@@ -82,7 +82,7 @@ namespace OutSmart.DAXon.Patterns
             {
                 bool ok;
                 try { ok = MatchesUpperPattern(node, anchor, context); }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     if (basePattern.Matches(node, context))
                     {
@@ -96,7 +96,7 @@ namespace OutSmart.DAXon.Patterns
             {
                 bool ok;
                 try { ok = basePattern.MatchesBeneathAnchor(node, anchor, context); }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     testUpperPatternFirst = true;
                     if (upperPattern.Matches(node, context))

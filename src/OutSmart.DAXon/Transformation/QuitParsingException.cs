@@ -13,12 +13,10 @@ namespace OutSmart.DAXon.Transformation
     // streamed early-exit); catch sites (ReceivingContentHandler, XsltController) treat it specially.
     internal sealed class QuitParsingException : XPathException
     {
-        private readonly bool notifiedByConsumer;
 
         public QuitParsingException(bool notifiedByConsumer)
             : base("The input file has not been read to completion", "SXQP0001")
         {
-            this.notifiedByConsumer = notifiedByConsumer;
         }
     }
 }

@@ -21,7 +21,6 @@ namespace OutSmart.DAXon.Events
         private int[] countStack = new int[50];
         private int depth = 0;
         private bool[] disinheritStack = new bool[50];
-        private NamespaceBinding[] pendingUndeclarations = null;
         public NamespaceReducer(IReceiver next) : base(next)
         {
         }
@@ -29,39 +28,6 @@ namespace OutSmart.DAXon.Events
         public override void StartElement(INodeName elemName, ISchemaType type, IAttributeMap attributes, NamespaceMap namespaceMap, ILocation location, int properties)
         {
             nextReceiver.StartElement(elemName, type, attributes, namespaceMap, location, properties);
-            if (ReceiverOption.Contains(properties, ReceiverOption.REFUSE_NAMESPACES))
-            {
-
-                // Typically XQuery: the element does not inherit namespaces from its parent
-                pendingUndeclarations = ArrayTools.CopyOf(namespaces, namespacesSize);
-            }
-            else if (depth > 0 && disinheritStack[depth - 1])
-            {
-
-                // If the parent element specified inherit=no, keep a list of namespaces that need to be
-                // undeclared. Note (bug 20340) that namespaces are still inherited from grandparent elements
-                IList<NamespaceBinding> undeclarations = new List<NamespaceBinding>(namespacesSize);
-                int k = namespacesSize;
-                for (int d = depth - 1; d >= 0; d--)
-                {
-                    if (!disinheritStack[d])
-                    {
-                        break;
-                    }
-
-                    for (int i = 0; i < countStack[d]; i++)
-                    {
-                        undeclarations.Add(namespaces[--k]);
-                    }
-                }
-
-                pendingUndeclarations = undeclarations.ToArray();
-            }
-            else
-            {
-                pendingUndeclarations = null;
-            }
-
 
             // Record the current height of the namespace list so it can be reset at endElement time
             countStack[depth] = 0;

@@ -14,7 +14,6 @@ namespace OutSmart.DAXon.Xslt
     internal sealed class XSLGlobalParam : XSLGlobalVariable
     {
 
-        Expression conversion = null;
         protected override HashSet<SourceBinding.BindingProperty> PermittedAttributes => new HashSet<SourceBinding.BindingProperty> { SourceBinding.BindingProperty.REQUIRED, SourceBinding.BindingProperty.SELECT, SourceBinding.BindingProperty.AS, SourceBinding.BindingProperty.STATIC };
         public XSLGlobalParam()
         {

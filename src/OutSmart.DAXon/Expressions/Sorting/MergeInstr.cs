@@ -750,12 +750,10 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
         {
 
-            private readonly MergeInstr parent;
             private readonly SortKeyDefinitionList sKeys;
             private readonly IAtomicComparer[] comps;
             public AnonymousComparator(MergeInstr parent, SortKeyDefinitionList sKeys, IAtomicComparer[] comps)
             {
-                this.parent = parent;
                 this.sKeys = sKeys;
                 this.comps = comps;
             }

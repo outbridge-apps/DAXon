@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Values
                 {
                     return typeLabel.Postprocess(cs);
                 }
-                catch (XPathException err)
+                catch (XPathException)
                 {
 
                     // Ignore any XPath errors that occur during postprocessing
@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Values
             {
                 return GetXPathMatchKey(CodepointCollator.GetInstance(), CalendarValue.NO_TIMEZONE);
             }
-            catch (NoDynamicContextException e)
+            catch (NoDynamicContextException)
             {
 
                 // Should not happen

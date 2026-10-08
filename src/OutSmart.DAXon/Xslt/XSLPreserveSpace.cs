@@ -56,13 +56,10 @@ namespace OutSmart.DAXon.Xslt
         {
             if (Fingerprint == StandardNames.XSL_STRIP_SPACE)
             {
-                if (Fingerprint == StandardNames.XSL_STRIP_SPACE)
+                string elements = GetAttributeValue(NamespaceUri.NULL, "elements");
+                if (elements != null && !(elements.Trim().Length == 0))
                 {
-                    string elements = GetAttributeValue(NamespaceUri.NULL, "elements");
-                    if (elements != null && !(elements.Trim().Length == 0))
-                    {
-                        top.GetStylesheetPackage().SetStripsWhitespace(true);
-                    }
+                    top.GetStylesheetPackage().SetStripsWhitespace(true);
                 }
             }
         }
@@ -170,7 +167,7 @@ namespace OutSmart.DAXon.Xslt
 
                             localName = parts[1];
                         }
-                        catch (QNameException err)
+                        catch (QNameException)
                         {
                             CompileError("Element name " + s + " is not a valid QName", "XTSE0280");
                             return;

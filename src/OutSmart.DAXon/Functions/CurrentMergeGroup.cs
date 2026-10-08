@@ -17,7 +17,6 @@ namespace OutSmart.DAXon.Functions
     /// </summary>
     internal sealed class CurrentMergeGroup : SystemFunction
     {
-        private bool inLoop = false;
         private MergeInstr controllingInstruction = null; // may be unknown, when current group has dynamic scope
         private readonly HashSet<string> allowedNames = new HashSet<string>();
 
@@ -29,7 +28,6 @@ namespace OutSmart.DAXon.Functions
         public void SetControllingInstruction(MergeInstr instruction, bool isInLoop)
         {
             this.controllingInstruction = instruction;
-            this.inLoop = isInLoop;
             foreach (MergeInstr.MergeSource m in instruction.MergeSources)
             {
                 string name = m.sourceName;

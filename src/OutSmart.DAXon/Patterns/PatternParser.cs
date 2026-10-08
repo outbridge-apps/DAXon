@@ -177,7 +177,7 @@ namespace OutSmart.DAXon.Patterns
                 {
                     pat = (Pattern)PatternMaker.FromExpression(exp.Simplify().TypeCheck(visitor, cit), env.GetConfiguration(), true);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     pat = (Pattern)PatternMaker.FromExpression(exp.Simplify(), env.GetConfiguration(), true);
                 }

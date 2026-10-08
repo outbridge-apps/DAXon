@@ -101,7 +101,7 @@ namespace OutSmart.DAXon.Functions
 
                 return DoubleValue.NaN;
             }
-            catch (FormatException e)
+            catch (FormatException)
             {
                 return DoubleValue.NaN;
             }

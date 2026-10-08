@@ -623,11 +623,9 @@ namespace OutSmart.DAXon.Values.Arrays
             private sealed class AnonymousIFold : IFold
             {
 
-                private readonly ArrayFromSequence parent;
                 readonly IList<IGroundedValue> members = new List<IGroundedValue>();
                 public AnonymousIFold(ArrayFromSequence parent)
                 {
-                    this.parent = parent;
                 }
                 public void ProcessItem(IItem item)
                 {

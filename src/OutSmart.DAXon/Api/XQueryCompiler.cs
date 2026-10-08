@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Api
             {
                 return new URI(staticQueryContext.BaseURI);
             }
-            catch (URISyntaxException err)
+            catch (URISyntaxException)
             {
                 throw new InvalidOperationException("Invalid base URI for query: " + staticQueryContext.BaseURI);
             }

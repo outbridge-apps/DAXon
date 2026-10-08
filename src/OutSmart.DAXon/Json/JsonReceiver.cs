@@ -234,7 +234,7 @@ namespace OutSmart.DAXon.Json
                     {
                         alreadyEscaped = StringConverter.StringToBoolean.INSTANCE.ConvertString(StringView.Tidy(escapedKey)).AsAtomic().EffectiveBooleanValue();
                     }
-                    catch (XPathException e)
+                    catch (XPathException)
                     {
                         throw new XPathException("xml-to-json: Value of escaped-key attribute '" + Err.Wrap(escapedKey) + "' is not a valid xs:boolean", ERR_INPUT);
                     }
@@ -293,7 +293,7 @@ namespace OutSmart.DAXon.Json
                         {
                             escaped = StringConverter.StringToBoolean.INSTANCE.ConvertString(StringView.Tidy(escapedAtt)).AsAtomic().EffectiveBooleanValue();
                         }
-                        catch (XPathException e)
+                        catch (XPathException)
                         {
                             throw new XPathException("xml-to-json: value of escaped attribute (" + escaped + ") is not a valid xs:boolean", ERR_INPUT);
                         }
@@ -403,7 +403,7 @@ namespace OutSmart.DAXon.Json
                     bool b = StringConverter.StringToBoolean.INSTANCE.ConvertString(uContent).AsAtomic().EffectiveBooleanValue();
                     output.Accept(b ? TOK_TRUE : TOK_FALSE);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     throw new XPathException("xml-to-json: Value of <boolean> element is not a valid xs:boolean", ERR_INPUT);
                 }
@@ -422,7 +422,7 @@ namespace OutSmart.DAXon.Json
 
                         output.Accept(new DoubleValue(d).UnicodeStringValue);
                     }
-                    catch (FormatException e)
+                    catch (FormatException)
                     {
                         throw new XPathException("xml-to-json: Invalid number: " + uContent, ERR_INPUT);
                     }
@@ -723,7 +723,7 @@ namespace OutSmart.DAXon.Json
                                 buffer.Append((char)code);
                                 i += 4;
                             }
-                            catch (Exception e)
+                            catch (Exception)
                             {
                                 throw new XPathException("Invalid hex escape sequence in string '" + Err.Wrap(literal) + "'", "FOJS0007");
                             }

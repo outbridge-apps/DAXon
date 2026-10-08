@@ -33,7 +33,7 @@ namespace OutSmart.DAXon.Lib
             }
             catch (URISyntaxException err)
             {
-                throw new XPathException(err?.Message);
+                throw new XPathException(err.Message);
             }
         }
 

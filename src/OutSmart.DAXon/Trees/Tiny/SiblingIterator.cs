@@ -18,9 +18,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         private readonly TinyTree tree;
         private int nextNodeNr;
         private readonly NodeTest test;
-        private readonly TinyNodeImpl startNode;
         private readonly TinyNodeImpl parentNode;
-        private readonly bool getChildren;
         private bool needToAdvance = false;
         private readonly IIntPredicateProxy matcher;
 
@@ -73,8 +71,6 @@ namespace OutSmart.DAXon.Trees.Tiny
                 matcher = nodeTest.GetMatcher(tree);
             }
 
-            startNode = node;
-            this.getChildren = getChildren;
             if (getChildren)
             {
 

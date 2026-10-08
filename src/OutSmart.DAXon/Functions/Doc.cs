@@ -90,11 +90,10 @@ namespace OutSmart.DAXon.Functions
         private sealed class AnonymousSystemFunctionCall : SystemFunctionCall
         {
 
-            private readonly Doc parent;
             private readonly SystemFunction sf;
             public AnonymousSystemFunctionCall(SystemFunction sf, Expression[] arguments) : base(sf, arguments)
             {
-                this.parent = sf as Doc; this.sf = sf;
+                this.sf = sf;
             }
             public override Expression PreEvaluate(ExpressionVisitor visitor)
             {
@@ -125,7 +124,7 @@ namespace OutSmart.DAXon.Functions
                         return constant;
                     }
                 }
-                catch (Exception err)
+                catch (Exception)
                 {
 
                     // ignore the exception and try again at run-time

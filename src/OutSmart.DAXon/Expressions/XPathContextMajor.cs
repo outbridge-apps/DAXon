@@ -401,13 +401,13 @@ namespace OutSmart.DAXon.Expressions
                 ComponentBinding binding = currentComponent.ComponentBindings[bindingSlot];
                 return binding.GetTarget();
             }
-            catch (NullReferenceException e)
+            catch (NullReferenceException)
             {
 
                 // Suggests that the current component is null, which would be a bug
                 throw;
             }
-            catch (IndexOutOfRangeException e)
+            catch (IndexOutOfRangeException)
             {
 
                 // Suggests that the current component's binding vector is the wrong size, which would be a bug.

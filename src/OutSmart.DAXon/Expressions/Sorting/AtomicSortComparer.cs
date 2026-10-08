@@ -18,7 +18,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
         //} else
         public static IAtomicMatchKey COLLATION_KEY_NaN = new MatchKeyForNaN();
         private IStringCollator collator;
-        private readonly IXPathContext context;
         private readonly int itemType;
         private readonly int implicitTimezone; // dynamic-context constant: hoisted from per-comparison GetImplicitTimezone() chase
 
@@ -32,7 +31,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 this.collator = CodepointCollator.GetInstance();
             }
 
-            this.context = context;
             this.itemType = itemType;
             this.implicitTimezone = context.GetImplicitTimezone();
         }
@@ -141,7 +139,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     {
                         return ac.CompareTo(bc);
                     }
-                    catch (InvalidCastException e)
+                    catch (InvalidCastException)
                     {
                         string message = "Cannot compare " + a.PrimitiveType.DisplayName + " with " + b.PrimitiveType.DisplayName;
 

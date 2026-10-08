@@ -131,7 +131,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
             0x4e5d
         };
         private string country;
-        private string language;
 
         public virtual string Country
         {
@@ -147,7 +146,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
 
         public virtual void SetLanguage(string language)
         {
-            this.language = language;
         }
 
         public string Format(long number, UnicodeString picture, int groupSize, string groupSeparator, string letterValue, string cardinal, string ordinal)
@@ -551,8 +549,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
 
                         break;
                     }
-
-                    break;
             }
 
             return sb.ToString();

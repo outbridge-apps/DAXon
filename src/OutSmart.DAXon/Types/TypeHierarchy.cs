@@ -776,7 +776,7 @@ namespace OutSmart.DAXon.Types
                     }
                 }
             }
-            catch (MissingComponentException e)
+            catch (MissingComponentException)
             {
                 return OVERLAPS;
             }

@@ -33,10 +33,8 @@ namespace OutSmart.DAXon.Functions
         private sealed class AnonymousSystemFunctionCall : SystemFunctionCall
         {
 
-            private readonly InsertBefore parent;
             public AnonymousSystemFunctionCall(InsertBefore parent, Expression[] arguments) : base(parent, arguments)
             {
-                this.parent = parent;
             }
             public override ItemType GetItemType()
             {

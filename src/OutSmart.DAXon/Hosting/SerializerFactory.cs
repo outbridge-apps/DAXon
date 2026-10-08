@@ -26,7 +26,6 @@ namespace OutSmart.DAXon.Lib
 
         private static readonly OutSmart.DAXon.Internal.Regex.Pattern publicIdPattern = OutSmart.DAXon.Internal.Regex.Pattern.Compile("^[\\s\\r\\na-zA-Z0-9\\-'()+,./:=?;!*#@$_%]*$");
         Configuration config;
-        PipelineConfiguration pipe;
         public SerializerFactory(Configuration config)
         {
             this.config = config;
@@ -34,7 +33,6 @@ namespace OutSmart.DAXon.Lib
 
         public SerializerFactory(PipelineConfiguration pipe)
         {
-            this.pipe = pipe;
             this.config = pipe.GetConfiguration();
         }
 
@@ -951,7 +949,7 @@ namespace OutSmart.DAXon.Lib
                             {
                                 value = CheckYesOrNo(key, value);
                             }
-                            catch (XPathException e)
+                            catch (XPathException)
                             {
                                 throw new XPathException("Serialization parameter {standalone} must have the value yes|no, true|false, 1|0, or 'omit'", "SEPM0016");
                             }

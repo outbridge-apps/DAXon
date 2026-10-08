@@ -846,7 +846,7 @@ namespace OutSmart.DAXon.XQuery
                     collationName = collationURI.ToString();
                 }
             }
-            catch (URISyntaxException err)
+            catch (URISyntaxException)
             {
                 Grumble("Collation name '" + collationName + "' is not a valid URI", "XQST0046");
                 collationName = NamespaceConstant.CODEPOINT_COLLATION_URI;

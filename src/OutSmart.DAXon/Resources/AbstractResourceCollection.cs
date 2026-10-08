@@ -243,7 +243,7 @@ namespace OutSmart.DAXon.Resources
                 stream = InputStreamMarker.EnsureMarkSupported(stream);
                 return URLConnection.GuessContentTypeFromStream(stream);
             }
-            catch (IOException err)
+            catch (IOException)
             {
                 return null;
             }

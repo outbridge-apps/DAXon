@@ -16,7 +16,6 @@ namespace OutSmart.DAXon.Regex
         private bool xpath20;
         private bool xpath30;
         private bool xsd11;
-        private bool debug; // flags = ";g"
         private bool allowUnknownBlockNames = false; //flags = ";k"
         public REFlags(string flags, string language)
         {
@@ -77,7 +76,6 @@ namespace OutSmart.DAXon.Regex
                 switch (c)
                 {
                     case 'g':
-                        debug = true;
                         break;
                     case 'k':
                         allowUnknownBlockNames = true;

@@ -264,7 +264,7 @@ namespace OutSmart.DAXon.Serialization
 
                 return writer;
             }
-            catch (Exception err)
+            catch (Exception)
             {
                 if (encoding.Equals("UTF8", StringComparison.OrdinalIgnoreCase))
                 {
@@ -290,7 +290,7 @@ namespace OutSmart.DAXon.Serialization
                     return new UnicodeWriterToWriter(writer, marksItself);
                 }
             }
-            catch (Exception err)
+            catch (Exception)
             {
                 if (encoding.Equals("UTF8", StringComparison.OrdinalIgnoreCase))
                 {

@@ -548,7 +548,7 @@ namespace OutSmart.DAXon.XQuery
             {
                 c = GetConfiguration().GetCollation(name);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 c = null;
             }

@@ -248,7 +248,7 @@ namespace OutSmart.DAXon.Api
                         destination.DestinationBaseURI = new URI(controller.BaseOutputURI);
                     }
                 }
-                catch (URISyntaxException e)
+                catch (URISyntaxException)
                 {
                 }
             }
@@ -313,11 +313,9 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousIResultDocumentResolver : IResultDocumentResolver
         {
 
-            private readonly AbstractXsltTransformer parent;
             private readonly Func<URI, IDestination> handler;
             public AnonymousIResultDocumentResolver(AbstractXsltTransformer parent, Func<URI, IDestination> handler)
             {
-                this.parent = parent;
                 this.handler = handler;
             }
             public IReceiver Resolve(IXPathContext context, string href, string baseUri, SerializationProperties properties)

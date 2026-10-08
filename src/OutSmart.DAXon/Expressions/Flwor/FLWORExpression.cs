@@ -768,7 +768,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                             break;
                         }
                     }
-                    catch (XPathException e)
+                    catch (XPathException)
                     {
                     }
                 }

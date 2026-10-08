@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.Expressions.Operators
             {
                 return operandArray[n];
             }
-            catch (IndexOutOfRangeException a)
+            catch (IndexOutOfRangeException)
             {
                 throw new ArgumentException();
             }
@@ -86,7 +86,7 @@ namespace OutSmart.DAXon.Expressions.Operators
             }
             catch (IndexOutOfRangeException a)
             {
-                throw new ArgumentException(a?.Message, a);
+                throw new ArgumentException(a.Message, a);
             }
         }
 
@@ -115,7 +115,7 @@ namespace OutSmart.DAXon.Expressions.Operators
                     operandArray[n].SetChildExpression(child);
                 }
             }
-            catch (IndexOutOfRangeException a)
+            catch (IndexOutOfRangeException)
             {
                 throw new ArgumentException();
             }

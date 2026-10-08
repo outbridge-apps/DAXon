@@ -185,7 +185,7 @@ namespace OutSmart.DAXon.Functions
                         prim = min;
                         foundDouble = true;
                     }
-                    catch (FormatException e)
+                    catch (FormatException)
                     {
                         throw new XPathException("Failure converting " + Err.Wrap(min.UnicodeStringValue) + " to a number").WithErrorCode("FORG0001").WithXPathContext(context);
                     }
@@ -260,7 +260,7 @@ namespace OutSmart.DAXon.Functions
                         prim = test2;
                         foundDouble = true;
                     }
-                    catch (FormatException e)
+                    catch (FormatException)
                     {
                         throw new XPathException("Failure converting " + Err.Wrap(test.GetStringValue()) + " to a number").WithErrorCode("FORG0001").WithXPathContext(context);
                     }
@@ -313,7 +313,7 @@ namespace OutSmart.DAXon.Functions
                             min = test2;
                         }
                     }
-                    catch (InvalidCastException err)
+                    catch (InvalidCastException)
                     {
                         if (min.GetItemType() == test2.GetItemType())
                         {

@@ -365,7 +365,7 @@ namespace OutSmart.DAXon.XQuery
                     controller.CloseTraceEpisode();
                     dest.Close();
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     // ignored, as upstream does (it only printed the stack trace)
                 }
@@ -410,7 +410,7 @@ namespace OutSmart.DAXon.XQuery
                     }
                     catch (IOException err)
                     {
-                        throw new XPathException(err?.Message);
+                        throw new XPathException(err.Message);
                     }
                 }
             }

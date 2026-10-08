@@ -1151,7 +1151,6 @@ namespace OutSmart.DAXon.Expressions.Parsing
                         }
 
                         goto case '_';
-                        break;
                     case '_':
                         bool foundColon = false;
                         bool breakLoop = false;

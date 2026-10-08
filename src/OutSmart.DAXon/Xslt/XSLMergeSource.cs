@@ -148,7 +148,7 @@ namespace OutSmart.DAXon.Xslt
                 {
                     sourceName = "merge-source " + (Count.CountFn(IterateAxis(AxisInfo.PRECEDING_SIBLING, NodeKindTest.ELEMENT)) + 1);
                 }
-                catch (XPathException e)
+                catch (XPathException)
                 {
                     sourceName = "merge-source " + GetHashCode();
                 }

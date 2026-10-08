@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Events
                     {
                         NextReceiver.Close();
                     }
-                    catch (XPathException err)
+                    catch (XPathException)
                     {
                     }
 

@@ -335,7 +335,7 @@ namespace OutSmart.DAXon.Functions
                         throw new XPathException("Relative URI passed to document() function (" + href + "); but no base URI is available", "XTDE1162");
                     }
                 }
-                catch (URISyntaxException e)
+                catch (URISyntaxException)
                 {
                     throw new XPathException("Invalid URI passed to document() function: " + href, "FODC0005");
                 }
@@ -404,7 +404,7 @@ namespace OutSmart.DAXon.Functions
                     // the href might be an absolute URL
                     absURI = new URI(href).ToString();
                 }
-                catch (URISyntaxException err)
+                catch (URISyntaxException)
                 {
 
                     // it isn't; but the URI resolver might know how to cope
@@ -423,15 +423,15 @@ namespace OutSmart.DAXon.Functions
                 {
                     absURI = Functions.ResolveURI.MakeAbsolute(href, baseURI).ToString();
                 }
-                catch (URISyntaxException err)
+                catch (URISyntaxException)
                 {
                     absURI = baseURI + "/../" + href;
                 }
-                catch (ArgumentException err)
+                catch (ArgumentException)
                 {
                     absURI = baseURI + "/../" + href;
                 }
-                catch (FormatException err)
+                catch (FormatException)
                 {
                     // .NET's Uri throws UriFormatException (a FormatException, NOT ArgumentException) for an
                     // unparseable href like ':/'. Fall back to a synthetic key like the other catches: doc()

@@ -396,27 +396,13 @@ namespace OutSmart.DAXon.Xslt
                 }
             }
 
-            try
+            ResolvedResource[] sources = (ResolvedResource[])grabber.AssociatedStylesheets;
+            if (sources == null)
             {
-                ResolvedResource[] sources = (ResolvedResource[])grabber.AssociatedStylesheets;
-                if (sources == null)
-                {
-                    throw new XPathException("No matching <?xml-stylesheet?> processing instruction found");
-                }
+                throw new XPathException("No matching <?xml-stylesheet?> processing instruction found");
+            }
 
-                return CompositeStylesheet(config, source.SystemId, sources);
-            }
-            catch (XPathException err)
-            {
-                if (err is XPathException)
-                {
-                    throw (XPathException)err;
-                }
-                else
-                {
-                    throw new XPathException(err?.Message);
-                }
-            }
+            return CompositeStylesheet(config, source.SystemId, sources);
         }
 
         private static ResolvedResource CompositeStylesheet(Configuration config, string baseURI, ResolvedResource[] sources)

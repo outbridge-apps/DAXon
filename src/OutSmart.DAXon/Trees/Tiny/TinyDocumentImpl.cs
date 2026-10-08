@@ -147,7 +147,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                     i++;
                 }
             }
-            catch (IndexOutOfRangeException e)
+            catch (IndexOutOfRangeException)
             {
 
                 // this shouldn't happen. If it does happen, it means the tree wasn't properly closed

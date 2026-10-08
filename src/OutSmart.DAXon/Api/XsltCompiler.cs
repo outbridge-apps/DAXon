@@ -156,7 +156,7 @@ namespace OutSmart.DAXon.Api
             {
                 c = GetProcessor().UnderlyingConfiguration.GetCollation(uri);
             }
-            catch (XPathException e)
+            catch (XPathException)
             {
                 c = null;
             }

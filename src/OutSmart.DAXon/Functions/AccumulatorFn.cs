@@ -90,7 +90,7 @@ namespace OutSmart.DAXon.Functions
                     return accumulator.GetType().PrimaryType;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 
@@ -109,7 +109,7 @@ namespace OutSmart.DAXon.Functions
                     return accumulator.GetType().GetCardinality();
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
             }
 

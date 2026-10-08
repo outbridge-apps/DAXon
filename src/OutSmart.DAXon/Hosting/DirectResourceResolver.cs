@@ -46,7 +46,7 @@ namespace OutSmart.DAXon.Lib
                         throw new XPathException("URIs using protocol " + u.Scheme + " are not permitted");
                     }
                 }
-                catch (URISyntaxException err)
+                catch (URISyntaxException)
                 {
                     throw new XPathException("Unknown URI scheme requested " + request.uri);
                 }
@@ -103,7 +103,7 @@ namespace OutSmart.DAXon.Lib
                 // Get an input stream from the request URI
                 stream = ResourceLoader.UrlStream(config, request.uri, kind);
             }
-            catch (IOException e)
+            catch (IOException)
             {
                 stream = null; // Carry on, the XML parser might know what to do with it.
             }

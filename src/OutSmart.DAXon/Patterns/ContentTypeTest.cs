@@ -120,7 +120,7 @@ namespace OutSmart.DAXon.Patterns
                     }
                 }
             }
-            catch (MissingComponentException e)
+            catch (MissingComponentException)
             {
                 return BuiltInAtomicType.ANY_ATOMIC;
             }

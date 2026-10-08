@@ -307,7 +307,7 @@ namespace OutSmart.DAXon.Text
                     ISegment seg = GetSegment(firstSeg);
                     return seg.Substring(start & MASK, lastCP);
                 }
-                catch (IndexOutOfRangeException e)
+                catch (IndexOutOfRangeException)
                 {
                     throw;
                 }

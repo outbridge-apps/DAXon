@@ -153,7 +153,7 @@ namespace OutSmart.DAXon.Xslt
                                 collationName = new StringLiteral(collationURI.ToString());
                             }
                         }
-                        catch (URISyntaxException err)
+                        catch (URISyntaxException)
                         {
                             CompileError("Collation name '" + collationName + "' is not a valid URI", "XTDE1110");
                             collationName = new StringLiteral(NamespaceConstant.CODEPOINT_COLLATION_URI);

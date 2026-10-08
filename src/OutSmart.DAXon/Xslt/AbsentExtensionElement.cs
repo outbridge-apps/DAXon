@@ -19,7 +19,6 @@ namespace OutSmart.DAXon.Xslt
     internal sealed class AbsentExtensionElement : StyleElement
     {
         CallTemplate instruction;
-        bool useTailRecursion;
         public override bool IsInXsltNamespace()
         {
             return GetNodeName().HasURI(NamespaceUri.XSLT);
@@ -138,7 +137,6 @@ namespace OutSmart.DAXon.Xslt
 
         public override bool MarkTailCalls()
         {
-            useTailRecursion = true;
             if (instruction != null)
             {
                 instruction.SetTailRecursive(true);

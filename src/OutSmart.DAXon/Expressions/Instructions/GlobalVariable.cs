@@ -354,7 +354,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             }
                         }
                     }
-                    catch (Exception err)
+                    catch (Exception)
                     {
                     }
                 }

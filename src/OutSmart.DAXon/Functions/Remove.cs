@@ -38,7 +38,7 @@ namespace OutSmart.DAXon.Functions
                             return new TailExpression(arguments[0], 2);
                         }
                     }
-                    catch (XPathException err)
+                    catch (XPathException)
                     {
                     }
                 }

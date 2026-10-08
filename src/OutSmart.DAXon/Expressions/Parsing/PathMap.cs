@@ -160,11 +160,11 @@ namespace OutSmart.DAXon.Expressions.Parsing
                             suppliedUri = ResolveURI.MakeAbsolute(argValue, baseUri).ToString();
                         }
                     }
-                    catch (URISyntaxException err)
+                    catch (URISyntaxException)
                     {
                         suppliedUri = null;
                     }
-                    catch (XPathException err)
+                    catch (XPathException)
                     {
                         suppliedUri = null;
                     }
@@ -224,8 +224,6 @@ namespace OutSmart.DAXon.Expressions.Parsing
                                 newRoot.CreateArc(AxisInfo.DESCENDANT_OR_SELF, arc.GetNodeTest(), arc.GetTarget());
                                 break;
                             }
-
-                            break;
                     }
                 }
 

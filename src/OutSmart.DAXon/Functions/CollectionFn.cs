@@ -205,11 +205,9 @@ namespace OutSmart.DAXon.Functions
         private sealed class CollectionIterator : ISequenceIterator
         {
             private readonly IEnumerator<IResource> sources;
-            private readonly IXPathContext context;
             public CollectionIterator(IEnumerator<IResource> sources, IXPathContext context)
             {
                 this.sources = sources;
-                this.context = context;
             }
 
             public IItem Next()

@@ -379,10 +379,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override ConversionRules GetConversionRules()
             {
@@ -402,10 +400,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType1 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType1(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -420,10 +416,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType2 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType2(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -438,10 +432,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType3 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType3(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -457,10 +449,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType4 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType4(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -476,10 +466,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType5 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType5(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -495,10 +483,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType6 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType6(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -514,10 +500,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType7 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType7(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -533,10 +517,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType8 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType8(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -552,10 +534,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType9 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType9(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -571,10 +551,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType10 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType10(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -589,10 +567,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType11 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType11(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -607,10 +583,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType12 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType12(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override bool Matches(XdmItem item)
             {
@@ -698,10 +672,8 @@ namespace OutSmart.DAXon.Api
         private sealed class AnonymousItemType13 : ItemType
         {
 
-            private readonly Types.ItemType parent;
             public AnonymousItemType13(Types.ItemType parent) : base(parent)
             {
-                this.parent = parent;
             }
             public override ConversionRules GetConversionRules()
             {

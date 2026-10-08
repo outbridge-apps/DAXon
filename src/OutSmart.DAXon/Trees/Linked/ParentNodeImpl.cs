@@ -393,7 +393,7 @@ namespace OutSmart.DAXon.Trees.Linked
                             source.Copy(builder, CopyOptions.ALL_NAMESPACES, Loc.NONE);
                             builder.Close();
                         }
-                        catch (XPathException e)
+                        catch (XPathException)
                         {
                             throw new ArgumentException("Failed to convert inserted element node to an instance of OutSmart.DAXon.Model.Tree.ElementImpl");
                         }

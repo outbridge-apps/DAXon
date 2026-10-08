@@ -418,7 +418,6 @@ namespace OutSmart.DAXon.Text
         private sealed class AnonymousIntIterator : AbstractIntIterator
         {
 
-            private readonly ZenoString parent;
             private IEnumerator<UnicodeString> outerIterator;
             private UnicodeString outerLookahead;
             private bool outerLookaheadFilled;
@@ -427,7 +426,6 @@ namespace OutSmart.DAXon.Text
             bool cpLookaheadFilled;
             public AnonymousIntIterator(ZenoString parent)
             {
-                this.parent = parent;
                 this.outerIterator = parent.segments.GetEnumerator();
             }
 

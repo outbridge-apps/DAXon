@@ -72,7 +72,6 @@ namespace OutSmart.DAXon.Functions.HigherOrder
         {
             TypeCheckChildren(visitor, contextInfo);
             ItemType baseType = BaseExpression.GetItemType();
-            SequenceType requiredFunctionType;
             SequenceType[] argTypes = new SequenceType[boundArgumentsOp.Length];
             ArrayTools.Fill(argTypes, SequenceType.ANY_SEQUENCE);
             TypeChecker tc = visitor.GetConfiguration().GetTypeChecker(false);
