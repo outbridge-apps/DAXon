@@ -32,7 +32,6 @@ namespace OutSmart.DAXon.Xslt
 {
     public class StylesheetPackage : PackageData
     {
-        private static readonly bool TRACING = false;
         private PackageVersion packageVersion = null;
         private string packageName;
         private readonly IList<StylesheetPackage> usedPackages = new List<StylesheetPackage>();
@@ -378,7 +377,6 @@ namespace OutSmart.DAXon.Xslt
         public virtual void AddComponentsFromUsedPackage(StylesheetPackage usedPackage, IList<XSLAccept> acceptors, HashSet<SymbolicName> overrides)
         {
             usedPackages.Add(usedPackage);
-            Trace("=== Adding components from " + usedPackage.PackageName + " to " + PackageName + " ===");
 
             // Create copies of the components in the used package, with suitably adjusted visibility
             // Create a mapping from components in the used package to their corresponding components
@@ -431,7 +429,6 @@ namespace OutSmart.DAXon.Xslt
                     }
                 }
 
-                Trace(oldC.GetActor().GetSymbolicName() + " (" + Err.DescribeVisibility(oldV) + ") becomes " + Err.DescribeVisibility(newV));
                 Component newC = Component.MakeComponent(oldC.GetActor(), newV, VisibilityProvenance.DERIVED, this, oldC.DeclaringPackage);
                 correspondence[oldC] = newC;
                 newC.BaseComponent = oldC;
@@ -479,7 +476,6 @@ namespace OutSmart.DAXon.Xslt
                 {
                     AddCompletionAction(() =>
                     {
-                        Trace("Doing mode completion for " + newC.GetActor().GetSymbolicName());
                         IList<ComponentBinding> oldBindings = newC.BaseComponent.ComponentBindings;
                         IList<ComponentBinding> newBindings = newC.ComponentBindings;
 
@@ -518,7 +514,6 @@ namespace OutSmart.DAXon.Xslt
                 {
                     AddCompletionAction(() =>
                     {
-                        Trace("Doing normal completion for " + newC.GetActor().GetSymbolicName());
                         IList<ComponentBinding> oldBindings = newC.BaseComponent.ComponentBindings;
                         IList<ComponentBinding> newBindings = new List<ComponentBinding>(oldBindings.Count);
                         MakeNewComponentBindings(overrides, correspondence, oldBindings, newBindings);
@@ -529,7 +524,6 @@ namespace OutSmart.DAXon.Xslt
 
             foreach (Component oldC in usedPackage.hiddenComponents)
             {
-                Trace(oldC.GetActor().GetSymbolicName() + " (HIDDEN, declared in " + oldC.DeclaringPackage.PackageName + ") becomes HIDDEN");
                 Component newC = Component.MakeComponent(oldC.GetActor(), HIDDEN, VisibilityProvenance.DERIVED, this, oldC.DeclaringPackage);
                 correspondence[oldC] = newC;
                 newC.BaseComponent = oldC;
@@ -579,15 +573,6 @@ namespace OutSmart.DAXon.Xslt
 
                 ComponentBinding newBinding = new ComponentBinding(name, target);
                 newBindings.Add(newBinding);
-            }
-        }
-
-        //    }
-        private void Trace(string message)
-        {
-            if (TRACING)
-            {
-                Console.Error.WriteLine(message);
             }
         }
 

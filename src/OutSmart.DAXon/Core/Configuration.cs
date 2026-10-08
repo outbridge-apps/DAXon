@@ -572,21 +572,6 @@ namespace OutSmart.DAXon.Core
             InternalSetBooleanProperty(FeatureCode.ALLOW_EXTERNAL_FUNCTIONS, FeatureKeys.ALLOW_EXTERNAL_FUNCTIONS, true);
             InternalSetBooleanProperty(FeatureCode.DISABLE_XSL_EVALUATE, FeatureKeys.DISABLE_XSL_EVALUATE, false);
 
-            string initializationClass = Environment.GetEnvironmentVariable("SAXON_INITIALIZER");
-            if (initializationClass != null)
-            {
-                try
-                {
-                    IInitializer initializer = (IInitializer)GetInstance(initializationClass);
-                    initializer.Initialize(this);
-                }
-                catch (XPathException e)
-                {
-                    Console.Error.WriteLine("Warning: Failed to invoke Saxon IInitializer " + initializationClass + ": " + e.Message);
-                }
-            }
-
-
             RegisterFileExtension("xml", "application/xml");
             RegisterFileExtension("html", "application/html");
             RegisterFileExtension("atom", "application/atom");

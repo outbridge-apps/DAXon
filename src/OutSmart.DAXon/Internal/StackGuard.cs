@@ -53,11 +53,6 @@ namespace OutSmart.DAXon.Internal
 
         private static volatile bool noApi;   // GetCurrentThreadStackLimits needs Windows 8/Server 2012+; absent off Windows
 
-        // QTDBG_SG=1 traces remaining-stack headroom to stderr (cached: an env lookup per probe
-        // would allocate on the hot path).
-        private static readonly bool Dbg = Environment.GetEnvironmentVariable("QTDBG_SG") != null;
-        private static int dbgCount;
-
         [DllImport("kernel32.dll")]
         private static extern void GetCurrentThreadStackLimits(out UIntPtr lowLimit, out UIntPtr highLimit);
 
@@ -94,19 +89,8 @@ namespace OutSmart.DAXon.Internal
             unsafe
             {
                 byte probe;
-                ulong at = (ulong)&probe;
-                if (Dbg && (++dbgCount & 255) == 0)
+                if ((ulong)&probe < floor + extraMargin)
                 {
-                    Console.Error.WriteLine("[SG] remaining=" + (at - stackLow) / 1024 + "KB");
-                }
-
-                if (at < floor + extraMargin)
-                {
-                    if (Dbg)
-                    {
-                        Console.Error.WriteLine("[SG] THREW at remaining=" + (at - stackLow) / 1024 + "KB");
-                    }
-
                     throw new RecursionDepthError();
                 }
             }
@@ -155,11 +139,6 @@ namespace OutSmart.DAXon.Internal
                 byte probe;
                 if ((ulong)&probe < floor)
                 {
-                    if (Dbg)
-                    {
-                        Console.Error.WriteLine("[SG] THREW at nesting");
-                    }
-
                     throw RecursionDepthError.AtNesting(location);
                 }
             }

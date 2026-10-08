@@ -269,14 +269,7 @@ namespace OutSmart.DAXon.Types
             public override IConversionResult Convert(object value) => (IConversionResult)BooleanValue.Get(((AtomicValue)value).EffectiveBooleanValue());
         }
         // Java: ToUntyped -> StringValue.makeUntypedAtomic(input.getUnicodeStringValue());
-        // ToString -> new StringValue(input.getUnicodeStringValue().tidy()). Matches the PhaseBConverters
-        // name-based fallback byte-for-byte (both dispatch paths must agree).
-        // KNOWN ENGINE-SIDE GAP (NOT this converter): xs:untypedAtomic(..) casts compile to an AtomicSequenceConverter whose
-        // MapItem (poc/output/full/expr/AtomicSequenceConverter.cs:~500) does `IConversionResult r = converter.Convert(item)` --
-        // a dynamic->IConversionResult assignment that yields null for the (otherwise-perfect: engine StringValue, implements
-        // IConversionResult, AsAtomic OK -- verified) value, NRE-ing at MapItem result.AsAtomic(). The PhaseBConverters fix that
-        // routes around this NRE was never wired into MapItem line 500. Fix belongs engine-side (route MapItem through
-        // PhaseBConverters.Convert, like the other sites) -- a separate Fix-PhaseB patch, out of scope for the compat un-stub.
+        // ToString -> new StringValue(input.getUnicodeStringValue().tidy()).
         internal sealed class ToUntypedAtomicConverter : Converter
         {
             public static readonly ToUntypedAtomicConverter INSTANCE = new ToUntypedAtomicConverter();

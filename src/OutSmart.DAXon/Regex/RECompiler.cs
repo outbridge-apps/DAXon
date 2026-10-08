@@ -84,7 +84,6 @@ namespace OutSmart.DAXon.Regex
         // Node flags
         static readonly int NODE_NORMAL = 0; // No flags (nothing special)
         static readonly int NODE_TOPLEVEL = 2; // True if top level expr
-        private static readonly bool TRACING = false;
         // Input state for compiling regular expression
         UnicodeString pattern; // Input string
         int len; // Length of the pattern string
@@ -148,18 +147,6 @@ namespace OutSmart.DAXon.Regex
         protected void SyntaxError(string s)
         {
             throw new RESyntaxException(s, idx);
-        }
-
-        static Operation Trace(Operation @base)
-        {
-            if (TRACING && !(@base is OpTrace))
-            {
-                return new OpTrace(@base);
-            }
-            else
-            {
-                return @base;
-            }
         }
 
         protected void Bracket()
@@ -1038,7 +1025,7 @@ namespace OutSmart.DAXon.Regex
 
 
             // Return the instruction
-            return Trace(new OpAtom(ub.ToUnicodeString()));
+            return new OpAtom(ub.ToUnicodeString());
         }
 
         protected Operation ParseTerminal(int[] flags)
@@ -1049,7 +1036,7 @@ namespace OutSmart.DAXon.Regex
                     if (isXPath)
                     {
                         idx++;
-                        return Trace(new OpEOL());
+                        return new OpEOL();
                     }
 
                     break;
@@ -1057,7 +1044,7 @@ namespace OutSmart.DAXon.Regex
                     if (isXPath)
                     {
                         idx++;
-                        return Trace(new OpBOL());
+                        return new OpBOL();
                     }
 
                     break;
@@ -1077,10 +1064,10 @@ namespace OutSmart.DAXon.Regex
                         predicate = IntPredicateLambda.Of((value) => value != '\n' && value != '\r');
                     }
 
-                    return Trace(new OpCharClass(predicate));
+                    return new OpCharClass(predicate);
                 case '[':
                     ICharacterClass range = ParseCharacterClass();
-                    return Trace(new OpCharClass(range));
+                    return new OpCharClass(range);
                 case '(':
                     return ParseExpr(flags);
                 case ')':
@@ -1117,7 +1104,7 @@ namespace OutSmart.DAXon.Regex
                                 SyntaxError("Bad backreference");
                             }
 
-                            return Trace(new OpBackReference(backreference));
+                            return new OpBackReference(backreference);
                         }
                         else if (esc is SingletonCharacterClass)
                         {
@@ -1128,7 +1115,7 @@ namespace OutSmart.DAXon.Regex
                         }
                         else
                         {
-                            return Trace(new OpCharClass(esc));
+                            return new OpCharClass(esc);
                         }
 
                         break;
@@ -1271,7 +1258,7 @@ namespace OutSmart.DAXon.Regex
                 // Actually do the quantifier now
                 if (ret.MatchLength == -1)
                 {
-                    result = Trace(new OpRepeat(ret, min, max, true));
+                    result = new OpRepeat(ret, min, max, true);
                 }
                 else
                 {
@@ -1290,7 +1277,7 @@ namespace OutSmart.DAXon.Regex
                 }
             }
 
-            return Trace(result);
+            return result;
         }
 
         protected Operation ParseBranch()
@@ -1440,7 +1427,7 @@ namespace OutSmart.DAXon.Regex
                 IList<Operation> list = new List<Operation>(4);
                 list.Add(o1);
                 list.Add(o2);
-                return Trace(new OpSequence(list));
+                return new OpSequence(list);
             }
         }
 

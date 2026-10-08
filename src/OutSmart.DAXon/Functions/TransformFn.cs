@@ -579,15 +579,12 @@ namespace OutSmart.DAXon.Functions
         [ThreadStatic]
         private static int transformNesting;
 
-        // QTDBG_XF=1 prints the open nesting on entry.
-        private static readonly bool DbgNesting = Environment.GetEnvironmentVariable("QTDBG_XF") != null;
-
         // Stack the UNWIND needs per open level, over and above StackGuard's own margin. MEASURED in
         // three steps, and each step was needed (see Call for the shape of the guard):
         //   1. A plain "1 idiv 0" raised 30 levels deep already killed a 1 MB thread while 10 levels
         //      reported fine - so the error path costs tens of KB per level against ~1.2 KB to descend.
-        //   2. At 32 KB the guard fired exactly where the arithmetic said it would (QTDBG_XF showed
-        //      nesting=23, ~990 KB still free) and the process died ANYWAY on the unwind.
+        //   2. At 32 KB the guard fired exactly where the arithmetic said it would (a trace of the nesting
+        //      showed 23, ~990 KB still free) and the process died ANYWAY on the unwind.
         //   3. That pins the real cost: >43 KB per level. The reserve must therefore be >= the unwind
         //      cost itself, not merely proportional to depth - with k < u, a deeper n always outruns
         //      the reserve, which is why step 2 failed while looking arithmetically correct.
@@ -605,19 +602,11 @@ namespace OutSmart.DAXon.Functions
             // outright, while the same 700 completed on 4 MB - stack-bound, uncatchable, no diagnosis.
             //   The reserve scales with the open nesting, and that was MEASURED rather than assumed
             // (round AW's lesson, and the first attempt here got it wrong): a plain Probe() does fire
-            // exactly as designed - QTDBG_SG showed "THREW at remaining=255KB" - and the process died
+            // exactly as designed - a trace showed it throwing with 255 KB remaining - and the process died
             // anyway, because unwinding several hundred open levels costs more than the whole fixed
             // margin. The per-level unwind cost is small (~1 KB, far below the include chain's ~28 KB,
             // since round BC made RecursionDepthError a type no catch site re-decorates), but small
             // times depth still beats any constant, which is the whole point of the AW rule.
-            if (DbgNesting)
-            {
-                // How the reserve above was calibrated, and the only way to see it: an uncatchable
-                // overflow leaves no trace, so the last nesting printed is the diagnosis.
-                Console.Error.WriteLine("[XF] nesting=" + transformNesting);
-                Console.Error.Flush();
-            }
-
             try
             {
                 StackGuard.Probe(UnwindReservePerTransform * (ulong)transformNesting);

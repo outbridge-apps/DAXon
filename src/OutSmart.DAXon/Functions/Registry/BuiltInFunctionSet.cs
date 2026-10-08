@@ -486,19 +486,14 @@ namespace OutSmart.DAXon.Functions.Registry
                     usage = OperandUsage.ABSORPTION;
                 }
 
-                try
+                if (a >= paramTypes.Length)
                 {
-                    this.paramTypes[a] = SequenceType.MakeSequenceType(type, cardinality);
-                    this.resultIfEmpty[a] = resultIfEmpty;
-                    this.usage[a] = usage; //                if (defaultValue != null) {
-                    //                    withDefault(a, defaultValue);
-                    //                }
-                }
-                catch (IndexOutOfRangeException err)
-                {
-                    Console.Error.WriteLine("Internal Saxon error: Can't set argument " + a + " of " + name);
+                    throw new InvalidOperationException("The function table gives " + name + " an argument " + a + " beyond its arity");
                 }
 
+                this.paramTypes[a] = SequenceType.MakeSequenceType(type, cardinality);
+                this.resultIfEmpty[a] = resultIfEmpty;
+                this.usage[a] = usage;
                 return this;
             }
 

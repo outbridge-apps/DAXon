@@ -180,15 +180,11 @@ namespace OutSmart.DAXon.Patterns
             // XPathException, so it propagates untouched; the old subtype is never thrown here.
             catch (UncheckedXPathException ex)
             {
-                if (System.Environment.GetEnvironmentVariable("SAXON_DBG_PAT") != null)
-                    System.Console.WriteLine("[pat-err] " + ex.GetXPathException().Message);
                 HandleDynamicError(ex.GetXPathException(), context);
                 return false;
             }
             catch (XPathException ex)
             {
-                if (System.Environment.GetEnvironmentVariable("SAXON_DBG_PAT") != null)
-                    System.Console.WriteLine("[pat-err] " + ex.Message);
                 HandleDynamicError(ex, context);
                 return false;
             }

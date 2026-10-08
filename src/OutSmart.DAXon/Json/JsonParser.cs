@@ -34,7 +34,6 @@ namespace OutSmart.DAXon.Json
         public const int ALLOW_ANY_TOP_LEVEL = 2;
         public const int LIBERAL = 4;
         public const int VALIDATE = 8;
-        public const int DEBUG = 16;
         public const int DUPLICATES_RETAINED = 32;
         public const int DUPLICATES_LAST = 64;
         public const int DUPLICATES_FIRST = 128;
@@ -82,12 +81,6 @@ namespace OutSmart.DAXon.Json
         public static int GetFlags(Dictionary<string, IGroundedValue> options, bool allowValidate, bool isSchemaAware)
         {
             int flags = 0;
-            BooleanValue debug = options.ContainsKey("debug") ? (BooleanValue)options.GetOrDefault("debug") : null;
-            if (debug != null && debug.GetBooleanValue())
-            {
-                flags |= DEBUG;
-            }
-
             BooleanValue escape = options.ContainsKey("escape") ? (BooleanValue)options.GetOrDefault("escape") : null;
             if (escape != null && escape.GetBooleanValue())
             {
@@ -153,12 +146,6 @@ namespace OutSmart.DAXon.Json
 
         private void ParseConstruct(JsonHandler handler, JsonTokenizer tokenizer, int flags, IXPathContext context)
         {
-            bool debug = (flags & DEBUG) != 0;
-            if (debug)
-            {
-                Console.Error.WriteLine("token:" + tokenizer.currentToken + " :" + tokenizer.TokenValue());
-            }
-
             JsonToken tok = tokenizer.currentToken;
             switch (tok)
             {

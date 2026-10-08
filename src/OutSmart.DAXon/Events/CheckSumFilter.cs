@@ -29,7 +29,6 @@ namespace OutSmart.DAXon.Events
     {
         public const string SIGMA = "Σ";
         public const string SIGMA2 = "Σ2";
-        private static readonly bool DEBUG = false;
         private DigestMaker digest = null;
         private int checksum = 0;
         private int sequence = 0;
@@ -59,30 +58,19 @@ namespace OutSmart.DAXon.Events
             this.checkExistingChecksum = check;
         }
 
-        private static void Trace(string message)
-        {
-            if (DEBUG)
-            {
-                Console.Error.WriteLine(message);
-            }
-        }
-
         public override void StartDocument(int properties)
         {
-            Trace("CHECKSUM - START DOC");
             base.StartDocument(properties);
         }
 
         public override void EndDocument()
         {
-            Trace("Σ ::= " + (checksum).ToString("x", CultureInfo.InvariantCulture));
             nextReceiver.EndDocument();
         }
 
         public override void Append(IItem item, ILocation locationId, int copyNamespaces)
         {
             checksum ^= Hash(item.ToString(), sequence++);
-            Trace("After append: " + (checksum).ToString("x", CultureInfo.InvariantCulture));
             base.Append(item, locationId, copyNamespaces);
         }
 
@@ -94,7 +82,6 @@ namespace OutSmart.DAXon.Events
             if (!Whitespace.IsAllWhite(chars))
             {
                 checksum ^= Hash(chars.ToString(), sequence++);
-                Trace("After characters " + chars + ": " + (checksum).ToString("x", CultureInfo.InvariantCulture));
             }
 
             base.Characters(chars, locationId, properties);
@@ -106,7 +93,6 @@ namespace OutSmart.DAXon.Events
         public override void StartElement(INodeName elemName, ISchemaType type, IAttributeMap attributes, NamespaceMap namespaces, ILocation location, int properties)
         {
             checksum ^= Hash(elemName, sequence++);
-            Trace("After startElement " + elemName.DisplayName + ": " + checksum);
             checksumCorrect = false;
             depth++;
             if (rootElement)
@@ -178,9 +164,7 @@ namespace OutSmart.DAXon.Events
                 INodeName name = namemap.GetOrDefault(key);
                 string value = attrmap.GetOrDefault(key);
                 checksum ^= Hash(name, sequence);
-                Trace("After attribute name " + name.DisplayName + ": " + checksum);
                 checksum ^= Hash(value, sequence);
-                Trace("After attribute value " + name.DisplayName + ": " + checksum);
             }
 
             base.StartElement(elemName, type, attributes, namespaces, location, properties);
@@ -204,11 +188,9 @@ namespace OutSmart.DAXon.Events
                 checksum ^= Hash(SIGMA2, 1);
                 checksum ^= Hash("", 1); // SIGMA2 @is in no namespace
                 checksum ^= Hash(sigma2Hash, 1);
-                Trace("After SIGMA2: " + checksum);
             }
 
             checksum ^= 1;
-            Trace("After endElement: " + checksum);
             base.EndElement();
         }
 

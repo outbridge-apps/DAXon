@@ -319,7 +319,7 @@ namespace OutSmart.DAXon.Expressions
             }
 
             Converter conv = GetConverterDynamically(context);
-            IConversionResult result = PhaseBConverters.Convert(conv, item);
+            IConversionResult result = conv.Convert(item);
             if (result is ValidationFailure && roleSupplier != null)
             {
 
