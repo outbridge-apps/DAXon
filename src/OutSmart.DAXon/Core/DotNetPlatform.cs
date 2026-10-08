@@ -88,7 +88,6 @@ namespace OutSmart.DAXon.Core
         // throw a clearly-labelled XPathException rather than silently mis-collating.
         public IStringCollator MakeCollation(Configuration config, Properties props, string uri)
         {
-            CompareInfoComparer comparer = null;
 
             // class= : Java loads a user Comparator class. No .NET equivalent without dynamic class loading.
             string classAtt = props.GetProperty("class");
@@ -115,7 +114,7 @@ namespace OutSmart.DAXon.Core
             {
                 ci = CultureInfo.CurrentCulture.CompareInfo;
             }
-            comparer = new CompareInfoComparer(ci, CompareOptions.None);
+            CompareInfoComparer comparer = new CompareInfoComparer(ci, CompareOptions.None);
 
             // strength=primary|secondary|tertiary|identical  (mirrors Java Collator.setStrength)
             string strengthAtt = props.GetProperty("strength");

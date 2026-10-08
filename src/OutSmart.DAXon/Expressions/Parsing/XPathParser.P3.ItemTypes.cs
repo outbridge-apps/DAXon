@@ -797,8 +797,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 {
                     NextToken();
                     resultType = ParseSequenceType();
-                    Values.SequenceType[] argArray = new Values.SequenceType[argTypes.Count];
-                    argArray = argTypes.ToArray();
+                    Values.SequenceType[] argArray = argTypes.ToArray();
                     return new SpecificFunctionType(argArray, resultType, annotations);
                 }
                 else if (argTypes.Count > 0)

@@ -86,7 +86,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
         //
         public override void AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
         {
-            PathMap.PathMapNodeSet varPath = Sequence.AddToPathMap(pathMap, pathMapNodeSet);
+            Sequence.AddToPathMap(pathMap, pathMapNodeSet);
         }
 
         //    }

@@ -169,7 +169,6 @@ namespace OutSmart.DAXon.Expressions.Accumulators
         {
             AccumulatorRule target = (AccumulatorRule)rule.GetAction();
             XPathContextMajor c2 = context.NewCleanContext();
-            Controller controller = c2.GetController();
             ManualIterator initialNode = new ManualIterator(node);
             c2.SetCurrentIterator(initialNode);
             c2.OpenStackFrame(target.GetStackFrameMap());

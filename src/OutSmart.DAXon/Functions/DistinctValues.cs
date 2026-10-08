@@ -226,10 +226,10 @@ namespace OutSmart.DAXon.Functions
                                     }
 
                                     int h;
-                                    byte[] spanBytes = null;
                                     int spanOff = 0;
                                     int spanLen = 0;
                                     Text.UnicodeString genericKey = null;
+                                    byte[] spanBytes;
                                     if (spanStart >= 0 && buffer.TryGetByteSpan(spanStart, spanEnd, out spanBytes, out spanOff, out spanLen))
                                     {
                                         h = 0;

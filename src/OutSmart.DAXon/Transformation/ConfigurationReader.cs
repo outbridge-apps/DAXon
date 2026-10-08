@@ -112,10 +112,6 @@ namespace OutSmart.DAXon.Transformation
                     localConfig = new Configuration();
                     SetPipelineConfiguration(localConfig.MakePipelineConfiguration());
                 }
-                else
-                {
-                    localConfig = pipe.GetConfiguration();
-                }
             }
             else
             {

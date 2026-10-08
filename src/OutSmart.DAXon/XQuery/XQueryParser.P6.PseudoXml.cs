@@ -393,7 +393,7 @@ namespace OutSmart.DAXon.XQuery
                 }
             }
 
-            StructuredQName qName = null;
+            StructuredQName qName;
             if (scanOnly)
             {
                 qName = StandardNames.GetStructuredQName(StandardNames.XSL_ELEMENT); // any name will do
@@ -658,8 +658,7 @@ namespace OutSmart.DAXon.XQuery
 
 
             // otherwise, return an expression that concatenates the components
-            Expression[] args = new Expression[components.Count];
-            args = components.ToArray();
+            Expression[] args = components.ToArray();
             RetainedStaticContext rsc = new RetainedStaticContext(env);
             Expression fn = SystemFunction.MakeCall("concat", rsc, args);
             fn.SetLocation(loc);
@@ -891,9 +890,8 @@ namespace OutSmart.DAXon.XQuery
                     if (afterEnclosedExpr)
                     {
                         Expression previousComponent = components[components.Count - 1];
-                        bool previousComponentIsNodeTest = true;
                         UType previousItemType = previousComponent.GetStaticUType(UType.ANY);
-                        previousComponentIsNodeTest = UType.ANY_NODE.Subsumes(previousItemType);
+                        bool previousComponentIsNodeTest = UType.ANY_NODE.Subsumes(previousItemType);
                         if (!previousComponentIsNodeTest)
                         {
 
@@ -1225,7 +1223,7 @@ namespace OutSmart.DAXon.XQuery
 
                 char prior = (char)0;
                 char penult = (char)0;
-                bool continueOuter = false;
+                bool continueOuter;
                 while (true)
                 {
                     c = t.NextChar();

@@ -114,7 +114,6 @@ namespace OutSmart.DAXon.Expressions.Parsing
                         break;
                     }
 
-                    Expression[] entriesArray = new Expression[entries.Count];
                     Block block = new Block(entries.ToArray());
                     HashTrieMap options = new HashTrieMap();
                     options.InitialPut(new StringValue("duplicates"), new StringValue("reject"));
@@ -278,8 +277,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 return new StringLiteral(StringValue.EMPTY_STRING);
             }
 
-            Expression[] arguments = new Expression[args.Count];
-            arguments = args.ToArray();
+            Expression[] arguments = args.ToArray();
             if (placeMarkers != null)
             {
                 return MakeCurriedFunction(this, offset, functionName, arguments, placeMarkers);
@@ -382,8 +380,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public virtual Expression CreateDynamicCurriedFunction(XPathParser p, Expression functionItem, List<Expression> args, IntSet placeMarkers)
         {
-            Expression[] arguments = new Expression[args.Count];
-            arguments = args.ToArray();
+            Expression[] arguments = args.ToArray();
             Expression result = CurryFunction(functionItem, arguments, placeMarkers);
             p.SetLocation(result, p.GetTokenizer().currentTokenStartOffset);
             return result;

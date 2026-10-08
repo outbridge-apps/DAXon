@@ -627,12 +627,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
         private Expression RewriteForOrLet(ExpressionVisitor visitor, ContextItemStaticInfo contextItemType)
         {
             Expression action = ReturnClause;
-            ICodeInjector injector = null;
-            if (visitor.StaticContext is QueryModule)
-            {
-                injector = ((QueryModule)visitor.StaticContext).CodeInjector;
-            }
-
             for (int i = clauses.Count - 1; i >= 0; i--)
             {
                 if (clauses[i] is ForClause)

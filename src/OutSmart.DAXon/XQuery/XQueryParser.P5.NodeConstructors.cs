@@ -229,7 +229,6 @@ namespace OutSmart.DAXon.XQuery
             {
 
                 // it really is a computed element constructor: save the namespace context
-                INamespaceResolver ns = new NamespaceResolverWithDefault(env.GetNamespaceResolver(), env.GetDefaultElementNamespace());
                 inst = new ComputedElement(name, null, null, ((QueryModule)env).ConstructionMode, ((QueryModule)env).IsInheritNamespaces(), true);
                 SetLocation(inst);
                 if (content == null)

@@ -70,8 +70,6 @@ namespace OutSmart.DAXon.Xslt
             string xpathAtt = null;
             string asAtt = null;
             string contextItemAtt = null;
-            string baseUriAtt = null;
-            string namespaceContextAtt = null;
             string schemaAwareAtt = null;
             string withParamsAtt = null;
             foreach (AttributeInfo att in atts)
@@ -92,11 +90,11 @@ namespace OutSmart.DAXon.Xslt
                         contextItem = MakeExpression(contextItemAtt, att);
                         break;
                     case "base-uri":
-                        baseUriAtt = att.Value;
+                        string baseUriAtt = att.Value;
                         baseUri = MakeAttributeValueTemplate(baseUriAtt, att);
                         break;
                     case "namespace-context":
-                        namespaceContextAtt = att.Value;
+                        string namespaceContextAtt = att.Value;
                         namespaceContext = MakeExpression(namespaceContextAtt, att);
                         break;
                     case "schema-aware":

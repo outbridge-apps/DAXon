@@ -28,7 +28,6 @@ namespace OutSmart.DAXon.Xslt
 
         public override void PrepareAttributes()
         {
-            string selectAtt = null;
             string rollbackOutputAtt = null;
             foreach (AttributeInfo att in Attributes())
             {
@@ -38,7 +37,7 @@ namespace OutSmart.DAXon.Xslt
                 switch (f)
                 {
                     case "select":
-                        selectAtt = value;
+                        string selectAtt = value;
                         select = MakeExpression(selectAtt, att);
                         break;
                     case "rollback-output":

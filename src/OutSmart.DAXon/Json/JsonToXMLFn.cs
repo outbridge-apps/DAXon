@@ -55,8 +55,8 @@ namespace OutSmart.DAXon.Json
         protected virtual IItem Eval(string input, MapItem options, IXPathContext context)
         {
             JsonParser parser = new JsonParser();
-            int flags = 0;
             Dictionary<string, IGroundedValue> checkedOptions = null;
+            int flags;
             if (options != null)
             {
                 checkedOptions = Details.optionDetails.ProcessSuppliedOptions(options, context);

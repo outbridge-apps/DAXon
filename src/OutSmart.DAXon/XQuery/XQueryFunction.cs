@@ -140,7 +140,6 @@ namespace OutSmart.DAXon.XQuery
 
         public virtual UserFunctionParameter[] GetParameterDefinitions()
         {
-            UserFunctionParameter[] @params = new UserFunctionParameter[parameters.Count];
             return parameters.ToArray();
         }
 
@@ -314,7 +313,6 @@ namespace OutSmart.DAXon.XQuery
             }
 
             ExpressionVisitor visitor = ExpressionVisitor.Make(staticContext);
-            Configuration config = staticContext.GetConfiguration();
             Optimizer opt = visitor.ObtainOptimizer();
             int arity = parameters.Count;
             if (opt.IsOptionSet(OptimizerOptions.MISCELLANEOUS))

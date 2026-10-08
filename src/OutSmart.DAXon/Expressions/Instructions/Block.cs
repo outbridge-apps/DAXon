@@ -126,8 +126,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     list.Add(e2);
                 }
 
-                Expression[] exps = new Expression[list.Count];
-                exps = list.ToArray();
+                Expression[] exps = list.ToArray();
                 return new Block(exps);
             }
             else
@@ -153,8 +152,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
             else
             {
-                Expression[] exps = new Expression[list.Count];
-                exps = list.ToArray();
+                Expression[] exps = list.ToArray();
                 return new Block(exps);
             }
         }

@@ -48,9 +48,6 @@ namespace OutSmart.DAXon.Xslt
             string formatAtt = null;
             AttributeInfo gsizeAtt = null;
             AttributeInfo gsepAtt = null;
-            string langAtt = null;
-            string letterValueAtt = null;
-            string ordinalAtt = null;
             string startAtAtt = null;
             foreach (AttributeInfo att in Attributes())
             {
@@ -81,11 +78,11 @@ namespace OutSmart.DAXon.Xslt
                         format = MakeAttributeValueTemplate(formatAtt, att);
                         break;
                     case "lang":
-                        langAtt = attValue;
+                        string langAtt = attValue;
                         lang = MakeAttributeValueTemplate(langAtt, att);
                         break;
                     case "letter-value":
-                        letterValueAtt = Whitespace.Trim(attValue);
+                        string letterValueAtt = Whitespace.Trim(attValue);
                         letterValue = MakeAttributeValueTemplate(letterValueAtt, att);
                         break;
                     case "grouping-size":
@@ -95,7 +92,7 @@ namespace OutSmart.DAXon.Xslt
                         gsepAtt = att;
                         break;
                     case "ordinal":
-                        ordinalAtt = attValue;
+                        string ordinalAtt = attValue;
                         ordinal = MakeAttributeValueTemplate(ordinalAtt, att);
                         break;
                     case "start-at":

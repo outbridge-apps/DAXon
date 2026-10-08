@@ -290,7 +290,7 @@ namespace OutSmart.DAXon.Xslt
 
             if (extraAsAtt != null)
             {
-                SequenceType extraResultType = null;
+                SequenceType extraResultType;
                 try
                 {
                     extraResultType = MakeExtendedSequenceType(extraAsAtt);

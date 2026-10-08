@@ -287,7 +287,6 @@ namespace OutSmart.DAXon.Transformation
             // Each list is sorted in precedence/priority order so we find the highest-priority rule first
             // This logic is designed to ensure that when a UnionPattern contains multiple branches
             // with the same priority, next-match doesn't select the same template twice (next-match-024)
-            int moduleHash = module.GetHashCode();
 
             //        int sequence;
             //        if (mostRecentRule == null) {

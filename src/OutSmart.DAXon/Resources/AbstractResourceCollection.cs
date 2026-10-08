@@ -223,10 +223,9 @@ namespace OutSmart.DAXon.Resources
         protected virtual string GuessContentTypeFromName(string resourceURI)
         {
             string contentTypeFromName = URLConnection.GuessContentTypeFromName(resourceURI);
-            string extension = null;
             if (contentTypeFromName == null)
             {
-                extension = GetFileExtension(resourceURI);
+                string extension = GetFileExtension(resourceURI);
                 if (extension != null)
                 {
                     contentTypeFromName = config.GetMediaTypeForFileExtension(extension);

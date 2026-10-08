@@ -346,7 +346,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 {
                     props.SetProperty("case-order", caseOrderX);
                     uri += (firstParam ? "?" : ";") + "case-order=" + caseOrderX;
-                    firstParam = false;
                 }
 
                 stringCollator = Core.Version.platform.MakeCollation(config, props, uri);

@@ -87,7 +87,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            URI relativeURI = null;
+            URI relativeURI;
             try
             {
                 relativeURI = AbsoluteOrRelativeURI(relative);
@@ -127,7 +127,7 @@ namespace OutSmart.DAXon.Functions
                 throw new XPathException("Relative URI " + Err.Wrap(relative) + " has a ':' in its first path segment", "FORG0002", context);
             }
 
-            URI absoluteURI = null;
+            URI absoluteURI;
             try
             {
                 absoluteURI = new URI(@base);
@@ -171,7 +171,7 @@ namespace OutSmart.DAXon.Functions
                 @base = absoluteURI.ToString();
             }
 
-            URI resolved = null;
+            URI resolved;
             try
             {
                 resolved = MakeAbsolute(relative, @base);

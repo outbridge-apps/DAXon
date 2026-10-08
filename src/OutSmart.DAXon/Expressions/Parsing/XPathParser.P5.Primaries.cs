@@ -221,7 +221,6 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public virtual Expression ParseStringTemplate()
         {
-            int offset = t.inputOffset;
 
             // we're reading raw characters
             //t.nextChar(); // lose this one, it's the initial backtick

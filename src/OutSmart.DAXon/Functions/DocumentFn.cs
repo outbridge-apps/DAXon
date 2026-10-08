@@ -538,7 +538,7 @@ namespace OutSmart.DAXon.Functions
 
             // see if the document is already loaded
             ITreeInfo doc = controller.GetDocumentPool().Find(documentKey);
-            ResolvedResource source = null;
+            ResolvedResource source;
             if (doc != null)
             {
                 source = new ResolvedResource { Node = doc.GetRootNode() };

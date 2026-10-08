@@ -24,7 +24,6 @@ namespace OutSmart.DAXon.Xslt
         {
             Expression name = null;
             string nameAtt = null;
-            string selectAtt = null;
             foreach (AttributeInfo att in Attributes())
             {
                 INodeName attName = att.GetNodeName();
@@ -37,7 +36,7 @@ namespace OutSmart.DAXon.Xslt
                 }
                 else if (f.Equals("select"))
                 {
-                    selectAtt = value;
+                    string selectAtt = value;
                     select = MakeExpression(selectAtt, att);
                 }
                 else

@@ -80,7 +80,6 @@ namespace OutSmart.DAXon.Xslt
 
             if (flagsAtt == null)
             {
-                flagsAtt = "";
                 flags = MakeAttributeValueTemplate("", null);
             }
 

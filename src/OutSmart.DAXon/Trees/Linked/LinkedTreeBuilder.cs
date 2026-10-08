@@ -207,8 +207,7 @@ namespace OutSmart.DAXon.Trees.Linked
 
             bool isNilled = ReceiverOption.Contains(properties, ReceiverOption.NILLED_ELEMENT);
             namespaceStack.Push(namespaces);
-            bool isTopWithinEntity = false;
-            isTopWithinEntity = location is ISourceLocator && ((ISourceLocator)location).LevelInEntity == 0;
+            bool isTopWithinEntity = location is ISourceLocator && ((ISourceLocator)location).LevelInEntity == 0;
             AttributeInfo xmlId = suppliedAttributes.Get(NamespaceUri.XML, "id");
             if (xmlId != null && Whitespace.ContainsWhitespace(StringTool.CodePoints(xmlId.Value)))
             {

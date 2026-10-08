@@ -31,7 +31,6 @@ namespace OutSmart.DAXon.Xslt
         public override void PrepareAttributes()
         {
             string keyAtt = null;
-            string selectAtt = null;
             foreach (AttributeInfo att in Attributes())
             {
                 INodeName attName = att.GetNodeName();
@@ -44,7 +43,7 @@ namespace OutSmart.DAXon.Xslt
                 }
                 else if (f.Equals("select"))
                 {
-                    selectAtt = value;
+                    string selectAtt = value;
                     select = MakeExpression(selectAtt, att);
                 }
                 else

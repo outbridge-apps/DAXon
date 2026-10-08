@@ -119,7 +119,7 @@ namespace OutSmart.DAXon.Functions
                     case "column-number":
 
                         // Bug 4144
-                        int column = -1;
+                        int column;
                         if (locator == null)
                         {
                             return EmptySequence.GetInstance();

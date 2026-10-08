@@ -95,7 +95,7 @@ namespace OutSmart.DAXon.Expressions
         return e2;*/
         public override void Process(Outputter output, IXPathContext context)
         {
-            ITailCall tc = MakeElaborator().ElaborateForPush().ProcessLeavingTail(output, context);
+            MakeElaborator().ElaborateForPush().ProcessLeavingTail(output, context);
         }
 
         /*TailCallLoop e2 = new TailCallLoop(containingFunction);

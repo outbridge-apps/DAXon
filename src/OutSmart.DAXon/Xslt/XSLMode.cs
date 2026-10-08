@@ -106,7 +106,6 @@ namespace OutSmart.DAXon.Xslt
             }
 
             prepared = true;
-            Visibility visibility = Visibility.PRIVATE;
             foreach (AttributeInfo att in Attributes())
             {
                 INodeName attName = att.GetNodeName();
@@ -182,7 +181,7 @@ namespace OutSmart.DAXon.Xslt
 
                     case "visibility":
                         visibilityAtt = Whitespace.Trim(value);
-                        visibility = InterpretVisibilityValue(visibilityAtt, "");
+                        Visibility visibility = InterpretVisibilityValue(visibilityAtt, "");
                         if (visibility == Visibility.ABSTRACT)
                         {
                             InvalidAttribute(f, "public|private|final");

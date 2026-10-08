@@ -32,7 +32,6 @@ namespace OutSmart.DAXon.Xslt
 
         public override void PrepareAttributes()
         {
-            string selectAtt = null;
             string errorAtt = null;
             foreach (AttributeInfo att in Attributes())
             {
@@ -41,7 +40,7 @@ namespace OutSmart.DAXon.Xslt
                 string value = att.Value;
                 if (f.Equals("select"))
                 {
-                    selectAtt = value;
+                    string selectAtt = value;
                     select = MakeExpression(selectAtt, att);
                 }
                 else if (f.Equals("errors"))

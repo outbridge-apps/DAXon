@@ -131,7 +131,7 @@ namespace OutSmart.DAXon.Lib
         private static string AbsoluteTarget(ResourceRequest request)
         {
             Uri absolute;
-            if (Uri.TryCreate(request.uri, UriKind.Absolute, out absolute))
+            if (Uri.TryCreate(request.uri, UriKind.Absolute, out _))
             {
                 return request.uri;
             }

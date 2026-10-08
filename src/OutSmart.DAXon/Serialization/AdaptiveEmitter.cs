@@ -216,7 +216,6 @@ namespace OutSmart.DAXon.Serialization
                     Emit("\"");
                     break;
                 default:
-                    StringWriter sw = new StringWriter();
                     Properties props = new Properties(outputProperties);
                     props.SetProperty("method", "xml");
 

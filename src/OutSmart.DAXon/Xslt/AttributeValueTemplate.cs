@@ -113,8 +113,7 @@ namespace OutSmart.DAXon.Xslt
 
             // otherwise, return an expression that concatenates the components
             {
-                Expression[] args = new Expression[components.Count];
-                args = components.ToArray();
+                Expression[] args = components.ToArray();
                 Expression fn = SystemFunction.MakeCall("concat", new RetainedStaticContext(env), args);
                 result = fn.Simplify();
             }

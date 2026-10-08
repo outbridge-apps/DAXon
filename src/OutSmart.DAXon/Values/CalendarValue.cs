@@ -110,7 +110,7 @@ namespace OutSmart.DAXon.Values
             DateTimeValue dt2 = other.ToDateTime();
             if (dt1.TimezoneInMinutes != dt2.TimezoneInMinutes)
             {
-                int tz = CalendarValue.NO_TIMEZONE;
+                int tz;
                 if (context == null || (tz = context.GetImplicitTimezone()) == CalendarValue.MISSING_TIMEZONE)
                 {
                     throw new NoDynamicContextException("Implicit timezone required");

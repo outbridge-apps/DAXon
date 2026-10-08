@@ -148,7 +148,6 @@ namespace OutSmart.DAXon.Events
         public static IReceiver MakeValidator(IReceiver receiver, string systemId, ParseOptions options)
         {
             PipelineConfiguration pipe = receiver.GetPipelineConfiguration();
-            Configuration config = pipe.GetConfiguration();
             int sv = options.GetSchemaValidationMode();
             if (sv != Validation.PRESERVE && sv != Validation.DEFAULT)
             {

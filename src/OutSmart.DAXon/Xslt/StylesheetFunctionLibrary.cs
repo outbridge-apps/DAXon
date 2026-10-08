@@ -106,7 +106,6 @@ namespace OutSmart.DAXon.Xslt
             {
                 if (entry.Value.ComponentKind == StandardNames.XSL_FUNCTION)
                 {
-                    UserFunction uf = (UserFunction)entry.Value.GetActor();
                     StructuredQName functionName = entry.Key.ComponentName;
                     if (functionIndex.ContainsKey(functionName))
                     {

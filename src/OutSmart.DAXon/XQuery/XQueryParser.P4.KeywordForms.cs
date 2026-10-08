@@ -27,7 +27,6 @@ namespace OutSmart.DAXon.XQuery
         {
 
             // On entry, the "(" has already been read
-            int offset = t.currentTokenStartOffset;
             NextToken();
             Expression operand = ParseExpression();
             IList<IList<Values.SequenceType>> types = new List<IList<Values.SequenceType>>(10);
@@ -97,7 +96,6 @@ namespace OutSmart.DAXon.XQuery
             }
 
             Expect(Token.DEFAULT);
-            int defaultOffset = t.currentTokenStartOffset;
             NextToken();
             Expression defaultAction;
             if (t.currentToken == Token.DOLLAR)
@@ -308,7 +306,6 @@ namespace OutSmart.DAXon.XQuery
         //
         protected override Expression ParseValidateExpression()
         {
-            int offset = t.currentTokenStartOffset;
             int mode = Validation.STRICT;
             bool foundCurly = false;
             ISchemaType requiredType = null;

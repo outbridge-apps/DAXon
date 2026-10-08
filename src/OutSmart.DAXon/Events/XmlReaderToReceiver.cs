@@ -1001,8 +1001,9 @@ namespace OutSmart.DAXon.Events
                     continue;   // parsed (general) entity — not reported
                 }
 
-                string publicId = null, systemId = null;
+                string publicId = null;
                 var m = System.Text.RegularExpressions.Regex.Match(body, "^PUBLIC\\s+(?:\"([^\"]*)\"|'([^']*)')\\s+(?:\"([^\"]*)\"|'([^']*)')");
+                string systemId;
                 if (m.Success)
                 {
                     publicId = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;

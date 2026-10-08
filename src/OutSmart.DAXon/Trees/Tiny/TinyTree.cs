@@ -1056,7 +1056,6 @@ namespace OutSmart.DAXon.Trees.Tiny
                             return StringValue.ZERO_LENGTH_UNTYPED;
                         }
 
-                        char[] dest = new char[len2];
                         return new StringValue(commentBuffer.Substring(start2, start2 + len2));
                     }
 

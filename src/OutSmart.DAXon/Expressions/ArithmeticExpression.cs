@@ -358,7 +358,6 @@ namespace OutSmart.DAXon.Expressions
                     // there are a few special cases where we can do better. For example, given X+1, where the type of X
                     // is unknown, we can still infer that the result is numeric. (Not so for X*2, however, where it could
                     // be a duration)
-                    TypeHierarchy th = GetConfiguration().GetTypeHierarchy();
                     if ((@operator == Token.PLUS || @operator == Token.MINUS) && (NumericType.IsNumericType(t2) || NumericType.IsNumericType(t1)))
                     {
                         resultType = NumericType.GetInstance();

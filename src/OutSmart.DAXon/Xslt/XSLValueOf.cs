@@ -20,9 +20,7 @@ namespace OutSmart.DAXon.Xslt
         protected override string ErrorCodeForSelectPlusContent => "XTSE0870";
         public override void PrepareAttributes()
         {
-            string selectAtt = null;
             string disableAtt = null;
-            string separatorAtt = null;
             foreach (AttributeInfo att in Attributes())
             {
                 INodeName attName = att.GetNodeName();
@@ -34,11 +32,11 @@ namespace OutSmart.DAXon.Xslt
                         disableAtt = Whitespace.Trim(value);
                         break;
                     case "select":
-                        selectAtt = value;
+                        string selectAtt = value;
                         select = MakeExpression(selectAtt, att);
                         break;
                     case "separator":
-                        separatorAtt = value;
+                        string separatorAtt = value;
                         separator = MakeAttributeValueTemplate(separatorAtt, att);
                         break;
                     default:
@@ -63,7 +61,6 @@ namespace OutSmart.DAXon.Xslt
         public override Expression Compile(Compilation exec, ComponentDeclaration decl)
         {
             Configuration config = GetConfiguration();
-            TypeHierarchy th = config.GetTypeHierarchy();
             if (separator == null && select != null && XPath10ModeIsEnabled())
             {
 

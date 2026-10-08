@@ -127,7 +127,6 @@ namespace OutSmart.DAXon.Xslt
             {
 
                 // not recognized as an XSLT element, not top-level
-                string localname = elemName.GetLocalPart();
                 StyleElement temp = null;
 
                 // Detect a mis-spelt XSLT element, or a 3.0 element used in a 2.0 stylesheet

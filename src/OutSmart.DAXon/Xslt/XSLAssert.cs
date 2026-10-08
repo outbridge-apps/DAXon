@@ -32,8 +32,6 @@ namespace OutSmart.DAXon.Xslt
         public override void PrepareAttributes()
         {
             string testAtt = null;
-            string selectAtt = null;
-            string errorCodeAtt = null;
             foreach (AttributeInfo att in Attributes())
             {
                 INodeName attName = att.GetNodeName();
@@ -46,11 +44,11 @@ namespace OutSmart.DAXon.Xslt
                         test = MakeExpression(testAtt, att);
                         break;
                     case "select":
-                        selectAtt = value;
+                        string selectAtt = value;
                         select = MakeExpression(selectAtt, att);
                         break;
                     case "error-code":
-                        errorCodeAtt = value;
+                        string errorCodeAtt = value;
                         errorCode = MakeAttributeValueTemplate(errorCodeAtt, att);
                         break;
                     default:

@@ -31,7 +31,6 @@ namespace OutSmart.DAXon.Json
             }
 
             string href = arg0.GetStringValue();
-            Configuration config = context.GetConfiguration();
             // json-doc applies no XML-character validation (bug 3911) and needs a string for the
             // parser, so it reads straight to a string (ReadFileToString) instead of building a
             // codepoint UnicodeString and converting it back.

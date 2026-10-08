@@ -32,7 +32,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
         {
             currentWindows = new List<WindowClause.Window>();
             bool autoClose = windowClause.IsTumblingWindow() && windowClause.EndCondition == null;
-            IItem previousPrevious = null;
             IItem previous = null;
             IItem current = null;
             IItem next = null;
@@ -41,7 +40,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             bool finished = false;
             while (!finished)
             {
-                previousPrevious = previous;
+                IItem previousPrevious = previous;
                 previous = current;
                 current = next;
                 next = iter.Next();

@@ -76,7 +76,6 @@ namespace OutSmart.DAXon.Functions
 
         protected virtual void PreAllocateComparer(IAtomicType type0, IAtomicType type1, IStaticContext env)
         {
-            IStringCollator collation = StringCollator;
             if (type0 == ErrorType.GetInstance() || type1 == ErrorType.GetInstance())
             {
 

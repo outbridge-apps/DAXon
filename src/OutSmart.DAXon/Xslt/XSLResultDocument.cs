@@ -84,7 +84,6 @@ namespace OutSmart.DAXon.Xslt
         public override void PrepareAttributes()
         {
             string formatAttribute = null;
-            string hrefAttribute = null;
             string validationAtt = null;
             string typeAtt = null;
             string useCharacterMapsAtt = null;
@@ -101,7 +100,7 @@ namespace OutSmart.DAXon.Xslt
                 }
                 else if (f.Equals("href"))
                 {
-                    hrefAttribute = Whitespace.Trim(value);
+                    string hrefAttribute = Whitespace.Trim(value);
                     href = MakeAttributeValueTemplate(hrefAttribute, att);
                 }
                 else if (f.Equals("validation"))
@@ -259,7 +258,7 @@ namespace OutSmart.DAXon.Xslt
 
             // If no serialization method was specified, we can work it out statically if the
             // first contained instruction is a literal result element. This saves effort at run-time.
-            string method = null;
+            string method;
             if (formatExpression == null && globalProps.GetProperty("method") == null && serializationAttributes.GetOrDefault(METHOD) == null)
             {
                 IAxisIterator kids = IterateAxis(AxisInfo.CHILD);

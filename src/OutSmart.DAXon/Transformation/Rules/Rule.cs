@@ -102,10 +102,9 @@ namespace OutSmart.DAXon.Transformation.Rules
         public virtual void Export(ExpressionPresenter @out, bool modeStreamable)
         {
             IRuleTarget target = GetAction();
-            TemplateRule template = null;
             if (target is TemplateRule)
             {
-                template = (TemplateRule)target;
+                TemplateRule template = (TemplateRule)target;
                 int s = @out.StartElement("templateRule");
                 @out.EmitAttribute("prec", Precedence + "");
                 @out.EmitAttribute("prio", Priority + "");

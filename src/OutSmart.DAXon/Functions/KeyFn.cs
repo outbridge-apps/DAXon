@@ -159,7 +159,7 @@ namespace OutSmart.DAXon.Functions
         private KeyDefinitionSet GetKeyDefinitionSet(KeyManager keyManager, string keyName)
         {
             KeyDefinitionSet selectedKeySet;
-            StructuredQName qName = null;
+            StructuredQName qName;
             try
             {
                 qName = StructuredQName.FromLexicalQName(keyName, false, true, GetNamespaceResolver());

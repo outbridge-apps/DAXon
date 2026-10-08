@@ -35,7 +35,6 @@ namespace OutSmart.DAXon.Xslt
             foreach (AttributeInfo att in Attributes())
             {
                 INodeName attName = att.GetNodeName();
-                string f = attName.DisplayName;
                 CheckUnknownAttribute(attName);
             }
         }

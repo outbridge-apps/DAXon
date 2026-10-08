@@ -385,7 +385,7 @@ namespace OutSmart.DAXon.Trees.Linked
                     case Types.Type.PROCESSING_INSTRUCTION:
                         return new ProcInstImpl(source.GetLocalPart(), source.UnicodeStringValue);
                     case Types.Type.ELEMENT:
-                        Builder builder = null;
+                        Builder builder;
                         try
                         {
                             builder = new LinkedTreeBuilder(GetConfiguration().MakePipelineConfiguration(), Durability.MUTABLE);

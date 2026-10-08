@@ -122,7 +122,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override void Export(ExpressionPresenter @out)
         {
-            ExpressionPresenter.ExportOptions options = @out.GetOptions();
             @out.StartElement(ExportTag, this);
             int validation = parseOptions.GetSchemaValidationMode();
             if (validation != Validation.SKIP && validation != Validation.BY_TYPE)

@@ -346,7 +346,7 @@ namespace OutSmart.DAXon.Xslt
 
             if (extraAsAtt != null)
             {
-                Values.SequenceType extraResultType = null;
+                Values.SequenceType extraResultType;
                 try
                 {
                     extraResultType = sourceElement.MakeExtendedSequenceType(extraAsAtt);

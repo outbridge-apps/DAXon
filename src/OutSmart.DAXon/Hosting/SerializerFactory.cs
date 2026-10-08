@@ -112,7 +112,6 @@ namespace OutSmart.DAXon.Lib
                 rr.nature = NamespaceConstant.OUTPUT;
                 rr.purpose = ResourceRequest.ANY_PURPOSE;
                 ResolvedResource source = rr.Resolve(config.GetResourceResolver(), new DirectResourceResolver(config));
-                ParseOptions options = new ParseOptions().WithSchemaValidationMode(Validation.LAX).WithDTDValidationMode(Validation.SKIP);
                 ITreeInfo doc = config.BuildDocumentTree(source);
                 SerializationParamsHandler ph = new SerializationParamsHandler();
                 ph.SetSerializationParams(doc.GetRootNode());

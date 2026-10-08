@@ -29,7 +29,6 @@ namespace OutSmart.DAXon.Xslt
         public override void PrepareAttributes()
         {
             string matchAtt = null;
-            string newValueAtt = null;
             foreach (AttributeInfo att in Attributes())
             {
                 INodeName attName = att.GetNodeName();
@@ -43,7 +42,7 @@ namespace OutSmart.DAXon.Xslt
                             matchAtt = value;
                             break;
                         case "select":
-                            newValueAtt = value;
+                            string newValueAtt = value;
                             select = MakeExpression(newValueAtt, att);
                             break;
                         case "phase":

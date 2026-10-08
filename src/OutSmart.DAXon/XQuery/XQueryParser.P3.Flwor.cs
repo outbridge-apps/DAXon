@@ -135,7 +135,6 @@ namespace OutSmart.DAXon.XQuery
                 SetLocation(clauseList[clauseList.Count - 1], offset);
             }
 
-            int returnOffset = t.currentTokenStartOffset;
             Expect(Token.RETURN);
             t.State = Tokenizer.DEFAULT_STATE;
             NextToken();
