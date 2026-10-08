@@ -8,8 +8,6 @@ using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
-using System.Collections.Generic;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Internal.Net;
 using OutSmart.DAXon.Trees.Iterators;

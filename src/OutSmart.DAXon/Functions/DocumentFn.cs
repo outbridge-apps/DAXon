@@ -14,16 +14,10 @@ using OutSmart.DAXon.Trees.Tiny;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Net;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
     /// <summary>

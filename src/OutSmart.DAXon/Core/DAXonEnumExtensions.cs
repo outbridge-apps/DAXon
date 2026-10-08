@@ -14,13 +14,6 @@
 // for use sites that still call them as `enum.Method()`.
 //
 
-using OutSmart.DAXon.Expressions;
-using OutSmart.DAXon.Lib;
-using OutSmart.DAXon.Api;
-using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Values;
-
-
 namespace OutSmart.DAXon.Transformation
 {
     // See FunctionStreamabilityExtensions.Of -- call sites need to use `FunctionStreamabilityExtensions.Of(s)` not the enum's static method.

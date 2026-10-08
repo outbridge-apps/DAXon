@@ -15,11 +15,6 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Core;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Trees.Iterators;
 namespace OutSmart.DAXon.Functions

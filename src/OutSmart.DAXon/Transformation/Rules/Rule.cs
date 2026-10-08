@@ -9,16 +9,7 @@ using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Tracing;
-using OutSmart.DAXon.Transformation;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 using OutSmart.DAXon.Types;
 namespace OutSmart.DAXon.Transformation.Rules
 {

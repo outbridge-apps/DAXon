@@ -7,15 +7,7 @@
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Values;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Types
 {
     public class JavaExternalObjectType : ExternalObjectType

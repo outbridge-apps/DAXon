@@ -10,7 +10,6 @@ using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Api;
 
 namespace OutSmart.DAXon.Serialization

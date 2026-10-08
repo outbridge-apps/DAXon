@@ -11,18 +11,9 @@ using OutSmart.DAXon.Values.Arrays;
 using OutSmart.DAXon.Values.Maps;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.XQuery;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal.Collections;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Core;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Types
 {
     internal sealed class SpecificFunctionType : AnyFunctionType

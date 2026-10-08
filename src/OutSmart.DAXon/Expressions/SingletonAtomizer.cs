@@ -15,7 +15,6 @@ using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Expressions.Elaboration;
 using System;
 

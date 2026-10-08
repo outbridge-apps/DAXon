@@ -6,19 +6,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Instructions;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Tracing;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using OutSmart.DAXon.Expressions.Parsing;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions.HigherOrder
 {
     internal sealed class FunctionLiteral : Literal

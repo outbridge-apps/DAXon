@@ -20,16 +20,12 @@ using OutSmart.DAXon.Internal.Net;
 using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Streams;
 using System.IO;
 namespace OutSmart.DAXon.Xslt
 {

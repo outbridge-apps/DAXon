@@ -6,14 +6,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Internal.Net;
-using OutSmart.DAXon.Internal.Charsets;
-using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Streams;

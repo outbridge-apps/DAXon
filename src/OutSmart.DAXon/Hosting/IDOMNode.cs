@@ -5,10 +5,6 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using System;
-using System.Collections.Generic;
-using OutSmart.DAXon.Model;
-
 // DOMLocator Ã¢â‚¬â€ W3C DOM type referenced by Saxon validation code. Stub interface
 // inside OutSmart.DAXon.Lib so it's visible without extra using-directives at the
 // call sites (StandardInvalidityHandler / StandardDiagnostics both live in this ns).

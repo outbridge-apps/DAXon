@@ -6,12 +6,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Trees.Iterators;
-using OutSmart.DAXon.Values;
 using System.Collections.Generic;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 
 namespace OutSmart.DAXon.Values.Maps
 {

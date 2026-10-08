@@ -15,16 +15,10 @@ using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Utilities;
-using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Functions
 {
     internal sealed class Trace : SystemFunction, ITraceable

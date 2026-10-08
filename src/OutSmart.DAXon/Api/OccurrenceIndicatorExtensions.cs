@@ -15,10 +15,6 @@
 //
 
 using OutSmart.DAXon.Expressions;
-using OutSmart.DAXon.Lib;
-using OutSmart.DAXon.Api;
-using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Api
 {

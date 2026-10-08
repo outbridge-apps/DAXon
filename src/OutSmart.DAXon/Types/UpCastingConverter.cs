@@ -9,7 +9,6 @@
 // (replaces the Phase 4.8c hollow stub whose inherited Convert()=>null NRE'd CastExpression.PreEvaluate via
 // Literal.MakeLiteral(null) for casts like xs:integer -> xs:decimal — an upcast within the same primitive).
 
-using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Types

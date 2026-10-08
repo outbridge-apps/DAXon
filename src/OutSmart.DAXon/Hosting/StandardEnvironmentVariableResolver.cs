@@ -7,8 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal.Collections;
 using System.Collections;
 
 namespace OutSmart.DAXon.Lib

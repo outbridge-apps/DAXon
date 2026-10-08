@@ -13,20 +13,13 @@ using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Accumulators;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Expressions.Parsing;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal.Collections;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Xslt
 {
     /// <summary>

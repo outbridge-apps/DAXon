@@ -21,15 +21,7 @@
  * limitations under the License.
  */
 
-using OutSmart.DAXon.Functions;
-
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Regex
 {
     internal sealed class RESyntaxException : Exception

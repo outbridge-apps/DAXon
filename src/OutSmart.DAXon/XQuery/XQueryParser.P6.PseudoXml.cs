@@ -5,28 +5,16 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Core;
-using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions;
-using OutSmart.DAXon.Expressions.Sorting;
-using OutSmart.DAXon.Functions.Registry;
-using OutSmart.DAXon.Values.Arrays;
-using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Api;
-using OutSmart.DAXon.Serialization;
 using OutSmart.DAXon.Serialization.CharCodes;
 using OutSmart.DAXon.Text;
-using OutSmart.DAXon.Xslt;
-using OutSmart.DAXon.Trees.Utilities;
 using OutSmart.DAXon.Collections;
-using OutSmart.DAXon.Internal.Net;
-using OutSmart.DAXon.Internal.Regex;
 using System;
 using System.Globalization;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Expressions.Flwor;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Functions;
@@ -35,10 +23,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
-using OutSmart.DAXon.Internal.Streams;
-using System.IO;
 namespace OutSmart.DAXon.XQuery
 {
     // XQueryParser part: direct (pseudo-XML) constructors — tags, attribute/element content, CDATA,

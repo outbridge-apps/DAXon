@@ -13,7 +13,6 @@ using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal;
 using System;
 using System.Text;
-using static OutSmart.DAXon.Text.StrHelpers;
 
 namespace OutSmart.DAXon.Text
 {

@@ -19,12 +19,8 @@ using OutSmart.DAXon.Collections;
 using static OutSmart.DAXon.Transformation.KeyIndex.Status;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using System.Runtime.CompilerServices;
 using OutSmart.DAXon.Expressions;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Transformation
 {

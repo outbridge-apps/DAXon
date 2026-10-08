@@ -7,15 +7,12 @@
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Instructions;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Values.Maps;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.XQuery;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 using S = OutSmart.DAXon.Api;
 using System.Collections.Generic;
 

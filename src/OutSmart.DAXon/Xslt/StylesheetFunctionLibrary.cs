@@ -11,13 +11,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Internal.Collections;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Core;
 namespace OutSmart.DAXon.Xslt
 {
     internal sealed class StylesheetFunctionLibrary : IFunctionLibrary

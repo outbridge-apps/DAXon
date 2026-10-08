@@ -7,14 +7,7 @@
 using OutSmart.DAXon.Collections.Zeno;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Collections;
-using OutSmart.DAXon.Internal.Collections;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Values.Arrays
 {
     internal sealed class ImmutableArrayItem : AbstractArrayItem

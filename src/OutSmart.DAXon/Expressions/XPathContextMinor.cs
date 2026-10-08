@@ -9,20 +9,12 @@ using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Expressions.Sorting;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Regex;
-using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Transformation.Rules;
 using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal.Collections;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions
 {
     public class XPathContextMinor : IXPathContext

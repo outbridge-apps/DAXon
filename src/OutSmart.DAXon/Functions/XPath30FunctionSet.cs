@@ -4,13 +4,8 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-using System;
-using System.Collections.Generic;
-using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Functions.HigherOrder;
 using OutSmart.DAXon.Functions.Registry;
-using OutSmart.DAXon.Json;
-using OutSmart.DAXon.Values.Maps;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;

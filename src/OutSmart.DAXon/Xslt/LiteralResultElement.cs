@@ -9,21 +9,13 @@ using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Lib;
-using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Linked;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Collections;
-using OutSmart.DAXon.Internal.Collections;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using OutSmart.DAXon.Expressions.Instructions;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Xslt
 {
     internal sealed class LiteralResultElement : StyleElement

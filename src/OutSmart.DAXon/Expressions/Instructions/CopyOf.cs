@@ -6,7 +6,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Expressions.Accumulators;
-using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Api;
@@ -15,21 +14,15 @@ using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Tiny;
 using OutSmart.DAXon.Trees.Wrappers;
-using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Net;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Parsing;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
     /// <summary>

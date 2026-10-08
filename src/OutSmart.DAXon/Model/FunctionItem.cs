@@ -9,16 +9,7 @@ using OutSmart.DAXon.Expressions.Sorting;
 using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.XQuery;
 using OutSmart.DAXon.Tracing;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Core;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Model
 {
     public interface IFunctionItem : IItem, ICallable, IGroundedValue

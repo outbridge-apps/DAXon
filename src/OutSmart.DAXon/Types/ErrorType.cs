@@ -6,24 +6,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //import com.saxonica.ee.schema.UserSimpleType;
 using OutSmart.DAXon.Expressions;
-using OutSmart.DAXon.Functions;
 
 using OutSmart.DAXon.Lib;
-using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal.Collections;
 using static OutSmart.DAXon.Types.SchemaValidationStatus;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Collections.Trie;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Types
 {
     /// <summary>

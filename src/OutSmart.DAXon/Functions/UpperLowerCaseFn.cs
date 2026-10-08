@@ -16,7 +16,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Expressions;

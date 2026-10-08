@@ -7,24 +7,16 @@
 using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Sorting;
-using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.XQuery;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
-using OutSmart.DAXon.Values;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Values.Maps
 {
     /// <summary>

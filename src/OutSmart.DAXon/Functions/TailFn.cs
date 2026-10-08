@@ -9,7 +9,6 @@
 
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Trees.Iterators;
 
 namespace OutSmart.DAXon.Functions
 {

@@ -9,22 +9,13 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Values.Arrays;
 using OutSmart.DAXon.Values.Maps;
-using OutSmart.DAXon.Core;
-using OutSmart.DAXon.XQuery;
 using OutSmart.DAXon.Regex;
 using OutSmart.DAXon.Text;
-using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Collections;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Streams;
 using System.IO;
 namespace OutSmart.DAXon.Serialization
 {

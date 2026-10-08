@@ -13,16 +13,10 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal.Collections;
 using static OutSmart.DAXon.Expressions.Flwor.Clause.ClauseName;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Expressions;
-using OutSmart.DAXon.Expressions.Instructions;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     /// <summary>

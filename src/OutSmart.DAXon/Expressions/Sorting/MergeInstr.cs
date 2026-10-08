@@ -10,7 +10,6 @@ using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Accumulators;
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Instructions;
-using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Api;
@@ -19,16 +18,12 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
     internal sealed class MergeInstr : Instruction

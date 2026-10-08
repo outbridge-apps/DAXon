@@ -6,18 +6,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Api;
-using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal.Collections;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Transformation
 {
     public class DecimalSymbols

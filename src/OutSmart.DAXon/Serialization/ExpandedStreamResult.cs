@@ -10,16 +10,9 @@ using OutSmart.DAXon.Serialization.CharCodes;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Internal.Net;
-using OutSmart.DAXon.Internal.Charsets;
 using OutSmart.DAXon.Internal.Collections;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Streams;
 using System.IO;
 namespace OutSmart.DAXon.Serialization
 {

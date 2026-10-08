@@ -8,16 +8,6 @@ using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.XQuery;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Core;
-using OutSmart.DAXon.Expressions.Instructions;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Model
 {
     public class QNameParser

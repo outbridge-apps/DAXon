@@ -9,7 +9,6 @@ using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Values;
 using System;
 using System.Collections.Generic;
 using OutSmart.DAXon.Internal.Net;

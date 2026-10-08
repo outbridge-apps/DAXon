@@ -8,17 +8,7 @@ using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Trees.Tiny
 {
     sealed class TinyCommentImpl : TinyNodeImpl

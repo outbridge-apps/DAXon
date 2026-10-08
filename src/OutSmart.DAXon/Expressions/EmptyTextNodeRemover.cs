@@ -7,7 +7,6 @@
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Transformation;
 
 namespace OutSmart.DAXon.Expressions
 {

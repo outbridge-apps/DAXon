@@ -16,8 +16,6 @@
 // regression. DynamicErrorInfoFn body is ported verbatim from the real (excluded) nested class.
 
 using System;
-using OutSmart.DAXon.Internal;
-using System.Collections.Generic;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Functions.Registry;
 using OutSmart.DAXon.Expressions;
@@ -26,7 +24,6 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Lib;
 
 namespace OutSmart.DAXon.Functions
 {

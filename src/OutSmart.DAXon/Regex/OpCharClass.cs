@@ -5,20 +5,11 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Expressions.Sorting;
-using OutSmart.DAXon.Functions;
 
 using OutSmart.DAXon.Regex.CharClass;
 using OutSmart.DAXon.Text;
-using OutSmart.DAXon.Core;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Collections;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Regex
 {
     /// <summary>

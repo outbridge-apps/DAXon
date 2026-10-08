@@ -6,16 +6,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Expressions.Sorting;
 using OutSmart.DAXon.Collections;
-using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
-using System.IO;
 namespace OutSmart.DAXon.Text
 {
     internal sealed class ZenoString : UnicodeString

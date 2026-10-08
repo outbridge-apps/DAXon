@@ -12,15 +12,9 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
-using OutSmart.DAXon.Core;
-using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Values
 {
     public abstract class AtomicValue : IItem, IAtomicSequence, IConversionResult, IIdentityComparable

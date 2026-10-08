@@ -10,12 +10,9 @@ using System.Collections.Generic;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Core;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Serialization;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.XQuery;
-using System.Linq;
 
 namespace OutSmart.DAXon.Api
 {

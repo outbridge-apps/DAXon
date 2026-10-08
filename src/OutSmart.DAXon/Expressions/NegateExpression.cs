@@ -12,7 +12,6 @@ using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Tracing;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 

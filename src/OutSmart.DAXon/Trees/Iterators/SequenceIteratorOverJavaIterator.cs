@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using OutSmart.DAXon.Model;
 
 namespace OutSmart.DAXon.Trees.Iterators
 {

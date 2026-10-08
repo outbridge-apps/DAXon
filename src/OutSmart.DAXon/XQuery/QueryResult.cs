@@ -16,8 +16,6 @@
 // lacks). NOT ported: wrap()/sendWrappedSequence (RESULT_NS diagnostic wrapper — only the
 // DAXonDeepEqual debug-logging path uses it) and rewriteToDisk (XQuery Update).
 
-using System;
-using System.Collections.Generic;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Model;

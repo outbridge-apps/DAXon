@@ -17,15 +17,10 @@ using OutSmart.DAXon.Types;
 using static OutSmart.DAXon.Events.RegularSequenceChecker.State;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using OutSmart.DAXon.Expressions.Instructions;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 
 using OutSmart.DAXon.Serialization;
 namespace OutSmart.DAXon.Events

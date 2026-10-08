@@ -13,18 +13,12 @@ using OutSmart.DAXon.Regex.CharClass;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal.Numerics;
-using OutSmart.DAXon.Internal.Collections;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
 using System.Globalization;
-using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Numbering;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Caching;
 namespace OutSmart.DAXon.Functions
 {

@@ -7,8 +7,6 @@
 
 using System;
 using System.Threading;
-using System.Collections.Generic;
-using System.IO;
 
 // Stub for net.sf.saxon.value.SequenceType (transpiler collision with s9api.SequenceType lost the Value one).
 // All 56 static field constants from Saxon's value/SequenceType.java + factory methods.

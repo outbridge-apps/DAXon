@@ -11,7 +11,6 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using System;
 using System.Collections.Generic;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Functions.HigherOrder
 {
     /// <summary>

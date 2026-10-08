@@ -5,17 +5,11 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Internal.Charsets;
 using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Core;
-using System.IO;
 using OutSmart.DAXon.Lib;
 namespace OutSmart.DAXon.Serialization.CharCodes
 {

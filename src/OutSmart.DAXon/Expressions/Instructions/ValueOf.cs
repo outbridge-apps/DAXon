@@ -5,8 +5,6 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Core;
-using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
@@ -18,14 +16,8 @@ using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Utilities;
 using OutSmart.DAXon.Values;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
     internal sealed class ValueOf : SimpleNodeConstructor

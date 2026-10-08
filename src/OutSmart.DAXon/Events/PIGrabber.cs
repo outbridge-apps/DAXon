@@ -12,7 +12,6 @@ using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Utilities;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Net;
 using System.Collections.Generic;
 using UnicodeString = OutSmart.DAXon.Text.UnicodeString;

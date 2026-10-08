@@ -6,7 +6,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Patterns;

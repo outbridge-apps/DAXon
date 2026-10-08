@@ -25,21 +25,14 @@
  * this file has been extensively modified for integration into Saxon by
  * Michael Kay, Saxonica.
  */
-using OutSmart.DAXon.Regex;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Collections.Trie;
 using OutSmart.DAXon.Regex.CharClass;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal;

@@ -13,14 +13,9 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal.Collections;
-using System;
 using System.Globalization;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Json
 {
     /// <summary>

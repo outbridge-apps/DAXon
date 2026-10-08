@@ -14,11 +14,6 @@
 // for use sites that still call them as `enum.Method()`.
 //
 
-using OutSmart.DAXon.Expressions;
-using OutSmart.DAXon.Lib;
-using OutSmart.DAXon.Api;
-using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Model;
 
 namespace OutSmart.DAXon.Api

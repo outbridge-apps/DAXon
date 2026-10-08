@@ -15,12 +15,9 @@ using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Globalization;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
 using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal;
 using System.IO;
 namespace OutSmart.DAXon.Serialization
 {

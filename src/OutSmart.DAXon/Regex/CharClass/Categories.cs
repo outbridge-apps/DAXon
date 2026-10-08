@@ -13,18 +13,10 @@ using OutSmart.DAXon.Serialization.CharCodes;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Trees.Tiny;
-using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Collections;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Streams;
-using System.IO;
 namespace OutSmart.DAXon.Regex.CharClass
 {
     internal sealed class Categories

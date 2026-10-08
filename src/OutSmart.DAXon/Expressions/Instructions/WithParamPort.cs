@@ -8,7 +8,6 @@
 // Hand-ported 1:1 from upstream WithParam.java (the JavaToCSharp converter crashes on it — a `params`-named
 // Java parameter). Member shapes match the transpiled call sites exactly.
 
-using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Model;

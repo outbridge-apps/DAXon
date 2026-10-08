@@ -5,17 +5,11 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Functions;
 
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
-using OutSmart.DAXon.Internal.Collections;
-using OutSmart.DAXon.Internal.Streams;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Api
 {

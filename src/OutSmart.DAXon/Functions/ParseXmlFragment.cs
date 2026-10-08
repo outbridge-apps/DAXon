@@ -8,21 +8,15 @@ using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Lib;
-using OutSmart.DAXon.Resources;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Xslt;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Tiny;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal.Collections;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
 using System.IO;
 namespace OutSmart.DAXon.Functions
 {

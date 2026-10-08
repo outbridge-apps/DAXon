@@ -13,20 +13,9 @@ using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Values;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Expressions.Parsing;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Values.Maps;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions.HigherOrder
 {
     internal sealed class FunctionSequenceCoercer : UnaryExpression

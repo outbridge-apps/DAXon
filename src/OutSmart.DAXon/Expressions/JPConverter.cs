@@ -17,15 +17,10 @@ using OutSmart.DAXon.Internal.Net;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
-using OutSmart.DAXon.Events;
 using System.Numerics;
 namespace OutSmart.DAXon.Expressions
 {

@@ -8,14 +8,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Numerics;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
-using System.IO;
 namespace OutSmart.DAXon.Transformation
 {
     /// <summary>

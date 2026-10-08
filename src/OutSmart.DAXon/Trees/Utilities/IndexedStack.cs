@@ -7,11 +7,6 @@
 using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Trees.Utilities
 {
     public class IndexedStack<T> : IEnumerable<T>

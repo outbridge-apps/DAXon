@@ -5,7 +5,6 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Core;
-using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Text;
@@ -19,7 +18,6 @@ using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Instructions
 {
     /// <summary>

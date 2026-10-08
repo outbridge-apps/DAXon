@@ -7,29 +7,13 @@
 using OutSmart.DAXon.Core;
 using static OutSmart.DAXon.Text.StrHelpers;
 
-using OutSmart.DAXon.Serialization;
-
 
 using OutSmart.DAXon.Collections;
-
-using OutSmart.DAXon.Internal.Charsets;
 
 using OutSmart.DAXon.Internal.Collections;
 
 
 using System;
-
-using System.Collections.Generic;
-
-using System.Collections.ObjectModel;
-
-using System.Linq;
-
-using System.Text;
-using OutSmart.DAXon.Expressions;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
-using System.IO;
 namespace OutSmart.DAXon.Text
 {
     internal sealed class Twine8 : UnicodeString

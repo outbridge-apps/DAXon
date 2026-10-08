@@ -13,7 +13,6 @@ using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Internal.Net;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Serialization.CharCodes;

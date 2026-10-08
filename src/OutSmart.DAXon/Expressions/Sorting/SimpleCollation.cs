@@ -7,15 +7,9 @@
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Text;
-using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
     /// <summary>

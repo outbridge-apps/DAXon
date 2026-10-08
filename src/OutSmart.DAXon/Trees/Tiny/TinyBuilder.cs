@@ -8,19 +8,11 @@ using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Text;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Expressions.Instructions;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Trees.Tiny
 {
     internal class TinyBuilder : Builder

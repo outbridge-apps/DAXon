@@ -12,19 +12,11 @@ using OutSmart.DAXon.Trees.Linked;
 using OutSmart.DAXon.Values;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Expressions.Instructions;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Text;
-using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Collections;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
-using System.IO;
 namespace OutSmart.DAXon.Trees.Tiny
 {
     internal sealed class TinyTree : GenericTreeInfo, INodeVectorTree

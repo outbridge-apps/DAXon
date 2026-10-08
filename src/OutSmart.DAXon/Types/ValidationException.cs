@@ -5,19 +5,12 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Api;
-using OutSmart.DAXon.Functions;
 
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Utilities;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Types
 {
     public class ValidationException : XPathException

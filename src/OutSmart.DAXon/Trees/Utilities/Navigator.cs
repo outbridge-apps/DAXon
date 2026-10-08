@@ -10,22 +10,16 @@ using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Text;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Trees.Tiny;
 using OutSmart.DAXon.Trees.Wrappers;
 using OutSmart.DAXon.Internal.Net;
-using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Trees.Utilities
 {
     internal sealed class Navigator

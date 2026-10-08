@@ -6,18 +6,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Accumulators;
-using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Transformation.Rules;
-using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Internal;

@@ -7,7 +7,6 @@ namespace OutSmart.DAXon.Internal.Regex
 {
     using System;
     using SysMatch = System.Text.RegularExpressions.Match;
-    using SysGroup = System.Text.RegularExpressions.Group;
 
     internal sealed class Matcher
     {

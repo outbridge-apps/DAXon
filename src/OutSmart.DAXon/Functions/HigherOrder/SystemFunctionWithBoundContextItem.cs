@@ -10,7 +10,6 @@
 
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Types;
 

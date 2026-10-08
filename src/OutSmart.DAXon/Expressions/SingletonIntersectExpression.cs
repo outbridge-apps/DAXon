@@ -6,11 +6,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Ported from upstream net/sf/saxon/expr/SingletonIntersectExpression.java (replaces the Phase 4.8c stub).
 
-using System;
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
 
 namespace OutSmart.DAXon.Expressions

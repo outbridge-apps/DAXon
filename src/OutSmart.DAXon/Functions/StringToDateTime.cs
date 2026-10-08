@@ -5,10 +5,7 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using System;
-using System.Collections.Generic;
 using OutSmart.DAXon.Lib;
-using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Types;
 

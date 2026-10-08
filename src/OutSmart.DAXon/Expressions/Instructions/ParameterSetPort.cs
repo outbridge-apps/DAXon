@@ -12,7 +12,6 @@ using System;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Values;
 using System.Collections.Generic;
-using OutSmart.DAXon.Internal.Collections;
 
 namespace OutSmart.DAXon.Expressions.Instructions
 {

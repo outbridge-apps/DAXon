@@ -7,8 +7,6 @@
 
 using OutSmart.DAXon.Core;
 using System;
-using System.Collections.Generic;
-using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal.Net;
 using OutSmart.DAXon.Transformation;
 using System.IO;

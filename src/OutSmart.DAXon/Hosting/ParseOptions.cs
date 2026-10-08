@@ -9,17 +9,11 @@ using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Accumulators;
 using OutSmart.DAXon.Collections.Trie;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
-using OutSmart.DAXon.Internal.Streams;
 using System.IO;
 namespace OutSmart.DAXon.Lib
 {

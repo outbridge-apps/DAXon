@@ -13,7 +13,6 @@ using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

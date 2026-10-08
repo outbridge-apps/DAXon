@@ -10,20 +10,13 @@ using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Api;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Collections;
-using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Expressions.Instructions;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Trees.Tiny
 {
     internal sealed class TinyDocumentImpl : TinyParentNodeImpl

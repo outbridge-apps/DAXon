@@ -4,7 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Operators;
@@ -12,8 +11,6 @@ using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal.Collections;
 // The engine XPathException: PreEvaluate's back-off catch used to bind to the (never-thrown)
 // JAXP stub of the same name, so a fold-time error crashed compilation instead of backing off.
 using XPathException = OutSmart.DAXon.Transformation.XPathException;

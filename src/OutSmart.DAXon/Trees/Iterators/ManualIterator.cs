@@ -8,13 +8,6 @@ using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Trees.Iterators
 {
     internal sealed class ManualIterator : IFocusIterator, ISequenceIterator, IReversibleIterator, ILastPositionFinder, IGroundedIterator, ILookaheadIterator

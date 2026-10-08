@@ -16,7 +16,6 @@ using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Trees.Utilities;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
-using System;
 using System.Collections.Generic;
 
 namespace OutSmart.DAXon.Patterns

@@ -6,19 +6,11 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Text;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Collections;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Collections.Trie;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Model
 {
     internal sealed class AtomicArray : IAtomicSequence

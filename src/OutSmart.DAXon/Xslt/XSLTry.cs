@@ -7,15 +7,7 @@
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Patterns;
-using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Internal.Collections;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Xslt
 {
     internal sealed class XSLTry : StyleElement

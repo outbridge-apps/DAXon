@@ -6,12 +6,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using System;
 using System.Collections.Generic;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Sorting;
-using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Values;
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     internal sealed class OrderByClausePull : TuplePull

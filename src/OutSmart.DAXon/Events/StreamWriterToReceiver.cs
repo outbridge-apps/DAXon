@@ -7,7 +7,6 @@
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Expressions.Parsing;
-using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Serialization.CharCodes;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Types;

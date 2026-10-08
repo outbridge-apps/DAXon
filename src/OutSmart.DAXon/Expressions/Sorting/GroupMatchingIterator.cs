@@ -5,21 +5,13 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //import com.saxonica.ee.stream.ManualGroupIterator;
-using OutSmart.DAXon.Expressions;using OutSmart.DAXon.Functions;
 
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Internal.Collections;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
     /// <summary>

@@ -6,19 +6,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions;
-using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Serialization;
 using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Internal.Collections;
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Core;
 namespace OutSmart.DAXon.Lib
 {
     internal sealed class OutputURIResolverWrapper : IResultDocumentResolver

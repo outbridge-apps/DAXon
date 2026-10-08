@@ -6,25 +6,18 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Lib;
-using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
 using OutSmart.DAXon.Trees.Utilities;
-using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Globalization;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Serialization
 {
     internal sealed class SerializationParamsHandler

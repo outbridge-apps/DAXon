@@ -5,10 +5,6 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using System;
-using System.Collections.Generic;
-using OutSmart.DAXon.Model;
-
 // (removed Lib.Tokenizer stub — colliding with Expr.Parser.Tokenizer; SerializerFactory needs Whitespace.Tokenizer qualifier patch)
 
 namespace OutSmart.DAXon.Api

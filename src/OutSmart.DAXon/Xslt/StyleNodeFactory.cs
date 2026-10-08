@@ -4,8 +4,7 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-using OutSmart.DAXon.Core;using OutSmart.DAXon.Functions;
-
+using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Accumulators;
 using OutSmart.DAXon.Api;
@@ -13,14 +12,8 @@ using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Linked;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal.Collections;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Xslt
 {
     public class StyleNodeFactory : INodeFactory

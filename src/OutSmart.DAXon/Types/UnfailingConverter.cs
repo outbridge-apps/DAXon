@@ -5,11 +5,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Misc Java stdlib types Saxon references but we don't yet shim individually.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
-using OutSmart.DAXon.Model;
-
 // Saxon-internal stub namespaces — sub-packages permanently excluded for now.
 // Stubs only what's needed for top-level references to resolve.
 

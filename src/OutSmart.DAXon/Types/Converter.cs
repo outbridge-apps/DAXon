@@ -5,9 +5,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Misc Java stdlib types Saxon references but we don't yet shim individually.
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Values;

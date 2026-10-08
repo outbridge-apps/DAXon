@@ -9,7 +9,6 @@
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Parsing;
 using OutSmart.DAXon.Expressions.Sorting;
-using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Regex;
 using OutSmart.DAXon.Text;
@@ -20,8 +19,6 @@ using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
 using OutSmart.DAXon.Lib;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Resources;
 using System.Globalization;
 using System.Text;
 using System.IO;

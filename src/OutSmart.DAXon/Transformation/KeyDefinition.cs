@@ -9,20 +9,12 @@ using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Xslt;
 using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Events;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Transformation
 {
     /// <summary>

@@ -7,7 +7,6 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Trees.Tiny;
-using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Expressions.Elaboration

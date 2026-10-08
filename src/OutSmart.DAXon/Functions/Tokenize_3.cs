@@ -8,15 +8,7 @@ using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Regex;
 using OutSmart.DAXon.Text;
-using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Functions
 {
     internal sealed class Tokenize_3 : RegexFunction

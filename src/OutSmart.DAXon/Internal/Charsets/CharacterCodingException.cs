@@ -5,8 +5,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Misc Java stdlib types Saxon references but we don't yet shim individually.
 
-using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace OutSmart.DAXon.Internal.Charsets

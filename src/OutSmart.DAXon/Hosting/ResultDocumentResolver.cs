@@ -7,15 +7,6 @@
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Serialization;
-using OutSmart.DAXon.Transformation;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Lib
 {
     public interface IResultDocumentResolver

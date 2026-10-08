@@ -11,9 +11,6 @@
 // xs:unsignedInt / xs:unsignedShort / xs:unsignedByte / xs:nonNegativeInteger / xs:positiveInteger /
 // xs:nonPositiveInteger / xs:negativeInteger), range-checking the value against the target type.
 
-using System;
-using System.Collections.Generic;
-using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Types

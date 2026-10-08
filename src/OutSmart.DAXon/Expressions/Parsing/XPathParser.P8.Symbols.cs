@@ -4,38 +4,19 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Expressions.Flwor;
-using OutSmart.DAXon.Expressions;
-using OutSmart.DAXon.Functions.HigherOrder;
-using OutSmart.DAXon.Functions.Registry;
-using OutSmart.DAXon.Lib;
-using OutSmart.DAXon.Values.Arrays;
 using OutSmart.DAXon.XQuery;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Xslt;
 using OutSmart.DAXon.XPath;
 using OutSmart.DAXon.Trees.Utilities;
-using OutSmart.DAXon.Internal.Numerics;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Instructions;
-using OutSmart.DAXon.Functions;
-using OutSmart.DAXon.Values.Maps;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Patterns;
 using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Values;
-using OutSmart.DAXon.Collections;
-using OutSmart.DAXon.Internal;
-using OutSmart.DAXon.Internal.Collections;
-using System.Numerics;
 namespace OutSmart.DAXon.Expressions.Parsing
 {
     // XPathParser part: range-variable scopes, QName/fingerprint/name-test factories, source
