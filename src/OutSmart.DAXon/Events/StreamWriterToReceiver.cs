@@ -22,6 +22,8 @@ namespace OutSmart.DAXon.Events
     // Per the port's Dispose/Close contract: Close() is the normal finish (implicitly ends the
     // document, may throw XPathException); Dispose without Close releases quietly and DISCARDS.
     // XPathException from the pipeline propagates as-is — no checked-exception wrapper.
+    // Names and prefixes mean what they mean to System.Xml's writer: a null namespace is the one the prefix has in
+    // scope, an attribute in a namespace gets a prefix, and a prefix means one namespace in a start tag.
     public class StreamWriterToReceiver : XmlWriter
     {
         private StartTag pendingTag;
@@ -31,7 +33,6 @@ namespace OutSmart.DAXon.Events
         private bool isChecking;
         private int depth = -1;
         private bool closed;
-        private readonly NamespaceReducer inScopeNamespaces;
 
         // Attribute values stream in between WriteStartAttribute and WriteEndAttribute.
         private Triple pendingAttribute;
@@ -46,12 +47,9 @@ namespace OutSmart.DAXon.Events
 
         public StreamWriterToReceiver(IReceiver receiver)
         {
-            // The NamespaceReducer maintains the namespace context, eliminates duplicate
-            // declarations, and adds declarations needed by element/attribute prefix-uri pairs.
             PipelineConfiguration pipe = receiver.GetPipelineConfiguration();
-            this.inScopeNamespaces = new NamespaceReducer(receiver);
             this.namespaceStack.Push(NamespaceMap.EmptyMap());
-            this.receiver = inScopeNamespaces;
+            this.receiver = new NamespaceReducer(receiver);
             this.charChecker = pipe.GetConfiguration().ValidCharacterChecker;
         }
 
@@ -125,62 +123,25 @@ namespace OutSmart.DAXon.Events
                 WriteStartDocument();
             }
 
+            if (pendingAttribute != null)
+            {
+                WriteEndAttribute();
+            }
+
             if (pendingTag != null)
             {
-                CompleteTriple(pendingTag.elementName, false);
-                foreach (Triple t in pendingTag.attributes)
-                {
-                    CompleteTriple(t, true);
-                }
-
-                INodeName elemName;
-                if (pendingTag.elementName.uri.IsEmpty())
-                {
-                    elemName = new NoNamespaceName(pendingTag.elementName.local);
-                }
-                else
-                {
-                    elemName = new FingerprintedQName(pendingTag.elementName.prefix, pendingTag.elementName.uri, pendingTag.elementName.local);
-                }
-
+                Triple e = pendingTag.elementName;
+                INodeName elemName = e.uri.IsEmpty() ? new NoNamespaceName(e.local) : (INodeName)new FingerprintedQName(e.prefix, e.uri, e.local);
                 NamespaceMap nsMap = namespaceStack.Peek();
-                if (!pendingTag.elementName.uri.IsEmpty())
+                foreach (KeyValuePair<string, NamespaceUri> b in pendingTag.bindings)
                 {
-                    nsMap = nsMap.Put(pendingTag.elementName.prefix, pendingTag.elementName.uri);
-                }
-
-                foreach (Triple t in pendingTag.namespaces)
-                {
-                    if (t.prefix == null)
-                    {
-                        t.prefix = "";
-                    }
-
-                    if (t.uri == null)
-                    {
-                        t.uri = NamespaceUri.NULL;
-                    }
-
-                    if (!t.uri.IsEmpty())
-                    {
-                        nsMap = nsMap.Put(t.prefix, t.uri);
-                    }
+                    nsMap = nsMap.Bind(b.Key, b.Value);
                 }
 
                 IAttributeMap attributes = EmptyAttributeMap.GetInstance();
                 foreach (Triple t in pendingTag.attributes)
                 {
-                    INodeName attName;
-                    if (t.uri.IsEmpty())
-                    {
-                        attName = new NoNamespaceName(t.local);
-                    }
-                    else
-                    {
-                        attName = new FingerprintedQName(t.prefix, t.uri, t.local);
-                        nsMap = nsMap.Put(t.prefix, t.uri);
-                    }
-
+                    INodeName attName = t.uri.IsEmpty() ? new NoNamespaceName(t.local) : (INodeName)new FingerprintedQName(t.prefix, t.uri, t.local);
                     attributes = attributes.Put(new AttributeInfo(attName, BuiltInAtomicType.UNTYPED_ATOMIC, t.value, Loc.NONE, ReceiverOption.NONE));
                 }
 
@@ -190,64 +151,121 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        private void CompleteTriple(Triple t, bool isAttribute)
+        // The namespace a prefix means where the pending tag is (its own bindings first), or where the content is.
+        private NamespaceUri InScope(string prefix)
         {
-            if (t.local == null)
+            if (prefix == "xml")
             {
-                throw new InvalidOperationException("Local name of " + (isAttribute ? "Attribute" : "Element") + " is missing");
+                return NamespaceUri.XML;
             }
 
-            if (isChecking && !IsValidNCName(t.local))
+            NamespaceUri own = pendingTag == null ? null : BoundInTag(prefix);
+            if (own != null)
             {
-                throw new InvalidOperationException("Local name of " + (isAttribute ? "Attribute" : "Element") + Err.Wrap(t.local) + " is invalid");
+                return own;
             }
 
-            if (t.uri == null)
-            {
-                t.uri = NamespaceUri.NULL;
-            }
-
-            if (isChecking && !t.uri.IsEmpty() && IsInvalidURI(t.uri.ToString()))
-            {
-                throw new InvalidOperationException("Namespace URI " + Err.Wrap(t.local) + " is invalid");
-            }
-
-            // Null prefix: derive one. An explicit "" prefix means the default namespace for an
-            // element, but an attribute in a namespace always needs a real prefix.
-            if (t.prefix == null)
-            {
-                t.prefix = t.uri.IsEmpty() ? "" : GetPrefixForUri(t.uri);
-            }
-            else if (t.prefix.Length == 0 && isAttribute && !t.uri.IsEmpty())
-            {
-                t.prefix = GetPrefixForUri(t.uri);
-            }
+            NamespaceUri outer = namespaceStack.Peek().GetNamespaceUri(prefix);
+            return outer == null && prefix.Length == 0 ? NamespaceUri.NULL : outer;
         }
 
-        private string GetPrefixForUri(NamespaceUri uri)
+        // A prefix that means uri where the pending tag is; "" only for an element, which takes the default namespace.
+        private string PrefixInScope(NamespaceUri uri, bool forAttribute)
         {
+            if (uri == NamespaceUri.XML)
+            {
+                return "xml";
+            }
+
+            if (!forAttribute && InScope("") == uri)
+            {
+                return "";
+            }
+
             if (pendingTag != null)
             {
-                foreach (Triple t in pendingTag.namespaces)
+                foreach (KeyValuePair<string, NamespaceUri> b in pendingTag.bindings)
                 {
-                    if (uri.Equals(t.uri))
+                    if (b.Key.Length != 0 && b.Value == uri)
                     {
-                        return t.prefix == null ? "" : t.prefix;
+                        return b.Key;
                     }
                 }
             }
 
-            IEnumerator<string> prefixes = inScopeNamespaces.IteratePrefixes();
+            IEnumerator<string> prefixes = namespaceStack.Peek().IteratePrefixes();
             while (prefixes.MoveNext())
             {
                 string p = prefixes.Current;
-                if (uri.Equals(inScopeNamespaces.GetURIForPrefix(p, false)))
+                if (p.Length != 0 && InScope(p) == uri)
                 {
                     return p;
                 }
             }
 
-            return "";
+            return null;
+        }
+
+        private NamespaceUri BoundInTag(string prefix)
+        {
+            foreach (KeyValuePair<string, NamespaceUri> b in pendingTag.bindings)
+            {
+                if (b.Key == prefix)
+                {
+                    return b.Value;
+                }
+            }
+
+            return null;
+        }
+
+        // A binding the pending tag makes. In one start tag a prefix means one namespace, or the tag would say two things.
+        private void BindInTag(string prefix, NamespaceUri uri)
+        {
+            NamespaceUri bound = BoundInTag(prefix);
+            if (bound == null)
+            {
+                pendingTag.bindings.Add(new KeyValuePair<string, NamespaceUri>(prefix, uri));
+            }
+            else if (bound != uri)
+            {
+                throw new ArgumentException("The prefix '" + prefix + "' cannot be bound to " + Err.Wrap(uri.ToString()) + " and to " + Err.Wrap(bound.ToString()) + " in one start tag");
+            }
+        }
+
+        // The prefixes XML Namespaces reserves: xml for its namespace alone, xmlns for none.
+        private static void CheckReserved(string prefix, NamespaceUri uri)
+        {
+            if (prefix == "xmlns" || uri == NamespaceUri.XMLNS)
+            {
+                throw new ArgumentException("The prefix xmlns and its namespace are reserved for namespace declarations");
+            }
+
+            if ((prefix == "xml") != (uri == NamespaceUri.XML))
+            {
+                throw new ArgumentException("The prefix xml and the namespace " + NamespaceUri.XML + " belong to each other");
+            }
+        }
+
+        private static void CheckName(string name, string what)
+        {
+            if (name == null)
+            {
+                throw new ArgumentNullException(what);
+            }
+
+            if (!NameChecker.IsValidNCName(name))
+            {
+                throw new ArgumentException("Invalid " + what + Err.Wrap(name));
+            }
+        }
+
+        private void CheckUri(NamespaceUri uri)
+        {
+            if (isChecking && !uri.IsEmpty() && !StandardURIChecker.GetInstance().IsValidURI(uri.ToString()))
+            {
+                throw new ArgumentException("Namespace URI " + Err.Wrap(uri.ToString()) + " is invalid");
+            }
         }
 
         public override void WriteStartDocument()
@@ -292,14 +310,42 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteStartElement(string prefix, string localName, string ns)
         {
-            CheckNonNull(localName);
+            CheckName(localName, "element name");
+            if (!string.IsNullOrEmpty(prefix))
+            {
+                CheckName(prefix, "prefix");
+            }
+
             FlushStartTag();
             ReleaseHalf();
+            NamespaceUri uri;
+            if (ns == null)
+            {
+                prefix = prefix ?? "";
+                uri = InScope(prefix) ?? throw new ArgumentException("The prefix '" + prefix + "' is not declared");
+            }
+            else
+            {
+                uri = NamespaceUri.Of(ns);
+                prefix = prefix ?? PrefixInScope(uri, false) ?? "";
+                if (prefix.Length != 0 && uri.IsEmpty())
+                {
+                    throw new ArgumentException("Cannot use a prefix with an empty namespace");
+                }
+            }
+
+            CheckUri(uri);
+            if (prefix.Length != 0 || !uri.IsEmpty())
+            {
+                CheckReserved(prefix, uri);
+            }
+
             depth++;
             pendingTag = new StartTag();
             pendingTag.elementName.local = localName;
-            pendingTag.elementName.uri = NamespaceUri.Of(ns ?? "");
+            pendingTag.elementName.uri = uri;
             pendingTag.elementName.prefix = prefix;
+            BindInTag(prefix, uri);
         }
 
         public override void WriteEndElement()
@@ -324,7 +370,7 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteStartAttribute(string prefix, string localName, string ns)
         {
-            CheckNonNull(localName);
+            CheckName(localName, "attribute name");
             if (pendingTag == null)
             {
                 throw new InvalidOperationException("Cannot write attribute when not in a start tag");
@@ -335,26 +381,92 @@ namespace OutSmart.DAXon.Events
                 throw new InvalidOperationException("WriteStartAttribute while already inside an attribute");
             }
 
-            attributeValue.Length = 0;
-            pendingAttribute = new Triple();
-            // xmlns declarations arrive through the attribute API: xmlns:p="uri" (prefix "xmlns")
-            // or xmlns="uri" (local name "xmlns", no prefix).
-            if (prefix == "xmlns" || NamespaceUri.XMLNS.ToString().Equals(ns))
+            if (!string.IsNullOrEmpty(prefix))
             {
-                pendingAttributeIsNamespaceDecl = true;
-                pendingAttribute.prefix = prefix == "xmlns" ? localName : "";
+                CheckName(prefix, "prefix");
             }
-            else if (string.IsNullOrEmpty(prefix) && localName == "xmlns" && string.IsNullOrEmpty(ns))
+
+            attributeValue.Length = 0;
+            bool xmlnsNamespace = ns == NamespaceUri.XMLNS.ToString();
+            // xmlns declarations arrive through the attribute API, as System.Xml takes them: xmlns:p="uri" (prefix "xmlns",
+            // or no prefix in the xmlns namespace) and xmlns="uri"; an attribute named so otherwise is refused.
+            if (prefix == "xmlns" || (prefix == null && xmlnsNamespace) || (string.IsNullOrEmpty(prefix) && localName == "xmlns" && (string.IsNullOrEmpty(ns) || xmlnsNamespace)))
             {
+                if (!string.IsNullOrEmpty(ns) && !xmlnsNamespace)
+                {
+                    throw new ArgumentException("The prefix and the name xmlns are reserved for namespace declarations");
+                }
+
                 pendingAttributeIsNamespaceDecl = true;
-                pendingAttribute.prefix = "";
+                pendingAttribute = new Triple { prefix = prefix == "xmlns" || localName != "xmlns" ? localName : "" };
+                return;
+            }
+
+            NamespaceUri uri;
+            if (ns == null)
+            {
+                // as System.Xml: an undeclared prefix with no namespace given is an attribute in no namespace
+                uri = string.IsNullOrEmpty(prefix) ? NamespaceUri.NULL : InScope(prefix) ?? NamespaceUri.NULL;
             }
             else
             {
-                pendingAttributeIsNamespaceDecl = false;
-                pendingAttribute.prefix = prefix;
-                pendingAttribute.uri = NamespaceUri.Of(ns ?? "");
-                pendingAttribute.local = localName;
+                uri = NamespaceUri.Of(ns);
+            }
+
+            // an attribute takes no default namespace: in a namespace it has a prefix, one of its own if need be
+            if (uri.IsEmpty())
+            {
+                if (localName == "xmlns")
+                {
+                    throw new ArgumentException("An attribute named xmlns in no namespace is a namespace declaration");
+                }
+
+                prefix = "";
+            }
+            else
+            {
+                CheckUri(uri);
+                if (!string.IsNullOrEmpty(prefix))
+                {
+                    CheckReserved(prefix, uri);
+                }
+
+                NamespaceUri inTag = string.IsNullOrEmpty(prefix) ? null : BoundInTag(prefix);
+                if (string.IsNullOrEmpty(prefix) || (inTag != null && inTag != uri))
+                {
+                    prefix = PrefixInScope(uri, true) ?? FreshPrefix();
+                }
+
+                CheckReserved(prefix, uri);
+            }
+
+            foreach (Triple t in pendingTag.attributes)
+            {
+                if (t.local == localName && t.uri == uri)
+                {
+                    throw new XmlException("'" + localName + "' is a duplicate attribute name");
+                }
+            }
+
+            if (!uri.IsEmpty())
+            {
+                BindInTag(prefix, uri);
+            }
+
+            pendingAttributeIsNamespaceDecl = false;
+            pendingAttribute = new Triple { prefix = prefix, uri = uri, local = localName };
+        }
+
+        // A prefix nothing in scope uses, for an attribute in a namespace that has none.
+        private string FreshPrefix()
+        {
+            for (int i = 0; ; i++)
+            {
+                string p = "ns" + i;
+                if (InScope(p) == null)
+                {
+                    return p;
+                }
             }
         }
 
@@ -367,23 +479,38 @@ namespace OutSmart.DAXon.Events
 
             // the pieces of the value are together here: what is half a pair now has no other half
             string value = StringTool.WithoutHalfPairs(attributeValue.ToString());
+            Triple attribute = pendingAttribute;
+            pendingAttribute = null;
             if (pendingAttributeIsNamespaceDecl)
             {
-                pendingAttribute.uri = NamespaceUri.Of(value);
-                pendingTag.namespaces.Add(pendingAttribute);
+                NamespaceUri uri = NamespaceUri.Of(value);
+                if (attribute.prefix.Length != 0 && uri.IsEmpty())
+                {
+                    throw new ArgumentException("The prefix '" + attribute.prefix + "' cannot be undeclared");
+                }
+
+                if (attribute.prefix.Length != 0 || !uri.IsEmpty())
+                {
+                    CheckReserved(attribute.prefix, uri);
+                }
+
+                CheckUri(uri);
+                BindInTag(attribute.prefix, uri);
             }
             else
             {
-                pendingAttribute.value = value;
-                pendingTag.attributes.Add(pendingAttribute);
+                attribute.value = value;
+                pendingTag.attributes.Add(attribute);
             }
-
-            pendingAttribute = null;
         }
 
         public override void WriteString(string text)
         {
-            CheckNonNull(text);
+            if (text == null)
+            {
+                return;
+            }
+
             if (pendingAttribute != null)
             {
                 attributeValue.Append(text);
@@ -408,20 +535,17 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteChars(char[] buffer, int index, int count)
         {
-            CheckNonNull(buffer);
-            WriteString(new string(buffer, index, count));
+            WriteString(new string(buffer ?? throw new ArgumentNullException(nameof(buffer)), index, count));
         }
 
         // CDATA is just characters to a tree pipeline.
         public override void WriteCData(string text)
         {
-            CheckNonNull(text);
             WriteString(text);
         }
 
         public override void WriteWhitespace(string ws)
         {
-            CheckNonNull(ws);
             WriteString(ws);
         }
 
@@ -448,8 +572,7 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteBase64(byte[] buffer, int index, int count)
         {
-            CheckNonNull(buffer);
-            WriteString(Convert.ToBase64String(buffer, index, count));
+            WriteString(Convert.ToBase64String(buffer ?? throw new ArgumentNullException(nameof(buffer)), index, count));
         }
 
         public override void WriteEntityRef(string name)
@@ -468,9 +591,10 @@ namespace OutSmart.DAXon.Events
                 throw new ArgumentException("Invalid XML character in comment: " + text);
             }
 
-            if (isChecking && text.Contains("--"))
+            // a comment or an instruction from data cannot end itself and go on as markup
+            if (text.Contains("--") || text.EndsWith("-", StringComparison.Ordinal))
             {
-                throw new ArgumentException("Comment contains '--'");
+                throw new ArgumentException("A comment cannot contain '--' or end with '-'");
             }
 
             receiver.Comment(uData, Loc.NONE, ReceiverOption.NONE);
@@ -478,22 +602,24 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteProcessingInstruction(string name, string text)
         {
-            CheckNonNull(name);
+            CheckName(name, "processing instruction name");
+            if ("xml".Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("Invalid processing instruction name" + Err.Wrap(name));
+            }
+
             text = text == null ? "" : StringTool.WithoutHalfPairs(text);
+            if (text.Contains("?>"))
+            {
+                throw new ArgumentException("A processing instruction cannot contain '?>'");
+            }
+
             FlushStartTag();
             ReleaseHalf();
             UnicodeString uData = StringView.Of(text);
-            if (isChecking)
+            if (!IsValidChars(uData))
             {
-                if (!IsValidNCName(name) || "xml".Equals(name, StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new ArgumentException("Invalid PITarget: " + name);
-                }
-
-                if (!IsValidChars(uData))
-                {
-                    throw new ArgumentException("Invalid character in PI data: " + text);
-                }
+                throw new ArgumentException("Invalid character in PI data: " + text);
             }
 
             receiver.ProcessingInstruction(name, uData, Loc.NONE, ReceiverOption.NONE);
@@ -501,29 +627,8 @@ namespace OutSmart.DAXon.Events
 
         public override string LookupPrefix(string ns)
         {
-            NamespaceUri uri = NamespaceUri.Of(ns);
-            if (pendingTag != null)
-            {
-                foreach (Triple t in pendingTag.namespaces)
-                {
-                    if (uri.Equals(t.uri))
-                    {
-                        return t.prefix == null ? "" : t.prefix;
-                    }
-                }
-            }
-
-            IEnumerator<string> prefixes = inScopeNamespaces.IteratePrefixes();
-            while (prefixes.MoveNext())
-            {
-                string p = prefixes.Current;
-                if (uri.Equals(inScopeNamespaces.GetURIForPrefix(p, false)))
-                {
-                    return p;
-                }
-            }
-
-            return null;
+            NamespaceUri uri = NamespaceUri.Of(ns ?? throw new ArgumentNullException(nameof(ns)));
+            return uri == NamespaceUri.XMLNS ? "xmlns" : PrefixInScope(uri, false);
         }
 
         // Normal finish: implicitly ends the document and closes the pipeline. May throw.
@@ -559,27 +664,9 @@ namespace OutSmart.DAXon.Events
         {
         }
 
-        private bool IsValidNCName(string name)
-        {
-            return !isChecking || NameChecker.IsValidNCName(name);
-        }
-
         private bool IsValidChars(UnicodeString text)
         {
             return !isChecking || (UTF16CharacterSet.FirstInvalidChar(text.CodePoints(), charChecker) == -1);
-        }
-
-        private bool IsInvalidURI(string uri)
-        {
-            return isChecking && !StandardURIChecker.GetInstance().IsValidURI(uri);
-        }
-
-        private void CheckNonNull(object value)
-        {
-            if (value == null)
-            {
-                throw new NullReferenceException();
-            }
         }
 
         private sealed class Triple
@@ -592,15 +679,9 @@ namespace OutSmart.DAXon.Events
 
         private sealed class StartTag
         {
-            public Triple elementName;
-            public IList<Triple> attributes;
-            public IList<Triple> namespaces;
-            public StartTag()
-            {
-                elementName = new Triple();
-                attributes = new List<Triple>();
-                namespaces = new List<Triple>();
-            }
+            public readonly Triple elementName = new Triple();
+            public readonly List<Triple> attributes = new List<Triple>();
+            public readonly List<KeyValuePair<string, NamespaceUri>> bindings = new List<KeyValuePair<string, NamespaceUri>>();   // prefix -> namespace, as this tag declares them
         }
     }
 }

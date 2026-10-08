@@ -160,9 +160,10 @@ namespace OutSmart.DAXon.Model
             return !first;
         }
 
+        // Half a surrogate pair is no character, so a string with one is no name (reading its code points would throw).
         public static bool IsValidNCName(string str)
         {
-            return IsValidNCName(StringTool.CodePoints(str));
+            return ReferenceEquals(StringTool.WithoutHalfPairs(str), str) && IsValidNCName(StringTool.CodePoints(str));
         }
 
         public static bool IsValidNmtoken(UnicodeString @in)
