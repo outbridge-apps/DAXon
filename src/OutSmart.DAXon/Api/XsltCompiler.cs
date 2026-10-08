@@ -412,11 +412,17 @@ namespace OutSmart.DAXon.Api
             }
         }
 
+        // versionRange as xsl:use-package's package-version: null is any version ("*").
         public virtual XsltPackage ObtainPackage(string packageName, string versionRange)
         {
+            if (packageName == null)
+            {
+                throw new ArgumentNullException(nameof(packageName));
+            }
+
             try
             {
-                PackageVersionRanges pvr = new PackageVersionRanges(versionRange);
+                PackageVersionRanges pvr = new PackageVersionRanges(versionRange ?? "*");
                 PackageDetails details = GetPackageLibrary().FindPackage(packageName, pvr);
                 if (details != null)
                 {
