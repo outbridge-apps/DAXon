@@ -141,6 +141,10 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 throw TooDeep("exceeds the static-analysis limit of " + MAX_STATIC_TREE_DEPTH);
             }
 
+            // The compile's deadline too: type-checking and optimizing a chain of clauses is quadratic work that no
+            // evaluation loop ever sees (20000 let clauses ran minutes past the limit).
+            Controller.CheckActiveTimeout();
+
             // Counter = Java-parity ceiling; the stack-adaptive probe covers threads whose stack
             // cannot hold even that many analysis levels (same discipline as XPathParser).
             try

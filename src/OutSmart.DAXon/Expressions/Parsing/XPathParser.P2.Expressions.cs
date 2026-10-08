@@ -84,6 +84,9 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 Grumble("Expression is too deeply nested (exceeds the limit of " + MAX_EXPRESSION_NESTING + ")", "XPST0003");
             }
 
+            // The compile's deadline, once per sub-expression: the parser is the one compile phase every text passes.
+            Controller.CheckActiveTimeout();
+
             // The counter above is the Java-parity ceiling; on a thread whose stack cannot hold even
             // MAX_EXPRESSION_NESTING recursion levels (a default 1 MB thread dies near ~2300), the
             // stack-adaptive probe raises the same XPST0003 before the uncatchable SOE.

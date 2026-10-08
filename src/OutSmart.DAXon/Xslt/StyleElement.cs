@@ -1448,6 +1448,7 @@ namespace OutSmart.DAXon.Xslt
         // adaptive stack probe (round AV) covers whatever depth the running thread's stack allows.
         internal void ProbeStylesheetDepth()
         {
+            Controller.CheckActiveTimeout();   // the compile's deadline: one strided look per element of the stylesheet
             try
             {
                 StackGuard.Probe();

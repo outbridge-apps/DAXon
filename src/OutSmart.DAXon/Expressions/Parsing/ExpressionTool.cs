@@ -86,6 +86,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         // recursion guard saw: a 2000-term chain compiled fine on a 1 MB thread and overflowed a 256 KB one in these walks.
         internal static void ProbeTreeDepth()
         {
+            Controller.CheckActiveTimeout();   // the compile's deadline: these walks are where a long chain's quadratic work is
             try
             {
                 StackGuard.Probe();
