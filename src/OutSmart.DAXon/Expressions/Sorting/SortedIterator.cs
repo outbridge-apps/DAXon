@@ -310,36 +310,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     return false;   // non-string key: let Array.Sort raise the type error
                 }
 
-                UnicodeString u = sv.UnicodeStringValue;
-                if (u is BMPSlice sl)
-                {
-                    sChars[e] = sl.Backing;
-                    koff[e] = sl.Start;
-                    klen[e] = sl.End - sl.Start;
-                }
-                else if (u is BMPString bstr)
-                {
-                    string s = bstr.ToString();   // backing string, no copy
-                    sChars[e] = s;
-                    klen[e] = s.Length;
-                }
-                else if (u is Slice8 s8)
-                {
-                    bBytes[e] = s8.ByteArray;
-                    koff[e] = s8.Start;
-                    klen[e] = s8.End - s8.Start;
-                }
-                else if (u is Twine8 t8)
-                {
-                    bBytes[e] = t8.ByteArray;
-                    klen[e] = t8.ByteArray.Length;
-                }
-                else if (u is EmptyUnicodeString)
-                {
-                    sChars[e] = "";
-                    klen[e] = 0;
-                }
-                else
+                if (!KeySpan(sv, e, sChars, bBytes, koff, klen))
                 {
                     return false;   // StringView (may hold surrogates) / Twine16 / Twine24 / composite
                 }
@@ -380,6 +351,47 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
 
             values = sorted;
+            return true;
+        }
+
+        // A string key's backing characters or Latin-1 bytes, with their span, for the radix sorts; false for a
+        // representation they do not read flat.
+        private static bool KeySpan(StringValue sv, int e, string[] sChars, byte[][] bBytes, int[] koff, int[] klen)
+        {
+            UnicodeString u = sv.UnicodeStringValue;
+            if (u is BMPSlice sl)
+            {
+                sChars[e] = sl.Backing;
+                koff[e] = sl.Start;
+                klen[e] = sl.End - sl.Start;
+            }
+            else if (u is BMPString bstr)
+            {
+                string s = bstr.ToString();   // backing string, no copy
+                sChars[e] = s;
+                klen[e] = s.Length;
+            }
+            else if (u is Slice8 s8)
+            {
+                bBytes[e] = s8.ByteArray;
+                koff[e] = s8.Start;
+                klen[e] = s8.End - s8.Start;
+            }
+            else if (u is Twine8 t8)
+            {
+                bBytes[e] = t8.ByteArray;
+                klen[e] = t8.ByteArray.Length;
+            }
+            else if (u is EmptyUnicodeString)
+            {
+                sChars[e] = "";
+                klen[e] = 0;
+            }
+            else
+            {
+                return false;
+            }
+
             return true;
         }
 
@@ -523,36 +535,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 }
                 else
                 {
-                    UnicodeString u = sv.UnicodeStringValue;
-                    if (u is BMPSlice sl)
-                    {
-                        sChars[e] = sl.Backing;
-                        koff[e] = sl.Start;
-                        klen[e] = sl.End - sl.Start;
-                    }
-                    else if (u is BMPString bstr)
-                    {
-                        string s = bstr.ToString();   // backing string, no copy
-                        sChars[e] = s;
-                        klen[e] = s.Length;
-                    }
-                    else if (u is Slice8 s8)
-                    {
-                        bBytes[e] = s8.ByteArray;
-                        koff[e] = s8.Start;
-                        klen[e] = s8.End - s8.Start;
-                    }
-                    else if (u is Twine8 t8)
-                    {
-                        bBytes[e] = t8.ByteArray;
-                        klen[e] = t8.ByteArray.Length;
-                    }
-                    else if (u is EmptyUnicodeString)
-                    {
-                        sChars[e] = "";
-                        klen[e] = 0;
-                    }
-                    else
+                    if (!KeySpan(sv, e, sChars, bBytes, koff, klen))
                     {
                         return false;   // StringView (may hold surrogates) / Twine16 / Twine24 / composite
                     }

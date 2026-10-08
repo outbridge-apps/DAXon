@@ -174,118 +174,32 @@ namespace OutSmart.DAXon.Xslt
 
         public static PreparedStylesheet LoadStylesheet(ResolvedResource styleSource, Compilation compilation)
         {
-            string systemId = styleSource.SystemId;
-            DocumentKey docURI = systemId == null ? null : new DocumentKey(systemId);
-            if (systemId != null && compilation.ImportStack.Contains(docURI))
+            return LoadStylesheet(styleSource.SystemId, compilation, (pipeline, options) =>
             {
-                throw new XPathException("The stylesheet module includes/imports itself directly or indirectly", "XTSE0180");
-            }
-
-            compilation.ImportStack.Push(docURI);
-            compilation.SetMinimalPackageData();
-            Configuration config = compilation.GetConfiguration();
-            PipelineConfiguration pipe = config.MakePipelineConfiguration();
-            pipe.SetErrorReporter(compilation.GetCompilerInfo().ErrorReporter);
-            LinkedTreeBuilder styleBuilder = new LinkedTreeBuilder(pipe, Durability.LASTING);
-            styleBuilder.SetSystemId(styleSource.SystemId);
-
-            styleBuilder.SetNodeFactory(compilation.GetStyleNodeFactory(true));
-            styleBuilder.SetLineNumbering(true);
-
-            // Pipeline for source XSLT code
-            IReceiver sourcePipeline;
-            UseWhenFilter useWhenFilter = new UseWhenFilter(compilation, styleBuilder, NestedIntegerValue.TWO);
-            useWhenFilter.SetSystemId(styleSource.SystemId);
-            StylesheetSpaceStrippingRule rule = new StylesheetSpaceStrippingRule(config.GetNamePool());
-            Stripper styleStripper = new Stripper(rule, useWhenFilter);
-            CommentStripper commentStripper = new CommentStripper(styleStripper);
-            if (compilation.GetCompilerInfo().XsltVersion == 40)
-            {
-                NamePool pool = config.GetNamePool();
-                commentStripper.SetSkippedElementTest((name) => name.ObtainFingerprint(pool) == StandardNames.XSL_NOTE);
-            }
-
-
-            // Pipeline for compiled XSLT code
-            TinyBuilder packageBuilder = new TinyBuilder(pipe);
-            packageBuilder.SetSystemId(styleSource.SystemId);
-            CheckSumFilter checksummer = new CheckSumFilter(packageBuilder);
-            checksummer.SetCheckExistingChecksum(true);
-            Valve valve = new Valve(NamespaceUri.SAXON_XSLT_EXPORT, commentStripper, checksummer);
-            sourcePipeline = valve;
-
-            // build the stylesheet document
-            ParseOptions options = MakeStylesheetParseOptions(pipe);
-            try
-            {
-                // The stylesheet is parsed by the same direct XmlReaderToReceiver pump as source documents
-                // (ActiveStreamSource); no SAX XMLReader is fabricated (config.GetStyleParser retired — the
-                // fabricated parser was already ignored by the delivery path).
-                Sender.Send(styleSource, sourcePipeline, options);
-                NodeInfo doc;
-                if (valve.WasDiverted())
+                try
                 {
-
-                    // Implies we have loaded a pre-compiled package
-                    if (!checksummer.IsChecksumCorrect())
+                    // The same direct XmlReaderToReceiver pump as source documents (ActiveStreamSource).
+                    Sender.Send(styleSource, pipeline, options);
+                }
+                finally
+                {
+                    if (options.IsPleaseCloseAfterUse())
                     {
-                        throw new XPathException("Compiled package cannot be loaded: incorrect checksum");
+                        ParseOptions.Dispose(styleSource);
                     }
-
-                    IIPackageLoader loader = config.MakePackageLoader();
-                    StylesheetPackage pack = loader.LoadPackageDoc(packageBuilder.CurrentRoot);
-                    compilation.SetPackageData(pack);
-                    PreparedStylesheet pss = new PreparedStylesheet(compilation);
-                    pack.CheckForAbstractComponents();
-                    pack.UpdatePreparedStylesheet(pss);
-
-                    return pss;
                 }
-                else
-                {
-
-                    // We loaded source XSLT (could be xsl:package or xsl:stylesheet or an LRE...
-                    doc = styleBuilder.CurrentRoot;
-                    styleBuilder.Reset();
-                    compilation.ImportStack.Pop();
-                    PreparedStylesheet pss = new PreparedStylesheet(compilation);
-                    PrincipalStylesheetModule psm = compilation.CompilePackage(new ResolvedResource { Node = doc });
-                    if (compilation.ErrorCount > 0)
-                    {
-                        throw compilation.MakeCompilationFailure();
-                    }
-
-                    psm.GetStylesheetPackage().CheckForAbstractComponents();
-                    psm.GetStylesheetPackage().UpdatePreparedStylesheet(pss);
-                    pss.AddPackage(compilation.GetPackageData());
-                    return pss;
-                }
-            }
-            catch (XPathException err)
-            {
-                if (!err.HasBeenReported())
-                {
-
-                    // bug 2244
-                    compilation.ReportError(err);
-                }
-
-                throw;
-            }
-            finally
-            {
-                if (options.IsPleaseCloseAfterUse())
-                {
-                    ParseOptions.Dispose(styleSource);
-                }
-            }
+            });
         }
 
-        // Source-free stylesheet load (P5): parse a System.Xml.XmlReader straight into the style tree via
-        // Sender.Send(XmlReader), without constructing a JAXP StreamSource. Mirrors LoadStylesheet(Source):
-        // same pipeline (use-when filter, stylesheet stripper, comment stripper, Valve for precompiled SEF
-        // packages) — only the parse-delivery differs. External entities resolve via the XmlReader's resolver.
+        // A stylesheet read from a System.Xml.XmlReader: external entities resolve through the reader's resolver.
         public static PreparedStylesheet LoadStylesheet(System.Xml.XmlReader reader, string systemId, Compilation compilation)
+        {
+            return LoadStylesheet(systemId, compilation, (pipeline, options) => Sender.Send(reader, systemId, pipeline, options));
+        }
+
+        // The two entry points differ only in how the text reaches the pipeline: the use-when filter, the stylesheet
+        // stripper, the comment stripper, and the Valve that diverts a precompiled package.
+        private static PreparedStylesheet LoadStylesheet(string systemId, Compilation compilation, System.Action<IReceiver, ParseOptions> send)
         {
             DocumentKey docURI = systemId == null ? null : new DocumentKey(systemId);
             if (systemId != null && compilation.ImportStack.Contains(docURI))
@@ -304,7 +218,6 @@ namespace OutSmart.DAXon.Xslt
             styleBuilder.SetLineNumbering(true);
 
             // Pipeline for source XSLT code
-            IReceiver sourcePipeline;
             UseWhenFilter useWhenFilter = new UseWhenFilter(compilation, styleBuilder, NestedIntegerValue.TWO);
             useWhenFilter.SetSystemId(systemId);
             StylesheetSpaceStrippingRule rule = new StylesheetSpaceStrippingRule(config.GetNamePool());
@@ -322,13 +235,10 @@ namespace OutSmart.DAXon.Xslt
             CheckSumFilter checksummer = new CheckSumFilter(packageBuilder);
             checksummer.SetCheckExistingChecksum(true);
             Valve valve = new Valve(NamespaceUri.SAXON_XSLT_EXPORT, commentStripper, checksummer);
-            sourcePipeline = valve;
 
-            ParseOptions options = new ParseOptions().WithSchemaValidationMode(Validation.STRIP).WithDTDValidationMode(Validation.STRIP).WithLineNumbering(true).WithSpaceStrippingRule(NoElementsSpaceStrippingRule.GetInstance()).WithErrorReporter(pipe.GetErrorReporter());
             try
             {
-                Sender.Send(reader, systemId, sourcePipeline, options);
-                NodeInfo doc;
+                send(valve, MakeStylesheetParseOptions(pipe));
                 if (valve.WasDiverted())
                 {
                     // Implies we have loaded a pre-compiled package
@@ -347,7 +257,8 @@ namespace OutSmart.DAXon.Xslt
                 }
                 else
                 {
-                    doc = styleBuilder.CurrentRoot;
+                    // We loaded source XSLT (could be xsl:package or xsl:stylesheet or an LRE...
+                    NodeInfo doc = styleBuilder.CurrentRoot;
                     styleBuilder.Reset();
                     compilation.ImportStack.Pop();
                     PreparedStylesheet pss = new PreparedStylesheet(compilation);
@@ -367,6 +278,7 @@ namespace OutSmart.DAXon.Xslt
             {
                 if (!err.HasBeenReported())
                 {
+                    // bug 2244
                     compilation.ReportError(err);
                 }
 

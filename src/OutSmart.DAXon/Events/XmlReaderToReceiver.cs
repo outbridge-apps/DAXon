@@ -1567,35 +1567,15 @@ namespace OutSmart.DAXon.Events
             {
                 this.config = config;
                 principalPending = !string.IsNullOrEmpty(principalSystemId);
-                if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config) && !string.IsNullOrEmpty(principalSystemId))
-                {
-                    try
-                    {
-                        principal = ResolveUri(null, principalSystemId);
-                    }
-                    catch (Exception)
-                    {
-                        principal = null;
-                    }
-                }
+                principal = ResourceResolverXmlResolver.PrincipalOf(this, config, principalSystemId);
             }
 
             public override Uri ResolveUri(Uri baseUri, string relativeUri)
             {
-                Uri resolved;
-                try
-                {
-                    resolved = base.ResolveUri(baseUri, relativeUri);
-                }
-                catch (Exception)
-                {
-                    publicIds.NotResolved(relativeUri);
-                    throw;
-                }
-
-                publicIds.Resolved(relativeUri, resolved);
-                return resolved;
+                return publicIds.Resolve(this, baseUri, relativeUri, (r, b, rel) => r.BaseResolveUri(b, rel));
             }
+
+            private Uri BaseResolveUri(Uri baseUri, string relativeUri) => base.ResolveUri(baseUri, relativeUri);
 
             public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
             {
@@ -1622,14 +1602,7 @@ namespace OutSmart.DAXon.Events
             {
                 if (absoluteUri != null && absoluteUri.IsFile)
                 {
-                    if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config) && !absoluteUri.Equals(principal))
-                    {
-                        string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, absoluteUri.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity);
-                        if (denied != null)
-                        {
-                            throw new System.IO.IOException(denied);
-                        }
-                    }
+                    ResourceResolverXmlResolver.CheckEntityRead(config, absoluteUri, principal);
 
                     // Opened as System.Xml opens it, by the engine: a name that is no file's is refused first.
                     object entity = ofObjectToReturn == null || ofObjectToReturn == typeof(Stream) || ofObjectToReturn == typeof(object)

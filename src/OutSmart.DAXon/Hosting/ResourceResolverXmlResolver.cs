@@ -46,34 +46,46 @@ namespace OutSmart.DAXon.Lib
             this.resolver = resolver;
             this.config = config;
             principalPending = !string.IsNullOrEmpty(principalSystemId);
-            if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config) && !string.IsNullOrEmpty(principalSystemId))
-            {
-                try
-                {
-                    principal = ResolveUri(null, principalSystemId);
-                }
-                catch (Exception)
-                {
-                    principal = null;
-                }
-            }
+            principal = PrincipalOf(this, config, principalSystemId);
         }
 
         public override Uri ResolveUri(Uri baseUri, string relativeUri)
         {
-            Uri resolved;
+            return publicIds.Resolve(this, baseUri, relativeUri, (r, b, rel) => r.BaseResolveUri(b, rel));
+        }
+
+        private Uri BaseResolveUri(Uri baseUri, string relativeUri) => base.ResolveUri(baseUri, relativeUri);
+
+        // The document the parser opens by system id, resolved only under a restricted policy, the only one that asks:
+        // the host asked for it or it passed the gate as a document, so it is no external entity.
+        internal static Uri PrincipalOf(XmlResolver resolver, OutSmart.DAXon.Core.Configuration config, string principalSystemId)
+        {
+            if (!OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config) || string.IsNullOrEmpty(principalSystemId))
+            {
+                return null;
+            }
+
             try
             {
-                resolved = base.ResolveUri(baseUri, relativeUri);
+                return resolver.ResolveUri(null, principalSystemId);
             }
             catch (Exception)
             {
-                publicIds.NotResolved(relativeUri);
-                throw;
+                return null;
             }
+        }
 
-            publicIds.Resolved(relativeUri, resolved);
-            return resolved;
+        // A file an external entity or DTD names, under a restricted policy: refused as an I/O failure unless allowed.
+        internal static void CheckEntityRead(OutSmart.DAXon.Core.Configuration config, Uri absoluteUri, Uri principal)
+        {
+            if (absoluteUri != null && absoluteUri.IsFile && OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config) && !absoluteUri.Equals(principal))
+            {
+                string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, absoluteUri.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity);
+                if (denied != null)
+                {
+                    throw new IOException(denied);
+                }
+            }
         }
 
         public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
@@ -111,14 +123,7 @@ namespace OutSmart.DAXon.Lib
             {
                 // Java's SAX parser fetches file-relative external DTDs/entities itself when no
                 // user resolver claims them; a null here makes System.Xml fail the whole parse.
-                if (absoluteUri != null && absoluteUri.IsFile && OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config) && !absoluteUri.Equals(principal))
-                {
-                    string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, absoluteUri.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity);
-                    if (denied != null)
-                    {
-                        throw new IOException(denied);
-                    }
-                }
+                CheckEntityRead(config, absoluteUri, principal);
 
                 // The document itself is opened even when it is not there, so the failure says why (missing, a
                 // directory) instead of "Cannot resolve"; an entity is probed, as System.Xml tries a PUBLIC id first.
@@ -184,6 +189,25 @@ namespace OutSmart.DAXon.Lib
         public void NotResolved(string relativeUri)
         {
             unopened = relativeUri;
+        }
+
+        // A URI the parser asks to resolve, resolved by the resolver's base, noting how it went. The base call comes as
+        // a delegate that captures nothing, so a resolution allocates nothing.
+        public Uri Resolve<T>(T resolver, Uri baseUri, string relativeUri, Func<T, Uri, string, Uri> resolveBase)
+        {
+            Uri resolved;
+            try
+            {
+                resolved = resolveBase(resolver, baseUri, relativeUri);
+            }
+            catch (Exception)
+            {
+                NotResolved(relativeUri);
+                throw;
+            }
+
+            Resolved(relativeUri, resolved);
+            return resolved;
         }
 
         public void NotOpened(Uri absoluteUri)

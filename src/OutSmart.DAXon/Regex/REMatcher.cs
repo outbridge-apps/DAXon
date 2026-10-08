@@ -234,6 +234,30 @@ namespace OutSmart.DAXon.Regex
             return at + LookStride;
         }
 
+        // The backing characters or Latin-1 bytes of a surrogate-free subject and where it starts in them, for the
+        // scans that index it directly; neither for any other kind, which they read through CodePointAt.
+        private static (string chars, byte[] bytes, int offset) Backing(UnicodeString s)
+        {
+            if (s is BMPString)
+            {
+                return (s.ToString(), null, 0);
+            }
+            else if (s is BMPSlice sl)
+            {
+                return (sl.Backing, null, sl.Start);
+            }
+            else if (s is Slice8 s8)
+            {
+                return (null, s8.ByteArray, s8.Start);
+            }
+            else if (s is Twine8 t8)
+            {
+                return (null, t8.ByteArray, 0);
+            }
+
+            return (null, null, 0);
+        }
+
         // Flat matcher for REProgram.GetFastKind() shapes (fk=1 single class, fk=2 greedy class repeat).
         // Finds the first position whose codepoint satisfies the predicate, extends the run, caps by max,
         // requires min. Byte-identical to the NFA for these shapes: as the whole pattern the greedy longest
@@ -250,27 +274,7 @@ namespace OutSmart.DAXon.Regex
             int min = fast.Min;
             int max = fast.Max;
 
-            string cs = null;
-            byte[] cb = null;
-            int off = 0;
-            if (s is BMPString)
-            {
-                cs = s.ToString();
-            }
-            else if (s is BMPSlice sl)
-            {
-                cs = sl.Backing;
-                off = sl.Start;
-            }
-            else if (s is Slice8 s8)
-            {
-                cb = s8.ByteArray;
-                off = s8.Start;
-            }
-            else if (s is Twine8 t8)
-            {
-                cb = t8.ByteArray;
-            }
+            var (cs, cb, off) = Backing(s);
 
             int look = i + LookStride;
             while (i < len)
@@ -337,27 +341,7 @@ namespace OutSmart.DAXon.Regex
                 return false;
             }
 
-            string cs = null;
-            byte[] cb = null;
-            int off = 0;
-            if (s is BMPString)
-            {
-                cs = s.ToString();
-            }
-            else if (s is BMPSlice sl)
-            {
-                cs = sl.Backing;
-                off = sl.Start;
-            }
-            else if (s is Slice8 s8)
-            {
-                cb = s8.ByteArray;
-                off = s8.Start;
-            }
-            else if (s is Twine8 t8)
-            {
-                cb = t8.ByteArray;
-            }
+            var (cs, cb, off) = Backing(s);
 
             int c0 = cs != null ? cs[off] : cb != null ? (cb[off] & 0xff) : s.CodePointAt(0);
             if (!fast.Pred1.Test(c0))
@@ -401,27 +385,7 @@ namespace OutSmart.DAXon.Regex
             IIntPredicateProxy p1 = fast.Pred1;
             IIntPredicateProxy p2 = fast.Pred2;
 
-            string cs = null;
-            byte[] cb = null;
-            int off = 0;
-            if (s is BMPString)
-            {
-                cs = s.ToString();
-            }
-            else if (s is BMPSlice sl)
-            {
-                cs = sl.Backing;
-                off = sl.Start;
-            }
-            else if (s is Slice8 s8)
-            {
-                cb = s8.ByteArray;
-                off = s8.Start;
-            }
-            else if (s is Twine8 t8)
-            {
-                cb = t8.ByteArray;
-            }
+            var (cs, cb, off) = Backing(s);
 
             while (i < len)
             {
@@ -504,27 +468,7 @@ namespace OutSmart.DAXon.Regex
             int min = fast.Min2;
             int max = fast.Max2;
 
-            string cs = null;
-            byte[] cb = null;
-            int off = 0;
-            if (s is BMPString)
-            {
-                cs = s.ToString();
-            }
-            else if (s is BMPSlice sl)
-            {
-                cs = sl.Backing;
-                off = sl.Start;
-            }
-            else if (s is Slice8 s8)
-            {
-                cb = s8.ByteArray;
-                off = s8.Start;
-            }
-            else if (s is Twine8 t8)
-            {
-                cb = t8.ByteArray;
-            }
+            var (cs, cb, off) = Backing(s);
 
             for (; i < len - 1; i++)
             {

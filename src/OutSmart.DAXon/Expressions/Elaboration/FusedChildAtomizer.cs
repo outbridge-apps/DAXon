@@ -141,6 +141,37 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             return true;
         }
 
+        // The first child of node p in the sibling chain, or -1.
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static int FirstChild(TinyTree tree, int p)
+        {
+            int child = p + 1;
+            return child < tree.numberOfNodes && tree.depth[child] == tree.depth[p] + 1 ? child : -1;
+        }
+
+        // The next element child named fp from n along the sibling chain, or -1; n moves past it (-1 at the end:
+        // a backwards jump in the chain is the owner pointer).
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private static int NextChildNamed(TinyTree tree, int fp, ref int n)
+        {
+            byte[] kinds = tree.nodeKind;
+            int[] nextArr = tree.next;
+            int[] nameCodes = tree.nameCode;
+            while (n >= 0)
+            {
+                int cur = n;
+                int n2 = nextArr[cur];
+                n = n2 > cur ? n2 : -1;
+                int k = kinds[cur];
+                if ((k == Types.Type.ELEMENT || k == Types.Type.TEXTUAL_ELEMENT) && (nameCodes[cur] & NamePool.FP_MASK) == fp)
+                {
+                    return cur;
+                }
+            }
+
+            return -1;
+        }
+
         // Single-child atomize for SingletonAtomizer(child::NAME): the one matching child's
         // untypedAtomic value without the per-call child iterator + node wrapper. Every case the
         // fast read cannot decide byte-identically — typed/foreign tree, a SECOND matching child
@@ -162,41 +193,21 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             }
 
             TinyTree tree = tiny.tree;
-            int p = tiny.nodeNr;
-            int child = p + 1;
-            Values.AtomicValue result = null;
-            if (child < tree.numberOfNodes && tree.depth[child] == tree.depth[p] + 1)
-            {
-                byte[] kinds = tree.nodeKind;
-                int[] nextArr = tree.next;
-                int[] nameCodes = tree.nameCode;
-                int n = child;
-                while (n >= 0)
-                {
-                    int cur = n;
-                    int n2 = nextArr[cur];
-                    n = n2 > cur ? n2 : -1;
-                    int k = kinds[cur];
-                    if ((k == Types.Type.ELEMENT || k == Types.Type.TEXTUAL_ELEMENT) && (nameCodes[cur] & NamePool.FP_MASK) == fp)
-                    {
-                        if (result != null)
-                        {
-                            offPath = true;
-                            return null;
-                        }
-
-                        result = StringValue.MakeUntypedAtomic(TinyParentNodeImpl.GetStringValue(tree, cur));
-                    }
-                }
-            }
-
-            if (result == null && !allowEmpty)
+            int n = FirstChild(tree, tiny.nodeNr);
+            int cur = NextChildNamed(tree, fp, ref n);
+            if (cur >= 0 && NextChildNamed(tree, fp, ref n) >= 0)
             {
                 offPath = true;
                 return null;
             }
 
-            return result;
+            if (cur < 0)
+            {
+                offPath = !allowEmpty;
+                return null;
+            }
+
+            return StringValue.MakeUntypedAtomic(TinyParentNodeImpl.GetStringValue(tree, cur));
         }
 
         // Single-child string for fn:string(child::NAME): the one matching child's string value as
@@ -213,35 +224,15 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             }
 
             TinyTree tree = tiny.tree;
-            int p = tiny.nodeNr;
-            int child = p + 1;
-            StringValue result = null;
-            if (child < tree.numberOfNodes && tree.depth[child] == tree.depth[p] + 1)
+            int n = FirstChild(tree, tiny.nodeNr);
+            int cur = NextChildNamed(tree, fp, ref n);
+            if (cur >= 0 && NextChildNamed(tree, fp, ref n) >= 0)
             {
-                byte[] kinds = tree.nodeKind;
-                int[] nextArr = tree.next;
-                int[] nameCodes = tree.nameCode;
-                int n = child;
-                while (n >= 0)
-                {
-                    int cur = n;
-                    int n2 = nextArr[cur];
-                    n = n2 > cur ? n2 : -1;
-                    int k = kinds[cur];
-                    if ((k == Types.Type.ELEMENT || k == Types.Type.TEXTUAL_ELEMENT) && (nameCodes[cur] & NamePool.FP_MASK) == fp)
-                    {
-                        if (result != null)
-                        {
-                            offPath = true;
-                            return null;
-                        }
-
-                        result = new StringValue(TinyParentNodeImpl.GetStringValue(tree, cur));
-                    }
-                }
+                offPath = true;
+                return null;
             }
 
-            return result;
+            return cur < 0 ? null : new StringValue(TinyParentNodeImpl.GetStringValue(tree, cur));
         }
 
         /// <summary>
@@ -264,29 +255,13 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             {
                 tree = parent.tree;
                 fp = fingerprint;
-                int p = parent.nodeNr;
-                int child = p + 1;
-                n = (child < tree.numberOfNodes && tree.depth[child] == tree.depth[p] + 1) ? child : -1;
+                n = FirstChild(tree, parent.nodeNr);
             }
 
             public IItem Next()
             {
-                byte[] kinds = tree.nodeKind;
-                int[] nextArr = tree.next;
-                int[] nameCodes = tree.nameCode;
-                while (n >= 0)
-                {
-                    int cur = n;
-                    int n2 = nextArr[cur];
-                    n = n2 > cur ? n2 : -1;   // a backwards jump is the owner pointer = end of siblings
-                    int k = kinds[cur];
-                    if ((k == Types.Type.ELEMENT || k == Types.Type.TEXTUAL_ELEMENT) && (nameCodes[cur] & NamePool.FP_MASK) == fp)
-                    {
-                        return StringValue.MakeUntypedAtomic(TinyParentNodeImpl.GetStringValue(tree, cur));
-                    }
-                }
-
-                return null;
+                int cur = NextChildNamed(tree, fp, ref n);
+                return cur < 0 ? null : StringValue.MakeUntypedAtomic(TinyParentNodeImpl.GetStringValue(tree, cur));
             }
 
             public void Dispose() { }
@@ -421,29 +396,13 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             {
                 tree = parent.tree;
                 this.fp = fp;
-                int p = parent.nodeNr;
-                int child = p + 1;
-                n = (child < tree.numberOfNodes && tree.depth[child] == tree.depth[p] + 1) ? child : -1;
+                n = FirstChild(tree, parent.nodeNr);
             }
 
             public IItem Next()
             {
-                byte[] kinds = tree.nodeKind;
-                int[] nextArr = tree.next;
-                int[] nameCodes = tree.nameCode;
-                while (n >= 0)
-                {
-                    int cur = n;
-                    int n2 = nextArr[cur];
-                    n = n2 > cur ? n2 : -1;   // a backwards jump is the owner pointer = end of siblings
-                    int k = kinds[cur];
-                    if ((k == Types.Type.ELEMENT || k == Types.Type.TEXTUAL_ELEMENT) && (nameCodes[cur] & NamePool.FP_MASK) == fp)
-                    {
-                        return new StringValue(TinyParentNodeImpl.GetStringValue(tree, cur));
-                    }
-                }
-
-                return null;
+                int cur = NextChildNamed(tree, fp, ref n);
+                return cur < 0 ? null : new StringValue(TinyParentNodeImpl.GetStringValue(tree, cur));
             }
 
             public void Dispose() { }
