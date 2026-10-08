@@ -11,7 +11,6 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using System;
 using System.Collections.Generic;
-using System.IO;
 namespace OutSmart.DAXon.Expressions
 {
     /// <summary>
@@ -20,7 +19,6 @@ namespace OutSmart.DAXon.Expressions
     public sealed class Operand : IEnumerable<Operand>, IExpressionOwner
     {
 
-        private static readonly bool DEBUG;
         private readonly Expression parentExpression;
         private Expression childExpression;
         private OperandRole role;
@@ -74,14 +72,7 @@ namespace OutSmart.DAXon.Expressions
         }
         public void DetachChild()
         {
-            if (DEBUG)
-            {
-                childExpression.ParentExpression = null;
-                StringWriter sw = new StringWriter();
-                sw.WriteLine(new XPathException("dummy").ToString());
-                childExpression = new ErrorExpression("child expression has been detached: " + sw.ToString(), "ZZZ", false);
-                ExpressionTool.CopyLocationInfo(parentExpression, childExpression);
-            }
+            // Saxon replaces the child with an error expression here when debugging; nothing to do otherwise.
         }
 
         public bool SetsNewFocus()

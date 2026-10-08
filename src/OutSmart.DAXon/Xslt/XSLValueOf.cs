@@ -8,7 +8,6 @@ using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Model;
-using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 namespace OutSmart.DAXon.Xslt
 {

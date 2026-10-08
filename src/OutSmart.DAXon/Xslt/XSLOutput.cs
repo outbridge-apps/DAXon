@@ -22,7 +22,6 @@ namespace OutSmart.DAXon.Xslt
     internal sealed class XSLOutput : StyleElement
     {
         private StructuredQName outputFormatName;
-        private readonly string method;
         private string useCharacterMaps;
         private readonly Dictionary<string, string> serializationAttributes = new Dictionary<string, string>(10);
         private Dictionary<string, string> userAttributes;
@@ -127,41 +126,6 @@ namespace OutSmart.DAXon.Xslt
         public void GatherOutputProperties(Properties details, Dictionary<string, int> precedences, int thisPrecedence)
         {
             SerializerFactory sf = GetConfiguration().SerializerFactory;
-            if (method != null)
-            {
-                if (method == "xml" || method == "html" || method == "text" || method == "xhtml" || method == "json" || method == "adaptive")
-                {
-                    CheckAndPut(sf, DAXonOutputKeys.METHOD, method, details, precedences, thisPrecedence); //details.put(DAXonOutputKeys.METHOD, method);
-                }
-                else
-                {
-                    string[] parts;
-                    try
-                    {
-                        parts = NameChecker.GetQNameParts(method);
-                        string prefix = parts[0];
-                        if ((prefix.Length == 0))
-                        {
-                            CompileError("method must be xml, html, xhtml, text, json, adaptive, or a prefixed name", "XTSE1570");
-                        }
-                        else
-                        {
-                            NamespaceUri uri = GetURIForPrefix(prefix, false);
-                            if (uri == null)
-                            {
-                                UndeclaredNamespaceError(prefix, "XTSE0280", "method");
-                            }
-
-                            CheckAndPut(sf, DAXonOutputKeys.METHOD, "{" + uri + "}" + parts[1], details, precedences, thisPrecedence); //details.put(DAXonOutputKeys.METHOD, '{' + uri + '}' + parts[1] );
-                        }
-                    }
-                    catch (QNameException e)
-                    {
-                        CompileError("Invalid method name. " + e.GetMessage(), "XTSE1570");
-                    }
-                }
-            }
-
             foreach (KeyValuePair<string, string> entry in serializationAttributes)
             {
                 CheckAndPut(sf, entry.Key, entry.Value, details, precedences, thisPrecedence);

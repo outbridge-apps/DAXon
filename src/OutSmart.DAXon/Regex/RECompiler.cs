@@ -75,8 +75,8 @@ namespace OutSmart.DAXon.Regex
     internal sealed class RECompiler
     {
         // Node flags
-        static readonly int NODE_NORMAL; // No flags (nothing special)
-        static readonly int NODE_TOPLEVEL = 2; // True if top level expr
+        const int NODE_NORMAL = 0; // No flags (nothing special)
+        const int NODE_TOPLEVEL = 2; // True if top level expr
         // Input state for compiling regular expression
         UnicodeString pattern; // Input string
         int len; // Length of the pattern string

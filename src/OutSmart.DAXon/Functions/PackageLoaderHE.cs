@@ -5,8 +5,6 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using OutSmart.DAXon.Core;
-
 // namespace OutSmart.DAXon.Text
 // {
 //     public class UnicodeChar { public UnicodeChar() {} public UnicodeChar(int cp) {} }

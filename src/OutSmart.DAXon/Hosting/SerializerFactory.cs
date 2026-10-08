@@ -759,13 +759,6 @@ namespace OutSmart.DAXon.Lib
 
         protected virtual ProxyReceiver NewXHTMLIndenter(IReceiver next, Properties outputProperties)
         {
-            string method = "xhtml";
-            string htmlVersion = outputProperties.GetProperty("html-version");
-            if (htmlVersion != null && htmlVersion.StartsWith("5", StringComparison.Ordinal))
-            {
-                method = "xhtml5";
-            }
-
             HTMLIndenter r = new HTMLIndenter(next);
             r.SetOutputProperties(outputProperties);
             return r;

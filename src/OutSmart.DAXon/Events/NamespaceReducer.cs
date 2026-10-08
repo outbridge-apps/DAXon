@@ -6,10 +6,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Types;
-using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using OutSmart.DAXon.Model;
 
 namespace OutSmart.DAXon.Events

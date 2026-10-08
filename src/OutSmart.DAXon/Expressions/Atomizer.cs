@@ -406,7 +406,6 @@ namespace OutSmart.DAXon.Expressions
         public override ItemType GetItemType()
         {
             operandItemType = BaseExpression.GetItemType();
-            TypeHierarchy th = GetConfiguration().GetTypeHierarchy();
             return GetAtomizedItemType(BaseExpression, untyped);
         }
 
