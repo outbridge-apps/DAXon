@@ -48,7 +48,16 @@ namespace OutSmart.DAXon.Text
         public override bool IsEmpty() => _s.Length == 0;
         public override int CodePointAt(long index) => _s[(int)index];
         public override UnicodeString Substring(long start, long end) => new Twine16(_s.Substring((int)start, (int)(end - start)));
-        public override UnicodeString Concat(UnicodeString other) => new Twine16(_s + other?.ToString());
+        // An operand wider than 16 bits brings surrogate pairs: the joined text is classified again, not labelled 16-bit.
+        public override UnicodeString Concat(UnicodeString other)
+        {
+            if (other != null && other.Width > 16)
+            {
+                return StringTool.FromCharSequence(_s + other.ToString());
+            }
+
+            return new Twine16(_s + other?.ToString());
+        }
         // CompareOrdinal is codepoint-correct only BMP-vs-BMP; against an astral operand (surrogates
         // 0xD800-0xDBFF < 0xE000-0xFFFF) it mis-orders, so defer to the base codepoint comparison then.
         public override int CompareTo(UnicodeString other)
@@ -79,7 +88,18 @@ namespace OutSmart.DAXon.Text
         }
         public override string ToString() => _s;
         public override void Copy16bit(char[] target, int offset) { _s.CopyTo(0, target, offset, _s.Length); }
-        public override void Copy24bit(byte[] target, int offset) { }
+        // Three bytes a character, high first, as Twine24 reads them back. It was empty: a rope joining this to wider text
+        // ('<a>' || a long string with an emoji) got zeros in its place.
+        public override void Copy24bit(byte[] target, int offset)
+        {
+            for (int i = 0; i < _s.Length; i++)
+            {
+                char c = _s[i];
+                target[offset++] = 0;
+                target[offset++] = (byte)(c >> 8);
+                target[offset++] = (byte)c;
+            }
+        }
         public override void Copy32bit(int[] target, int offset) { for (int i = 0; i < _s.Length; i++) target[offset + i] = _s[i]; }
     }
 }

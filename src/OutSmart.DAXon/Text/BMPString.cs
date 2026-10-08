@@ -59,7 +59,16 @@ namespace OutSmart.DAXon.Text
         public override bool IsEmpty() => _s.Length == 0;
         public override int CodePointAt(long index) => index >= 0 && index < _s.Length ? _s[(int)index] : -1;
         public override UnicodeString Substring(long start, long end) => new BMPString(_s.Substring((int)start, (int)(end - start)));
-        public override UnicodeString Concat(UnicodeString other) => new BMPString(_s + other?.ToString());
+        // An operand wider than 16 bits brings surrogate pairs: the joined text is classified again, not labelled BMP.
+        public override UnicodeString Concat(UnicodeString other)
+        {
+            if (other != null && other.Width > 16)
+            {
+                return StringTool.FromCharSequence(_s + other.ToString());
+            }
+
+            return new BMPString(_s + other?.ToString());
+        }
         // CompareOrdinal is codepoint-correct only BMP-vs-BMP; against an astral operand (surrogates
         // 0xD800-0xDBFF < 0xE000-0xFFFF) it mis-orders, so defer to the base codepoint comparison then.
         public override int CompareTo(UnicodeString other)

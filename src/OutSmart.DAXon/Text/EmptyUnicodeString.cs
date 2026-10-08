@@ -29,6 +29,7 @@ namespace OutSmart.DAXon.Text
         public override IIntIterator CodePoints() => new StrCodePointIterator(ToString());
         public override long IndexWhere(Func<int, bool> predicate, long from) => -1;
         public override string ToString() => "";
+        public override void Copy8bit(byte[] target, int offset) { }
         public override void Copy16bit(char[] target, int offset) { }
         public override void Copy24bit(byte[] target, int offset) { }
         public override void Copy32bit(int[] target, int offset) { }

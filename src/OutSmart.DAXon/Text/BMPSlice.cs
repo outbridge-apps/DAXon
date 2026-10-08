@@ -44,7 +44,16 @@ namespace OutSmart.DAXon.Text
         }
 
         public override UnicodeString Substring(long start, long end) => new BMPSlice(_s, _start + (int)start, _start + (int)end);
-        public override UnicodeString Concat(UnicodeString other) => new BMPString(ToString() + other?.ToString());
+        // An operand wider than 16 bits brings surrogate pairs: the joined text is classified again, not labelled BMP.
+        public override UnicodeString Concat(UnicodeString other)
+        {
+            if (other != null && other.Width > 16)
+            {
+                return StringTool.FromCharSequence(ToString() + other.ToString());
+            }
+
+            return new BMPString(ToString() + other?.ToString());
+        }
         public override long IndexOf(int codePoint) => IndexOf(codePoint, 0);
         public override long IndexOf(int codePoint, long from)
         {
