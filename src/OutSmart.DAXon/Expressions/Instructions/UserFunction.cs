@@ -620,9 +620,9 @@ namespace OutSmart.DAXon.Expressions.Instructions
             {
                 throw uxe.GetXPathException().MaybeWithLocation(GetLocation()).MaybeWithContext(c2);
             }
-            catch (Exception err2) when (!(err2 is XPathException) && !(err2 is RecursionDepthError) && !(err2 is OutOfMemoryException))
+            catch (Exception err2) when (!(err2 is XPathException) && !(err2 is RecursionDepthError) && !(err2 is OutOfMemoryException) && !OutSmart.DAXon.Lib.HostDefects.IsHostDefect(err2))
             {
-                // RecursionDepthError and OutOfMemoryException excluded: see the matching note in TemplateRule.
+                // RecursionDepthError, OutOfMemoryException and a host's own exception excluded: see the matching note in TemplateRule.
                 string message = "Internal error evaluating function " + (functionName == null ? "(unnamed)" : functionName.DisplayName) + (GetLineNumber() > 0 ? " at line " + GetLineNumber() : "") + (GetSystemId() != null ? " in module " + GetSystemId() : "");
                 throw new InvalidOperationException(message, err2);
             }

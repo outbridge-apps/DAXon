@@ -531,6 +531,11 @@ namespace OutSmart.DAXon.Api
 
                         throw new XPathException(e.Message, e);
                     }
+                    catch (Exception e) when (HostDefects.Mark(e))
+                    {
+                        // The host's own defect: on through the run as thrown, past xsl:try (HOSTING.md).
+                        throw;
+                    }
                 }
             }
         }
