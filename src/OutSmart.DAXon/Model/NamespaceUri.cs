@@ -12,28 +12,37 @@ namespace OutSmart.DAXon.Model
 {
     public class NamespaceUri
     {
-        // A map from strings to NamespaceUris. Concurrent (as in the Java original): Of() is called
-        // while parsing source documents, and two threads first meeting new URIs at once would race
-        // an unsynchronized Dictionary's resize. Grows with distinct URIs for the process lifetime.
-        //
-        // NOT a cache, and deliberately NOT bounded (round A3). NamespaceUri overrides neither
-        // Equals nor GetHashCode nor ==, so every comparison in the engine - IsEmpty() against NULL,
-        // IsReserved() against XSLT/FN/..., the built-in function-set dispatch, ~15 explicit
-        // `== NamespaceUri.X` sites - is REFERENCE equality. This table is what makes that sound.
-        // Evicting an entry would let the same URI be interned twice and silently compare unequal
-        // to itself: the null namespace stops being empty, XSLT stops being reserved, built-ins
-        // stop resolving. Scoping it per-Configuration fails for the same reason (the well-known
-        // singletons are static). Bounding becomes possible only after equality is made value-based,
-        // which would put a string compare on the hottest path in the engine. Watch InternedCount
-        // instead; see docs/HOSTING.md.
-        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, NamespaceUri> stringToNamespaceUri
-            = new System.Collections.Concurrent.ConcurrentDictionary<string, NamespaceUri>();
+        // The engine compares namespaces by reference, so a URI has one live instance at most. The table holds
+        // them weakly: an entry goes only when nothing references its instance, and nothing is left to compare.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, System.WeakReference<NamespaceUri>> interned
+            = new System.Collections.Concurrent.ConcurrentDictionary<string, System.WeakReference<NamespaceUri>>();
+        private static readonly object internGate = new object();
+        private static int sweepAtCount = MinSweepCount;
+        private static long sweepAtChars = MinSweepChars;
+        private static long charsSinceSweep;
+        private const int MinSweepCount = 1024;
+        private const long MinSweepChars = 1L << 20;
+        private static bool sweeperStarted;
 
         /// <summary>
-        /// Distinct namespace URIs interned process-wide. Only ever grows, and is NOT released by
-        /// disposing a Processor - this table outlives every Configuration. Diagnostic.
+        /// Namespace URIs interned process-wide that something still references. A URI nothing references
+        /// is released by the garbage collector. Diagnostic: walks the table on every read.
         /// </summary>
-        public static int InternedCount => stringToNamespaceUri.Count;
+        public static int InternedCount
+        {
+            get
+            {
+                int live = 0;
+                foreach (System.Collections.Generic.KeyValuePair<string, System.WeakReference<NamespaceUri>> e in interned)
+                {
+                    if (e.Value.TryGetTarget(out _))
+                    {
+                        live++;
+                    }
+                }
+                return live;
+            }
+        }
 
         /// <summary>
         /// A URI representing the null namespace (actually, an empty string)
@@ -231,12 +240,102 @@ namespace OutSmart.DAXon.Model
         }
         public static NamespaceUri Of(string content)
         {
-            if (content == null)
+            string key = Whitespace.Trim(content ?? "");
+            if (interned.TryGetValue(key, out System.WeakReference<NamespaceUri> entry) && entry.TryGetTarget(out NamespaceUri live))
             {
-                content = "";
+                return live;
             }
 
-            return stringToNamespaceUri.GetOrAdd(Whitespace.Trim(content), k => new NamespaceUri(k));
+            return Intern(key);
+        }
+
+        // A URI without a live instance, made under the gate so that threads meeting it at once share one. The
+        // reference tracks resurrection: an instance a finalizer brings back is still the one.
+        private static NamespaceUri Intern(string key)
+        {
+            lock (internGate)
+            {
+                if (interned.TryGetValue(key, out System.WeakReference<NamespaceUri> entry))
+                {
+                    if (entry.TryGetTarget(out NamespaceUri live))
+                    {
+                        return live;
+                    }
+
+                    NamespaceUri again = new NamespaceUri(key);
+                    entry.SetTarget(again);
+                    return again;
+                }
+
+                if (!sweeperStarted)
+                {
+                    sweeperStarted = true;
+                    new CollectionSweeper();
+                }
+
+                charsSinceSweep += key.Length;
+                if (interned.Count >= sweepAtCount || charsSinceSweep >= sweepAtChars)
+                {
+                    Sweep();
+                }
+
+                NamespaceUri made = new NamespaceUri(key);
+                interned[key] = new System.WeakReference<NamespaceUri>(made, true);
+                return made;
+            }
+        }
+
+        // Drops the entries whose instance was collected, with their keys. The next sweep waits until the table
+        // has doubled in entries or in characters, so sweeping costs a constant per URI interned.
+        private static void Sweep()
+        {
+            long liveChars = 0;
+            foreach (System.Collections.Generic.KeyValuePair<string, System.WeakReference<NamespaceUri>> e in interned)
+            {
+                if (e.Value.TryGetTarget(out _))
+                {
+                    liveChars += e.Key.Length;
+                }
+                else
+                {
+                    interned.TryRemove(e.Key, out _);
+                }
+            }
+
+            sweepAtCount = System.Math.Max(MinSweepCount, interned.Count * 2);
+            sweepAtChars = System.Math.Max(MinSweepChars, liveChars * 2);
+            charsSinceSweep = 0;
+        }
+
+        // Only a collection finds the dead, so the table is also swept after each full one, on the finalizer
+        // thread: a host that drops a Processor and goes idle gets its URIs back without another call.
+        private sealed class CollectionSweeper
+        {
+            ~CollectionSweeper()
+            {
+                if (System.Environment.HasShutdownStarted || System.AppDomain.CurrentDomain.IsFinalizingForUnload())
+                {
+                    return;
+                }
+
+                if (System.Threading.Monitor.TryEnter(internGate))
+                {
+                    try
+                    {
+                        Sweep();
+                    }
+                    catch (System.Exception)
+                    {
+                        // a finalizer must not throw; the next collection sweeps again
+                    }
+                    finally
+                    {
+                        System.Threading.Monitor.Exit(internGate);
+                    }
+                }
+
+                System.GC.ReRegisterForFinalize(this);
+            }
         }
 
         public static implicit operator string(NamespaceUri u) => u?.stringContent;
