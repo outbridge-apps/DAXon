@@ -64,7 +64,7 @@ namespace OutSmart.DAXon.Transformation.Packages
             foreach (string file in files)
             {
                 PackageInspector inspector = new PackageInspector(config.MakePipelineConfiguration());
-                PackageDetails details = inspector.GetPackageDetails(file, config);
+                PackageDetails details = inspector.GetPackageDetails(file);
                 if (details == null)
                 {
                     string message = "Unable to get package name and version for file " + Path.GetFileName(file);
@@ -127,7 +127,7 @@ namespace OutSmart.DAXon.Transformation.Packages
         public virtual void AddPackage(string file)
         {
             PackageInspector inspector = new PackageInspector(config.MakePipelineConfiguration());
-            PackageDetails details = inspector.GetPackageDetails(file, config);
+            PackageDetails details = inspector.GetPackageDetails(file);
             if (details == null)
             {
                 string message = "Unable to get package name and version for file " + Path.GetFileName(file);

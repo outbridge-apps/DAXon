@@ -91,7 +91,7 @@ namespace OutSmart.DAXon.Functions
                 return EmptySequence.GetInstance();
             }
 
-            return SequenceTool.ItemOrEmpty(Parse(stringValue.GetStringValue(), context));
+            return SequenceTool.ItemOrEmpty(Parse(stringValue.GetStringValue()));
         }
         private bool IsDayName(string str)
         {
@@ -261,7 +261,7 @@ namespace OutSmart.DAXon.Functions
         }
 
         /* what should this return? */
-        public DateTimeValue Parse(string input, IXPathContext context)
+        public DateTimeValue Parse(string input)
         {
             IList<string> tokens = Tokenize(input);
             int year = 0;

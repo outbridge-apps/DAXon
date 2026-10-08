@@ -182,7 +182,7 @@ namespace OutSmart.DAXon.Expressions
             }
             else
             {
-                if (!Types.Type.IsPossiblyComparable(pt0, pt1, visitor.StaticContext.GetXPathVersion()))
+                if (!Types.Type.IsPossiblyComparable(visitor.StaticContext.GetXPathVersion()))
                 {
                     string message = "In {" + ToShortString() + "}: cannot compare " + t0 + " to " + t1;
                     if (Cardinality.AllowsZero(c0) || Cardinality.AllowsZero(c1))

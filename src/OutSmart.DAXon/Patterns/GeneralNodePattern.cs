@@ -99,7 +99,7 @@ namespace OutSmart.DAXon.Patterns
             {
                 try
                 {
-                    return ((Pattern)PatternMaker.FromExpression(equivalentExpr, config, true)).TypeCheck(visitor, defaultInfo);
+                    return ((Pattern)PatternMaker.FromExpression(equivalentExpr, config)).TypeCheck(visitor, defaultInfo);
                 }
                 catch (XPathException)
                 {

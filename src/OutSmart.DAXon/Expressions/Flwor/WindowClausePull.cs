@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
         private int position = -1;
         private readonly List<WindowClause.Window> currentWindows = new List<WindowClause.Window>();
 
-        public WindowClausePull(TuplePull source, WindowClause windowClause, IXPathContext context)
+        public WindowClausePull(TuplePull source, WindowClause windowClause)
         {
             this.windowClause = windowClause;
             this.source = source;
@@ -92,7 +92,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                             w0.endPreviousItem = oldPrevious;
                             w0.endNextItem = current;
                             w0.endPosition = position - 1;
-                            earliest = Despatch(w0, context);
+                            earliest = Despatch(w0);
                             currentWindows.Clear();
                         }
 
@@ -133,7 +133,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                                 w.endPosition = position;
                                 if (earliest == null)
                                 {
-                                    earliest = Despatch(w, context);
+                                    earliest = Despatch(w);
                                     if (w.IsDespatched())
                                     {
                                         removals.Add(w);
@@ -172,7 +172,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return false;
         }
 
-        private WindowClause.Window Despatch(WindowClause.Window w, IXPathContext context)
+        private WindowClause.Window Despatch(WindowClause.Window w)
         {
             windowClause.CheckWindowContents(w);
 

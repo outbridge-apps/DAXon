@@ -11,6 +11,6 @@ namespace OutSmart.DAXon.Types
     {
         public static string FromItemType(ItemType t) => "";
         // AlphaCode.FromSequenceType used by export visitors.
-        public static string FromSequenceType(object t) => "";
+        public static string FromSequenceType() => "";
     }
 }

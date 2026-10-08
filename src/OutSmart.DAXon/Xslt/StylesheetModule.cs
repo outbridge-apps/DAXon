@@ -136,7 +136,7 @@ namespace OutSmart.DAXon.Xslt
 
             // build the stylesheet document
             DocumentImpl doc;
-            ParseOptions options = MakeStylesheetParseOptions(styleSource, pipe);
+            ParseOptions options = MakeStylesheetParseOptions(pipe);
             try
             {
                 // Direct XmlReaderToReceiver pump (ActiveStreamSource); no SAX XMLReader fabricated.
@@ -165,7 +165,7 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        private static ParseOptions MakeStylesheetParseOptions(ResolvedResource styleSource, PipelineConfiguration pipe)
+        private static ParseOptions MakeStylesheetParseOptions(PipelineConfiguration pipe)
         {
             ParseOptions options = new ParseOptions();
             options = options.WithSchemaValidationMode(Validation.STRIP).WithDTDValidationMode(Validation.STRIP).WithLineNumbering(true).WithSpaceStrippingRule(NoElementsSpaceStrippingRule.GetInstance()).WithErrorReporter(pipe.GetErrorReporter());
@@ -215,7 +215,7 @@ namespace OutSmart.DAXon.Xslt
             sourcePipeline = valve;
 
             // build the stylesheet document
-            ParseOptions options = MakeStylesheetParseOptions(styleSource, pipe);
+            ParseOptions options = MakeStylesheetParseOptions(pipe);
             try
             {
                 // The stylesheet is parsed by the same direct XmlReaderToReceiver pump as source documents
@@ -402,10 +402,10 @@ namespace OutSmart.DAXon.Xslt
                 throw new XPathException("No matching <?xml-stylesheet?> processing instruction found");
             }
 
-            return CompositeStylesheet(config, source.SystemId, sources);
+            return CompositeStylesheet(source.SystemId, sources);
         }
 
-        private static ResolvedResource CompositeStylesheet(Configuration config, string baseURI, ResolvedResource[] sources)
+        private static ResolvedResource CompositeStylesheet(string baseURI, ResolvedResource[] sources)
         {
             if (sources.Length == 1)
             {

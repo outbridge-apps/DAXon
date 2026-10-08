@@ -46,12 +46,12 @@ namespace OutSmart.DAXon.Functions
                 if (stable)
                 {
                     StringValue content = UnparsedText.EvalUnparsedText(hrefVal, StaticBaseUriString, encoding, context);
-                    URI abs = GetAbsoluteURI(hrefVal.GetStringValue(), StaticBaseUriString, context);
+                    URI abs = GetAbsoluteURI(hrefVal.GetStringValue(), StaticBaseUriString);
                     iter = new UnparsedTextIterator(new System.IO.StringReader(content.GetStringValue()), abs, context);
                 }
                 else
                 {
-                    URI abs = GetAbsoluteURI(hrefVal.GetStringValue(), StaticBaseUriString, context);
+                    URI abs = GetAbsoluteURI(hrefVal.GetStringValue(), StaticBaseUriString);
                     iter = new UnparsedTextIterator(abs, context, encoding);
                 }
 

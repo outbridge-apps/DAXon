@@ -168,7 +168,7 @@ namespace OutSmart.DAXon.Xslt
                 SlotManager stackFrameMap = config.MakeSlotManager();
                 ExpressionTool.AllocateSlots(init, 0, stackFrameMap);
                 accumulator.SlotManagerForInitialValueExpression = stackFrameMap;
-                CheckInitialStreamability(init);
+                CheckInitialStreamability();
                 accumulator.InitialValueExpression = init;
                 accumulator.AddChildExpression(init);
             }
@@ -194,7 +194,7 @@ namespace OutSmart.DAXon.Xslt
                 action.SetLocation(rule.SaveLocation());
                 action.SetAccumulatorName(((XSLAccumulator)rule.GetParent()).GetObjectName());
                 mode.AddRule(pattern, action, decl.Module, decl.Module.Precedence, 1, position++, 0);
-                CheckRuleStreamability(rule, pattern, newValueExp);
+                CheckRuleStreamability();
                 if (accumulator.IsDeclaredStreamable() && rule.IsPostDescent() && rule.IsCapture())
                 {
                     action.SetCapturing(true);
@@ -314,11 +314,11 @@ namespace OutSmart.DAXon.Xslt
         {
         }
 
-        private void CheckInitialStreamability(Expression init)
+        private void CheckInitialStreamability()
         {
         }
 
-        private void CheckRuleStreamability(XSLAccumulatorRule rule, Patterns.Pattern pattern, Expression newValueExp)
+        private void CheckRuleStreamability()
         {
         }
     }

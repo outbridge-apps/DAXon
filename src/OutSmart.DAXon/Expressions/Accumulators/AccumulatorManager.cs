@@ -74,7 +74,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
                 else if (doc is TinyTree && ((TinyTree)doc).CopiedFrom != null)
                 {
                     IIAccumulatorData original = GetAccumulatorData(((TinyTree)doc).CopiedFrom.GetTreeInfo(), acc, context);
-                    return new PathMappedAccumulatorData(original, ((TinyTree)doc).CopiedFrom);
+                    return new PathMappedAccumulatorData(((TinyTree)doc).CopiedFrom);
                 }
                 else
                 {

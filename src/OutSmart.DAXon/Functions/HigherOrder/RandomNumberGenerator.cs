@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             return BitConverter.ToInt64(b, 0);
         }
 
-        private static MapItem Generator(long seed, IXPathContext context)
+        private static MapItem Generator(long seed)
         {
             Random random = new Random(unchecked((int)seed));
             double number = random.NextDouble();
@@ -62,7 +62,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 seed = val == null ? context.GetCurrentDateTime().RandomSeed() : val.GetHashCode();
             }
 
-            return Generator(seed, context);
+            return Generator(seed);
         }
 
         private sealed class Permutation : ICallable
@@ -93,7 +93,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
 
             public ISequence Call(IXPathContext context, ISequence[] arguments)
             {
-                return Generator(nextSeed, context);
+                return Generator(nextSeed);
             }
         }
     }

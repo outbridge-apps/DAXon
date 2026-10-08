@@ -209,7 +209,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (itemType == BuiltInAtomicType.UNTYPED_ATOMIC)
@@ -231,7 +231,7 @@ namespace OutSmart.DAXon.Expressions
                             }
                             catch (MissingMethodException)
                             {
-                                throw CannotConvert(itemType, targetClass, config);
+                                throw CannotConvert(itemType, targetClass);
                             }
                         }
                     }
@@ -247,7 +247,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.INTEGER))
@@ -294,7 +294,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.DECIMAL))
@@ -317,7 +317,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.FLOAT))
@@ -336,7 +336,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.DOUBLE))
@@ -374,7 +374,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.QNAME))
@@ -389,7 +389,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.NOTATION))
@@ -404,7 +404,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.DURATION))
@@ -415,7 +415,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.DATE_TIME))
@@ -434,7 +434,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.DATE))
@@ -453,7 +453,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.TIME))
@@ -472,7 +472,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.G_YEAR))
@@ -483,7 +483,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.G_YEAR_MONTH))
@@ -494,7 +494,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.G_MONTH))
@@ -505,7 +505,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.G_MONTH_DAY))
@@ -516,7 +516,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.G_DAY))
@@ -527,7 +527,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.BASE64_BINARY))
@@ -538,7 +538,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else if (th.IsSubType(itemType, BuiltInAtomicType.HEX_BINARY))
@@ -549,7 +549,7 @@ namespace OutSmart.DAXon.Expressions
                         }
                         else
                         {
-                            throw CannotConvert(itemType, targetClass, config);
+                            throw CannotConvert(itemType, targetClass);
                         }
                     }
                     else
@@ -591,7 +591,7 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        private static XPathException CannotConvert(ItemType source, System.Type target, Configuration config)
+        private static XPathException CannotConvert(ItemType source, System.Type target)
         {
             return new XPathException("Cannot convert from " + source + " to " + target.FullName);
         }

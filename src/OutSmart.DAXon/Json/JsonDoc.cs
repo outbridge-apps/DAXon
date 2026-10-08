@@ -36,7 +36,7 @@ namespace OutSmart.DAXon.Json
             // codepoint UnicodeString and converting it back.
 
             // Use the URI machinery to validate and resolve the URIs
-            URI absoluteURI = UnparsedTextFunction.GetAbsoluteURI(href, StaticBaseUriString, context);
+            URI absoluteURI = UnparsedTextFunction.GetAbsoluteURI(href, StaticBaseUriString);
             // Encoding is INFERRED for json-doc (JSON is UTF-8, or UTF-16/32 by BOM — never user-supplied), so
             // pass null: a decode failure is then reported as FOUT1200 (inferred), not FOUT1190 (explicit).
             // JSONTestSuite i_string_* accept FOUT1200 but not FOUT1190.

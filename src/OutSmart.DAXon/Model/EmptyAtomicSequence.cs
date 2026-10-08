@@ -54,7 +54,7 @@ namespace OutSmart.DAXon.Model
             return "";
         }
 
-        public EmptyAtomicSequence Subsequence(int start, int length)
+        public EmptyAtomicSequence Subsequence()
         {
             return this;
         }
@@ -71,7 +71,7 @@ namespace OutSmart.DAXon.Model
         ISequenceIterator IGroundedValue.Iterate() => Iterate();
         IItem IGroundedValue.ItemAt(int arg0) => ItemAt(arg0);
         IItem IGroundedValue.Head() => Head();
-        IGroundedValue IGroundedValue.Subsequence(int arg0, int arg1) => Subsequence(arg0, arg1);
+        IGroundedValue IGroundedValue.Subsequence(int arg0, int arg1) => Subsequence();
         IItem ISequence.Head() => Head();
         ISequenceIterator ISequence.Iterate() => Iterate();
         public IEnumerator<AtomicValue> GetEnumerator() => System.Linq.Enumerable.Empty<AtomicValue>().GetEnumerator();

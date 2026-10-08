@@ -137,7 +137,7 @@ namespace OutSmart.DAXon.Lib
         }
         // What a resolver returned (UnparsedTextFunction.OpenText), or the DirectResourceResolver for a scheme Read leaves
         // alone: materialized via StringReader (Java -1 EOF semantics), from whichever of reader/stream/systemId it carries.
-        public static TextReader GetReaderFromResolvedResource(ResolvedResource src, string encoding, Configuration config, bool isXml, string function = "unparsed-text()")
+        public static TextReader GetReaderFromResolvedResource(ResolvedResource src, string encoding, Configuration config, string function = "unparsed-text()")
         {
             try
             {

@@ -358,7 +358,7 @@ namespace OutSmart.DAXon.Functions
                 }
 
                 absoluteURI = new URI(ResolveURI.EscapeSpaces(@base));
-                checker.CheckThoroughly(absoluteURI);
+                checker.CheckThoroughly();
                 if (!absoluteURI.IsAbsolute())
                 {
                     throw Failure(@base, "Relative URI not supplied, so base URI must be absolute");
@@ -477,7 +477,7 @@ namespace OutSmart.DAXon.Functions
                         try
                         {
                             baseURI = new URI(@base);
-                            checker.CheckThoroughly(baseURI);
+                            checker.CheckThoroughly();
                         }
                         catch (URISyntaxException e)
                         {
@@ -489,7 +489,7 @@ namespace OutSmart.DAXon.Functions
                     try
                     {
                         absOrRel = AbsoluteOrRelativeURI(relativeURI); // for validation only
-                        checker.CheckThoroughly(absOrRel);
+                        checker.CheckThoroughly();
                     }
                     catch (URISyntaxException e)
                     {

@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Patterns
         // Runtime: real FromExpression (the prior `=> null` hollow stub made every expression->Pattern
         // conversion return null -> NRE at PatternParser.ParsePattern pat.SetOriginalText, the moment any
         // xsl:template match pattern compiled). Faithful to PatternMaker.java: ToPattern + location copy.
-        public static object FromExpression(object expr, object config, bool isFinal)
+        public static object FromExpression(object expr, object config)
         {
             Pattern result = ((Expression)expr).ToPattern((Configuration)config);
             OutSmart.DAXon.Expressions.Parsing.ExpressionTool.CopyLocationInfo((Expression)expr, result);

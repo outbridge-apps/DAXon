@@ -308,7 +308,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     Grumble("NameTestUnion syntax requires 4.0 to be enabled");
                 }
 
-                nodeTest = NameTestUnion.WithTests(tests);
+                nodeTest = NameTestUnion.WithTests();
             }
 
             if (t.currentToken == Token.RPAR)

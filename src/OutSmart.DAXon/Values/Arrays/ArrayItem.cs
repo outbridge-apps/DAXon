@@ -50,7 +50,7 @@ namespace OutSmart.DAXon.Values.Arrays
         public abstract IEnumerable<IGroundedValue> Members();
         public virtual ISequenceIterator Parcels()
         {
-            return (ISequenceIterator)(new SequenceIteratorOverJavaIterator<IGroundedValue>(Members().GetEnumerator(), (member) => new Parcel(member)));
+            return (ISequenceIterator)(new SequenceIteratorOverJavaIterator<IGroundedValue>(Members().GetEnumerator(), (member) => new Parcel()));
         }
 
         public abstract ArrayItem Append(IGroundedValue newMember);

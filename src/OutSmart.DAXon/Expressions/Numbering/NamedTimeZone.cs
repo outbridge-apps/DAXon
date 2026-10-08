@@ -359,7 +359,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
             foreach (string olson in possibleIds)
             {
                 TimeZoneInfo possibleTimeZone = ZoneOf(olson);
-                int offsetSeconds = GetOffsetInSecondsAtDateTime(possibleTimeZone, date);
+                int offsetSeconds = GetOffsetInSecondsAtDateTime(possibleTimeZone);
                 if (offsetSeconds == tzMinutes * 60)
                 {
                     return inSummerTime ? olson + "*" : olson;
@@ -433,7 +433,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
         // Preserves the legacy offset-at-now behaviour: the old DateTimeValue.ToJavaInstant() returned
         // Instant.now() (a stub that ignored the value), so the offset was taken at the current instant,
         // not at dateTime. Reached only from GetOlsonTimeZoneName.
-        private static int GetOffsetInSecondsAtDateTime(TimeZoneInfo zone, DateTimeValue dateTime)
+        private static int GetOffsetInSecondsAtDateTime(TimeZoneInfo zone)
         {
             return (int)zone.GetUtcOffset(DateTimeOffset.UtcNow).TotalSeconds;
         }

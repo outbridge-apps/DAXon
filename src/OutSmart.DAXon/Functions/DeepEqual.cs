@@ -482,7 +482,7 @@ namespace OutSmart.DAXon.Functions
                     goto case Types.Type.TEXT;
                 case Types.Type.TEXT:
                 case Types.Type.COMMENT:
-                    bool vr = CompareStrings(n1.GetStringValue(), n2.GetStringValue(), options, context);
+                    bool vr = CompareStrings(n1.GetStringValue(), n2.GetStringValue(), options);
 
                     if (!vr)
                     {
@@ -728,14 +728,14 @@ namespace OutSmart.DAXon.Functions
             IntSet hashSet = new IntHashSet();
             foreach (NodeInfo nodeInfo in children1)
             {
-                int hash = ComputeHashCode(nodeInfo, options);
+                int hash = ComputeHashCode(nodeInfo);
                 hashSet.Add(hash);
                 hashcodes1.Add(hash);
             }
 
             foreach (NodeInfo c0 in children0)
             {
-                int hash = ComputeHashCode(c0, options);
+                int hash = ComputeHashCode(c0);
                 if (!hashSet.Contains(hash))
                 {
                     return "Node found among first node's children with no counterpart among the second node's children";
@@ -769,7 +769,7 @@ namespace OutSmart.DAXon.Functions
      * Determine whether two nodes are deep-equal
      * @return null if they are deep equal, or an explanation of the reason if not
      */
-        private static int ComputeHashCode(NodeInfo node, DeepEqualOptions options)
+        private static int ComputeHashCode(NodeInfo node)
         {
 
             // Keep it simple for now - independent of the options
@@ -780,7 +780,7 @@ namespace OutSmart.DAXon.Functions
      * Determine whether two nodes are deep-equal
      * @return null if they are deep equal, or an explanation of the reason if not
      */
-        private static bool CompareStrings(string s1, string s2, DeepEqualOptions options, IXPathContext context)
+        private static bool CompareStrings(string s1, string s2, DeepEqualOptions options)
         {
             if (options.normalizeSpace)
             {

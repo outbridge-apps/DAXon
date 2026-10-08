@@ -44,12 +44,12 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override TuplePull GetPullStream(TuplePull @base, IXPathContext context)
         {
-            return new DiagnosticClausePull(@base, this);
+            return new DiagnosticClausePull();
         }
 
         public override TuplePush GetPushStream(TuplePush destination, Outputter output, IXPathContext context)
         {
-            return new DiagnosticClausePush(output, destination, this);
+            return new DiagnosticClausePush();
         }
 
         public override void ProcessOperands(IOperandProcessor processor)

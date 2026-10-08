@@ -213,7 +213,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 return (output, context) =>
                 {
                     string href = hrefEval.Eval(context);
-                    NodeInfo doc = DocumentFn.MakeDoc(href, expr.StaticBaseURIString, expr.GetPackageData(), expr.parseOptions, context, expr.GetLocation(), false);
+                    NodeInfo doc = DocumentFn.MakeDoc(href, expr.StaticBaseURIString, expr.GetPackageData(), expr.parseOptions, context, expr.GetLocation());
                     if (doc != null)
                     {
                         Controller controller = context.GetController();

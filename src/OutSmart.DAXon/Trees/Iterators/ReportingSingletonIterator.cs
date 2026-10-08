@@ -11,7 +11,7 @@ namespace OutSmart.DAXon.Trees.Iterators
 {
     internal sealed class ReportingSingletonIterator : ISequenceIterator
     {
-        public ReportingSingletonIterator(object item, object listener, object loc) { }
+        public ReportingSingletonIterator() { }
         public IItem Next() => null;
         void ISequenceIterator.Dispose() { }
         void IDisposable.Dispose() { }

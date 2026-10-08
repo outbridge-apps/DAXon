@@ -10,6 +10,6 @@ namespace OutSmart.DAXon.Tracing
     internal static class TraceEventMulticaster
     {
         public static object Add(object a, object b) => a ?? b;
-        public static object Remove(object a, object b) => a;
+        public static object Remove(object a) => a;
     }
 }

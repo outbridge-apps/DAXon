@@ -167,7 +167,7 @@ namespace OutSmart.DAXon.Json
                     break;
                 case JsonToken.STRING_LITERAL:
                     string literal = tokenizer.TokenValue();
-                    handler.WriteString(Unescape(literal, flags, ERR_GRAMMAR, tokenizer.lineNumber));
+                    handler.WriteString(Unescape(literal, flags, ERR_GRAMMAR));
                     break;
                 default:
                     InvalidJSON("Unexpected symbol: " + tokenizer.TokenValue(), ERR_GRAMMAR, tokenizer.lineNumber);
@@ -192,7 +192,7 @@ namespace OutSmart.DAXon.Json
                 }
 
                 string key = tokenizer.TokenValue();
-                key = Unescape(key, flags, ERR_GRAMMAR, tokenizer.lineNumber);
+                key = Unescape(key, flags, ERR_GRAMMAR);
                 string reEscaped = handler.ReEscape(key);
                 tok = tokenizer.Next();
                 if (tok != JsonToken.COLON)
@@ -369,7 +369,7 @@ namespace OutSmart.DAXon.Json
             }
         }
 
-        public static string Unescape(string literal, int flags, string errorCode, int lineNumber)
+        public static string Unescape(string literal, int flags, string errorCode)
         {
             if (literal.IndexOf('\\') < 0)
             {

@@ -116,7 +116,7 @@ namespace OutSmart.DAXon.Serialization
         public virtual void WriteKey(string key)
         {
             bool oneLiner = oneLinerStack.Peek();
-            ConditionalComma(false);
+            ConditionalComma();
             Emit('"');
             Emit(Escape(key));
             Emit("\":");
@@ -130,7 +130,7 @@ namespace OutSmart.DAXon.Serialization
 
         public virtual void WriteAtomicValue(AtomicValue item)
         {
-            ConditionalComma(false);
+            ConditionalComma();
             if (item == null)
             {
                 Emit("null");
@@ -284,7 +284,7 @@ namespace OutSmart.DAXon.Serialization
 
         public virtual void WriteStringValue(string str)
         {
-            ConditionalComma(false);
+            ConditionalComma();
             Emit('"');
             Emit(Escape(str));
             Emit('"');
@@ -314,7 +314,7 @@ namespace OutSmart.DAXon.Serialization
 
         private void EmitOpen(char bracket, bool oneLiner)
         {
-            ConditionalComma(true);
+            ConditionalComma();
             oneLinerStack.Push(oneLiner);
             Emit(bracket);
             first = true;
@@ -343,7 +343,7 @@ namespace OutSmart.DAXon.Serialization
             first = false;
         }
 
-        private void ConditionalComma(bool opening)
+        private void ConditionalComma()
         {
             bool wasFirst = first;
             bool oneLiner = oneLinerStack.Count > 0 && oneLinerStack.Peek();

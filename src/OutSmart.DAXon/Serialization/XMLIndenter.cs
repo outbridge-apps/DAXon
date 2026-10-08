@@ -74,7 +74,7 @@ namespace OutSmart.DAXon.Serialization
         {
             if (afterStartTag || afterEndTag)
             {
-                bool doubleSpaced = IsDoubleSpaced(nameCode);
+                bool doubleSpaced = IsDoubleSpaced();
 
                 //            if (doubleSpaced) {
                 //                line = 0;
@@ -300,7 +300,7 @@ namespace OutSmart.DAXon.Serialization
             base.EndDocument();
         }
 
-        protected bool IsDoubleSpaced(INodeName name)
+        protected bool IsDoubleSpaced()
         {
             return false;
         }

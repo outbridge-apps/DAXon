@@ -54,7 +54,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             }
         }
 
-        public void ReportCompletion(int serialNumber)
+        public void ReportCompletion()
         {
 
             // Note, does thread-unsafe updates to the statistics

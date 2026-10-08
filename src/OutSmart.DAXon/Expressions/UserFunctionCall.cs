@@ -207,7 +207,7 @@ namespace OutSmart.DAXon.Expressions
 
                 if (i == 0 && target.DeclaredStreamability.IsConsuming())
                 {
-                    evaluators[i] = new StreamingArgumentEvaluator(arg);
+                    evaluators[i] = new StreamingArgumentEvaluator();
                 }
                 else if (target.GetParameterDefinitions()[i].IsIndexedVariable())
                 {

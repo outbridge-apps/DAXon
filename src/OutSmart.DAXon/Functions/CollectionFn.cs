@@ -158,7 +158,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            ISequenceIterator result = new CollectionIterator(collection.GetResources(context), context);
+            ISequenceIterator result = new CollectionIterator(collection.GetResources(context));
 
             // Apply space-stripping to document nodes in the collection (no-op when the builder already did)
             if (whitespaceRule != null && whitespaceRule != NoElementsSpaceStrippingRule.GetInstance())
@@ -205,7 +205,7 @@ namespace OutSmart.DAXon.Functions
         private sealed class CollectionIterator : ISequenceIterator
         {
             private readonly IEnumerator<IResource> sources;
-            public CollectionIterator(IEnumerator<IResource> sources, IXPathContext context)
+            public CollectionIterator(IEnumerator<IResource> sources)
             {
                 this.sources = sources;
             }

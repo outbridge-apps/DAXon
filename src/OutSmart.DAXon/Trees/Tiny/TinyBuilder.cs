@@ -204,7 +204,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             for (int i = 0; i < attCount; i++)
             {
                 AttributeInfo att = attributes.ItemAt(i);
-                Attribute2(att.GetNodeName(), att.GetType(), GetAttValue(att), location, att.GetProperties());
+                Attribute2(att.GetNodeName(), att.GetType(), GetAttValue(att), att.GetProperties());
             }
 
             textualElementEligibilityState = (noNewNamespaces && !lineNumbering) ? Eligibility.PRIMED : Eligibility.INELIGIBLE;
@@ -335,7 +335,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             return att.Value;
         }
 
-        private void Attribute2(INodeName attName, ISimpleType type, string value, ILocation locationId, int properties)
+        private void Attribute2(INodeName attName, ISimpleType type, string value, int properties)
         {
 
             int fp = attName.ObtainFingerprint(namePool);
@@ -667,7 +667,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         /// </summary>
         public override BuilderMonitor GetBuilderMonitor()
         {
-            return new TinyBuilderMonitor(this);
+            return new TinyBuilderMonitor();
         }
         private enum Eligibility
         {

@@ -228,7 +228,7 @@ namespace OutSmart.DAXon.Internal.Numerics
         // Compact-path result constructor: the mantissa is a known long, so no BigInteger is
         // touched (Unscaled materializes lazily if ever read). long.MinValue collides with the
         // INFLATED sentinel and takes the big form — value-identical.
-        private BigDecimal(long compact, int scale, bool marker)
+        private BigDecimal(long compact, int scale)
         {
             if (compact != INFLATED)
             {
@@ -242,7 +242,7 @@ namespace OutSmart.DAXon.Internal.Numerics
                 _scale = scale;
             }
         }
-        internal static BigDecimal FromCompact(long v, int scale) => new BigDecimal(v, scale, true);
+        internal static BigDecimal FromCompact(long v, int scale) => new BigDecimal(v, scale);
         public BigDecimal(decimal value)
         {
             var bits = decimal.GetBits(value);

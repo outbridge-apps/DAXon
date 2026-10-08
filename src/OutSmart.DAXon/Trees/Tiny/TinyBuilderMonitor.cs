@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Trees.Tiny
     internal sealed class TinyBuilderMonitor : BuilderMonitor
     {
         public override NodeInfo MarkedNode => throw new NotImplementedException("STUB: TinyBuilderMonitor.GetMarkedNode not ported (excluded stub)");
-        public TinyBuilderMonitor(object a) : base(null) { }
+        public TinyBuilderMonitor() : base(null) { }
         public override void MarkNextNode(int nodeKind) { }
     }
 }

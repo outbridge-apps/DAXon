@@ -364,7 +364,7 @@ namespace OutSmart.DAXon.Api
         {
             if (collation is RuleBasedCollator)
             {
-                return new RuleBasedSubstringMatcher(uri, (RuleBasedCollator)collation);
+                return new RuleBasedSubstringMatcher();
             }
             else
             {

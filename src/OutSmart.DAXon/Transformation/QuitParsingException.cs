@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Transformation
     internal sealed class QuitParsingException : XPathException
     {
 
-        public QuitParsingException(bool notifiedByConsumer)
+        public QuitParsingException()
             : base("The input file has not been read to completion", "SXQP0001")
         {
         }

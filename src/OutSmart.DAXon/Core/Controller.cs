@@ -1323,7 +1323,7 @@ namespace OutSmart.DAXon.Core
 
         public virtual void RemoveTraceListener(ITraceListener trace)
         {
-            traceListener = (ITraceListener)TraceEventMulticaster.Remove(traceListener, trace);
+            traceListener = (ITraceListener)TraceEventMulticaster.Remove(traceListener);
         }
 
         public virtual void InitializeController(GlobalParameterSet @params)
@@ -1561,7 +1561,7 @@ namespace OutSmart.DAXon.Core
                 ITreeInfo docInfo = start.GetTreeInfo();
                 if (docInfo.IsTyped())
                 {
-                    TypeStrippedDocument strippedDoc = new TypeStrippedDocument(docInfo);
+                    TypeStrippedDocument strippedDoc = new TypeStrippedDocument();
                     start = strippedDoc.Wrap(start);
                 }
             }

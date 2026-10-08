@@ -179,7 +179,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             return (IFunctionItem)MakeElaborator().ElaborateForItem().Eval(context);
         }
 
-        public IFunctionItem Call(IXPathContext context, ISequence[] arguments)
+        public IFunctionItem Call(IXPathContext context)
         {
             return (IFunctionItem)EvaluateItem(context);
         }
@@ -228,7 +228,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
         {
             return new UserFunctionReferenceElaborator();
         }
-        ISequence ICallable.Call(IXPathContext arg0, ISequence[] arg1) => Call(arg0, arg1);
+        ISequence ICallable.Call(IXPathContext arg0, ISequence[] arg1) => Call(arg0);
 
         private sealed class UserFunctionReferenceElaborator : ItemElaborator
         {

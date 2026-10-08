@@ -85,7 +85,7 @@ namespace OutSmart.DAXon.Transformation.Packages
             }
         }
 
-        public PackageDetails GetPackageDetails(string top, Configuration config)
+        public PackageDetails GetPackageDetails(string top)
         {
             try
             {

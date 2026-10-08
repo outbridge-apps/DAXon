@@ -121,7 +121,7 @@ namespace OutSmart.DAXon.Serialization
             inlineTable.UnionWith(inlineTags);
             formattedTable.UnionWith(formattedTags);
         }
-        public HTMLIndenter(IReceiver next, string method) : base(next)
+        public HTMLIndenter(IReceiver next) : base(next)
         {
         }
 

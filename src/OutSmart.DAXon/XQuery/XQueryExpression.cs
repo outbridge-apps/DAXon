@@ -91,7 +91,7 @@ namespace OutSmart.DAXon.XQuery
 
                 if (optimizer.IsOptionSet(OptimizerOptions.LOOP_LIFTING))
                 {
-                    e2 = LoopLifter.Process(exp, visitor, cit);
+                    e2 = LoopLifter.Process(exp);
                     if (e2 != exp)
                     {
                         e2.SetRetainedStaticContext(exp.GetRetainedStaticContext());

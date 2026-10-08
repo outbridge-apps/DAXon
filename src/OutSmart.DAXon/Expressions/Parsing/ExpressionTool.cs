@@ -844,7 +844,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
                 if (opt.IsOptionSet(OptimizerOptions.LOOP_LIFTING))
                 {
-                    body = LoopLifter.Process(body, visitor, cisi);
+                    body = LoopLifter.Process(body);
                 }
             }
             else

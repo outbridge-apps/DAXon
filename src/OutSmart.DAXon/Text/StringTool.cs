@@ -156,7 +156,7 @@ namespace OutSmart.DAXon.Text
 
         public static IIntIterator CodePoints(string value)
         {
-            return new AnonymousIntIterator(null, value);
+            return new AnonymousIntIterator(value);
         }
 
         public static string DiagnosticDisplay(string s)
@@ -371,7 +371,7 @@ namespace OutSmart.DAXon.Text
 
             private readonly string value;
             int i;
-            public AnonymousIntIterator(StringTool parent, string value)
+            public AnonymousIntIterator(string value)
             {
                 this.value = value;
             }

@@ -9,7 +9,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 {
     internal sealed class DiagnosticClausePush
     {
-        public DiagnosticClausePush(object a, object b, object c) { }
+        public DiagnosticClausePush() { }
         public static implicit operator TuplePush(DiagnosticClausePush x) => null;
     }
 }

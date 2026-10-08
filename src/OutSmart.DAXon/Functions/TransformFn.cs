@@ -98,7 +98,7 @@ namespace OutSmart.DAXon.Functions
             return op;
         }
 
-        private void CheckTransformOptions(Dictionary<string, IGroundedValue> options, IXPathContext context, int languageVersion)
+        private void CheckTransformOptions(Dictionary<string, IGroundedValue> options, int languageVersion)
         {
             if (options.Count == 0)
             {
@@ -641,7 +641,7 @@ namespace OutSmart.DAXon.Functions
                 languageVersion = 30;
             }
 
-            CheckTransformOptions(options, context, languageVersion);
+            CheckTransformOptions(options, languageVersion);
             if (options.GetOrDefault("xslt-version") != null)
             {
                 DecimalValue requestedVersion = (DecimalValue)options.GetOrDefault("xslt-version").Head();

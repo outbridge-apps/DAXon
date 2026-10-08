@@ -97,7 +97,7 @@ namespace OutSmart.DAXon.Patterns
 
                 AxisExpression ae = new AxisExpression(axis, nodeTest);
                 FilterExpression fe = new FilterExpression(ae, positionExpr);
-                return ((Pattern)PatternMaker.FromExpression(fe, config, true)).TypeCheck(visitor, contextInfo);
+                return ((Pattern)PatternMaker.FromExpression(fe, config)).TypeCheck(visitor, contextInfo);
             }
 
             return this;
@@ -115,13 +115,13 @@ namespace OutSmart.DAXon.Patterns
 
         public override bool MatchesBeneathAnchor(NodeInfo node, NodeInfo anchor, IXPathContext context)
         {
-            return InternalMatches(node, anchor, context);
+            return InternalMatches(node, context);
         }
 
         /// <summary>
         /// Test whether the pattern matches, but without changing the current() node
         /// </summary>
-        private bool InternalMatches(NodeInfo node, NodeInfo anchor, IXPathContext context)
+        private bool InternalMatches(NodeInfo node, IXPathContext context)
         {
             if (!nodeTest.Test(node))
             {

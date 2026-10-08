@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Lib
     // be Action<Message>. Use implicit operator (Action<T> is a delegate, so we wrap).
     internal sealed class StandardMessageHandler
     {
-        public StandardMessageHandler(object factory) { }
+        public StandardMessageHandler() { }
         public void Accept(Message msg) { }
         public static implicit operator Action<Message>(StandardMessageHandler h) => h == null ? null : h.Accept;
     }

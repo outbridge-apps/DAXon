@@ -565,7 +565,7 @@ namespace OutSmart.DAXon.Model
                 // would get multiple notifications for constructs like `if (!empty(x)) then x`.
                 if (container.learningEvaluator != null)
                 {
-                    container.learningEvaluator.ReportCompletion(container.serialNumber);
+                    container.learningEvaluator.ReportCompletion();
                 }
             }
         }

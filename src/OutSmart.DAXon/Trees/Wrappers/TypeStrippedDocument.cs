@@ -12,7 +12,7 @@ namespace OutSmart.DAXon.Trees.Wrappers
 {
     internal sealed class TypeStrippedDocument
     {
-        public TypeStrippedDocument(object doc) { }
+        public TypeStrippedDocument() { }
         public NodeInfo Wrap(object node) => throw new NotImplementedException("STUB: TypeStrippedDocument.Wrap not ported (excluded stub)");
     }
 }

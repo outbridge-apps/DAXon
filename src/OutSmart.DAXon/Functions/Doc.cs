@@ -62,7 +62,7 @@ namespace OutSmart.DAXon.Functions
 
             string href = hrefVal.GetStringValue();
             PackageData packageData = GetRetainedStaticContext().GetPackageData();
-            NodeInfo item = DocumentFn.MakeDoc(href, GetRetainedStaticContext().StaticBaseUriString, packageData, GetParseOptions(), context, null, false);
+            NodeInfo item = DocumentFn.MakeDoc(href, GetRetainedStaticContext().StaticBaseUriString, packageData, GetParseOptions(), context, null);
             if (item == null)
             {
 

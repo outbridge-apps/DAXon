@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Types
     internal sealed class AnyFunctionTypeWithAssertions : AnyFunctionType
     {
 
-        public AnyFunctionTypeWithAssertions(AnnotationList assertions, Configuration config)
+        public AnyFunctionTypeWithAssertions(Configuration config)
         {
         }
     }

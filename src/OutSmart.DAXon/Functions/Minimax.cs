@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Functions
         public override ItemType GetResultItemType(Expression[] args)
         {
             TypeHierarchy th = GetRetainedStaticContext().GetConfiguration().GetTypeHierarchy();
-            ItemType @base = Atomizer.GetAtomizedItemType(args[0], false, th);
+            ItemType @base = Atomizer.GetAtomizedItemType(args[0], false);
             if (@base.Equals(BuiltInAtomicType.UNTYPED_ATOMIC))
             {
                 @base = BuiltInAtomicType.DOUBLE;

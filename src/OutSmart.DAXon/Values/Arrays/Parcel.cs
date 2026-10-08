@@ -9,6 +9,6 @@ namespace OutSmart.DAXon.Values.Arrays
 {
     internal sealed class Parcel
     {
-        public Parcel(object value) { }
+        public Parcel() { }
     }
 }

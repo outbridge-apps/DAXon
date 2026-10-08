@@ -116,7 +116,7 @@ namespace OutSmart.DAXon.Expressions
             destination.EmitAttribute("slot", slotNumber + "");
             if (type != null)
             {
-                destination.EmitAttribute("sType", AlphaCode.FromSequenceType(type));
+                destination.EmitAttribute("sType", AlphaCode.FromSequenceType());
             }
 
             destination.EndElement();

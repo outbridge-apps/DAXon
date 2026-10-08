@@ -128,7 +128,7 @@ namespace OutSmart.DAXon.Expressions
             }
 
             needsRuntimeCheck = p0.Equals(BuiltInAtomicType.ANY_ATOMIC) || p1.Equals(BuiltInAtomicType.ANY_ATOMIC);
-            if (!needsRuntimeCheck && !Types.Type.IsPossiblyComparable(p0, p1, visitor.StaticContext.GetXPathVersion()))
+            if (!needsRuntimeCheck && !Types.Type.IsPossiblyComparable(visitor.StaticContext.GetXPathVersion()))
             {
                 bool opt0 = Cardinality.AllowsZero(GetLhsExpression().GetCardinality());
                 bool opt1 = Cardinality.AllowsZero(GetRhsExpression().GetCardinality());

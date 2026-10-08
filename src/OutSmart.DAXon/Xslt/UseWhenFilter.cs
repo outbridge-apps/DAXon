@@ -530,7 +530,7 @@ namespace OutSmart.DAXon.Xslt
                     try
                     {
                         staticContext.SetContainingLocation(attLoc);
-                        ISequence sequence = EvaluateStatic(selectStr, location, staticContext);
+                        ISequence sequence = EvaluateStatic(selectStr, staticContext);
                         value = sequence.Materialize();
                     }
                     catch (XPathException e)
@@ -801,7 +801,7 @@ namespace OutSmart.DAXon.Xslt
             return dynamicContext;
         }
 
-        public ISequence EvaluateStatic(string expression, ILocation locationId, UseWhenStaticContext staticContext)
+        public ISequence EvaluateStatic(string expression, UseWhenStaticContext staticContext)
         {
             try
             {

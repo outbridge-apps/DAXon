@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Functions
         public override ItemType ResultItemType => AnyItemType.GetInstance();
 
         public override string StreamerName => "CurrentMergeGroup";
-        public void SetControllingInstruction(MergeInstr instruction, bool isInLoop)
+        public void SetControllingInstruction(MergeInstr instruction)
         {
             this.controllingInstruction = instruction;
             foreach (MergeInstr.MergeSource m in instruction.MergeSources)

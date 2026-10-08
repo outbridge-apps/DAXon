@@ -323,7 +323,7 @@ namespace OutSmart.DAXon.XQuery
             body.ParentExpression = null;
             if (opt.IsOptionSet(OptimizerOptions.LOOP_LIFTING))
             {
-                body = LoopLifter.Process(body, visitor, ContextItemStaticInfo.ABSENT);
+                body = LoopLifter.Process(body);
             }
 
             if (opt.IsOptionSet(OptimizerOptions.EXTRACT_GLOBALS))

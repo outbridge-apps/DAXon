@@ -225,7 +225,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override TuplePull GetPullStream(TuplePull @base, IXPathContext context)
         {
-            return new WindowClausePull(@base, this, context);
+            return new WindowClausePull(@base, this);
         }
 
         public override TuplePush GetPushStream(TuplePush destination, Outputter output, IXPathContext context)

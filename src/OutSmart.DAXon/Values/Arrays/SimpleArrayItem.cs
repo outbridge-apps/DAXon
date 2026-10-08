@@ -167,7 +167,7 @@ namespace OutSmart.DAXon.Values.Arrays
 
         public override ISequenceIterator Parcels()
         {
-            return (ISequenceIterator)(new SequenceIteratorOverJavaIterator<IGroundedValue>(_members.GetEnumerator(), (member) => new Parcel(member)));
+            return (ISequenceIterator)(new SequenceIteratorOverJavaIterator<IGroundedValue>(_members.GetEnumerator(), (member) => new Parcel()));
         }
 
         public override ArrayItem RemoveSeveral(IntSet positions)

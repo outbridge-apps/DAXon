@@ -184,7 +184,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             else if (exp.IsCallOn(typeof(CurrentMergeGroup)))
             {
                 CurrentMergeGroup fn = (CurrentMergeGroup)((SystemFunctionCall)exp).TargetFunction;
-                fn.SetControllingInstruction(instr, isInLoop);
+                fn.SetControllingInstruction(instr);
             }
             else if (exp.IsCallOn(typeof(CurrentMergeKey)))
             {
@@ -361,7 +361,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     anchorsIter = ItemMappingIterator.IMap(uriIter, (baseItem) =>
                     {
                         string uri = baseItem.GetStringValue();
-                        NodeInfo node = DocumentFn.MakeDoc(uri, GetRetainedStaticContext().StaticBaseUriString, GetPackageData(), options, context, GetLocation(), true);
+                        NodeInfo node = DocumentFn.MakeDoc(uri, GetRetainedStaticContext().StaticBaseUriString, GetPackageData(), options, context, GetLocation());
                         if (node != null)
                         {
                             accumulatorManager.SetApplicableAccumulators(node.GetTreeInfo(), ms.accumulators);
@@ -491,7 +491,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         public IComparer<ObjectValue<ItemWithMergeKeys>> GetComparer(SortKeyDefinitionList sKeys, IAtomicComparer[] comps)
         {
 
-            return new AnonymousComparator(this, sKeys, comps);
+            return new AnonymousComparator(sKeys, comps);
         }
 
         public override Expression Copy(RebindingMap rebindings)
@@ -752,7 +752,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
             private readonly SortKeyDefinitionList sKeys;
             private readonly IAtomicComparer[] comps;
-            public AnonymousComparator(MergeInstr parent, SortKeyDefinitionList sKeys, IAtomicComparer[] comps)
+            public AnonymousComparator(SortKeyDefinitionList sKeys, IAtomicComparer[] comps)
             {
                 this.sKeys = sKeys;
                 this.comps = comps;

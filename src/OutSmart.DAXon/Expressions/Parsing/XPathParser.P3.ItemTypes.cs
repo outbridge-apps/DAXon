@@ -619,7 +619,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                         // self-reference
                         p.NextToken();
                         int occ = ParseOccurrenceIndicator();
-                        arg = Values.SequenceType.MakeSequenceType((Types.ItemType)(new SelfReferenceRecordTest(recordTest)), occ);
+                        arg = Values.SequenceType.MakeSequenceType((Types.ItemType)(new SelfReferenceRecordTest()), occ);
                         if (!Cardinality.AllowsZero(occ) && !optionalFieldNames.Contains(name))
                         {
                             throw new XPathException("A self-referencing field in a record type must be emptiable or optional", "XPST0140");
@@ -769,7 +769,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 }
                 else
                 {
-                    return (Types.ItemType)new AnyFunctionTypeWithAssertions(annotations, GetStaticContext().GetConfiguration());
+                    return (Types.ItemType)new AnyFunctionTypeWithAssertions(GetStaticContext().GetConfiguration());
                 }
             }
             else

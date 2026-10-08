@@ -648,7 +648,7 @@ namespace OutSmart.DAXon.Core
                 message += ". You are using Saxon-" + Version.softwareEdition + " software, but the Configuration is an instance of " + GetType() + "; to use this feature you need to create an instance of " + (feature == LicenseFeature.PROFESSIONAL_EDITION ? packageNs + ".ProfessionalConfiguration" : packageNs + ".EnterpriseConfiguration");
             }
 
-            throw new LicenseException(message, LicenseException.WRONG_CONFIGURATION);
+            throw new LicenseException(message);
         }
 
         public virtual void DisableLicensing()
@@ -672,7 +672,7 @@ namespace OutSmart.DAXon.Core
         {
             if (!IsLicensedFeature(LicenseFeature.PROFESSIONAL_EDITION))
             {
-                throw new LicenseException("Use of " + featureName + " requires a license key for Saxon-PE or Saxon-EE", LicenseException.NOT_FOUND);
+                throw new LicenseException("Use of " + featureName + " requires a license key for Saxon-PE or Saxon-EE");
             }
         }
 
@@ -3016,7 +3016,7 @@ namespace OutSmart.DAXon.Core
 
         public virtual IIPackageLoader MakePackageLoader()
         {
-            return (IIPackageLoader)new PackageLoaderHE(this);
+            return (IIPackageLoader)new PackageLoaderHE();
         }
 
         public virtual InvalidityReportGenerator CreateValidityReporter()

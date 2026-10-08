@@ -307,7 +307,7 @@ namespace OutSmart.DAXon.XQuery
 
                 if (allowingEmpty)
                 {
-                    CheckForClauseAllowingEmpty(flwor, clause);
+                    CheckForClauseAllowingEmpty(clause);
                 }
 
                 if (forMember)
@@ -328,7 +328,7 @@ namespace OutSmart.DAXon.XQuery
         }
 
         /*clause.getRangeVariable()*/
-        private void CheckForClauseAllowingEmpty(FLWORExpression flwor, ForClause clause)
+        private void CheckForClauseAllowingEmpty(ForClause clause)
         {
             if (!allowXPath30Syntax)
             {

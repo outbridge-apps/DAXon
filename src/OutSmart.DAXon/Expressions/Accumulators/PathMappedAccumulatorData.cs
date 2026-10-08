@@ -12,7 +12,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
 {
     internal sealed class PathMappedAccumulatorData : IIAccumulatorData
     {
-        public PathMappedAccumulatorData(object a, object b) { }
+        public PathMappedAccumulatorData(object b) { }
         public Accumulator GetAccumulator() => throw new NotImplementedException("STUB: PathMappedAccumulatorData.GetAccumulator not ported (excluded stub)");
         public ISequence GetValue(NodeInfo node, bool postDescent) => throw new NotImplementedException("STUB: PathMappedAccumulatorData.GetValue not ported (excluded stub)");
     }

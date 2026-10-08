@@ -209,7 +209,7 @@ namespace OutSmart.DAXon.Types
         }
         public static object GetBuiltInSimpleType(string ns, string local) => GetBuiltInSimpleType(StandardNames.GetFingerprint(NamespaceUri.Of(ns), local));
         // Int-version overload (paulirwin passes XPathVersion int).
-        public static bool IsPossiblyComparable(ItemType t1, ItemType t2, int xpathVersion) => true;
+        public static bool IsPossiblyComparable(int xpathVersion) => true;
         // Faithful port of upstream Type.isSubType(AtomicType,AtomicType): walk the atomic base-type
         // chain. Was a hollow `=> false`, which defeated BuiltInAtomicType.Matches so every atomic
         // instance-of/treat-as gave false positives. Non-atomic operands keep the old `false` (unchanged).

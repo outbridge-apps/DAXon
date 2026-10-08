@@ -90,7 +90,7 @@ namespace OutSmart.DAXon.Functions
                     }
                 }
 
-                return StandardUnparsedTextResolver.GetReaderFromResolvedResource(src, encoding, config, false, function);
+                return StandardUnparsedTextResolver.GetReaderFromResolvedResource(src, encoding, config, function);
             }
             catch (XPathException err)
             {
@@ -99,7 +99,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        public static URI GetAbsoluteURI(string href, string baseURI, IXPathContext context)
+        public static URI GetAbsoluteURI(string href, string baseURI)
         {
             URI absoluteURI;
             try

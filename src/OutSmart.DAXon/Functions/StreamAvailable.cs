@@ -63,7 +63,7 @@ namespace OutSmart.DAXon.Functions
             public override void StartElement(INodeName elemName, ISchemaType type, IAttributeMap attributes,
                 NamespaceMap namespaces, ILocation location, int properties)
             {
-                throw new QuitParsingException(false);
+                throw new QuitParsingException();
             }
         }
     }

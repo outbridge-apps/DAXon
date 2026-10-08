@@ -329,7 +329,7 @@ namespace OutSmart.DAXon.Trees.Linked
 
         public override BuilderMonitor GetBuilderMonitor()
         {
-            return new LinkedBuilderMonitor(this);
+            return new LinkedBuilderMonitor();
         }
 
         // Inner class DefaultNodeFactory. This creates the nodes in the tree.

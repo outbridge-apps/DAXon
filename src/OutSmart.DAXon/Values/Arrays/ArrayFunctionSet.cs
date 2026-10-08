@@ -617,14 +617,14 @@ namespace OutSmart.DAXon.Values.Arrays
 
             public override IFold GetFold(IXPathContext context, params ISequence[] additionalArguments)
             {
-                return new AnonymousIFold(this);
+                return new AnonymousIFold();
             }
 
             private sealed class AnonymousIFold : IFold
             {
 
                 readonly IList<IGroundedValue> members = new List<IGroundedValue>();
-                public AnonymousIFold(ArrayFromSequence parent)
+                public AnonymousIFold()
                 {
                 }
                 public void ProcessItem(IItem item)

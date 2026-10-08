@@ -1181,7 +1181,7 @@ namespace OutSmart.DAXon.Expressions
                                 return null;
                             }
 
-                            if (FilterIterator.TestPredicateValue(condition.Iterate(outerContext), @base.Position(), null))
+                            if (FilterIterator.TestPredicateValue(condition.Iterate(outerContext), @base.Position()))
                             {
                                 return next;
                             }

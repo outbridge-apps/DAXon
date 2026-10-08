@@ -98,7 +98,7 @@ namespace OutSmart.DAXon.Expressions
                 {
                     knownToBeComparable = true;
                 }
-                else if (!Types.Type.IsPossiblyComparable(pt0, pt1, visitor.StaticContext.GetXPathVersion()))
+                else if (!Types.Type.IsPossiblyComparable(visitor.StaticContext.GetXPathVersion()))
                 {
                     env.IssueWarning("Cannot compare " + t0 + " to " + t1, DAXonErrorCode.SXWN9025, GetLocation()); // This is not an error in a switch statement, but it means the branch will never be chosen
                 }

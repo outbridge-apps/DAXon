@@ -76,10 +76,10 @@ namespace OutSmart.DAXon.XPath
             if (opt.IsOptionSet(OptimizerOptions.LOOP_LIFTING))
             {
                 exp.ParentExpression = null;
-                exp = LoopLifter.Process(exp, visitor, cit);
+                exp = LoopLifter.Process(exp);
             }
 
-            exp = PostProcess(exp, visitor, cit);
+            exp = PostProcess(exp);
             exp.SetRetainedStaticContext(rsc);
             SlotManager map = staticContext.GetStackFrameMap();
             int numberOfExternalVariables = map.NumberOfVariables;
@@ -89,7 +89,7 @@ namespace OutSmart.DAXon.XPath
             return xpe;
         }
 
-        protected Expression PostProcess(Expression exp, ExpressionVisitor visitor, ContextItemStaticInfo cit)
+        protected Expression PostProcess(Expression exp)
         {
             return exp;
         }

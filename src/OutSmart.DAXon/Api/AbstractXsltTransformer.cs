@@ -121,7 +121,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetResultDocumentHandler(Func<URI, IDestination> handler)
         {
-            controller.ResultDocumentResolver = new AnonymousIResultDocumentResolver(this, handler);
+            controller.ResultDocumentResolver = new AnonymousIResultDocumentResolver(handler);
         }
 
         public virtual void SetMessageListener(IMessageListener2 listener)
@@ -314,7 +314,7 @@ namespace OutSmart.DAXon.Api
         {
 
             private readonly Func<URI, IDestination> handler;
-            public AnonymousIResultDocumentResolver(AbstractXsltTransformer parent, Func<URI, IDestination> handler)
+            public AnonymousIResultDocumentResolver(Func<URI, IDestination> handler)
             {
                 this.handler = handler;
             }

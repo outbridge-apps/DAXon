@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Patterns
     {
         public override double DefaultPriority => 0;
         public NameTestUnion() { }
-        public static NameTestUnion WithTests(IList<NodeTest> tests) => new NameTestUnion();
+        public static NameTestUnion WithTests() => new NameTestUnion();
         public override bool Matches(int nodeKind, INodeName name, ISchemaType annotation) => false;
     }
 }

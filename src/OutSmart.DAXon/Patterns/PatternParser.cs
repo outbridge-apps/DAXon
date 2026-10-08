@@ -175,11 +175,11 @@ namespace OutSmart.DAXon.Patterns
                 Pattern pat;
                 try
                 {
-                    pat = (Pattern)PatternMaker.FromExpression(exp.Simplify().TypeCheck(visitor, cit), env.GetConfiguration(), true);
+                    pat = (Pattern)PatternMaker.FromExpression(exp.Simplify().TypeCheck(visitor, cit), env.GetConfiguration());
                 }
                 catch (XPathException)
                 {
-                    pat = (Pattern)PatternMaker.FromExpression(exp.Simplify(), env.GetConfiguration(), true);
+                    pat = (Pattern)PatternMaker.FromExpression(exp.Simplify(), env.GetConfiguration());
                 }
 
                 pat.OriginalText = pattern;

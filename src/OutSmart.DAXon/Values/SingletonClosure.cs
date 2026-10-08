@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Values
                 }
                 else if (learningEvaluator != null)
                 {
-                    return new ReportingSingletonIterator(item, learningEvaluator, serialNumber);
+                    return new ReportingSingletonIterator();
                 }
                 else
                 {
@@ -84,7 +84,7 @@ namespace OutSmart.DAXon.Values
                     savedXPathContext = null; // release variables saved in the context to the garbage collector
                     if (learningEvaluator != null)
                     {
-                        learningEvaluator.ReportCompletion(serialNumber);
+                        learningEvaluator.ReportCompletion();
 
                         learningEvaluator = null;
                     }

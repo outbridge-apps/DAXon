@@ -107,12 +107,12 @@ namespace OutSmart.DAXon.Transformation
         }
         public XsltController(Configuration config, PreparedStylesheet pss) : base(config, pss)
         {
-            InitMessageHandler(config);
+            InitMessageHandler();
         }
 
-        private void InitMessageHandler(Configuration config)
+        private void InitMessageHandler()
         {
-            messageHandler = new StandardMessageHandler(config);
+            messageHandler = new StandardMessageHandler();
         }
 
         public override void Reset()
@@ -513,7 +513,7 @@ namespace OutSmart.DAXon.Transformation
                         ITreeInfo docInfo = node.GetTreeInfo();
                         if (docInfo.IsTyped())
                         {
-                            TypeStrippedDocument strippedDoc = new TypeStrippedDocument(docInfo);
+                            TypeStrippedDocument strippedDoc = new TypeStrippedDocument();
                             node = strippedDoc.Wrap(node);
                         }
                     }

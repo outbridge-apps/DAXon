@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Expressions
 {
     internal sealed class StreamingArgumentEvaluator : ISequenceEvaluator
     {
-        public StreamingArgumentEvaluator(object expr) { }
+        public StreamingArgumentEvaluator() { }
         public ISequence Evaluate(IXPathContext context) => throw new NotImplementedException("STUB: StreamingArgumentEvaluator.Evaluate not ported (excluded stub)");
     }
 }

@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Events
                 }
             }
 
-            next = MakeValidator(next, systemId, options);
+            next = MakeValidator(next, options);
             ISpaceStrippingRule strippingRule = options.SpaceStrippingRule;
             if (strippingRule != null && !(strippingRule is NoElementsSpaceStrippingRule))
             {
@@ -145,7 +145,7 @@ namespace OutSmart.DAXon.Events
             receiver.Close();
         }
 
-        public static IReceiver MakeValidator(IReceiver receiver, string systemId, ParseOptions options)
+        public static IReceiver MakeValidator(IReceiver receiver, ParseOptions options)
         {
             PipelineConfiguration pipe = receiver.GetPipelineConfiguration();
             int sv = options.GetSchemaValidationMode();

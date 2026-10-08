@@ -407,7 +407,7 @@ namespace OutSmart.DAXon.Expressions
         {
             operandItemType = BaseExpression.GetItemType();
             TypeHierarchy th = GetConfiguration().GetTypeHierarchy();
-            return GetAtomizedItemType(BaseExpression, untyped, th);
+            return GetAtomizedItemType(BaseExpression, untyped);
         }
 
         public override UType GetStaticUType(UType contextItemType)
@@ -415,7 +415,7 @@ namespace OutSmart.DAXon.Expressions
             return UType.ANY_ATOMIC.Intersection(GetItemType().GetUType());
         }
 
-        public static ItemType GetAtomizedItemType(Expression operand, bool alwaysUntyped, TypeHierarchy th)
+        public static ItemType GetAtomizedItemType(Expression operand, bool alwaysUntyped)
         {
             ItemType @in = operand.GetItemType();
             if (@in.IsPlainType())

@@ -81,7 +81,7 @@ namespace OutSmart.DAXon.Functions
             return SequenceTool.ToLazySequence(new DocumentOrderIterator(iter, GlobalOrderComparer.GetInstance())); // this is to make sure we eliminate duplicates: two href's might be the same
         }
 
-        public static NodeInfo MakeDoc(string href, string baseURI, PackageData packageData, ParseOptions options, IXPathContext c, ILocation locator, bool silent)
+        public static NodeInfo MakeDoc(string href, string baseURI, PackageData packageData, ParseOptions options, IXPathContext c, ILocation locator)
         {
             Configuration config = c.GetConfiguration();
 
@@ -118,7 +118,7 @@ namespace OutSmart.DAXon.Functions
             }
 
             // Resolve relative URI
-            DocumentKey documentKey = ComputeDocumentKey(href, baseURI, packageData, c);
+            DocumentKey documentKey = ComputeDocumentKey(href, baseURI, packageData);
 
             // see if the document is already loaded
             ITreeInfo doc = config.GlobalDocumentPool.Find(documentKey);
@@ -383,7 +383,7 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        public static DocumentKey ComputeDocumentKey(string href, string baseURI, PackageData packageData, IXPathContext c)
+        public static DocumentKey ComputeDocumentKey(string href, string baseURI, PackageData packageData)
         {
             return ComputeDocumentKey(href, baseURI, packageData, true);
         }
@@ -645,7 +645,7 @@ namespace OutSmart.DAXon.Functions
 
                 try
                 {
-                    return MakeDoc(item.GetStringValue(), b, packageData, null, context, locator, false);
+                    return MakeDoc(item.GetStringValue(), b, packageData, null, context, locator);
                 }
                 catch (XPathException e) when (context.GetConfiguration().IsRecoverFromDocFailures()
                                                && (e.HasErrorCode("FODC0002") || e.HasErrorCode("FODC0005")))

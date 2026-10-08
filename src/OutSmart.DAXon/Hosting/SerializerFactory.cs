@@ -752,7 +752,7 @@ namespace OutSmart.DAXon.Lib
 
         protected virtual ProxyReceiver NewHTMLIndenter(IReceiver next, Properties outputProperties)
         {
-            HTMLIndenter r = new HTMLIndenter(next, "html");
+            HTMLIndenter r = new HTMLIndenter(next);
             r.SetOutputProperties(outputProperties);
             return r;
         }
@@ -766,7 +766,7 @@ namespace OutSmart.DAXon.Lib
                 method = "xhtml5";
             }
 
-            HTMLIndenter r = new HTMLIndenter(next, method);
+            HTMLIndenter r = new HTMLIndenter(next);
             r.SetOutputProperties(outputProperties);
             return r;
         }

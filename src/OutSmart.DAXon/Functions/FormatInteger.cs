@@ -430,7 +430,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            UnicodeString adjustedPic = ExtractSeparators(picExpanded, groupingPositions);
+            UnicodeString adjustedPic = ExtractSeparators(picExpanded);
             if (groupingPositions.IsEmpty())
             {
                 return new RegularGroupFormatter(0, "", adjustedPic);
@@ -456,7 +456,7 @@ namespace OutSmart.DAXon.Functions
         }
 
         //
-        private static UnicodeString ExtractSeparators(UnicodeString arr, IntSet excludePositions)
+        private static UnicodeString ExtractSeparators(UnicodeString arr)
         {
 
             // TODO: this doesn't do what the documentation says: it ignores the supplied positions entirely

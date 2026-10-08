@@ -36,7 +36,7 @@ namespace OutSmart.DAXon.Functions
             try
             {
                 PackageData packageData = GetRetainedStaticContext().GetPackageData();
-                DocumentKey documentKey = DocumentFn.ComputeDocumentKey(href, StaticBaseUriString, packageData, context);
+                DocumentKey documentKey = DocumentFn.ComputeDocumentKey(href, StaticBaseUriString, packageData);
                 DocumentPool pool = context.GetController().GetDocumentPool();
                 if (pool.IsMarkedUnavailable(documentKey))
                 {
@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Functions
                     return true;
                 }
 
-                IItem item = DocumentFn.MakeDoc(href, StaticBaseUriString, packageData, null, context, null, true);
+                IItem item = DocumentFn.MakeDoc(href, StaticBaseUriString, packageData, null, context, null);
                 if (item != null)
                 {
                     return true;

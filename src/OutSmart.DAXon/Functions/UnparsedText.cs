@@ -70,7 +70,7 @@ namespace OutSmart.DAXon.Functions
             else
             {
                 StringValue href = (StringValue)arguments[0].Head();
-                URI absoluteURI = GetAbsoluteURI(href.GetStringValue(), StaticBaseUriString, context);
+                URI absoluteURI = GetAbsoluteURI(href.GetStringValue(), StaticBaseUriString);
                 string encoding = GetArity() == 2 ? arguments[1].Head().GetStringValue() : null;
                 IUniStringConsumer consumer = destination.GetStringReceiver(false, Loc.NONE);
                 consumer.Open();
@@ -103,7 +103,7 @@ namespace OutSmart.DAXon.Functions
                 }
 
                 string href = hrefVal.GetStringValue();
-                URI absoluteURI = GetAbsoluteURI(href, @base, context);
+                URI absoluteURI = GetAbsoluteURI(href, @base);
                 if (stable)
                 {
                     Controller controller = context.GetController();

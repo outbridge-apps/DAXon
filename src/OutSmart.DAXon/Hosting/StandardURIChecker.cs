@@ -66,6 +66,6 @@ namespace OutSmart.DAXon.Lib
 
         // Detailed post-parse checks (passesAdditionalChecks) are not ported; upstream's checkThoroughly
         // then never throws, so this stays a no-op — ResolveURI relies on it not rejecting parsed URIs.
-        public bool CheckThoroughly(string uri) => true;
+        public bool CheckThoroughly() => true;
     }
 }

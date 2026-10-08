@@ -221,7 +221,7 @@ namespace OutSmart.DAXon.XQuery
                 }
                 else if (kind == Types.Type.NAMESPACE)
                 {
-                    Namespace(new NamespaceBinding(node.GetLocalPart(), NamespaceUri.Of(node.GetStringValue())), 0);
+                    Namespace(new NamespaceBinding(node.GetLocalPart(), NamespaceUri.Of(node.GetStringValue())));
                 }
                 else
                 {
@@ -316,7 +316,7 @@ namespace OutSmart.DAXon.XQuery
             @out.EndElement();
         }
 
-        private void Namespace(INamespaceBindingSet namespaceBindings, int properties)
+        private void Namespace(INamespaceBindingSet namespaceBindings)
         {
             NamespaceMap ns = NamespaceMap.EmptyMap();
             ns = ns.AddAll(namespaceBindings);

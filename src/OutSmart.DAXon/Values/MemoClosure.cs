@@ -59,7 +59,7 @@ namespace OutSmart.DAXon.Values
                     // evaluation in future.
                     if (learningEvaluator != null)
                     {
-                        learningEvaluator.ReportCompletion(serialNumber);
+                        learningEvaluator.ReportCompletion();
                     }
                 }
                 else

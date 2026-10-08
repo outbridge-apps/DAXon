@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Expressions
         // predicate is positional (value == position). Boolean/string use EBV. (The all-false hollow stub
         // silently filtered out every item on the non-boolean predicate path, e.g. the descendant::y[parent::x]
         // form produced by the //x/y rewrite, so any such path expression returned empty.)
-        public static bool TestPredicateValue(object iter, int pos, object ctx)
+        public static bool TestPredicateValue(object iter, int pos)
         {
             ISequenceIterator iterator = (ISequenceIterator)iter;
             IItem first = iterator.Next();
