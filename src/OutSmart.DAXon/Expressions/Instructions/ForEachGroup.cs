@@ -209,6 +209,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         private static void FixupGroupReferences(Expression exp, ForEachGroup feg, ItemType selectedItemType, bool isInLoop)
         {
+            ExpressionTool.ProbeTreeDepth();
             if (exp == null)
             {
             }

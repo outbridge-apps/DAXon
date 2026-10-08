@@ -448,6 +448,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         private static void LookForFunctionCycles(XQueryFunction f, IndexedStack<object> referees, XQueryFunctionLibrary globalFunctionLibrary)
         {
+            ExpressionTool.ProbeTreeDepth();
             Expression body = f.Body;
             referees.IPush(f);
             IList<IBinding> list = new List<IBinding>(10);

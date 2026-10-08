@@ -319,6 +319,7 @@ namespace OutSmart.DAXon.Expressions
 
         private static void CountReferences(IBinding binding, Expression exp, IList<VariableReference> references, int[] results)
         {
+            ExpressionTool.ProbeTreeDepth();
 
             // results[0] = nominal reference count
             // results[1] = quota nodes visited

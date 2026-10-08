@@ -182,6 +182,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
         private static void FixupGroupReferences(Expression exp, MergeInstr instr, bool isInLoop)
         {
+            ExpressionTool.ProbeTreeDepth();
             if (exp == null)
             {
             }

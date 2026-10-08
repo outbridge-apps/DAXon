@@ -454,6 +454,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         private static bool ContainsUserFunctionCalls(Expression exp)
         {
+            ExpressionTool.ProbeTreeDepth();
             if (exp is UserFunctionCall)
             {
                 return true;

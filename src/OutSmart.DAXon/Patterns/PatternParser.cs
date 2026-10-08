@@ -239,6 +239,7 @@ namespace OutSmart.DAXon.Patterns
 
         private void CheckNoPredicatePattern(Expression exp)
         {
+            ExpressionTool.ProbeTreeDepth();
             if (exp is ContextItemExpression)
             {
                 Grumble("A predicatePattern can appear only at the outermost level (union operator not allowed)");

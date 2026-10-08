@@ -131,6 +131,7 @@ namespace OutSmart.DAXon.Expressions
 
         public static void ListAndComponents(Expression exp, IList<Expression> list)
         {
+            ExpressionTool.ProbeTreeDepth();
             if (exp is BooleanExpression && ((BooleanExpression)exp).Operator == Token.AND)
             {
                 foreach (Operand o in exp.Operands())

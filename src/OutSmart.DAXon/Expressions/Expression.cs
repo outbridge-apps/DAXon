@@ -346,6 +346,7 @@ namespace OutSmart.DAXon.Expressions
 
         protected void SimplifyChildren()
         {
+            ExpressionTool.ProbeTreeDepth();
             foreach (Operand o in Operands())
             {
                 if (o != null)

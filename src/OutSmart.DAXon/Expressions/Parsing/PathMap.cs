@@ -257,6 +257,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         private void ReduceToDownwardsAxes(PathMapRoot root, IndexedStack<PathMapNode> nodeStack)
         {
+            ExpressionTool.ProbeTreeDepth();
 
             //PathMapArc lastArc = (PathMapArc)arcStack.peek();
             PathMapNode node = nodeStack.Peek();

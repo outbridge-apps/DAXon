@@ -81,8 +81,24 @@ namespace OutSmart.DAXon.Expressions.Parsing
             return exp;
         }
 
+        // Every recursive walk of an expression tree in this class starts here. The parser's operator, predicate and
+        // path loops build a left-deep tree one level per ITERATION, so the tree can be far deeper than the parser's own
+        // recursion guard saw: a 2000-term chain compiled fine on a 1 MB thread and overflowed a 256 KB one in these walks.
+        internal static void ProbeTreeDepth()
+        {
+            try
+            {
+                StackGuard.Probe();
+            }
+            catch (RecursionDepthError e) when (!e.Described)
+            {
+                throw e.Describe("Expression is too deeply nested (insufficient stack on this thread)", "XPST0003", null);
+            }
+        }
+
         public static void SetDeepRetainedStaticContext(Expression exp, RetainedStaticContext rsc)
         {
+            ProbeTreeDepth();
             if (exp.LocalRetainedStaticContext == null)
             {
                 exp.SetRetainedStaticContextLocally(rsc);
@@ -133,6 +149,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static Expression InjectCode(Expression exp, ICodeInjector injector)
         {
+            ProbeTreeDepth();
             if (exp is FLWORExpression)
             {
                 ((FLWORExpression)exp).InjectCode(injector);
@@ -206,6 +223,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static bool Contains(Expression exp, bool sameFocusOnly, Func<Expression, bool> predicate)
         {
+            ProbeTreeDepth();
             if (predicate(exp))
             {
                 return true;
@@ -224,6 +242,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static bool ChangesXsltContext(Expression exp)
         {
+            ProbeTreeDepth();
             if (exp is ResultDocument || exp is CallTemplate || exp is ApplyTemplates || exp is NextMatch || exp is ApplyImports || exp.IsCallOn(typeof(RegexGroup)) || exp.IsCallOn(typeof(CurrentGroup)) || exp is DynamicFunctionCall)
             {
                 return true;
@@ -413,6 +432,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static int GetAxisNavigation(Expression exp)
         {
+            ProbeTreeDepth();
             Expression unfiltered = UnfilteredExpression(exp, true);
             if (unfiltered is AxisExpression)
             {
@@ -455,6 +475,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static int AllocateSlots(Expression exp, int nextFree, SlotManager frame)
         {
+            ProbeTreeDepth();
             if (exp is Assignation)
             {
                 ((Assignation)exp).SetSlotNumber(nextFree);
@@ -721,6 +742,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static void GatherReferencedVariables(Expression e, IList<IBinding> list)
         {
+            ProbeTreeDepth();
             if (e is VariableReference)
             {
                 IBinding binding = ((VariableReference)e).GetBinding();
@@ -758,6 +780,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static void GatherCalledFunctions(Expression e, IList<UserFunction> list)
         {
+            ProbeTreeDepth();
             if (e is UserFunctionCall)
             {
                 UserFunction function = ((UserFunctionCall)e).GetFunction();
@@ -785,6 +808,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static void GatherCalledFunctionNames(Expression e, IList<SymbolicName> list)
         {
+            ProbeTreeDepth();
             if (e is UserFunctionCall)
             {
                 list.Add(((UserFunctionCall)e).GetSymbolicName());
@@ -845,6 +869,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         private static Expression AvoidDocumentSort(Expression exp)
         {
+            ProbeTreeDepth();
             if (exp is DocumentSorter)
             {
                 Expression @base = ((DocumentSorter)exp).BaseExpression;
@@ -893,6 +918,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static void ResetPropertiesWithinSubtree(Expression exp)
         {
+            ProbeTreeDepth();
             exp.ResetLocalStaticProperties();
             if (exp is LocalVariableReference)
             {
@@ -949,6 +975,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static void GatherVariableReferences(Expression exp, IBinding binding, IList<VariableReference> list)
         {
+            ProbeTreeDepth();
             if (exp is VariableReference && ((VariableReference)exp).GetBinding() == binding)
             {
                 list.Add((VariableReference)exp);
@@ -964,6 +991,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static bool ProcessExpressionTree(Expression root, object result, IExpressionAction action)
         {
+            ProbeTreeDepth();
             bool done = action.Process(root, result);
             if (!done)
             {
@@ -982,6 +1010,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static bool ReplaceSelectedSubexpressions(Expression exp, Func<Expression, bool> selector, Expression replacement, bool mustCopy)
         {
+            ProbeTreeDepth();
             bool replaced = false;
             foreach (Operand o in exp.Operands())
             {
@@ -1018,6 +1047,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static int GetReferenceCount(Expression exp, IBinding binding, bool inLoop)
         {
+            ProbeTreeDepth();
             int rcount = 0;
             if (exp is VariableReference && ((VariableReference)exp).GetBinding() == binding)
             {
@@ -1053,6 +1083,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static void RebindVariableReferences(Expression exp, IBinding oldBinding, IBinding newBinding)
         {
+            ProbeTreeDepth();
             if (exp is VariableReference)
             {
                 if (((VariableReference)exp).GetBinding() == oldBinding)
@@ -1121,6 +1152,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static Expression UnfilteredExpression(Expression exp, bool allowPositional)
         {
+            ProbeTreeDepth();
             if (exp is FilterExpression && (allowPositional || !((FilterExpression)exp).IsFilterIsPositional()))
             {
                 return UnfilteredExpression(((FilterExpression)exp).GetSelectExpression(), allowPositional);
@@ -1182,6 +1214,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static bool FactorOutDot(Expression exp, IBinding variable)
         {
+            ProbeTreeDepth();
             bool changed = false;
             if ((exp.Dependencies & (StaticProperty.DEPENDS_ON_CONTEXT_ITEM | StaticProperty.DEPENDS_ON_CONTEXT_DOCUMENT)) != 0)
             {
@@ -1240,6 +1273,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static bool InlineVariableReferencesInternal(Expression expr, IBinding binding, Expression replacement)
         {
+            ProbeTreeDepth();
             if (expr is TryCatch && !(replacement is Literal))
             {
 
@@ -1290,6 +1324,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static bool ReplaceTrivialCallsToCurrent(Expression expr)
         {
+            ProbeTreeDepth();
             bool found = false;
             foreach (Operand o in expr.Operands())
             {
@@ -1320,6 +1355,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static bool ReplaceCallsToCurrent(Expression expr, ILocalBinding binding)
         {
+            ProbeTreeDepth();
             bool found = false;
             foreach (Operand o in expr.Operands())
             {

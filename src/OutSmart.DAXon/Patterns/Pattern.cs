@@ -56,6 +56,7 @@ namespace OutSmart.DAXon.Patterns
 
         protected static void ReplaceCurrent(Expression exp, ILocalBinding binding)
         {
+            ExpressionTool.ProbeTreeDepth();
             foreach (Operand o in exp.Operands())
             {
                 Expression child = o.GetChildExpression();

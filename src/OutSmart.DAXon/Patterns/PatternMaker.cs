@@ -35,6 +35,7 @@ namespace OutSmart.DAXon.Patterns
         // so a predicated step like //a[@id='x'] pattern-matched as /a[@id='x'] (silent no-match).
         public static int GetAxisForPathStep(object step)
         {
+            OutSmart.DAXon.Expressions.Parsing.ExpressionTool.ProbeTreeDepth();
             if (step is AxisExpression)
                 return AxisInfo.inverseAxis[((AxisExpression)step).Axis];
             if (step is FilterExpression)

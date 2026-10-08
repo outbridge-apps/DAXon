@@ -168,6 +168,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public virtual bool IsVariableReplaceableByDot(Expression exp, IBinding[] binding)
         {
+            ExpressionTool.ProbeTreeDepth();
 
             // TODO: the fact that a variable reference appears inside a predicate (etc) shouldn't stop us
             // rewriting a where clause as a predicate. We just have to bind a new variable:

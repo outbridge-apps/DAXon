@@ -758,6 +758,7 @@ namespace OutSmart.DAXon.Expressions
 
             private static void GatherUnionLeafEvaluators(VennExpression exp, IList<IPullEvaluator> leafEvaluators)
             {
+                ExpressionTool.ProbeTreeDepth();
                 Expression e1 = exp.GetLhsExpression();
                 if (e1 is VennExpression && ((VennExpression)e1).Operator == Token.UNION)
                 {

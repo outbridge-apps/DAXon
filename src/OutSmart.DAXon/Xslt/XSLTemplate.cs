@@ -733,6 +733,7 @@ namespace OutSmart.DAXon.Xslt
 
         private void GatherSubPatterns(Patterns.Pattern match, IList<Patterns.Pattern> subPatterns)
         {
+            ExpressionTool.ProbeTreeDepth();
             if (match is UnionPattern)
             {
                 UnionPattern up = (UnionPattern)match;
