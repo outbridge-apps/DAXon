@@ -22,8 +22,12 @@ namespace OutSmart.DAXon.Text
     {
 
         public static readonly ZenoString EMPTY = new ZenoString();
-        private IList<UnicodeString> segments = new List<UnicodeString>();
-        private IList<long> offsets = new List<long>();
+        private List<UnicodeString> segments = new List<UnicodeString>();
+        private List<long> offsets = new List<long>();
+
+        // The segment of the last character asked for: a scan by index stays in one segment for its whole length.
+        // Racing threads only ever store a valid index, and every use checks the bounds first.
+        private int lastSegment;
 
         public override int Width
         {
@@ -84,42 +88,42 @@ namespace OutSmart.DAXon.Text
                 throw new IndexOutOfRangeException("ZenoString is empty");
             }
 
-            int result = BinarySearch(offset, 0, offsets.Count - 1);
-            if (result < 0)
-            {
-                throw new IndexOutOfRangeException("Index " + offset + " out of range 0-" + (Length() - 1));
-            }
-
-            return result;
-        }
-
-        private int BinarySearch(long offset, int start, int end)
-        {
-            if (start == end)
-            {
-                long s = offsets[start];
-                long e = s + segments[start].Length();
-                if (s <= offset && e > offset)
-                {
-                    return start;
-                }
-                else
-                {
-                    return -1;
-                }
-            }
-            else
+            int start = 0;
+            int end = offsets.Count - 1;
+            while (start < end)
             {
                 int mid = start + (end - start + 1) / 2;
                 if (offsets[mid] > offset)
                 {
-                    return BinarySearch(offset, start, mid - 1);
+                    end = mid - 1;
                 }
                 else
                 {
-                    return BinarySearch(offset, mid, end);
+                    start = mid;
                 }
             }
+
+            if (offset < offsets[start] || offset >= offsets[start] + segments[start].Length())
+            {
+                throw new IndexOutOfRangeException("Index " + offset + " out of range 0-" + (Length() - 1));
+            }
+
+            return start;
+        }
+
+        // SegmentForOffset, looking first in the segment found last time.
+        private int Locate(long offset)
+        {
+            int entry = lastSegment;
+            if (entry < segments.Count && offset >= offsets[entry]
+                && (entry + 1 < offsets.Count ? offset < offsets[entry + 1] : offset < offsets[entry] + segments[entry].Length()))
+            {
+                return entry;
+            }
+
+            entry = SegmentForOffset(offset);
+            lastSegment = entry;
+            return entry;
         }
 
         public override IIntIterator CodePoints()
@@ -151,7 +155,7 @@ namespace OutSmart.DAXon.Text
                 return -1;
             }
 
-            int first = SegmentForOffset(from);
+            int first = Locate(from);
             for (int i = first; i < segments.Count; i++)
             {
                 UnicodeString segment = segments[i];
@@ -168,7 +172,7 @@ namespace OutSmart.DAXon.Text
 
         public override long IndexWhere(Func<int, bool> predicate, long from)
         {
-            int first = SegmentForOffset(from);
+            int first = Locate(from);
             for (int i = first; i < segments.Count; i++)
             {
                 UnicodeString segment = segments[i];
@@ -185,9 +189,8 @@ namespace OutSmart.DAXon.Text
 
         public override int CodePointAt(long index)
         {
-            int entry = SegmentForOffset(index);
-            UnicodeString segment = segments[entry];
-            return segment.CodePointAt(index - offsets[entry]);
+            int entry = Locate(index);
+            return segments[entry].CodePointAt(index - offsets[entry]);
         }
 
         public override UnicodeString Substring(long start, long end)
@@ -202,8 +205,8 @@ namespace OutSmart.DAXon.Text
                 return new UnicodeChar(CodePointAt(start));
             }
 
-            int first = SegmentForOffset(start);
-            int last = SegmentForOffset(end - 1);
+            int first = Locate(start);
+            int last = Locate(end - 1);
             if (first == last)
             {
                 UnicodeString segment = segments[first];
@@ -238,8 +241,8 @@ namespace OutSmart.DAXon.Text
             }
 
             long end = offset + len;
-            int first = SegmentForOffset(offset);
-            int last = SegmentForOffset(end - 1);
+            int first = Locate(offset);
+            int last = Locate(end - 1);
             if (first == last)
             {
                 UnicodeString segment = segments[first];
