@@ -418,7 +418,7 @@ namespace OutSmart.DAXon.Text
         private sealed class AnonymousIntIterator : AbstractIntIterator
         {
 
-            private IEnumerator<UnicodeString> outerIterator;
+            private readonly IEnumerator<UnicodeString> outerIterator;
             private UnicodeString outerLookahead;
             private bool outerLookaheadFilled;
             IIntIterator innerIterator;

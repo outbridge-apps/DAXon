@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Serialization
         public static readonly NamespaceUri NAMESPACE = NamespaceUri.OUTPUT;
         Properties properties;
         CharacterMap characterMap;
-        ILocation locator;
+        readonly ILocation locator;
         public SerializationParamsHandler()
         {
         }

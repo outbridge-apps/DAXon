@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Serialization
 {
     public class CharacterMap
     {
-        private StructuredQName name;
+        private readonly StructuredQName name;
         private readonly IntHashMap<string> charMap;
         private int min = int.MaxValue; // the lowest mapped character
         private int max = 0; // the highest mapped character

@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
         //} else
         public static IAtomicMatchKey COLLATION_KEY_NaN = new MatchKeyForNaN();
-        private IStringCollator collator;
+        private readonly IStringCollator collator;
         private readonly int itemType;
         private readonly int implicitTimezone; // dynamic-context constant: hoisted from per-comparison GetImplicitTimezone() chase
 

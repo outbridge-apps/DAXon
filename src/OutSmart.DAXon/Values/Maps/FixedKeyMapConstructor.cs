@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Values.Maps
         private readonly string[] keys;
         private readonly StringValue[] keyValues;   // pre-built, shared across evaluations
         private readonly FixedShapeMap.Shape shape;  // interned key layout + HAMT iteration order, shared
-        private OperandArray operanda;
+        private readonly OperandArray operanda;
 
         public override string ExpressionName => "FixedKeyMapConstructor";
         public override int ImplementationMethod => EVALUATE_METHOD;

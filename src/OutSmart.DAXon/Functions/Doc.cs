@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Functions
     /// </summary>
     internal sealed class Doc : SystemFunction, ICallable
     {
-        private ParseOptions parseOptions;
+        private readonly ParseOptions parseOptions;
         public ParseOptions GetParseOptions()
         {
             return parseOptions;

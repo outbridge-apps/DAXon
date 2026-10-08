@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
 {
     internal sealed class CoercedFunction : AbstractFunction
     {
-        private IFunctionItem targetFunction;
+        private readonly IFunctionItem targetFunction;
         private readonly SpecificFunctionType requiredType;
 
         public IFunctionItem TargetFunction => targetFunction;

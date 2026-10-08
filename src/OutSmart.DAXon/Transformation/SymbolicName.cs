@@ -50,7 +50,7 @@ namespace OutSmart.DAXon.Transformation
         /// </summary>
         public class F : SymbolicName
         {
-            int arity;
+            readonly int arity;
 
             /// <summary>
             /// Get a short name suitable for use in messages

@@ -88,7 +88,7 @@ namespace OutSmart.DAXon.Regex
         bool isXPath = true;
         bool isXPath30 = true;
         bool isXSD11 = false;
-        IntHashSet captures = new IntHashSet();
+        readonly IntHashSet captures = new IntHashSet();
         bool hasBackReferences = false;
         REFlags reFlags;
         IList<string> warnings;

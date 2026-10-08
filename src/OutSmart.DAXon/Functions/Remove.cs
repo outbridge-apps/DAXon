@@ -90,8 +90,8 @@ namespace OutSmart.DAXon.Functions
         //
         internal sealed class RemoveIterator : ISequenceIterator, ILastPositionFinder
         {
-            ISequenceIterator @base;
-            IntSet removePositions;
+            readonly ISequenceIterator @base;
+            readonly IntSet removePositions;
             int basePosition = 0;
             IItem current = null;
             public RemoveIterator(ISequenceIterator @base, IntSet removePosition)

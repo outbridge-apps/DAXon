@@ -26,8 +26,8 @@ namespace OutSmart.DAXon.Expressions.Instructions
 {
     public class ResultDocument : Instruction, IValidatingInstruction, IInstructionWithComplexContent, IContextOriginator
     {
-        private Operand hrefOp;
-        private Operand formatOp; // null if format was known at compile time
+        private readonly Operand hrefOp;
+        private readonly Operand formatOp; // null if format was known at compile time
         private Operand contentOp;
         private bool async = false;
         private readonly Properties globalProperties;

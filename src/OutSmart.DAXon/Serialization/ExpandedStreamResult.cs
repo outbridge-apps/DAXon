@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Serialization
     public class ExpandedStreamResult
     {
         private readonly Configuration config;
-        private Properties outputProperties;
+        private readonly Properties outputProperties;
         private readonly string systemId;
         // The StreamResult this was expanded from. Kept so that a stream opened HERE (from the
         // system ID) can be published back to it - Serializer.Dispose closes result.GetOutputStream()
@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Serialization
         private TextWriter writer;
         private System.IO.Stream outputStream;
         private ICharacterSet characterSet;
-        private string encoding;
+        private readonly string encoding;
         private bool mustCloseAfterUse = false;
         // set when the writer made here over a stream begins the bytes with their mark itself (see Marked)
         private bool marksItself;

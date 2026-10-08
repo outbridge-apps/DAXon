@@ -21,8 +21,8 @@ namespace OutSmart.DAXon.Transformation.Packages
         private readonly object syncLock = new object();
         private readonly Configuration config;
         private readonly CompilerInfo compilerInfo;
-        private Dictionary<string, IList<PackageVersion>> packageVersions = new Dictionary<string, IList<PackageVersion>>();
-        private Dictionary<VersionedPackageName, PackageDetails> packages = new Dictionary<VersionedPackageName, PackageDetails>();
+        private readonly Dictionary<string, IList<PackageVersion>> packageVersions = new Dictionary<string, IList<PackageVersion>>();
+        private readonly Dictionary<VersionedPackageName, PackageDetails> packages = new Dictionary<VersionedPackageName, PackageDetails>();
 
         public virtual IList<StylesheetPackage> Packages
         {

@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
     /// </summary>
     internal sealed class GroupByClause : Clause
     {
-        Configuration config;
+        readonly Configuration config;
         LocalVariableBinding[] bindings; // Variables bound in the output tuple stream.
         internal GenericAtomicComparer[] comparers; // One comparer per grouping variable (accessed by GroupByClausePull/Push)
         Operand retainedTupleOp;

@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Expressions
         private readonly ISequenceIterator @base;
         private readonly IItemMappingFunction action;
         private readonly OutSmart.DAXon.Core.Controller controller;   // null: no deadline check
-        private bool oneToOne = false;
+        private readonly bool oneToOne = false;
 
         public bool HasNext => ((ILookaheadIterator)@base).HasNext;
         public ItemMappingIterator(ISequenceIterator @base, IItemMappingFunction action)

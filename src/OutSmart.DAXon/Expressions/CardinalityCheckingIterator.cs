@@ -17,8 +17,8 @@ namespace OutSmart.DAXon.Expressions
     {
         private readonly ISequenceIterator @base;
         private readonly ILocation locator;
-        private IItem first = null;
-        private IItem second = null;
+        private readonly IItem first = null;
+        private readonly IItem second = null;
         private int position = 0;
         public CardinalityCheckingIterator(ISequenceIterator @base, int requiredCardinality, Func<RoleDiagnostic> roleSupplier, ILocation locator)
         {

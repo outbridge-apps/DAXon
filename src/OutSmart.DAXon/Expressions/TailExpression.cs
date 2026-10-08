@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Expressions
 {
     internal sealed class TailExpression : UnaryExpression
     {
-        int start; // 1-based offset of first item from base expression
+        readonly int start; // 1-based offset of first item from base expression
 
         public override int ImplementationMethod => ITERATE_METHOD;
 

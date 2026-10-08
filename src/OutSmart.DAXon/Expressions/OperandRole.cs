@@ -38,7 +38,7 @@ namespace OutSmart.DAXon.Expressions
         public static readonly OperandRole PATTERN = new OperandRole(OperandRole.USES_NEW_FOCUS | OperandRole.HIGHER_ORDER | OperandRole.CONSTRAINED_CLASS, OperandUsage.ABSORPTION, SequenceType.ATOMIC_SEQUENCE, (expr) => expr is Patterns.Pattern);
         public int properties;
         private readonly OperandUsage usage;
-        private SequenceType requiredType = SequenceType.ANY_SEQUENCE;
+        private readonly SequenceType requiredType = SequenceType.ANY_SEQUENCE;
         private Func<Expression, bool> constraint;
 
         public virtual Func<Expression, bool> Constraint

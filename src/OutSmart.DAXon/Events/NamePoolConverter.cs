@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Events
 {
     internal sealed class NamePoolConverter : ProxyReceiver
     {
-        NamePool newPool;
+        readonly NamePool newPool;
         public NamePoolConverter(IReceiver next, NamePool oldPool, NamePool newPool) : base(next)
         {
             this.newPool = newPool;

@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Values
     {
         public static NestedIntegerValue ONE = new NestedIntegerValue(new int[] { 1 });
         public static NestedIntegerValue TWO = new NestedIntegerValue(new int[] { 2 });
-        int[] value;
+        readonly int[] value;
 
         public virtual NestedIntegerValue Stem
         {

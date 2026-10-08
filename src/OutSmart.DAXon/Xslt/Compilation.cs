@@ -51,7 +51,7 @@ namespace OutSmart.DAXon.Xslt
         private IList<VersionedPackageName> usingPackages = new List<VersionedPackageName>();
         private GlobalParameterSet suppliedParameters;
         private bool fallbackToNonStreaming = false;
-        private HashSet<StructuredQName> referencedModes = new HashSet<StructuredQName>();
+        private readonly HashSet<StructuredQName> referencedModes = new HashSet<StructuredQName>();
         public Timer timer = null;
 
         public virtual int ErrorCount => errorCount;

@@ -1161,7 +1161,7 @@ namespace OutSmart.DAXon.Trees.Utilities
         internal sealed class ChildrenAsIterable : IEnumerable<NodeInfo>
         {
             private readonly NodeInfo parent;
-            private INodePredicate filter = null;
+            private readonly INodePredicate filter = null;
             public ChildrenAsIterable(NodeInfo parent)
             {
                 this.parent = parent;

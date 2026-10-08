@@ -39,7 +39,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private AtomicValue nextSingleKey;
         private IItem nextItem;
         private IItem current = null;
-        private bool composite = false;
+        private readonly bool composite = false;
 
         public bool HasNext => nextItem != null;
         public GroupAdjacentIterator(IPullEvaluator select, Expression keyExpression, IXPathContext baseContext, IStringCollator collator, bool composite)

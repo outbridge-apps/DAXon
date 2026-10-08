@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Events
     // implementing "sticky disable-output-escaping".
     internal sealed class OutputterEventBuffer : Outputter
     {
-        private IList<OutputterEvent> buffer = new List<OutputterEvent>();
+        private readonly IList<OutputterEvent> buffer = new List<OutputterEvent>();
 
         public OutputterEventBuffer()
         {

@@ -20,9 +20,9 @@ namespace OutSmart.DAXon.Expressions.Flwor
     internal sealed class OrderByClause : Clause
     {
         public static readonly OperandRole SORT_KEYS_ROLE = new OperandRole(OperandRole.HIGHER_ORDER | OperandRole.CONSTRAINED_CLASS, OperandUsage.NAVIGATION, SequenceType.ANY_SEQUENCE, (expr) => expr is SortKeyDefinitionList);
-        Operand sortKeysOp; // Holds a SortKeyDefinitionList
+        readonly Operand sortKeysOp; // Holds a SortKeyDefinitionList
         IAtomicComparer[] comparators;
-        Operand tupleOp; // Holds a TupleExpression
+        readonly Operand tupleOp; // Holds a TupleExpression
 
         public override ClauseName ClauseKey => ORDER_BY;
 

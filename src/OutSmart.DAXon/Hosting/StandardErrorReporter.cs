@@ -19,16 +19,16 @@ namespace OutSmart.DAXon.Lib
     internal sealed class StandardErrorReporter : StandardDiagnostics, IErrorReporter
     {
         private int warningCount = 0;
-        private int maximumNumberOfWarnings = 25;
+        private readonly int maximumNumberOfWarnings = 25;
         private int errorCount = 0;
-        private int maximumNumberOfErrors = 1000;
-        private int maxOrdinaryCharacter = 255;
-        private int stackTraceDetail = 2;
+        private readonly int maximumNumberOfErrors = 1000;
+        private readonly int maxOrdinaryCharacter = 255;
+        private readonly int stackTraceDetail = 2;
         private readonly HashSet<string> warningsIssued = new HashSet<string>();
         protected Logger logger = new StandardLogger();
         private IXmlProcessingError latestError;
-        private bool outputErrorCodes = true;
-        private HashSet<StructuredQName> suppressedWarnings;
+        private readonly bool outputErrorCodes = true;
+        private readonly HashSet<StructuredQName> suppressedWarnings;
 
         public Logger Logger
         {

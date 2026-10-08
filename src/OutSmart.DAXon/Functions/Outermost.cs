@@ -70,7 +70,7 @@ namespace OutSmart.DAXon.Functions
 
         private sealed class OutermostIterator : ISequenceIterator
         {
-            ISequenceIterator @in;
+            readonly ISequenceIterator @in;
             NodeInfo current = null;
             public OutermostIterator(ISequenceIterator @in)
             {

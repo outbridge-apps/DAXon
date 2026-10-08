@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Serialization
     internal abstract class HTMLEmitter : XMLEmitter
     {
 
-        static HTMLTagHashSet emptyTags = new HTMLTagHashSet(31);
+        static readonly HTMLTagHashSet emptyTags = new HTMLTagHashSet(31);
 
         private static readonly HTMLTagHashSet booleanAttributes = new HTMLTagHashSet(43);
         private static readonly HTMLTagHashSet booleanCombinations = new HTMLTagHashSet(57);

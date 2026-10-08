@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Xslt
         private Visibility visibility;
         private IGroundedValue constantValue = null;
 
-        private HashSet<BindingProperty> properties = new HashSet<BindingProperty>();
+        private readonly HashSet<BindingProperty> properties = new HashSet<BindingProperty>();
         // List of VariableReference objects that reference this XSLVariableDeclaration
         private readonly IList<IBindingReference> references = new List<IBindingReference>(10);
 

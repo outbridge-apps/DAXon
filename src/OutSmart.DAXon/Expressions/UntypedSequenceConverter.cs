@@ -180,7 +180,7 @@ namespace OutSmart.DAXon.Expressions
 
         internal sealed class UntypedConverter : Converter
         {
-            Converter untypedConverter = null;
+            readonly Converter untypedConverter = null;
             public UntypedConverter(ConversionRules rules, Converter converter) : base(rules)
             {
                 untypedConverter = converter; //untypedConverter.setConversionRules(rules);

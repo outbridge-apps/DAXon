@@ -243,7 +243,7 @@ namespace OutSmart.DAXon.Types
             // classes are mutually referencing), capturing a still-null ID/ENTITY/IDREF and later NRE-ing
             // in casts like xs:NCName(...) cast as xs:ENTITY. First USE is always after full type init.
             private static StringToNCName _toId, _toEntity, _toNCName, _toIdref;
-            IAtomicType targetType;
+            readonly IAtomicType targetType;
             public static StringToNCName TO_ID => _toId ?? (_toId = new StringToNCName(BuiltInAtomicType.ID));
             public static StringToNCName TO_ENTITY => _toEntity ?? (_toEntity = new StringToNCName(BuiltInAtomicType.ENTITY));
             public static StringToNCName TO_NCNAME => _toNCName ?? (_toNCName = new StringToNCName(BuiltInAtomicType.NCNAME));
@@ -362,8 +362,8 @@ namespace OutSmart.DAXon.Types
         /// </summary>
         internal sealed class StringToStringSubtype : StringConverter
         {
-            IAtomicType targetType;
-            int whitespaceAction;
+            readonly IAtomicType targetType;
+            readonly int whitespaceAction;
             public StringToStringSubtype(ConversionRules rules, IAtomicType targetType) : base(rules)
             {
                 this.targetType = targetType;
@@ -414,9 +414,9 @@ namespace OutSmart.DAXon.Types
         /// </summary>
         internal sealed class StringToDerivedStringSubtype : StringConverter
         {
-            IAtomicType targetType;
-            StringConverter builtInValidator;
-            int whitespaceAction;
+            readonly IAtomicType targetType;
+            readonly StringConverter builtInValidator;
+            readonly int whitespaceAction;
             public StringToDerivedStringSubtype(ConversionRules rules, IAtomicType targetType) : base(rules)
             {
                 this.targetType = targetType;
@@ -926,8 +926,8 @@ namespace OutSmart.DAXon.Types
         /// </summary>
         internal sealed class StringToUnionConverter : StringConverter
         {
-            IPlainType targetType;
-            ConversionRules rules;
+            readonly IPlainType targetType;
+            readonly ConversionRules rules;
             public StringToUnionConverter(IPlainType targetType, ConversionRules rules)
             {
                 if (!targetType.IsPlainType())

@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Types
 {
     internal class LocalUnionType : IPlainType, IUnionType, IItemTypeWithSequenceTypeCache
     {
-        private IList<IAtomicType> memberTypes;
+        private readonly IList<IAtomicType> memberTypes;
         private SequenceType _one, _zeroOrOne, _oneOrMore, _zeroOrMore;
 
         public virtual StructuredQName TypeName => new StructuredQName("", NamespaceUri.ANONYMOUS, "U" + GetHashCode());

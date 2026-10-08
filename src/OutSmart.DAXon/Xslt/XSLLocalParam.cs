@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Xslt
 {
     public class XSLLocalParam : XSLGeneralVariable
     {
-        private HashSet<SourceBinding.BindingProperty> permittedAttributes = new HashSet<SourceBinding.BindingProperty> { SourceBinding.BindingProperty.TUNNEL, SourceBinding.BindingProperty.REQUIRED, SourceBinding.BindingProperty.SELECT, SourceBinding.BindingProperty.AS };
+        private readonly HashSet<SourceBinding.BindingProperty> permittedAttributes = new HashSet<SourceBinding.BindingProperty> { SourceBinding.BindingProperty.TUNNEL, SourceBinding.BindingProperty.REQUIRED, SourceBinding.BindingProperty.SELECT, SourceBinding.BindingProperty.AS };
         Expression conversion = null;
         private int slotNumber = -9876; // initial value designed solely to show up when debugging
         private LocalParam compiledParam;

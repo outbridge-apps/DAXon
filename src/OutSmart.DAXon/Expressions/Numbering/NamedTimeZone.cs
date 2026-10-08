@@ -13,9 +13,9 @@ namespace OutSmart.DAXon.Expressions.Numbering
 {
     internal sealed class NamedTimeZone
     {
-        static HashSet<string> knownTimeZones = new HashSet<string>();
-        static Dictionary<string, IList<string>> idForCountry = new Dictionary<string, IList<string>>(50);
-        static IList<string> worldTimeZones = new List<string>(20);
+        static readonly HashSet<string> knownTimeZones = new HashSet<string>();
+        static readonly Dictionary<string, IList<string>> idForCountry = new Dictionary<string, IList<string>>(50);
+        static readonly IList<string> worldTimeZones = new List<string>(20);
 
         static NamedTimeZone()
         {

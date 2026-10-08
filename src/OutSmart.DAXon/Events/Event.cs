@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Events
         /// </summary>
         internal sealed class StartDocument : Event
         {
-            int properties;
+            readonly int properties;
             public StartDocument(int properties)
             {
                 this.properties = properties;
@@ -54,12 +54,12 @@ namespace OutSmart.DAXon.Events
         /// </summary>
         internal sealed class StartElement : Event
         {
-            INodeName name;
-            ISchemaType type;
-            IAttributeMap attributes;
-            NamespaceMap namespaces;
-            ILocation location;
-            int properties;
+            readonly INodeName name;
+            readonly ISchemaType type;
+            readonly IAttributeMap attributes;
+            readonly NamespaceMap namespaces;
+            readonly ILocation location;
+            readonly int properties;
             public StartElement(INodeName name, ISchemaType type, IAttributeMap attributes, NamespaceMap namespaces, ILocation location, int properties)
             {
                 this.name = name;
@@ -96,9 +96,9 @@ namespace OutSmart.DAXon.Events
         /// </summary>
         internal sealed class Text : Event
         {
-            UnicodeString content;
-            ILocation location;
-            int properties;
+            readonly UnicodeString content;
+            readonly ILocation location;
+            readonly int properties;
             public Text(UnicodeString content, ILocation location, int properties)
             {
                 this.content = content;
@@ -117,9 +117,9 @@ namespace OutSmart.DAXon.Events
         /// </summary>
         internal sealed class Comment : Event
         {
-            UnicodeString content;
-            ILocation location;
-            int properties;
+            readonly UnicodeString content;
+            readonly ILocation location;
+            readonly int properties;
             public Comment(UnicodeString content, ILocation location, int properties)
             {
                 this.content = content;
@@ -138,10 +138,10 @@ namespace OutSmart.DAXon.Events
         /// </summary>
         internal sealed class ProcessingInstruction : Event
         {
-            string target;
-            UnicodeString content;
-            ILocation location;
-            int properties;
+            readonly string target;
+            readonly UnicodeString content;
+            readonly ILocation location;
+            readonly int properties;
             public ProcessingInstruction(string target, UnicodeString content, ILocation location, int properties)
             {
                 this.target = target;
@@ -158,9 +158,9 @@ namespace OutSmart.DAXon.Events
 
         internal sealed class Append : Event
         {
-            IItem item;
-            ILocation location;
-            int properties;
+            readonly IItem item;
+            readonly ILocation location;
+            readonly int properties;
             public Append(IItem item, ILocation location, int properties)
             {
                 this.item = item;

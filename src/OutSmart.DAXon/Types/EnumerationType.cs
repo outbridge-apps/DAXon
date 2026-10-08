@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Types
 {
     public class EnumerationType : IAtomicType
     {
-        private HashSet<string> values;
+        private readonly HashSet<string> values;
 
         public virtual StructuredQName TypeName => new StructuredQName("", NamespaceUri.ANONYMOUS, "E" + GetHashCode());
 

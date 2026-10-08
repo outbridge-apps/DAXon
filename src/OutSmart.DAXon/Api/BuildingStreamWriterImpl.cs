@@ -10,7 +10,7 @@ namespace OutSmart.DAXon.Api
 {
     public class BuildingStreamWriterImpl : StreamWriterToReceiver
     {
-        Builder builder;
+        readonly Builder builder;
 
         public XdmNode DocumentNode
         {

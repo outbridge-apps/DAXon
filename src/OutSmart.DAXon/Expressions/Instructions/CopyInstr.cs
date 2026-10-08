@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// </summary>
     internal sealed class CopyInstr : ElementCreator
     {
-        private bool copyNamespaces;
+        private readonly bool copyNamespaces;
         private ItemType selectItemType = AnyItemType.GetInstance();
         private ItemType resultItemType;
 

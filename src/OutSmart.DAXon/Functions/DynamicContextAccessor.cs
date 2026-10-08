@@ -12,7 +12,7 @@ namespace OutSmart.DAXon.Functions
 {
     internal abstract class DynamicContextAccessor : SystemFunction
     {
-        private AtomicValue boundValue;
+        private readonly AtomicValue boundValue;
 
         public abstract AtomicValue Evaluate(IXPathContext context);
         public override ISequence Call(IXPathContext context, ISequence[] arguments)

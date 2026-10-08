@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Regex
     /// </summary>
     internal sealed class OpBackReference : Operation
     {
-        int groupNr;
+        readonly int groupNr;
         public OpBackReference(int groupNr)
         {
             this.groupNr = groupNr;

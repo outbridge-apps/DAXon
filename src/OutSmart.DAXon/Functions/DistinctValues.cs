@@ -333,7 +333,7 @@ namespace OutSmart.DAXon.Functions
             private readonly IXPathContext context;
             private readonly HashSet<IAtomicMatchKey> lookup = new HashSet<IAtomicMatchKey>();
             private static readonly Func<object, long> LookupSizer = o => 48 + 112L * ((HashSet<IAtomicMatchKey>)o).Count;   // a slot and a key each
-            private IAction onDuplicates = null;
+            private readonly IAction onDuplicates = null;
             public DistinctIterator(ISequenceIterator @base, IStringCollator collator, IXPathContext context)
             {
                 this.@base = @base;

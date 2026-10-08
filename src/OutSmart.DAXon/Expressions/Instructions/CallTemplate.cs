@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// </summary>
     internal sealed class CallTemplate : Instruction, IITemplateCall, IComponentInvocation
     {
-        private NamedTemplate template; // Null only for saxon:call-template
+        private readonly NamedTemplate template; // Null only for saxon:call-template
         private readonly StructuredQName calledTemplateName; // the name of the called template
         private WithParam[] actualParams = WithParam.EMPTY_ARRAY;
         private WithParam[] tunnelParams = WithParam.EMPTY_ARRAY;

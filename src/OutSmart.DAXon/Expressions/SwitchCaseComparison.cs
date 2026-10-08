@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Expressions
     {
         private IAtomicComparer comparer;
         private bool knownToBeComparable = false;
-        private bool allowMultiple;
+        private readonly bool allowMultiple;
 
         public IStringCollator StringCollator => comparer.Collator;
 

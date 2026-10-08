@@ -25,15 +25,15 @@ namespace OutSmart.DAXon.Expressions
 {
     internal sealed class NumberSequenceFormatter : Expression
     {
-        private Operand valueOp;
-        private Operand formatOp;
-        private Operand groupSizeOp;
-        private Operand groupSeparatorOp;
-        private Operand letterValueOp;
-        private Operand ordinalOp;
+        private readonly Operand valueOp;
+        private readonly Operand formatOp;
+        private readonly Operand groupSizeOp;
+        private readonly Operand groupSeparatorOp;
+        private readonly Operand letterValueOp;
+        private readonly Operand ordinalOp;
         private readonly Operand startAtOp;
-        private Operand langOp;
-        private NumberFormatter formatter = null;
+        private readonly Operand langOp;
+        private readonly NumberFormatter formatter = null;
         private INumberer numberer = null;
         private readonly bool backwardsCompatible;
 

@@ -126,9 +126,9 @@ namespace OutSmart.DAXon.Model
         /// </summary>
         public class PathElement
         {
-            int nodeKind;
-            INodeName name;
-            int index;
+            readonly int nodeKind;
+            readonly INodeName name;
+            readonly int index;
 
             public virtual INodeName Name => name;
             public PathElement(int nodeKind, INodeName name, int index)

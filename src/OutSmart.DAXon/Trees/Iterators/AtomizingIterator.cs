@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Trees.Iterators
         private IAtomicSequence currentValue = null;
         private int currentValuePosition = 1;
         private int currentValueSize = 1;
-        private RoleDiagnostic roleDiagnostic;
+        private readonly RoleDiagnostic roleDiagnostic;
         public AtomizingIterator(ISequenceIterator @base)
         {
             this.@base = @base;

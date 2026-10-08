@@ -39,7 +39,7 @@ namespace OutSmart.DAXon.Expressions
         private bool untyped = false; //set to true if it is known that the nodes being atomized will be untyped
         private bool singleValued = false; // set to true if all atomized nodes will atomize to a single atomic value
         private ItemType operandItemType = null;
-        private Func<RoleDiagnostic> roleSupplier = null;
+        private readonly Func<RoleDiagnostic> roleSupplier = null;
 
         public override int ImplementationMethod => ITERATE_METHOD | WATCH_METHOD;
 

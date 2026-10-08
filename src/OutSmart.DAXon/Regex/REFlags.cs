@@ -8,15 +8,15 @@ namespace OutSmart.DAXon.Regex
 {
     internal sealed class REFlags
     {
-        private bool caseIndependent;
-        private bool multiLine;
-        private bool singleLine;
-        private bool allowWhitespace;
-        private bool literal;
-        private bool xpath20;
-        private bool xpath30;
-        private bool xsd11;
-        private bool allowUnknownBlockNames = false; //flags = ";k"
+        private readonly bool caseIndependent;
+        private readonly bool multiLine;
+        private readonly bool singleLine;
+        private readonly bool allowWhitespace;
+        private readonly bool literal;
+        private readonly bool xpath20;
+        private readonly bool xpath30;
+        private readonly bool xsd11;
+        private readonly bool allowUnknownBlockNames = false; //flags = ";k"
         public REFlags(string flags, string language)
         {
             if (language.Equals("XSD10"))

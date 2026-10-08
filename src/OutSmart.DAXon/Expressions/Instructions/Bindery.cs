@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     public sealed class Bindery
     {
         internal readonly object syncLock = new object();
-        private SlotManager slotManager;
+        private readonly SlotManager slotManager;
         private IGroundedValue[] globals; // values of global variables and parameters
 
         public IGroundedValue[] GlobalVariables => globals;

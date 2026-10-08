@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// </summary>
     internal sealed class ApplyTemplates : Instruction, IITemplateCall, IComponentInvocation
     {
-        private Operand selectOp;
+        private readonly Operand selectOp;
         private Operand separatorOp;
         private WithParam[] actualParams;
         private WithParam[] tunnelParams;

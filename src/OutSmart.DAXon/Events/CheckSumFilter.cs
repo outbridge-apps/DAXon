@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Events
     {
         public const string SIGMA = "Σ";
         public const string SIGMA2 = "Σ2";
-        private DigestMaker digest = null;
+        private readonly DigestMaker digest = null;
         private int checksum = 0;
         private int sequence = 0;
         private bool checkExistingChecksum = false;

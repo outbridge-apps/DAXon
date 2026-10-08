@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Text
         private readonly IList<ISegment> completeSegments;
         private ISegment lastSegment;
         private int lastSegmentLength;
-        private int initialSize;
+        private readonly int initialSize;
 
         public LargeTextBuffer(int initialSize)
         {

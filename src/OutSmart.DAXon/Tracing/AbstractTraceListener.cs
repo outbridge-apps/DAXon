@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Tracing
         protected int indent = 0;
         protected int detail = TraceLevel.NORMAL;
         protected Logger @out = new StandardLogger();
-        private Stack<object> stack = new Stack<object>();
+        private readonly Stack<object> stack = new Stack<object>();
 
         /// <summary>
         /// Called at start of a transformation

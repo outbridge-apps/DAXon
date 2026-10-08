@@ -10,7 +10,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 {
     internal sealed class ComparisonException : InvalidCastException
     {
-        XPathException reason;
+        readonly XPathException reason;
         public ComparisonException(XPathException reason) : base(reason.Message)
         {
             this.reason = reason;

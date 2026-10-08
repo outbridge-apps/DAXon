@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 {
     internal class GenericAtomicComparer : IAtomicComparer
     {
-        private IStringCollator collator;
+        private readonly IStringCollator collator;
         private readonly IXPathContext context;
 
         public virtual IStringCollator Collator => collator;

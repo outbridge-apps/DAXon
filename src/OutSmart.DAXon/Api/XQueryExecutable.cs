@@ -14,8 +14,8 @@ namespace OutSmart.DAXon.Api
 {
     public class XQueryExecutable
     {
-        Processor processor;
-        XQueryExpression exp;
+        readonly Processor processor;
+        readonly XQueryExpression exp;
 
         public virtual ItemType ResultItemType
         {

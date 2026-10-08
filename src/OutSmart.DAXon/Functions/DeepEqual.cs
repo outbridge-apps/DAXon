@@ -1114,7 +1114,7 @@ namespace OutSmart.DAXon.Functions
         private sealed class NormalizingComparer : IAtomicComparer
         {
             private IAtomicComparer baseComparer;
-            private DeepEqualOptions options;
+            private readonly DeepEqualOptions options;
 
             public IStringCollator Collator => baseComparer.Collator;
             public NormalizingComparer(IAtomicComparer baseComparer, DeepEqualOptions options)

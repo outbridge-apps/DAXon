@@ -23,7 +23,7 @@ namespace OutSmart.DAXon.XQuery
     {
         private Configuration config;
         private Dictionary<SymbolicName, XQueryFunction> functions = new Dictionary<SymbolicName, XQueryFunction>(20);
-        private Dictionary<StructuredQName, IList<XQueryFunction>> functionsByName = new Dictionary<StructuredQName, IList<XQueryFunction>>(20);
+        private readonly Dictionary<StructuredQName, IList<XQueryFunction>> functionsByName = new Dictionary<StructuredQName, IList<XQueryFunction>>(20);
 
         public virtual IEnumerable<XQueryFunction> FunctionDefinitions => functions.Values;
         public XQueryFunctionLibrary(Configuration config)
@@ -343,7 +343,7 @@ namespace OutSmart.DAXon.XQuery
 
         internal sealed class UnresolvedCallable : IUserFunctionResolvable, ICallable
         {
-            SymbolicName.F symbolicName;
+            readonly SymbolicName.F symbolicName;
             UserFunction function;
             public UnresolvedCallable(SymbolicName.F symbolicName)
             {

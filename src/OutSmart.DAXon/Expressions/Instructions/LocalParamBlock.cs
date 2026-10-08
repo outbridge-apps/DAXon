@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// </summary>
     internal sealed class LocalParamBlock : Instruction
     {
-        Operand[] operanda;
+        readonly Operand[] operanda;
 
         public override string ExpressionName => "params";
 

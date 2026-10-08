@@ -12,10 +12,10 @@ namespace OutSmart.DAXon.Expressions
 {
     internal sealed class DescendingRangeIterator : RangeIterator, IAtomicIterator, IReversibleIterator, ILastPositionFinder, ILookaheadIterator
     {
-        long start;
-        long step;
+        readonly long start;
+        readonly long step;
         long currentValue;
-        long limit;
+        readonly long limit;
 
         public override IntegerValue First => new Int64Value(start);
 

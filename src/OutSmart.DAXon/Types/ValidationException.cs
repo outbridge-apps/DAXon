@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Types
 {
     public class ValidationException : XPathException
     {
-        private ValidationFailure failure;
+        private readonly ValidationFailure failure;
 
         /*setIsTypeError(true);*/
         /*setIsTypeError(true);*/

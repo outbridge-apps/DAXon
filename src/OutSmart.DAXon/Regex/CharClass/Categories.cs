@@ -30,9 +30,9 @@ namespace OutSmart.DAXon.Regex.CharClass
         public static readonly ICharacterClass ESCAPE_C = new InverseCharacterClass(ESCAPE_c);
         public static readonly Category ESCAPE_d = GetCategory("Nd");
         public static readonly ICharacterClass ESCAPE_D = new InverseCharacterClass(ESCAPE_d);
-        static Category CATEGORY_P = GetCategory("P");
-        static Category CATEGORY_Z = GetCategory("Z");
-        static Category CATEGORY_C = GetCategory("C");
+        static readonly Category CATEGORY_P = GetCategory("P");
+        static readonly Category CATEGORY_Z = GetCategory("Z");
+        static readonly Category CATEGORY_C = GetCategory("C");
         public static readonly PredicateCharacterClass ESCAPE_w = new PredicateCharacterClass((value) => !(CATEGORY_P.Test(value) || CATEGORY_Z.Test(value) || CATEGORY_C.Test(value)));
         public static readonly ICharacterClass ESCAPE_W = new InverseCharacterClass(ESCAPE_w);
 

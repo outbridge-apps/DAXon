@@ -1111,7 +1111,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
         private sealed class SortComparer : IComparer<ObjectToBeSorted>
         {
-            private IAtomicComparer[] comparators;
+            private readonly IAtomicComparer[] comparators;
             private int comparisons;
             public SortComparer(IAtomicComparer[] comparators)
             {

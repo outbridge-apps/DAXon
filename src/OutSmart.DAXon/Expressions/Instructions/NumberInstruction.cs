@@ -30,9 +30,9 @@ namespace OutSmart.DAXon.Expressions.Instructions
         };
         private readonly Operand selectOp;
         private readonly int level;
-        private Operand countOp;
-        private Operand fromOp;
-        private bool hasVariablesInPatterns = false;
+        private readonly Operand countOp;
+        private readonly Operand fromOp;
+        private readonly bool hasVariablesInPatterns = false;
 
         public virtual int Level => level;
 

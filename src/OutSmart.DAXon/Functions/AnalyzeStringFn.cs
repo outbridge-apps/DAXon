@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
     {
         private readonly object syncLock = new object();
 
-        private ResultNamesAndTypes vocab = new ResultNamesAndTypes();
+        private readonly ResultNamesAndTypes vocab = new ResultNamesAndTypes();
         protected override bool AllowRegexMatchingEmptyString()
         {
             return false;

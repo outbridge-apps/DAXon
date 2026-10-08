@@ -24,8 +24,8 @@ namespace OutSmart.DAXon.Serialization
     public class JSONEmitter
     {
         //private final ExpandedStreamResult result;
-        private Configuration config;
-        private IUnicodeWriter writer;
+        private readonly Configuration config;
+        private readonly IUnicodeWriter writer;
         private bool normalize;
         private NormalizationForm normalizationForm;
         private CharacterMap characterMap;

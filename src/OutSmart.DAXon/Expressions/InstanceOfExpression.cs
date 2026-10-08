@@ -19,8 +19,8 @@ namespace OutSmart.DAXon.Expressions
     /// </summary>
     internal sealed class InstanceOfExpression : UnaryExpression
     {
-        ItemType targetType;
-        int targetCardinality;
+        readonly ItemType targetType;
+        readonly int targetCardinality;
 
         public ItemType RequiredItemType => targetType;
 

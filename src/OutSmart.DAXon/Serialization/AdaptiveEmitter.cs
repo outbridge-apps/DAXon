@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Serialization
     public class AdaptiveEmitter : SequenceWriter, IReceiverWithOutputProperties
     {
 
-        static ARegularExpression QUOTES = ARegularExpression.Compile("\"", "");
+        static readonly ARegularExpression QUOTES = ARegularExpression.Compile("\"", "");
         private readonly IUnicodeWriter writer;
         private CharacterMap characterMap;
         private Properties outputProperties;

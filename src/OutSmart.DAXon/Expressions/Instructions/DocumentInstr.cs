@@ -27,7 +27,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     {
         private readonly bool textOnly;
         private readonly UnicodeString constantText;
-        private Statistics treeStatistics = new Statistics();
+        private readonly Statistics treeStatistics = new Statistics();
 
         public override int ImplementationMethod => Expression.EVALUATE_METHOD;
 

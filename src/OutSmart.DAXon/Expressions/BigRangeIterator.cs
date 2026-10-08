@@ -15,11 +15,11 @@ namespace OutSmart.DAXon.Expressions
 {
     internal sealed class BigRangeIterator : RangeIterator, IAtomicIterator, ILastPositionFinder, ILookaheadIterator
     {
-        BigInteger start;
-        BigInteger step;
+        readonly BigInteger start;
+        readonly BigInteger step;
         BigInteger currentValue;
-        BigInteger limit;
-        bool descending;
+        readonly BigInteger limit;
+        readonly bool descending;
 
         public override IntegerValue First => IntegerValue.MakeIntegerValue(start);
 

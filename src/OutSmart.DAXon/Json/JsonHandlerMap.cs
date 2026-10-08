@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Json
     internal sealed class JsonHandlerMap : JsonHandler
     {
         // ArrayItem | MapBuilder frames under construction; the finished value at the bottom
-        Stack<object> stack;
+        readonly Stack<object> stack;
         // An array of similar objects repeats each schema key once per object; interning collapses
         // those copies to one shared instance (large drop in retained heap + GC). Capped so an
         // all-distinct-keys document cannot grow the pool without bound.

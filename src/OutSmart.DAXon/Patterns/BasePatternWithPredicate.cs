@@ -29,8 +29,8 @@ namespace OutSmart.DAXon.Patterns
     /// </summary>
     internal sealed class BasePatternWithPredicate : Pattern, IPatternWithPredicate
     {
-        Operand basePatternOp;
-        Operand predicateOp;
+        readonly Operand basePatternOp;
+        readonly Operand predicateOp;
         volatile IBooleanEvaluator predicateEvaluator;   // volatile: published once, read per node match (round 11)
 
         public Expression Predicate => predicateOp.GetChildExpression();

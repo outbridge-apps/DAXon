@@ -13,8 +13,8 @@ namespace OutSmart.DAXon.Serialization
 {
     public class SerializationProperties
     {
-        Properties properties;
-        CharacterMapIndex charMapIndex;
+        readonly Properties properties;
+        readonly CharacterMapIndex charMapIndex;
         IFilterFactory validationFactory;
 
         public virtual IFilterFactory ValidationFactory

@@ -12,8 +12,8 @@ namespace OutSmart.DAXon.Lib
     internal sealed class StandardLogger : Logger
     {
         private TextWriter writer = Console.Error;
-        private int threshold = Logger.INFO;
-        private bool mustClose = false;
+        private readonly int threshold = Logger.INFO;
+        private readonly bool mustClose = false;
 
         public TextWriter PrintWriter
         {

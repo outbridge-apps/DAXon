@@ -86,7 +86,7 @@ namespace OutSmart.DAXon.Core
         private readonly Dictionary<string, IStringCollator> collationMap = new Dictionary<string, IStringCollator>(10);
         private ICollationURIResolver collationResolver = new StandardCollationURIResolver();
         private string defaultCollationName = NamespaceConstant.CODEPOINT_COLLATION_URI;
-        private Dictionary<string, IResourceCollection> registeredCollections = new Dictionary<string, IResourceCollection>();
+        private readonly Dictionary<string, IResourceCollection> registeredCollections = new Dictionary<string, IResourceCollection>();
         private ICollectionFinder collectionFinder;
         private IEnvironmentVariableResolver environmentVariableResolver = new StandardEnvironmentVariableResolver();
         private string defaultCollection = null;

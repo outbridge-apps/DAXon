@@ -165,7 +165,7 @@ namespace OutSmart.DAXon.Values.Maps
         /// </summary>
         private sealed class KeyIterator : IAtomicIterator
         {
-            IEnumerator<string> keyIter;
+            readonly IEnumerator<string> keyIter;
             public KeyIterator(Dictionary<string, IGroundedValue> hashMap)
             {
                 this.keyIter = hashMap.Keys.GetEnumerator();

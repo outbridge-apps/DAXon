@@ -21,10 +21,10 @@ namespace OutSmart.DAXon.Expressions.Sorting
     internal sealed class GroupByIterator : IGroupIterator, ILastPositionFinder, ILookaheadIterator
     {
         private readonly object syncLock = new object();
-        private ISequenceIterator population;
+        private readonly ISequenceIterator population;
         protected Expression keyExpression;
-        private IStringCollator collator;
-        private IXPathContext keyContext;
+        private readonly IStringCollator collator;
+        private readonly IXPathContext keyContext;
         private int position = 0;
         protected IList<IList<IItem>> groups = new List<IList<IItem>>(40);
 

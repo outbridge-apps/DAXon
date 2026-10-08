@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.XQuery
         private HashSet<NamespaceUri> importedSchemata; // The schema target namespaces imported into this module
         private Dictionary<NamespaceUri, HashSet<string>> loadedSchemata;
         private Executable executable;
-        private IList<QueryModule> importers; // A list of QueryModule objects representing the modules that import this one,
+        private readonly IList<QueryModule> importers; // A list of QueryModule objects representing the modules that import this one,
         private FunctionLibraryList functionLibraryList;
         private XQueryFunctionLibrary globalFunctionLibrary; // used only on a top-level module
         private int localFunctionLibraryNr;
@@ -66,7 +66,7 @@ namespace OutSmart.DAXon.XQuery
         private OptimizerOptions optimizerOptions;
         private int languageLevel;
         private UnprefixedElementMatchingPolicy unprefixedElementMatchingPolicy = UnprefixedElementMatchingPolicy.DEFAULT_NAMESPACE;
-        private HashSet<QueryModule> importedModules = new HashSet<QueryModule>();
+        private readonly HashSet<QueryModule> importedModules = new HashSet<QueryModule>();
 
         public virtual int ConstructionMode
         {

@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.XQuery
         public static readonly StructuredQName PRIVATE = NamespaceUri.XQUERY.QName("private");
         public static readonly StructuredQName PUBLIC = NamespaceUri.XQUERY.QName("public");
         // The name of the annotation
-        private StructuredQName qName = null;
+        private readonly StructuredQName qName = null;
         // The list of parameters (all strings or numbers) associated with the annotation
         private IList<AtomicValue> annotationParameters = null;
 

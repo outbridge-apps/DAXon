@@ -11,7 +11,7 @@ namespace OutSmart.DAXon.Xslt
 {
     internal sealed class TextValueTemplateContext : ExpressionContext
     {
-        TextValueTemplateNode textNode;
+        readonly TextValueTemplateNode textNode;
         public TextValueTemplateContext(StyleElement parent, TextValueTemplateNode textNode) : base(parent, null)
         {
             this.textNode = textNode;

@@ -410,7 +410,7 @@ namespace OutSmart.DAXon.Collections
         /// </summary>
         private sealed class IntRangeSetIterator : AbstractIntIterator
         {
-            private IntRangeSet intRangeSet;
+            private readonly IntRangeSet intRangeSet;
             private int i = 0;
             private int current = 0;
             public IntRangeSetIterator(IntRangeSet intRangeSet)

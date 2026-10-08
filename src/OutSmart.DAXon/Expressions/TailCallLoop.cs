@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Expressions
 {
     public sealed class TailCallLoop : UnaryExpression
     {
-        UserFunction containingFunction;
+        readonly UserFunction containingFunction;
 
         public UserFunction ContainingFunction => containingFunction;
 

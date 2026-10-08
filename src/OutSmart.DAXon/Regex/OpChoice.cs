@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Regex
     /// </summary>
     internal sealed class OpChoice : Operation
     {
-        IList<Operation> branches;
+        readonly IList<Operation> branches;
 
         public override int MatchLength
         {

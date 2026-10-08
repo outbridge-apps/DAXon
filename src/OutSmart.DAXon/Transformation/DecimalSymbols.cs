@@ -60,7 +60,7 @@ namespace OutSmart.DAXon.Transformation
             "NaN"
         };
 
-        static int[] zeroDigits = new[]
+        static readonly int[] zeroDigits = new[]
         {
             0x0030,
             0x0660,

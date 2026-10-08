@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 {
     public class GlobalParameterSet
     {
-        private Dictionary<StructuredQName, IGroundedValue> @params = new Dictionary<StructuredQName, IGroundedValue>(10);
+        private readonly Dictionary<StructuredQName, IGroundedValue> @params = new Dictionary<StructuredQName, IGroundedValue>(10);
 
         // PHASE7_INDEXER_GPS
         public IGroundedValue this[StructuredQName key] { get { return Get(key); } set { Put(key, value); } }

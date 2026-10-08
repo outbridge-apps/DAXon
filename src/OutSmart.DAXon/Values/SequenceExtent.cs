@@ -89,7 +89,7 @@ namespace OutSmart.DAXon.Values
         public virtual ISequence MakeRepeatable() => this;
         internal sealed class Of<T> : SequenceExtent, IEnumerable<T> where T : IItem
         {
-            private IList<T> items;
+            private readonly IList<T> items;
 
             public override UnicodeString UnicodeStringValue
             {

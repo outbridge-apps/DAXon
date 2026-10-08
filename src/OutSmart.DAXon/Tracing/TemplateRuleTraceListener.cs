@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Tracing
     public class TemplateRuleTraceListener
     {
         private int depth = 0;
-        private Logger logger;
+        private readonly Logger logger;
         public TemplateRuleTraceListener(Logger logger)
         {
             this.logger = logger;

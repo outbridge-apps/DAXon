@@ -27,9 +27,9 @@ namespace OutSmart.DAXon.Trees.Tiny
         private bool noNewNamespaces = true;
         private Statistics statistics;
         private long inputLength = -1;
-        private bool markDefaultedAttributes = false;
+        private readonly bool markDefaultedAttributes = false;
         private Eligibility textualElementEligibilityState = Eligibility.INELIGIBLE;
-        private UnicodeBuilder commentBuilder = new UnicodeBuilder();
+        private readonly UnicodeBuilder commentBuilder = new UnicodeBuilder();
 
         private int[] prevAtDepth = new int[100];
         private int[] siblingsAtDepth = new int[100];

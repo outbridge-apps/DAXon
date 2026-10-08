@@ -39,7 +39,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private readonly Operand actionOp;
         private readonly Operand keyOp;
         private Operand collationOp;
-        private Operand sortKeysOp;
+        private readonly Operand sortKeysOp;
 
         public override int InstructionNameCode => StandardNames.XSL_FOR_EACH_GROUP;
 

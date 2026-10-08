@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Events
 {
     internal sealed class NamespaceDifferencer : ProxyReceiver
     {
-        private bool undeclareNamespaces = false;
+        private readonly bool undeclareNamespaces = false;
         private readonly Stack<NamespaceMap> namespaceStack = new Stack<NamespaceMap>();
         public NamespaceDifferencer(IReceiver next) : base(next)
         {

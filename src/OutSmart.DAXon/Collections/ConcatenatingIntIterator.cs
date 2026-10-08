@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Collections
     internal sealed class ConcatenatingIntIterator : AbstractIntIterator
     {
         IIntIterator first;
-        Func<IIntIterator> second;
+        readonly Func<IIntIterator> second;
         IIntIterator active;
         int lookahead;
         bool lookaheadFilled;

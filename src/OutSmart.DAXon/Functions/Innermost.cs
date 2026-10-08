@@ -75,7 +75,7 @@ namespace OutSmart.DAXon.Functions
 
         private sealed class InnermostIterator : ISequenceIterator
         {
-            ISequenceIterator @in;
+            readonly ISequenceIterator @in;
             NodeInfo pending = null;
             public InnermostIterator(ISequenceIterator @in)
             {

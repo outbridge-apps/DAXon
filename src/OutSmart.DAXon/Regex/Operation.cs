@@ -52,7 +52,7 @@ namespace OutSmart.DAXon.Regex
             private readonly REMatcher matcher;
             int countZeroLength = 0;
             int currentPos = -1;
-            int loopingDepth = 1;
+            readonly int loopingDepth = 1;
             int maxTries = 10;
             public ForceProgressIterator(IIntIterator @base, int loopingDepth, REMatcher matcher)
             {

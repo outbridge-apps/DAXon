@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         private const int MAX_INLININGS = 100;
 
-        private static string saxonDotEqName = "Q{" + NamespaceUri.SAXON + "}dot";
+        private static readonly string saxonDotEqName = "Q{" + NamespaceUri.SAXON + "}dot";
         private StructuredQName functionName; // null for an anonymous function
         private bool tailCalls = false;
         private bool tailRecursive = false;

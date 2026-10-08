@@ -10,7 +10,7 @@ namespace OutSmart.DAXon.Model
 {
     internal sealed class QNameException : Exception
     {
-        string message;
+        readonly string message;
         public QNameException(string message)
         {
             this.message = message;

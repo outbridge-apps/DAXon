@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Events
 {
     internal sealed class NamespaceReducer : ProxyReceiver, INamespaceResolver
     {
-        private NamespaceBinding[] namespaces = new NamespaceBinding[50]; // all namespace codes currently declared
+        private readonly NamespaceBinding[] namespaces = new NamespaceBinding[50]; // all namespace codes currently declared
         private int namespacesSize = 0; // all namespaces currently declared
         private int[] countStack = new int[50];
         private int depth = 0;

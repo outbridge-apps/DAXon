@@ -13,9 +13,9 @@ namespace OutSmart.DAXon.Text
 {
     internal sealed class Slice16 : UnicodeString
     {
-        private char[] chars;
-        private int start;
-        private int end;
+        private readonly char[] chars;
+        private readonly int start;
+        private readonly int end;
         private int cachedHash;
 
         public override int Width => 16;

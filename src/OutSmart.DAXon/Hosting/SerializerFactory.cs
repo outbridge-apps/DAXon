@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Lib
     {
 
         private static readonly OutSmart.DAXon.Internal.Regex.Pattern publicIdPattern = OutSmart.DAXon.Internal.Regex.Pattern.Compile("^[\\s\\r\\na-zA-Z0-9\\-'()+,./:=?;!*#@$_%]*$");
-        Configuration config;
+        readonly Configuration config;
         public SerializerFactory(Configuration config)
         {
             this.config = config;

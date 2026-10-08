@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Functions
         private ICallable callable;
         private readonly SymbolicName.F name;
         private IFunctionItemType type;
-        private AnnotationList annotations;
+        private readonly AnnotationList annotations;
 
         public ICallable Callable
         {

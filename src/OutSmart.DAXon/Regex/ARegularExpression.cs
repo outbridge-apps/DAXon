@@ -18,9 +18,9 @@ namespace OutSmart.DAXon.Regex
 {
     internal sealed class ARegularExpression : IRegularExpression
     {
-        UnicodeString rawPattern;
-        string rawFlags;
-        REProgram regex;
+        readonly UnicodeString rawPattern;
+        readonly string rawFlags;
+        readonly REProgram regex;
         // Codepoint for the single-literal-char tokenize fast path; -1 = not applicable,
         // -2 = not yet determined. Lazily computed from the COMPILED program (so \; and the
         // q flag qualify too); benign race: concurrent writers store the same value.

@@ -173,7 +173,7 @@ namespace OutSmart.DAXon.Text
 
             private readonly Slice24 parent;
             int i;
-            int j;
+            readonly int j;
             public AnonymousIntIterator(Slice24 parent)
             {
                 this.parent = parent;

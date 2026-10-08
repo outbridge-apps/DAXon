@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// </summary>
     internal sealed class NextMatch : ApplyNextMatchingTemplate
     {
-        bool useTailRecursion;
+        readonly bool useTailRecursion;
 
         public override int InstructionNameCode => StandardNames.XSL_NEXT_MATCH;
 

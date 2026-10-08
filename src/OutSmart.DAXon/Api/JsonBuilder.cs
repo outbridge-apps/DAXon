@@ -19,7 +19,7 @@ namespace OutSmart.DAXon.Api
 {
     public class JsonBuilder
     {
-        private Configuration config;
+        private readonly Configuration config;
         private bool liberal;
         private bool escaped;
         public JsonBuilder(Configuration config)

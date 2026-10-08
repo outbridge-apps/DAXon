@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Expressions
 {
     internal sealed class CardinalityChecker : UnaryExpression
     {
-        private int requiredCardinality = -1;
+        private readonly int requiredCardinality = -1;
         private readonly Func<RoleDiagnostic> roleSupplier;
 
         public int RequiredCardinality => requiredCardinality;

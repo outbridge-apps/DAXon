@@ -14,7 +14,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
     {
         // This is extracted as a separate class primarily to allow different implementations for Java and C#.
         // This is because <code>List.equals()</code> has the desired semantics on Java, but not on C#.
-        private IList<IAtomicMatchKey> keys;
+        private readonly IList<IAtomicMatchKey> keys;
         public CompositeAtomicKey(IList<IAtomicMatchKey> keys)
         {
             this.keys = keys;

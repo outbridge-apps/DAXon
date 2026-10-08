@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Resources
         private NodeInfo doc;
         private readonly IXPathContext context;
         private readonly Configuration config;
-        private AbstractResourceCollection.InputDetails details;
+        private readonly AbstractResourceCollection.InputDetails details;
 
         public string ResourceURI
         {

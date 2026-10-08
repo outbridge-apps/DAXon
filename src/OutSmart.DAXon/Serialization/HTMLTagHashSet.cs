@@ -9,8 +9,8 @@ namespace OutSmart.DAXon.Serialization
 {
     internal sealed class HTMLTagHashSet
     {
-        string[] strings;
-        int size;
+        readonly string[] strings;
+        readonly int size;
         public HTMLTagHashSet(int size)
         {
             strings = new string[size];

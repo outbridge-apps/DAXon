@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Patterns
         private readonly int kind; // element or attribute
         private readonly ISchemaType schemaType;
         private readonly Configuration config;
-        private bool nillable = false;
+        private readonly bool nillable = false;
 
         public override double DefaultPriority => 0;
 

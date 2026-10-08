@@ -9,7 +9,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 {
     internal sealed class LFUCache<K, V>
     {
-        private int targetSize;
+        private readonly int targetSize;
         private int retentionThreshold = 1;
         private Dictionary<K, LFUCacheEntryWithCounter<V>> map;
         // Indexer for `cache[key]` syntax (Java's cache.get(key))
