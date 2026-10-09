@@ -304,7 +304,9 @@ namespace OutSmart.DAXon.Xslt
                 }
                 else
                 {
-                    throw new XPathException("Failed while looking for xml-stylesheet PI", err);
+                    // With the cause's code and message: an input too large (FODC0002), a limit or a parse error said
+                    // only that the search failed.
+                    throw new XPathException("Failed while looking for xml-stylesheet PI: " + err.Message, err) { ErrorCodeQName = err.ErrorCodeQName };
                 }
             }
 
