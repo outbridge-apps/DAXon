@@ -59,7 +59,42 @@ static class Smoke
             Console.WriteLine("SMOKE FAILED (windows-1251)");
             return 1;
         }
+
+        // A policy without file reads: unparsed-text of a file: URI fails as a missing file does; by default it reads.
+        string file = Path.Combine(Path.GetTempPath(), "daxon-smoke-" + Guid.NewGuid().ToString("N") + ".txt");
+        File.WriteAllText(file, "text");
+        try
+        {
+            string read = "unparsed-text('" + new Uri(file).AbsoluteUri + "')";
+            string open = Outcome(proc, read);
+            string closed = Outcome(new Processor(new ProcessorOptions { AllowFileRead = false }), read);
+            Console.WriteLine("read: " + open + " / " + closed);
+            if (open != "text" || closed != "FOUT1170")
+            {
+                Console.WriteLine("want: text / FOUT1170");
+                Console.WriteLine("SMOKE FAILED (AllowFileRead)");
+                return 1;
+            }
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+
         Console.WriteLine("SMOKE OK");
         return 0;
+    }
+
+    // The value of an expression, or the code of its error.
+    static string Outcome(Processor proc, string expression)
+    {
+        try
+        {
+            return proc.NewXPathCompiler().Compile(expression).Load().EvaluateSingle().GetStringValue();
+        }
+        catch (DAXonApiException e)
+        {
+            return e.GetErrorCode()?.LocalName ?? e.Message;
+        }
     }
 }

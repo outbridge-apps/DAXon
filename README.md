@@ -14,6 +14,19 @@ for hosts that are stuck on the old Framework where current XSLT 3.0 engines are
 **Base version**: the port derives from the Saxon-HE **12.9** Java source release, published by
 Saxonica at <https://github.com/Saxonica/Saxon-HE> (see also <https://www.saxonica.com/>).
 
+**Current version: 1.4.0** — see [`CHANGELOG.md`](CHANGELOG.md), and its *Upgrading from 1.3* section before
+replacing 1.3.x in a host.
+
+## What's new in 1.4
+
+- .NET 8 and .NET 10 builds beside .NET Framework 4.7.2, in one package.
+- `ProcessorOptions`: a time limit and a memory limit per call (one minute and 500 MB by default), the stack a
+  recursion must leave free, and control over file, network and environment access (see Security).
+- Hardening: deep input, long expression chains and runaway work stop with a coded error instead of a stack
+  overflow or a hang; memory and file-lock leaks closed; two output-escaping security fixes.
+- Faster compilation, regex, XSLT 1.0-style stylesheets and small repeated calls.
+- Some behaviour changed — listed in [`CHANGELOG.md`](CHANGELOG.md), *Upgrading from 1.3*.
+
 ## Build
 
 Prebuilt assembly: [latest release](https://github.com/outbridge-apps/DAXon/releases/latest).
@@ -134,7 +147,7 @@ corpora at pinned revisions, so the result above can be reproduced locally.
 
 The translation from the Saxon-HE 12.9 Java sources, and the subsequent refactoring,
 hardening and performance work, were carried out with AI assistance — Anthropic's Claude
-(Opus 4.8 and Fable 5) — under human direction and review.
+(Opus 4.8, Fable 5 and Opus 5.5) — under human direction and review.
 
 Nothing was taken on the model's word. Every change to the engine had to pass:
 
@@ -143,8 +156,9 @@ Nothing was taken on the model's word. Every change to the engine had to pass:
   which the .NET `XmlReader` cannot parse);
 - **byte-identity gates** — selected transform outputs compared byte-for-byte against
   Java Saxon-HE running the same inputs;
-- a spec-derived suite of 489 cases, a multi-threaded equality battery on one shared
-  `Processor`, and a set of robustness probes (deadlines, caches, stack guards).
+- a spec-derived suite of 497 cases, a multi-threaded equality battery on one shared
+  `Processor`, and 161 robustness probes (time and memory limits, stack guards, hostile input,
+  leaks, API contracts) — on .NET Framework 4.7.2, .NET 8 and .NET 10.
 
 ## License & attribution
 
