@@ -20,7 +20,7 @@ namespace OutSmart.DAXon.Core
 
         // seen: the document numbers counted already - numbers, so the call keeps no tree reachable. A tree numbered
         // from firstOfCall on was made by the call itself, and its ledger counts it already.
-        internal static long Of(ISequence value, HashSet<long> seen, long firstOfCall)
+        internal static long Of(ISequence value, CountedTrees seen, long firstOfCall)
         {
             if (value is IItem single)
             {
@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Core
             return bytes;
         }
 
-        private static long OfItem(IItem item, HashSet<long> seen, long firstOfCall)
+        private static long OfItem(IItem item, CountedTrees seen, long firstOfCall)
         {
             if (!(item is NodeInfo node))
             {
@@ -60,6 +60,33 @@ namespace OutSmart.DAXon.Core
 
             long number = tree.GetDocumentNumber();
             return number < firstOfCall && seen.Add(number) ? tiny.RetainedBytes() : 0;
+        }
+
+        // The document numbers of the trees a call counted. A call is mostly handed one tree, which needs no set: a reused
+        // selector clears this on every evaluation.
+        internal sealed class CountedTrees
+        {
+            private bool any;
+            private long first;
+            private HashSet<long> more;
+
+            internal bool Add(long number)
+            {
+                if (!any)
+                {
+                    any = true;
+                    first = number;
+                    return true;
+                }
+
+                return number != first && (more ??= new HashSet<long>()).Add(number);
+            }
+
+            internal void Clear()
+            {
+                any = false;
+                more = null;
+            }
         }
     }
 }

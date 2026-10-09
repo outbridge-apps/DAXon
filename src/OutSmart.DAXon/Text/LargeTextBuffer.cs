@@ -397,9 +397,9 @@ namespace OutSmart.DAXon.Text
         internal long RetainedBytes()
         {
             long bytes = lastSegment.Bytes;
-            foreach (ISegment segment in completeSegments)
+            for (int i = 0; i < completeSegments.Count; i++)
             {
-                bytes += segment.Bytes;
+                bytes += completeSegments[i].Bytes;   // by index: foreach over the IList boxed an enumerator each call
             }
 
             return bytes;

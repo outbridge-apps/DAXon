@@ -16,9 +16,9 @@ namespace OutSmart.DAXon.Internal
         [ThreadStatic]
         private static RunResources current;
 
-        private readonly RunResources outer;
+        private RunResources outer;
         private readonly bool entered;
-        private readonly Core.Controller.DeadlineToken limitsBefore;   // the thread's limits when the call began
+        private Core.Controller.DeadlineToken limitsBefore;   // the thread's limits when the call began
         private HashSet<WeakReference<IDisposable>> open;
         private List<Action> onClose;   // the end of the evaluation the scope belongs to: once, when it closes
         private int sweepAt = 64;
@@ -30,10 +30,23 @@ namespace OutSmart.DAXon.Internal
             limitsBefore = entered ? Core.Controller.ActiveLimits : null;
         }
 
+        [ThreadStatic]
+        private static RunResources spare;   // a call's scope once left: the next call on the thread enters it again
+
         // A scope for the duration of a call: using (RunResources.Enter()) { ... }
         public static RunResources Enter()
         {
-            return current = new RunResources(current, true);
+            RunResources scope = spare;
+            if (scope == null)
+            {
+                return current = new RunResources(current, true);
+            }
+
+            spare = null;
+            scope.outer = current;
+            scope.limitsBefore = Core.Controller.ActiveLimits;
+            scope.sweepAt = 64;
+            return current = scope;
         }
 
         // A scope a lazy iterator keeps across calls; it is current only between Activate and Restore.
@@ -101,6 +114,11 @@ namespace OutSmart.DAXon.Internal
 
         public void CloseAll()
         {
+            if (open == null && onClose == null)
+            {
+                return;   // the common call opens nothing; only this thread adds, so no lock to see that
+            }
+
             HashSet<WeakReference<IDisposable>> left;
             List<Action> actions;
             lock (this)
@@ -155,6 +173,13 @@ namespace OutSmart.DAXon.Internal
             }
 
             CloseAll();
+            if (entered)
+            {
+                // A reader it tracked may keep it, to untrack itself: that finds nothing of a later call to remove.
+                outer = null;
+                limitsBefore = null;
+                spare = this;
+            }
         }
     }
 }

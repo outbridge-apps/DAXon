@@ -80,7 +80,8 @@ namespace OutSmart.DAXon.Trees.Tiny
         // trees held 1.2 KB each).
         private const int TreeOverhead = 1100;
 
-        private static long Size(Array array, int width)
+        // Typed: the length of an Array is a call into the runtime, of a T[] an instruction (every call is handed a tree).
+        private static long Size<T>(T[] array, int width)
         {
             return array == null ? 0 : (long)array.Length * width;
         }

@@ -9,7 +9,6 @@ namespace OutSmart.DAXon.Trees.Utilities
 {
     public class DocumentNumberAllocator
     {
-        private readonly object syncLock = new object();
         // Changed to a long in Saxon 9.4, because a user reported an int overflowing
         // on a system that had been in live operation for several months. The effect wasn't fatal,
         // but could cause incorrect node identity tests.
@@ -18,20 +17,15 @@ namespace OutSmart.DAXon.Trees.Utilities
         // nodes always precede unstreamed nodes in document order. We take advantage of this
         // when sorting a sequence that contains both streamed and unstreamed nodes.
         private long nextStreamedDocumentNumber = -2; // -1 is special
+        // Interlocked, not a lock: every call with a memory limit takes a number.
         public virtual long AllocateDocumentNumber()
         {
-            lock (syncLock)
-            {
-                return nextDocumentNumber++;
-            }
+            return System.Threading.Interlocked.Increment(ref nextDocumentNumber) - 1;
         }
 
         public virtual long AllocateStreamedDocumentNumber()
         {
-            lock (syncLock)
-            {
-                return nextStreamedDocumentNumber--;
-            }
+            return System.Threading.Interlocked.Decrement(ref nextStreamedDocumentNumber) + 1;
         }
     }
 }

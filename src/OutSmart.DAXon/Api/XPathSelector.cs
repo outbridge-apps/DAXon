@@ -138,10 +138,11 @@ namespace OutSmart.DAXon.Api
         {
             using RunResources run = RunResources.Enter();
             ISequence value;
+            Core.Controller.DeadlineToken limits = null;   // given back for the next evaluation: the result is grounded
             try
             {
                 evaluations++;
-                exp.ArmEvaluation(dynamicContext);
+                limits = exp.ArmEvaluation(dynamicContext);
                 value = SequenceTool.ToGroundedValue(exp.Iterate(dynamicContext));
             }
             catch (UncheckedXPathException uxe)
@@ -162,7 +163,7 @@ namespace OutSmart.DAXon.Api
             }
             finally
             {
-                exp.EndEvaluation(dynamicContext);
+                exp.EndEvaluation(dynamicContext, limits);
             }
 
             return XdmValue.Wrap(value);
@@ -171,10 +172,11 @@ namespace OutSmart.DAXon.Api
         public virtual XdmItem EvaluateSingle()
         {
             using RunResources run = RunResources.Enter();
+            Core.Controller.DeadlineToken limits = null;   // given back for the next evaluation: the result is grounded
             try
             {
                 evaluations++;
-                exp.ArmEvaluation(dynamicContext);
+                limits = exp.ArmEvaluation(dynamicContext);
                 IItem i = exp.EvaluateSingle(dynamicContext);
                 if (i == null)
                 {
@@ -197,7 +199,7 @@ namespace OutSmart.DAXon.Api
             }
             finally
             {
-                exp.EndEvaluation(dynamicContext);
+                exp.EndEvaluation(dynamicContext, limits);
             }
         }
 
@@ -219,7 +221,7 @@ namespace OutSmart.DAXon.Api
                 {
                     if (evaluations == evaluation)
                     {
-                        exp.EndEvaluation(dynamicContext);
+                        exp.EndEvaluation(dynamicContext, null);
                     }
                 });
                 exp.ArmEvaluation(dynamicContext);
@@ -250,10 +252,11 @@ namespace OutSmart.DAXon.Api
         public virtual bool EffectiveBooleanValue()
         {
             using RunResources run = RunResources.Enter();
+            Core.Controller.DeadlineToken limits = null;   // given back for the next evaluation: the result is grounded
             try
             {
                 evaluations++;
-                exp.ArmEvaluation(dynamicContext);
+                limits = exp.ArmEvaluation(dynamicContext);
                 return exp.EffectiveBooleanValue(dynamicContext);
             }
             catch (UncheckedXPathException uxe)
@@ -270,7 +273,7 @@ namespace OutSmart.DAXon.Api
             }
             finally
             {
-                exp.EndEvaluation(dynamicContext);
+                exp.EndEvaluation(dynamicContext, limits);
             }
         }
         // s9api XPathSelector is Iterable<XdmItem>: foreach over the selector evaluates it.

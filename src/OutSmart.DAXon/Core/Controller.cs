@@ -83,13 +83,14 @@ namespace OutSmart.DAXon.Core
         private bool hasDeadline;
         private long deadlineTimestamp;      // Stopwatch timestamp at which to abort
         private DeadlineToken deadlineToken; // the adaptive throttle shared with the thread slot
+        private DeadlineToken spareToken;    // a finished call's token that nothing keeps: the next call arms it again
         private TimeSpan timeoutSetting;     // remembered for the diagnostic message only
         private bool hasInheritedCap;        // nested run: may not outlive the enclosing run
         private long inheritedDeadline;
         private TimeSpan inheritedSetting;
         private DeadlineToken inheritedMemory;   // nested run: the enclosing run's memory count, which it continues
         private bool chargesInputs;              // this run has a memory limit of its own and counts what it is handed
-        private HashSet<long> chargedTrees;      // document numbers of the trees counted already
+        private InputSize.CountedTrees chargedTrees;   // the trees counted already
         private long firstTreeOfRun;             // trees numbered from here on were made by the run itself
 
 
@@ -156,6 +157,25 @@ namespace OutSmart.DAXon.Core
             private Throttle perItem;
             private Throttle perStep;
 
+            // As new, for the next call of the controller that armed it.
+            internal void Reset(string activity, int stackThreshold)
+            {
+                hasDeadline = false;
+                deadlineTimestamp = 0;
+                setting = TimeSpan.Zero;
+                this.activity = activity;
+                this.stackThreshold = stackThreshold;
+                memoryLimit = 0;
+                memoryOwner = null;
+                memory = null;
+                memoryInputs = 0;
+                nextLook = 0;
+                untilLook = 0;
+                armed = false;
+                perItem = default;
+                perStep = default;
+            }
+
             internal void Arm(long deadline, TimeSpan limit, long now)
             {
                 deadlineTimestamp = deadline;
@@ -172,7 +192,7 @@ namespace OutSmart.DAXon.Core
                 memoryLimit = limit;
                 memoryOwner = this;
                 memory = null;
-                nextLook = OutSmart.DAXon.Internal.AllocationMeter.Read() + MemoryLedger.StepOf(limit);
+                nextLook = 0;   // the first check sums, which with no ledger yet is a compare: no counter read per call
                 StartSampling(now);
             }
 
@@ -495,15 +515,18 @@ namespace OutSmart.DAXon.Core
         // activity names what the limit stops when it is not a transformation ("Compilation", "Parsing", ...).
         internal void SetTimeout(TimeSpan timeout, string activity)
         {
-            var token = new DeadlineToken { activity = activity, stackThreshold = StackThresholdOf(config) };
+            DeadlineToken token = spareToken ?? new DeadlineToken();
+            spareToken = null;
+            token.Reset(activity, StackThresholdOf(config));
             Own(token);   // this run now owns the deadline slot on the running thread
             hasDeadline = false;
-            chargedTrees = null;
+            chargedTrees?.Clear();
             chargesInputs = false;
             long memoryLimit = inheritedMemory != null ? inheritedMemory.memoryLimit : MemoryLimitOf(config);
             if (timeout <= TimeSpan.Zero && !hasInheritedCap && memoryLimit <= 0)
             {
-                return;               // no limit at all: the token stays unarmed
+                deadlineToken = token;   // unarmed: the checks of this controller no longer see a previous call's limits
+                return;
             }
 
             long now = System.Diagnostics.Stopwatch.GetTimestamp();   // the one reading for the deadline and the throttles
@@ -529,6 +552,20 @@ namespace OutSmart.DAXon.Core
 
             deadlineToken = token;
             ChargeRunInputs();
+        }
+
+        // The token the last SetTimeout armed: a call that grounds its result hands it back to ReleaseLimits.
+        internal DeadlineToken Limits => deadlineToken;
+
+        // The call that armed this token is over and its result is grounded, so nothing outlives the call with the token:
+        // the controller's next call arms it again instead of a new one (a reused selector arms on every evaluation).
+        // A token re-armed since (the same evaluator called inside the call) is not the call's to give.
+        internal void ReleaseLimits(DeadlineToken armed)
+        {
+            if (armed != null && ReferenceEquals(armed, deadlineToken))
+            {
+                spareToken = armed;
+            }
         }
 
         // The Processor's memory limit for this call, counted from now - or, for a nested run, the enclosing run's count.
@@ -561,7 +598,7 @@ namespace OutSmart.DAXon.Core
         {
             if (chargesInputs && value != null && deadlineToken != null)
             {
-                deadlineToken.ChargeInput(InputSize.Of(value, chargedTrees ??= new HashSet<long>(), firstTreeOfRun));
+                deadlineToken.ChargeInput(InputSize.Of(value, chargedTrees ??= new InputSize.CountedTrees(), firstTreeOfRun));
             }
         }
 
@@ -575,7 +612,7 @@ namespace OutSmart.DAXon.Core
             }
 
             ChargeInput(globalContextItem);
-            if (globalParameters != null)
+            if (globalParameters != null && globalParameters.NumberOfKeys > 0)   // none: no enumerator boxed on every call
             {
                 foreach (StructuredQName name in globalParameters.Keys)
                 {
@@ -714,8 +751,14 @@ namespace OutSmart.DAXon.Core
         // stack its options keep free for the recursion guard. Every change of the slot goes through here.
         private static void Own(DeadlineToken token)
         {
+            // The guard holds the slot's threshold already; the default and 0 (no call) both keep the minimum.
+            int threshold = Math.Max(token?.stackThreshold ?? 0, OutSmart.DAXon.Internal.StackGuard.MinThreshold);
+            if (threshold != Math.Max(activeOnThread?.stackThreshold ?? 0, OutSmart.DAXon.Internal.StackGuard.MinThreshold))
+            {
+                OutSmart.DAXon.Internal.StackGuard.UseThreshold(threshold);
+            }
+
             activeOnThread = token;
-            OutSmart.DAXon.Internal.StackGuard.UseThreshold(token?.stackThreshold ?? 0);
         }
 
         // The StackSizeThreshold of the Processor a configuration serves; 0 (the default) for the engine's own.
@@ -1348,8 +1391,11 @@ namespace OutSmart.DAXon.Core
 
             globalParameters = @params;
 
-            // Check the global context item
-            globalContextItem = executable.CheckInitialContextItem(globalContextItem, NewXPathContext());
+            // Check the global context item; with no requirement it stands as given, and no context is made to check it
+            if (executable.GlobalContextRequirement != null)
+            {
+                globalContextItem = executable.CheckInitialContextItem(globalContextItem, NewXPathContext());
+            }
             if (traceListener != null)
             {
 

@@ -26,6 +26,8 @@ namespace OutSmart.DAXon.Api
         private readonly XQueryExpression expression;
         private readonly DynamicQueryContext context;
         private Controller controller; // used only when making direct calls to global functions
+        private QName calledName;      // the function the last direct call found: a host calls one over and over, and
+        private UserFunction called;   // finding it again hashed its name on every call
         private IDestination destination;
         private HashSet<XdmNode> updatedDocuments;
         private Builder sourceTreeBuilder;
@@ -453,12 +455,18 @@ namespace OutSmart.DAXon.Api
         public virtual XdmValue CallFunction(QName function, params XdmValue[] arguments)
         {
             using RunResources run = RunResources.Enter();
-            UserFunction fn = expression.MainModule.GetUserDefinedFunction(function.GetNamespaceUri(), function.LocalName, arguments.Length);
+            UserFunction fn = called != null && called.GetArity() == arguments.Length && function.Equals(calledName)
+                ? called
+                : expression.MainModule.GetUserDefinedFunction(function.GetNamespaceUri(), function.LocalName, arguments.Length);
             if (fn == null)
             {
                 throw new DAXonApiException("No function with name " + function.EQName + " and arity " + arguments.Length + " has been declared in the query");
             }
 
+            called = fn;
+            calledName = function;
+
+            Controller.DeadlineToken limits = null;   // given back for the next call: the result is grounded
             try
             {
                 if (controller == null)
@@ -471,6 +479,7 @@ namespace OutSmart.DAXon.Api
                     expression.ArmLimits(controller);
                 }
 
+                limits = controller.Limits;
                 Configuration config = processor.UnderlyingConfiguration;
                 TypeHierarchy th = config.GetTypeHierarchy();
                 ISequence[] vr = SequenceTool.MakeSequenceArray(arguments.Length);
@@ -500,6 +509,10 @@ namespace OutSmart.DAXon.Api
             catch (RecursionDepthError e)
             {
                 throw new DAXonApiException(e.ToXPathException());
+            }
+            finally
+            {
+                controller?.ReleaseLimits(limits);
             }
         }
         // s9api XQueryEvaluator is Iterable<XdmItem>: foreach over the evaluator runs the query.

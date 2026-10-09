@@ -47,21 +47,39 @@ namespace OutSmart.DAXon.XPath
 
                 ManualIterator iter = new ManualIterator(value);
                 contextObject.SetCurrentIterator(iter);
-                if (value is NodeInfo && ((NodeInfo)value).GetSystemId() != null)
+                string systemId = (value as NodeInfo)?.GetSystemId();
+                if (systemId != null)
                 {
                     Controller controller = contextObject.GetController();
                     if (controller != null)
                     {
                         DocumentPool pool = controller.GetDocumentPool();
-                        DocumentKey key = new DocumentKey(((NodeInfo)value).GetSystemId());
+                        if (pool.Version == pooledAt && ReferenceEquals(systemId, pooledSystemId))
+                        {
+                            return;   // the key of this URI found its document in this pool already: no key made again
+                        }
+
+                        DocumentKey key = new DocumentKey(systemId);
                         if (pool.Find(key) == null)
                         {
                             pool.Add(((NodeInfo)value).GetTreeInfo(), key);
                         }
+
+                        pooledAt = pool.Version;
+                        pooledSystemId = systemId;
                     }
                 }
             }
         }
+
+        // The URI the last context item was pooled by, and the pool's stamp after it: a string and a stamp, not
+        // references, so a selector keeps no document and no pool alive.
+        private long pooledAt;
+        private string pooledSystemId;
+
+        // The pool's stamp and the context document when an evaluation's end last found nothing to release.
+        internal long releasedAt;
+        internal long releasedDocument;
 
         public virtual IResourceResolver ResourceResolver
         {

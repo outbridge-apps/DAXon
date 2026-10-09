@@ -77,8 +77,8 @@ namespace OutSmart.DAXon.XPath
 
         // Each evaluation of a selector is a call of its own: the limits run from its start on the thread that evaluates,
         // and the trees in its context item and variables count against the memory limit. A selector used to arm once,
-        // when it was made, so every later evaluation shared the first one's deadline.
-        internal void ArmEvaluation(XPathDynamicContext dynamicContext)
+        // when it was made, so every later evaluation shared the first one's deadline. Returns the limits armed.
+        internal Controller.DeadlineToken ArmEvaluation(XPathDynamicContext dynamicContext)
         {
             XPathContextMajor context = (XPathContextMajor)dynamicContext.XPathContextObject;
             ArmDeadline(context);
@@ -89,11 +89,15 @@ namespace OutSmart.DAXon.XPath
             {
                 controller.ChargeInput(slots[i]);   // the variables the host set; the slots after them are the last evaluation's
             }
+
+            return controller.Limits;
         }
 
         // A reused selector evaluates in one stack frame and one controller: what an evaluation bound to its local
         // variables stayed reachable until the next one, and the documents doc() loaded for as long as the selector.
-        internal void EndEvaluation(XPathDynamicContext dynamicContext)
+        // grounded: the limits of an evaluation whose result is grounded, for the next evaluation to arm again; null for a
+        // lazy result, which keeps its own.
+        internal void EndEvaluation(XPathDynamicContext dynamicContext, Controller.DeadlineToken grounded)
         {
             XPathContextMajor context = (XPathContextMajor)dynamicContext.XPathContextObject;
             ISequence[] slots = context.GetStackFrame().StackFrameValues;
@@ -103,25 +107,32 @@ namespace OutSmart.DAXon.XPath
             }
 
             Controller controller = context.GetController();
-            int pooled = controller.GetDocumentPool().Count;
-            if (pooled == 0)
+            controller.ReleaseLimits(grounded);
+
+            // The document of the context item the host set stays: doc() of its URI is that node, evaluation after evaluation.
+            // Its key is made only when the pool holds more (a key normalizes its URI: a microsecond and a kilobyte).
+            // Nothing pooled since the last evaluation found nothing to release, and the same context document: the same
+            // answer, without the lock.
+            NodeInfo host = context.GetContextItem() as NodeInfo;
+            long hostDocument = host?.GetTreeInfo().GetDocumentNumber() ?? long.MinValue;
+            if (controller.GetDocumentPool().Version == dynamicContext.releasedAt && hostDocument == dynamicContext.releasedDocument)
             {
                 return;
             }
 
-            // The document of the context item the host set stays: doc() of its URI is that node, evaluation after evaluation.
-            // Its key is made only when the pool holds more (a key normalizes its URI: a microsecond and a kilobyte).
-            NodeInfo host = context.GetContextItem() as NodeInfo;
             ITreeInfo hostTree = host != null && host.GetSystemId() != null ? host.GetTreeInfo() : null;
-            bool hostPooled = hostTree != null && controller.GetDocumentPool().Contains(hostTree);
-            if (pooled > (hostPooled ? 1 : 0))
+            if (!controller.GetDocumentPool().HoldsOnly(hostTree))
             {
+                bool hostPooled = hostTree != null && controller.GetDocumentPool().Contains(hostTree);
                 controller.ReleaseRunState();
                 if (hostPooled)
                 {
                     controller.GetDocumentPool().Add(hostTree, new DocumentKey(host.GetSystemId()));
                 }
             }
+
+            dynamicContext.releasedAt = controller.GetDocumentPool().Version;
+            dynamicContext.releasedDocument = hostDocument;
         }
 
         public virtual XPathDynamicContext CreateDynamicContext(Controller controller, IItem contextItem)
@@ -158,10 +169,17 @@ namespace OutSmart.DAXon.XPath
             }
         }
 
+        // Elaborated once, as a function's body is, then shared by every evaluation and thread: elaborating the tree again
+        // for each evaluation cost a reused selector a quarter of a small one.
+        private volatile IPullEvaluator pull;
+        private volatile IBooleanEvaluator boolean;
+
+        private IPullEvaluator Pull => pull ??= expression.MakeElaborator().ElaborateForPull();
+
         public virtual ISequenceIterator Iterate(XPathDynamicContext context)
         {
             context.CheckExternalVariables(stackFrameMap, numberOfExternalVariables);
-            return expression.MakeElaborator().ElaborateForPull().Iterate(context.XPathContextObject);
+            return Pull.Iterate(context.XPathContextObject);
         }
 
         public virtual IList<IItem> Evaluate(XPathDynamicContext context)
@@ -175,7 +193,7 @@ namespace OutSmart.DAXon.XPath
 
         public virtual IItem EvaluateSingle(XPathDynamicContext context)
         {
-            ISequenceIterator iter = expression.Iterate(context.XPathContextObject);
+            ISequenceIterator iter = Pull.Iterate(context.XPathContextObject);   // as Iterate and so Evaluate() evaluate
             IItem result = iter.Next();
             iter.Dispose();
             return result;
@@ -183,7 +201,7 @@ namespace OutSmart.DAXon.XPath
 
         public virtual bool EffectiveBooleanValue(XPathDynamicContext context)
         {
-            return expression.MakeElaborator().ElaborateForBoolean().Eval(context.XPathContextObject);
+            return (boolean ??= expression.MakeElaborator().ElaborateForBoolean()).Eval(context.XPathContextObject);
         }
     }
 }

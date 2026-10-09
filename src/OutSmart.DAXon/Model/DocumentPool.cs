@@ -21,6 +21,18 @@ namespace OutSmart.DAXon.Model
         // The set of documents known to be unavailable. These documents must remain
         // unavailable for the duration of a transformation or query!
         private readonly HashSet<DocumentKey> unavailableDocuments = new HashSet<DocumentKey>();
+        private static long stamps;
+
+        // A stamp of what the pool holds, new with each change and each pool: a reused selector looks at the pool only
+        // when it differs from the one it saw, and keeps no reference to a pool (a released one holds documents).
+        private long version = NextVersion();
+
+        internal long Version => version;
+
+        private static long NextVersion()
+        {
+            return System.Threading.Interlocked.Increment(ref stamps);
+        }
 
         /// <summary>
         /// True when this pool holds nothing at all. Lets the end-of-run release skip its work
@@ -38,15 +50,23 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        // Documents and documents known to be unavailable.
-        internal int Count
+        // Whether the pool holds this tree alone, or nothing (null: nothing): what a reused selector leaves between
+        // evaluations, asked under one lock.
+        internal bool HoldsOnly(ITreeInfo doc)
         {
-            get
+            lock (syncLock)
             {
-                lock (syncLock)
+                if (unavailableDocuments.Count > 0 || documentNameMap.Count > 1)
                 {
-                    return documentNameMap.Count + unavailableDocuments.Count;
+                    return false;
                 }
+
+                foreach (ITreeInfo held in documentNameMap.Values)
+                {
+                    return ReferenceEquals(held, doc);
+                }
+
+                return true;
             }
         }
 
@@ -74,6 +94,7 @@ namespace OutSmart.DAXon.Model
                     }
 
                     documentNameMap[uri] = doc;
+                    version = NextVersion();
                 }
             }
         }
@@ -136,6 +157,7 @@ namespace OutSmart.DAXon.Model
                     if (entry.Equals(doc))
                     {
                         documentNameMap.Remove(name);
+                        version = NextVersion();
                         return doc;
                     }
                 }
@@ -163,6 +185,7 @@ namespace OutSmart.DAXon.Model
             lock (syncLock)
             {
                 unavailableDocuments.Add(uri);
+                version = NextVersion();
             }
         }
 
