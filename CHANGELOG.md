@@ -4,7 +4,8 @@
 
 1.4.0 adds .NET 8 and .NET 10 builds, per-call time and memory limits, and control over what a stylesheet
 may reach outside the transformation. It also brings a long list of fixes from three reviews of the port
-against the specifications and against Saxon-HE 12.9. Most fixes are invisible to a working host. Read
+against the specifications and against Saxon-HE 12.9, made by Claude like the port itself. Most fixes are
+invisible to a working host. Read
 **Upgrading from 1.3** first: it lists every change an existing host can observe.
 
 ### Upgrading from 1.3

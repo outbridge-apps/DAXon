@@ -145,20 +145,15 @@ corpora at pinned revisions, so the result above can be reproduced locally.
 
 ## How this port was produced
 
-The translation from the Saxon-HE 12.9 Java sources, and the subsequent refactoring,
-hardening and performance work, were carried out with AI assistance — Anthropic's Claude
-(Opus 4.8, Fable 5 and Opus 5.5) — under human direction and review.
+The translation from the Saxon-HE 12.9 Java sources, and all the refactoring, hardening and
+performance work since, were done by Anthropic's Claude (Opus 4.8, Fable 5 and Opus 5.5) under
+human direction.
 
-Nothing was taken on the model's word. Every change to the engine had to pass:
-
-- the **W3C QT3 (XPath/XQuery 3.1) and XSLT 3.0 conformance corpora** — 38 554 cases
-  passing against a fixed, documented set of 17 known failures (XML 1.1 input documents,
-  which the .NET `XmlReader` cannot parse);
-- **byte-identity gates** — selected transform outputs compared byte-for-byte against
-  Java Saxon-HE running the same inputs;
-- a spec-derived suite of 497 cases, a multi-threaded equality battery on one shared
-  `Processor`, and 161 robustness probes (time and memory limits, stack guards, hostile input,
-  leaks, API contracts) — on .NET Framework 4.7.2, .NET 8 and .NET 10.
+Nothing was taken on the model's word. Every change to the engine had to pass the **W3C QT3
+(XPath/XQuery 3.1) and XSLT 3.0 conformance corpora**: 38 554 cases passing against a fixed,
+documented set of 17 known failures (XML 1.1 input documents, which the .NET `XmlReader` cannot
+parse). The runner is in [`tests/QT3Test`](tests/QT3Test), so anyone can repeat the run. CI builds
+every change for .NET Framework 4.7.2, .NET 8 and .NET 10 and runs a smoke test on Windows and Linux.
 
 ## License & attribution
 
