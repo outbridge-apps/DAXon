@@ -26,11 +26,18 @@ namespace OutSmart.DAXon.Lib
         // names; otherwise UTF-8. STREAMS the content (F1): the encoding is sniffed from the first 256 bytes
         // and the stream rewound — the old whole-file materialization tripled the memory of a large
         // unparsed-text (bytes + string + engine buffers). The consumer owns and closes the reader.
-        private static TextReader OpenTextFile(string path, string encoding)
+        // maxInput: the input-size cap, checked against the length of the open file (asking the file system by path
+        // first cost a read of a small file a third of its time); uri names the resource in the error.
+        private static TextReader OpenTextFile(string path, string encoding, long maxInput = long.MaxValue, string uri = null)
         {
             var fs = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(path, 65536);
             try
             {
+                if (maxInput != long.MaxValue && fs.CanSeek && fs.Length > maxInput)
+                {
+                    throw OutSmart.DAXon.Internal.Streams.InputSizeLimit.Oversized(fs.Length, maxInput, uri ?? path, "FOUT1170");
+                }
+
                 Encoding enc;
                 if (!string.IsNullOrEmpty(encoding))
                 {
@@ -108,16 +115,7 @@ namespace OutSmart.DAXon.Lib
                 string text;
                 if (sysUri.IsFile)
                 {
-                    if (maxInput != long.MaxValue)
-                    {
-                        var info = new FileInfo(sysUri.LocalPath);
-                        if (info.Exists && info.Length > maxInput)
-                        {
-                            throw OutSmart.DAXon.Internal.Streams.InputSizeLimit.Oversized(info.Length, maxInput, absoluteURI.ToString(), "FOUT1170");
-                        }
-                    }
-
-                    return OpenTextFile(sysUri.LocalPath, encoding);
+                    return OpenTextFile(sysUri.LocalPath, encoding, maxInput, absoluteURI.ToString());
                 }
                 else if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config))
                 {
