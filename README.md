@@ -141,7 +141,9 @@ errors; `ProcessorOptions.StackSizeThreshold` sets how much of the thread's stac
 that (128 KB by default, and at least).
 
 The conformance runner lives in [`tests/QT3Test`](tests/QT3Test); it downloads the W3C
-corpora at pinned revisions, so the result above can be reproduced locally.
+corpora at pinned revisions, so the result above can be reproduced locally. Beside it, a suite of
+499 cases taken from the specifications and a concurrency test for a shared `Processor`; how to
+build and run each: [`tests/README.md`](tests/README.md).
 
 ## How this port was produced
 
