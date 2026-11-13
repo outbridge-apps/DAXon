@@ -138,7 +138,6 @@ namespace OutSmart.DAXon.Functions
             return null;
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public void GatherProperties(Action<string, object> consumer) { } // upstream Traceable default: no properties
 
         /// <summary>

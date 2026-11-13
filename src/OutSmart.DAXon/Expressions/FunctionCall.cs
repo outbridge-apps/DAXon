@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Expressions
             {
 
                 // happens during expression tree construction
-                return new List<Operand>();
+                return Array.Empty<Operand>();
             }
         }
 
@@ -358,21 +358,6 @@ namespace OutSmart.DAXon.Expressions
                 default:
                     return num + " " + thing + "s";
             }
-        }
-
-        public virtual PathMap.PathMapNodeSet AddExternalFunctionCallToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodes)
-        {
-
-            // Except in the case of system functions, we have no idea where a function call might
-            // navigate, so we assume the worst, and register that the path has unknown dependencies
-            PathMap.PathMapNodeSet result = new PathMap.PathMapNodeSet();
-            foreach (Operand o in Operands())
-            {
-                result.AddNodeSet(o.GetChildExpression().AddToPathMap(pathMap, pathMapNodes));
-            }
-
-            result.SetHasUnknownDependencies();
-            return result;
         }
 
         public override string ToString()

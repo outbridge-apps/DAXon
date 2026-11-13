@@ -25,7 +25,13 @@ namespace OutSmart.DAXon.Xslt
     internal sealed class XSLKey : StyleElement, IStylesheetComponent
     {
 
-        private static readonly Func<Expression, bool> containsGlobalVariable = (e) => (e is GlobalVariableReference || e is UserFunctionCall || e is CallTemplate || e is ApplyTemplates);
+        // What may make the index differ between transformations of one stylesheet over one document, so it is not kept
+        // for the next (Saxon bug 1968): a global variable, a call that may read one, and - wider than Saxon, which kept
+        // those and gave the next run the first run's answer - another key, an accumulator, a dynamic or extension call,
+        // xsl:evaluate, and the run's own clock, timezone and defaults.
+        private static readonly Func<Expression, bool> containsGlobalVariable = (e) => e is GlobalVariableReference || e is UserFunctionCall || e is CallTemplate || e is ApplyTemplates
+            || e is DynamicFunctionCall || e is EvaluateInstr || e is Functions.IntegratedFunctionCall
+            || (e is SystemFunctionCall call && (call.TargetFunction is Functions.KeyFn || call.TargetFunction is Functions.AccumulatorFn || call.TargetFunction is Functions.DynamicContextAccessor));
         private Patterns.Pattern match;
         private Expression use;
         private string collationName;

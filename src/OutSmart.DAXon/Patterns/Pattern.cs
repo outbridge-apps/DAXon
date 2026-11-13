@@ -95,10 +95,11 @@ namespace OutSmart.DAXon.Patterns
 
         protected virtual void HandleDynamicError(XPathException ex, IXPathContext context)
         {
-            if (ex.HasErrorCode("XTDE0640"))
+            if (ex.HasErrorCode("XTDE0640") || ex.IsRunLimit())
             {
 
-                // Treat circularity error as fatal (test error213)
+                // Treat circularity error as fatal (test error213); the time and memory limits stop the run, never a
+                // "no match" that would leave a key index half built and cached.
                 throw ex;
             }
 

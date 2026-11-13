@@ -369,7 +369,6 @@ namespace OutSmart.DAXon.Xslt
             CheckTopLevel("XTSE0010", false);
         }
 
-        /*Can be null after an error*/
         public override void CompileDeclaration(Compilation compilation, ComponentDeclaration decl)
         {
             StylesheetPackage pack = GetPrincipalStylesheetModule().GetStylesheetPackage();
@@ -389,7 +388,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        /*Can be null after an error*/
         public SimpleMode GetMode()
         {
             return mode;

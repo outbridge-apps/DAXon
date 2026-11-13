@@ -36,16 +36,17 @@ namespace OutSmart.DAXon.Resources
             Uri resolvedURI;
             try
             {
-                resolvedURI = new Uri(collectionURI, UriKind.Absolute);
+                resolvedURI = OutSmart.DAXon.Internal.Net.BidiUri.Make(collectionURI, UriKind.Absolute);
             }
             catch (Exception e)
             {
                 throw new XPathException("Invalid collection URI " + collectionURI + " passed to collection() function: " + e.Message, "FODC0004", context);
             }
 
-            string denied = OutSmart.DAXon.Internal.ResourceGate.IsRestricted(context.GetConfiguration())
+            string denied = OutSmart.DAXon.Internal.ResourceGate.CheckProtocol(context.GetConfiguration(), resolvedURI.AbsoluteUri)
+                ?? (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(context.GetConfiguration())
                 ? OutSmart.DAXon.Internal.ResourceGate.CheckRead(context.GetConfiguration(), resolvedURI.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.Collection)
-                : null;
+                : null);
             if (denied != null)
             {
                 throw new XPathException(denied, "FODC0002", context);
@@ -61,15 +62,15 @@ namespace OutSmart.DAXon.Resources
                     throw new XPathException("Invalid collection URI " + collectionURI + " (URI has a fragment component)", "FODC0004", context);
                 }
 
-                string path = resolvedURI.LocalPath;
-                if (!File.Exists(path) && !Directory.Exists(path))
+                string path = OutSmart.DAXon.Internal.Net.BidiUri.Out(OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(resolvedURI));
+                if (!OutSmart.DAXon.Internal.Streams.FileNames.IsFile(path) && !OutSmart.DAXon.Internal.Streams.FileNames.IsDirectory(path))
                 {
                     throw new XPathException("The file or directory " + resolvedURI + " does not exist", "FODC0002", context);
                 }
 
-                if (Directory.Exists(path))
+                if (OutSmart.DAXon.Internal.Streams.FileNames.IsDirectory(path))
                 {
-                    return new DirectoryCollection(context.GetConfiguration(), collectionURI, new DirectoryInfo(path), @params);
+                    return new DirectoryCollection(context.GetConfiguration(), collectionURI, ListedDirectory(path, resolvedURI, context), @params);
                 }
             }
 
@@ -80,6 +81,19 @@ namespace OutSmart.DAXon.Resources
             }
 
             return new CatalogCollection(context.GetConfiguration(), collectionURI, @params);
+        }
+
+        // In the .NET 4.5 mode the classes of System.IO take no long path in any form.
+        private static DirectoryInfo ListedDirectory(string path, Uri uri, IXPathContext context)
+        {
+            try
+            {
+                return new DirectoryInfo(OutSmart.DAXon.Internal.Streams.FileNames.ForListing(path));
+            }
+            catch (Exception e) when (e is PathTooLongException || e is ArgumentException || e is NotSupportedException)
+            {
+                throw new XPathException("The directory " + uri + " cannot be listed on this runtime: " + e.Message, "FODC0002", context);
+            }
         }
 
         // The default pattern "^jar:|\.jar$|\.zip$|\.docx$|\.xlsx$" as plain tests: compiling it per call
@@ -93,7 +107,7 @@ namespace OutSmart.DAXon.Resources
                     || uri.EndsWith(".xlsx", StringComparison.Ordinal);
             }
 
-            return Regex.ARegularExpression.Compile(pattern, "").ContainsMatch(Text.StringView.Of(uri).Tidy());
+            return Regex.ARegularExpression.Compile(pattern, "").ContainsMatch(Text.StringView.Of(uri));
         }
     }
 }

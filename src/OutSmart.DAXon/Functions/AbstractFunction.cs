@@ -82,11 +82,6 @@ namespace OutSmart.DAXon.Functions
             return callingContext;
         }
 
-        public virtual bool DeepEquals(IFunctionItem other, IXPathContext context, IAtomicComparer comparer, int flags)
-        {
-            throw new XPathException("Argument to deep-equal() contains a function item", "FOTY0015");
-        }
-
         public virtual bool DeepEqual40(IFunctionItem other, IXPathContext context, DeepEqual.DeepEqualOptions options)
         {
             if (options.falseOnError)
@@ -139,21 +134,13 @@ namespace OutSmart.DAXon.Functions
         }
         SingletonIterator IItem.Iterate() => (SingletonIterator)SingletonIterator.MakeIterator(this);
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual bool IsSequenceVariadic() => false;
         public virtual IGroundedValue Reduce() => this;
         public virtual bool IsStreamed() => false;
         public virtual IGroundedValue Materialize() => this;
         public virtual IEnumerable<IItem> AsIterable() => new IItem[] { this };
         public virtual bool ContainsNode(NodeInfo sought) => false;
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public virtual IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         public virtual ISequence MakeRepeatable() => this;
     }
 }

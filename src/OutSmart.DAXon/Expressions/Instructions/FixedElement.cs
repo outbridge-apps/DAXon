@@ -73,7 +73,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             // Remove any unnecessary creation of namespace nodes by child literal result elements.
             // Specifically, if this instruction creates a namespace node, then a child literal result element
             // doesn't need to create the same namespace if all the following conditions are true:
-            // (a) the child element @is in the same namespace as its parent, and
+            // (a) the child element is in the same namespace as its parent, and
             // (b) this element doesn't specify xsl:inherit-namespaces="no"
             // (c) the child element is incapable of creating attributes in a non-null namespace
             if (!bequeathNamespacesToChildren)
@@ -82,16 +82,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
 
 
-            //            if (getContentExpression() instanceof FixedElement) {
-            //                FixedElement fixedContent = (FixedElement) getContentExpression();
-            //                    fixedContent.removeRedundantNamespaces(visitor, namespaceBindings);
-            //                }
-            //                return this;
-            //                for (Operand o : getContentExpression().operands()) {
-            //                    if (exp instanceof FixedElement &&
-            //                        ((FixedElement) exp).removeRedundantNamespaces(visitor, namespaceBindings);
-            //                    }
-            //                }
             return this;
         }
 
@@ -346,9 +336,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
             {
                 GetContentExpression().CheckPermittedContents(type, true);
             }
-            catch (XPathException e)
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation())))
             {
-                throw e.MaybeWithLocation(GetLocation());
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 
@@ -476,12 +467,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         // output the element end tag (which will fail if validation fails)
                         @out.EndElement();
                     }
-                    catch (XPathException e) when (!(e is XPathException.StackOverflow))
+                    catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                     {
-                        // Filtered: a literal result element nests once per level of a recursive
-                        // template, and decorating from inside a catch re-enters exception dispatch
-                        // at ~20KB of stack per level - far more than the descent itself cost.
-                        throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                        // Decorated in the filter, never handled: a literal result element nests once per level
+                        // of a recursion, and a rethrow from here cost a dispatch per level (XPathException.PassOn).
+                        throw;
                     }
 
                     return null;

@@ -143,7 +143,6 @@ namespace OutSmart.DAXon.Values
             return expression;
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual IGroundedValue Materialize() => SequenceTool.ToGroundedValue(Iterate()); // StubGen NIE -> faithful Java Sequence.materialize() default
     }
 }

@@ -71,10 +71,6 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             } //diagnosticPrint();
         }
 
-        /*
-     * Diagnostic output of the entire data structure
-     */
-        //    }
         // Walks the document without recursing per level: its depth is the input's, and a deep one
         // overflowed here and was reported as a cyclic accumulator (XTDE3400).
         private ISequence VisitFn(NodeInfo root, ISequence value, IXPathContext context, ITraceListener listener)
@@ -150,10 +146,6 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             return value;
         }
 
-        /*
-     * Diagnostic output of the entire data structure
-     */
-        //    }
         private void LogChange(NodeInfo node, ISequence value, IXPathContext context, string phase)
         {
             if (accumulator.IsTracing())
@@ -162,9 +154,6 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             }
         }
 
-        /*
-     * Diagnostic output of the entire data structure
-     */
         private ISequence ProcessRule(Rule rule, NodeInfo node, bool isPostDescent, ISequence value, IXPathContext context)
         {
             AccumulatorRule target = (AccumulatorRule)rule.GetAction();
@@ -185,21 +174,21 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             }
 
             values.Add(new DataPoint(new Visit(node, isPostDescent), value));
+            valueBytes += Core.MemoryLedger.MemberBytes(value);
+            if (!held && (values.Count >= Core.MemoryLedger.BigCount || valueBytes >= Core.MemoryLedger.Big))
+            {
+                held = true;
+                Core.MemoryLedger.Hold(this, ValuesSizer);   // two points a node of the document, summed as they grow
+            }
             return value;
         }
 
-        /*
-     * Diagnostic output of the entire data structure
-     */
         public ISequence GetValue(NodeInfo node, bool postDescent)
         {
             Visit visit = new Visit(node, postDescent);
             return Search(0, values.Count, visit); //System.Console.Error.println("Searched " + values.size() + " " + ((TinyNodeImpl) visit.node).getNodeNumber() + " : " + seq);
         }
 
-        /*
-     * Diagnostic output of the entire data structure
-     */
         private ISequence Search(int start, int end, Visit sought)
         {
 
@@ -229,11 +218,6 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             } // 9.6:
         }
 
-        /*
-     * Diagnostic output of the entire data structure
-     */
-        /*|| (rel == 0 && sought.isPostDescent)*/
-        // 9.6:
         /// <summary>
         /// Class representing one of the two visits to a node during a tree-walk
         /// </summary>
@@ -276,14 +260,14 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             }
         }
 
-        /*
-     * Diagnostic output of the entire data structure
-     */
-        /*|| (rel == 0 && sought.isPostDescent)*/
-        // 9.6:
         /// <summary>
         /// Class representing a value of the accumulator immediately after a particular visit to a node.
         /// </summary>
+        // The values as well: a 30 000-char string a node held 876 MB under a 50 MB limit at 72 B a point.
+        private long valueBytes;
+        private bool held;
+        private static readonly Func<object, long> ValuesSizer = o => 24 + 72L * ((AccumulatorData)o).values.Count + ((AccumulatorData)o).valueBytes;
+
         private sealed class DataPoint
         {
             public Visit visit;

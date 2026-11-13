@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Streams;
 using System.IO;
+using System;
 namespace OutSmart.DAXon.Api
 {
     public class JsonBuilder
@@ -24,6 +25,7 @@ namespace OutSmart.DAXon.Api
         private bool escaped;
         public JsonBuilder(Configuration config)
         {
+            ArgumentCheck.NotNull(config, nameof(config));
             this.config = config;
         }
 
@@ -51,10 +53,11 @@ namespace OutSmart.DAXon.Api
 
         public virtual XdmValue ParseJson(TextReader jsonReader)
         {
+            ArgumentCheck.NotNull(jsonReader, nameof(jsonReader));
             // A standalone parse runs outside any transformation, so it must claim the Processor's
             // budget for itself - every other API entry does (see Controller.ArmThreadDeadline).
             // Without this the JSON path was the one entry point with no time limit at all.
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Parsing");
+            using Controller.ThreadLimits deadline = Controller.ArmScope(config, "Parsing");
             try
             {
                 // Capped as it is read: an oversized reader stops at the limit, not after a full read. Read
@@ -62,43 +65,28 @@ namespace OutSmart.DAXon.Api
                 TextReader capped = InputSizeLimit.Apply(jsonReader, InputSizeLimit.MaxFor(config), "urn:json-input", "FODC0002");
                 return Parse(UnparsedTextFunction.ReadFileToString(capped));
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
             catch (IOException e)
             {
                 throw new DAXonApiException(e);
             }
-            finally
-            {
-                Controller.RestoreThreadDeadline(prevDeadline);
-            }
         }
 
         public virtual XdmValue ParseJson(string json)
         {
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Parsing");
+            ArgumentCheck.NotNull(json, nameof(json));
+            using Controller.ThreadLimits deadline = Controller.ArmScope(config, "Parsing");
             try
             {
                 InputSizeLimit.CheckString(json, InputSizeLimit.MaxFor(config), "urn:json-input", "FODC0002");
                 return Parse(json);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            finally
-            {
-                Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -108,7 +96,9 @@ namespace OutSmart.DAXon.Api
             options["liberal"] = BooleanValue.Get(liberal);
             options["escape"] = BooleanValue.Get(escaped);
             // With no fallback or number-parser option the parse reads only the configuration: no Controller.
-            return XdmValue.Wrap(ParseJsonFn.Parse(json, options, new EarlyEvaluationContext(config)));
+            IItem item = ParseJsonFn.Parse(json, options, new EarlyEvaluationContext(config));
+            // JSON null is no item: the empty sequence, not a value wrapping nothing (which failed wherever it was used)
+            return item == null ? new XdmValue() : XdmValue.Wrap(item);
         }
 
         // Consumer-compat alias: a JSON text is one item - a map, an array, an atomic value - or null, which is no

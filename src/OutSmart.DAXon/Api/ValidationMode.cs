@@ -32,22 +32,5 @@ namespace OutSmart.DAXon.Api
         /// Value indication no preference: the choice is defined elsewhere
         /// </summary>
         DEFAULT
-
-        // --------------------
-        // private final int number;
-        // ValidationMode(int number) {
-        //     this.number = number;
-        // }
-        // protected int getNumber() {
-        // protected static ValidationMode get(int number) {
-        //             return STRICT;
-        //         case Validation.LAX:
-        //             return LAX;
-        //         case Validation.STRIP:
-        //             return STRIP;
-        //         case Validation.PRESERVE:
-        //             return PRESERVE;
-        //             return DEFAULT;
-        // --------------------
     }
 }

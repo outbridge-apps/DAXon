@@ -88,6 +88,5 @@ namespace OutSmart.DAXon.Functions
             return new Dictionary<StructuredQName, ExtensionFunctionDefinition>(functions);
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
     }
 }

@@ -16,11 +16,6 @@ using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.XPath
 {
-    //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(Action<OutSmart.DAXon.Api.IXmlProcessingError> reporter) {"
-    //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
-    //                + "    }"
-    //})
     public class XPathDynamicContext
     {
         private readonly ItemType contextItemType;
@@ -31,12 +26,9 @@ namespace OutSmart.DAXon.XPath
         {
             get => contextObject.GetContextItem(); set
             {
-                if (value is NodeInfo)
+                if (contextObject.GetConfiguration().HoldsForeignNode(value))   // a node, or a map or an array holding one
                 {
-                    if (!((NodeInfo)value).GetConfiguration().IsCompatible(contextObject.GetConfiguration()))
-                    {
-                        throw new XPathException("Supplied node must be built using the same or a compatible Configuration", DAXonErrorCode.SXXP0004);
-                    }
+                    throw new XPathException("Supplied node must be built using the same or a compatible Configuration", DAXonErrorCode.SXXP0004);
                 }
 
                 TypeHierarchy th = contextObject.GetConfiguration().GetTypeHierarchy();
@@ -117,13 +109,9 @@ namespace OutSmart.DAXon.XPath
                 }
             }
 
-            ISequenceIterator iter = value.Iterate();
-            for (IItem item; (item = iter.Next()) != null;)
+            if (contextObject.GetConfiguration().HoldsForeignNode(value))
             {
-                if (item is NodeInfo && !((NodeInfo)item).GetConfiguration().IsCompatible(contextObject.GetConfiguration()))
-                {
-                    throw new XPathException("Supplied node must be built using the same or a compatible Configuration", DAXonErrorCode.SXXP0004);
-                }
+                throw new XPathException("Supplied node must be built using the same or a compatible Configuration", DAXonErrorCode.SXXP0004);
             }
 
             int slot = variable.LocalSlotNumber;
@@ -164,7 +152,23 @@ namespace OutSmart.DAXon.XPath
                 if (stack[i] == null)
                 {
                     StructuredQName qname = stackFrameMap.VariableMap[i];
-                    throw new XPathException("No value has been supplied for variable $" + qname.DisplayName);
+                    throw new XPathException("No value has been supplied for variable $" + qname.DisplayName, "XPDY0002");
+                }
+            }
+        }
+
+        // For a single item or a boolean only the variables the expression reads must be set (Evaluate and iteration want all, as in Java).
+        public virtual void CheckExternalVariablesRead(SlotManager stackFrameMap, int numberOfExternals, Expression expression)
+        {
+            ISequence[] stack = contextObject.GetStackFrame().StackFrameValues;
+            for (int i = 0; i < numberOfExternals; i++)
+            {
+                int slot = i;
+                if (stack[i] == null
+                    && ExpressionTool.Contains(expression, false, (e) => e is VariableReference r && r.GetBinding() is XPathVariable v && v.LocalSlotNumber == slot))
+                {
+                    StructuredQName qname = stackFrameMap.VariableMap[i];
+                    throw new XPathException("No value has been supplied for variable $" + qname.DisplayName, "XPDY0002");
                 }
             }
         }

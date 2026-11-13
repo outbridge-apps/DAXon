@@ -204,18 +204,7 @@ namespace OutSmart.DAXon.Xslt
             if (sourceBinding.HasProperty(SourceBinding.BindingProperty.GLOBAL))
             {
                 var = new GlobalVariableReference(qName);
-
-                GlobalVariable compiledVar = ((XSLGlobalVariable)sourceBinding.SourceElement).CompiledVariable;
-                if (compiledVar != null && element.GetCompilation().GetCompilerInfo().IsJustInTimeCompilation())
-                {
-                    var.Fixup(compiledVar);
-                    var.SetStaticType(compiledVar.GetRequiredType(), sourceBinding.ConstantValue, 0);
-                }
-                else
-                {
-                    sourceBinding.RegisterReference(var);
-                }
-
+                sourceBinding.RegisterReference(var);
                 return var;
             }
             else
@@ -250,7 +239,7 @@ namespace OutSmart.DAXon.Xslt
         }
 
         /// <summary>
-        /// Get the default function @namespace
+        /// Get the default function namespace
         /// </summary>
         public virtual NamespaceUri GetDefaultFunctionNamespace()
         {
@@ -273,7 +262,7 @@ namespace OutSmart.DAXon.Xslt
             //        if ((element.getEffectiveVersion() == 40
             //                || element.getCompilation().getCompilerInfo().getXsltVersion() == 40
             //                || (attributeName != null && attributeName.hasURI(NamespaceUri.SAXON)))
-            return GetConfiguration().GetConfigurationProperty(Feature<int>.XPATH_VERSION_FOR_XSLT); //        }
+            return GetConfiguration().GetConfigurationProperty(Feature<int>.XPATH_VERSION_FOR_XSLT);
         }
 
         public virtual bool IsImportedSchema(NamespaceUri @namespace)
@@ -281,8 +270,6 @@ namespace OutSmart.DAXon.Xslt
 
             //if (Configuration.USE_PACKAGE_BINDING) {
             return element.GetPrincipalStylesheetModule().IsImportedSchema(@namespace); //} else {
-            //    return getConfiguration().
-            //}
         }
 
         public virtual HashSet<NamespaceUri> GetImportedSchemaNamespaces()

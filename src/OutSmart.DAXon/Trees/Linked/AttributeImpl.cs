@@ -161,8 +161,7 @@ namespace OutSmart.DAXon.Trees.Linked
             {
                 if (GetRawParent() != null)
                 {
-                    GetRawParent().RemoveAttribute(this); //                IAttributeMap oldAtts = getRawParent().attributes();
-                    //                IAttributeMap newAtts = oldAtts.remove(getNodeName());
+                    GetRawParent().RemoveAttribute(this);
                 }
 
                 SetRawParent(null);
@@ -216,7 +215,7 @@ namespace OutSmart.DAXon.Trees.Linked
                 if (!newURI.IsEmpty())
                 {
 
-                    // new attribute name @is in a namespace
+                    // new attribute name is in a namespace
                     string newPrefix = newNameCode.GetPrefix();
                     NamespaceBinding newBinding = new NamespaceBinding(newPrefix, newURI);
                     NamespaceUri oldURI = ((ElementImpl)GetRawParent()).GetURIForPrefix(newPrefix, false);

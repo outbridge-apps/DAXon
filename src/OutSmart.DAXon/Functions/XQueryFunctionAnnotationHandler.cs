@@ -10,11 +10,6 @@ using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.XQuery;
 using OutSmart.DAXon.Types;
 
-// namespace OutSmart.DAXon.Text
-// {
-//     public class UnicodeChar { public UnicodeChar() {} public UnicodeChar(int cp) {} }
-// }
-
 namespace OutSmart.DAXon.Functions
 {
     internal sealed class XQueryFunctionAnnotationHandler : IFunctionAnnotationHandler

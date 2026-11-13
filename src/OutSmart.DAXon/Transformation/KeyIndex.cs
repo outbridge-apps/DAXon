@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Transformation
         // Hardening, not a live fix: that writer is currently unreachable, because untypedKeys is
         // only populated when KeyDefinition.IsConvertUntypedToOther() holds, and the only setter
         // upstream calls lives in the SEF package loader, which is a bare stub here. Whoever
-        // implements PackageLoaderHE inherits a KeyIndex that is already safe to share.
+        // implements loading compiled packages inherits a KeyIndex that is already safe to share.
         private volatile Dictionary<IAtomicMatchKey, object> index;
 
         // Serializes reindexing. The lookup path never takes it.
@@ -110,7 +110,109 @@ namespace OutSmart.DAXon.Transformation
                 xc.OpenStackFrame(map);
             }
 
-            SequenceTool.Supply(match.SelectNodes(doc, xc), (node) => ProcessNode((NodeInfo)node, keydef, xc, isFirst));
+            int fused = FusedUse(keydef);
+            Action<NodeInfo> process = (node) =>
+            {
+                if (fused < -1 || !ProcessTinyNode(node, keydef, fused, xc, isFirst))
+                {
+                    ProcessNode(node, keydef, xc, isFirst);
+                }
+            };
+
+            // match="NAME" on a Tiny tree: the elements by number, a node object only for each one matched. The general
+            // selection makes one for every element of the document to test the pattern on it.
+            if (match is Patterns.NodeTestPattern ntp && ntp.GetNodeTest() is Patterns.NameTest test && test.PrimitiveType == Types.Type.ELEMENT
+                && doc.GetRootNode() is Trees.Tiny.TinyParentNodeImpl root)
+            {
+                Trees.Tiny.TinyTree tree = root.tree;
+                int n = root.nodeNr;
+                for (int cur; (cur = Trees.Tiny.TinyText.NextDescendant(tree, root.nodeNr, test.Fingerprint, ref n)) >= 0;)
+                {
+                    process(tree.GetNode(cur));
+                }
+
+                return;
+            }
+
+            SequenceTool.Supply(match.SelectNodes(doc, xc), (node) => process((NodeInfo)node));
+        }
+
+        // use="name" (the child's fingerprint) or use="." (-1) as key of one value per item under the codepoint
+        // collation: the keys can be read off an untyped Tiny tree. -2 for any other definition.
+        private static int FusedUse(KeyDefinition keydef)
+        {
+            if (keydef.IsComposite() || keydef.IsConvertUntypedToOther() || !(keydef.Collation == null || keydef.Collation is CodepointCollator))
+            {
+                return -2;
+            }
+
+            if (FusedChildAtomizer.MatchAtomizer(keydef.Use, out int fp))
+            {
+                return fp;
+            }
+
+            return keydef.Use is Atomizer self && self.BaseExpression is ContextItemExpression ? -1 : -2;
+        }
+
+        // The keys of a node of an untyped Tiny tree, read off the tree: the string of each child named fused, or of the
+        // node itself; no context iterator, use-expression pipeline or untypedAtomic value per node. False off the tree.
+        private bool ProcessTinyNode(NodeInfo node, KeyDefinition keydef, int fused, IXPathContext xc, bool isFirst)
+        {
+            if (!(node is Trees.Tiny.TinyNodeImpl tn) || tn.tree.TypeArray != null)
+            {
+                return false;
+            }
+
+            xc.GetController()?.CheckTimeout();
+            Trees.Tiny.TinyTree tree = tn.tree;
+            bool any = false;
+            if (fused == -1)
+            {
+                AddEntry(Key(node.UnicodeStringValue, keydef), node, isFirst);
+                any = true;
+            }
+            else if (tn is Trees.Tiny.TinyParentNodeImpl)
+            {
+                int c = tn.nodeNr + 1;
+                int n = c < tree.numberOfNodes && tree.depth[c] == tree.depth[tn.nodeNr] + 1 ? c : -1;
+                while (n >= 0)
+                {
+                    int cur = n;
+                    int next = tree.next[cur];
+                    n = next > cur ? next : -1;
+                    int kind = tree.nodeKind[cur];
+                    if ((kind == Types.Type.ELEMENT || kind == Types.Type.TEXTUAL_ELEMENT) && (tree.nameCode[cur] & NamePool.FP_MASK) == fused)
+                    {
+                        AddEntry(Key(Trees.Tiny.TinyParentNodeImpl.GetStringValue(tree, cur), keydef), node, isFirst);
+                        any = true;
+                    }
+                }
+            }
+
+            if (any && !keyTypesPresent.Subsumes(UType.UNTYPED_ATOMIC))
+            {
+                keyTypesPresent = keyTypesPresent.Union(UType.UNTYPED_ATOMIC);
+            }
+
+            return true;
+        }
+
+        // GetCollationKey of an untypedAtomic value with this text.
+        // A key's own bytes; a text of BigChars or more is in the ledger on its own.
+        private static long KeyBytes(IAtomicMatchKey key)
+        {
+            if (key is UnicodeString text)
+            {
+                long chars = text.Length();
+                return chars >= Core.MemoryLedger.BigChars ? 40 : 40 + chars * (text.Width >> 3);
+            }
+
+            return Core.MemoryLedger.MemberBytes(key);
+        }
+
+        private static IAtomicMatchKey Key(UnicodeString text, KeyDefinition keydef)
+        {
+            return keydef.Collation == null ? text : keydef.Collation.GetCollationKey(text);
         }
 
         private void ProcessNode(NodeInfo node, KeyDefinition keydef, IXPathContext xc, bool isFirst)
@@ -172,9 +274,28 @@ namespace OutSmart.DAXon.Transformation
 
         // The target is always a map the caller owns exclusively: the one being built, or the
         // private copy a reindex is filling. Nothing here may touch a published map.
+        // An index can outgrow its document (use="tokenize(.)" files every word of every node): past BigCount entries it
+        // is entered in the memory ledger of the call building it, summed as it grows.
+        // The key values count as well, as maps count theirs: 10 000 keys of 30 000 chars held 830 MB under a 50 MB limit.
+        private long entries;
+        private long keyBytes;
+        private bool held;
+        private static readonly Func<object, long> Sizer = o => 64 + 56L * ((KeyIndex)o).entries + ((KeyIndex)o).keyBytes;
+
         private void AddEntry(Dictionary<IAtomicMatchKey, object> target, IAtomicMatchKey val, NodeInfo curr, bool isFirst)
         {
             object value = target.GetOrDefault(val);
+            if (value == null)
+            {
+                keyBytes += KeyBytes(val);   // the key is kept once, with its first node
+            }
+
+            if (!held && (++entries >= Core.MemoryLedger.BigCount || keyBytes >= Core.MemoryLedger.Big))
+            {
+                held = true;
+                Core.MemoryLedger.Hold(this, Sizer);
+            }
+
             if (value == null)
             {
 
@@ -334,41 +455,57 @@ namespace OutSmart.DAXon.Transformation
             Dictionary<IAtomicMatchKey, object> snapshot = index;
             if (soughtValue.IsUntypedAtomic())
             {
-                IList<NodeInfo> resultNodes = new List<NodeInfo>();
-                int counter = 0;
+                // One entry - the sought value as one key type - is read in place, as a typed value's is: copying it
+                // into a list of its own was a fifth of a run of key() lookups. Entries of several types are merged.
+                object first = null;
+                List<NodeInfo> merged = null;
                 foreach (PrimitiveUType type in keyTypesPresent.Decompose())
                 {
                     IAtomicType targetType = (IAtomicType)type.ToItemType();
                     AtomicValue converted = (AtomicValue)Converter.Convert(soughtValue, targetType, rules);
                     object value = snapshot.GetOrDefault(GetCollationKey(converted, collation, implicitTimezone));
-                    if (value != null)
+                    if (value == null)
                     {
-                        counter++;
-                        if (value is NodeInfo)
-                        {
-                            resultNodes.Add(((NodeInfo)value));
-                        }
-                        else
-                        {
-                            resultNodes.AddRange((IList<NodeInfo>)value);
-                        }
+                        continue;
                     }
+
+                    if (first == null)
+                    {
+                        first = value;
+                        continue;
+                    }
+
+                    if (merged == null)
+                    {
+                        merged = new List<NodeInfo>();
+                        AddEntry(merged, first);
+                    }
+
+                    AddEntry(merged, value);
                 }
 
                 // No (IList<IItem>) cast: .NET generic lists are invariant, a List<NodeInfo> is not an
                 // IList<IItem> (threw InvalidCastException on untyped-key key() lookups).
-                ISequenceIterator result = new ListIterator.Of<NodeInfo>(resultNodes);
-                if (counter > 1)
-                {
-                    result = new DocumentOrderIterator(result, GlobalOrderComparer.GetInstance());
-                }
-
-                return result;
+                return merged == null
+                    ? EntryIterator(first)
+                    : DocumentOrderIterator.Of(new ListIterator.Of<NodeInfo>(merged), GlobalOrderComparer.GetInstance());
             }
             else
             {
                 object value = snapshot.GetOrDefault(GetCollationKey(soughtValue, collation, implicitTimezone));
                 return EntryIterator(value);
+            }
+        }
+
+        private static void AddEntry(List<NodeInfo> nodes, object entry)
+        {
+            if (entry is NodeInfo node)
+            {
+                nodes.Add(node);
+            }
+            else
+            {
+                nodes.AddRange((IList<NodeInfo>)entry);
             }
         }
 
@@ -403,7 +540,7 @@ namespace OutSmart.DAXon.Transformation
             {
                 if (collation == null)
                 {
-                    return value.UnicodeStringValue.Tidy();
+                    return value.UnicodeStringValue;
                 }
                 else
                 {

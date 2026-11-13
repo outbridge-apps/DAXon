@@ -10,7 +10,6 @@ using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Xslt;
 using OutSmart.DAXon.Transformation;
-using OutSmart.DAXon.Trees.Linked;
 using OutSmart.DAXon.Trees.Tiny;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Model;
@@ -26,19 +25,10 @@ namespace OutSmart.DAXon.Functions
             {
                 return EmptySequence.GetInstance();
             }
-            else if (UsePushParser())
+            else
             {
                 return ParseXmlPush(input, context);
             }
-            else
-            {
-                return ParseXmlPull(input, context);
-            }
-        }
-
-        private static bool UsePushParser()
-        {
-            return true;
         }
 
         private NodeInfo ParseXmlPush(StringValue inputArg, IXPathContext context)
@@ -114,74 +104,11 @@ namespace OutSmart.DAXon.Functions
                 xe.MaybeSetContext(context);
                 throw xe;
             }
-        }
-
-        private NodeInfo ParseXmlPull(StringValue inputArg, IXPathContext context)
-        {
-            string baseURI = GetRetainedStaticContext().StaticBaseUriString;
-            try
+            // A DOCTYPE system id that is no URI or no readable file ("http://[bad", "con"): the string is not
+            // well-formed XML that can be parsed, as doc() reports the same input.
+            catch (System.Exception ioErr) when (Api.DAXonApiException.IsIO(ioErr))
             {
-                Controller controller = context.GetController();
-                if (controller == null)
-                {
-                    throw new XPathException("parse-xml() function is not available in this environment");
-                }
-
-                Configuration config = context.GetConfiguration();
-                string inputXml = inputArg.GetStringValue();
-                if (!(inputXml.Length == 0) && inputXml[0] == 0xFEFF)
-                {
-
-                    // Strip a leading BOM
-                    inputXml = inputXml.Substring(1);
-                }
-
-                StringReader sr = new StringReader(inputXml);
-                IActiveSource pullSource = new OutSmart.DAXon.Resources.ActiveStreamSource(null, sr, baseURI);
-                Builder b = TreeModel.TINY_TREE.MakeBuilder(controller.MakePipelineConfiguration());
-                (b as TinyBuilder)?.SetInputLength(inputXml.Length);
-                IReceiver s = b;
-                ParseOptions options = config.GetParseOptions();
-                options = options.WithDTDValidationMode(Validation.SKIP);
-                options = options.WithSchemaValidationMode(Validation.SKIP);
-                PackageData pd = GetRetainedStaticContext().GetPackageData();
-                if (pd is StylesheetPackage)
-                {
-                    options = options.WithSpaceStrippingRule(((StylesheetPackage)pd).SpaceStrippingRule);
-                    if (((StylesheetPackage)pd).IsStripsTypeAnnotations())
-                    {
-                        s = config.GetAnnotationStripper(s);
-                    }
-                }
-                else
-                {
-                    options = options.WithSpaceStrippingRule(IgnorableSpaceStrippingRule.GetInstance());
-                }
-
-                s.SetPipelineConfiguration(b.GetPipelineConfiguration());
-                Sender.Send(pullSource, s, options);
-                NodeInfo root = b.CurrentRoot;
-                if (root is TinyDocumentImpl)
-                {
-                    TinyDocumentImpl node = (TinyDocumentImpl)root;
-                    node.SetBaseURI(baseURI);
-                    node.GetTreeInfo().SetUserData("saxon:document-uri", "");
-                }
-                else if (root is DocumentImpl)
-                {
-                    DocumentImpl node = (DocumentImpl)root;
-                    node.SetBaseURI(baseURI);
-                    node.GetTreeInfo().SetUserData("saxon:document-uri", "");
-                }
-
-                b.Reset();
-                return root;
-            }
-            // A limit of the run keeps its code (SXTO0001, SXLM0003): the input was not malformed.
-            catch (XPathException err) when (!err.IsRunLimit())
-            {
-                string msg = MakeParsingErrorMessage(err);
-                XPathException xe = new XPathException(msg, "FODC0006");
+                XPathException xe = new XPathException("Failure parsing XML: " + ioErr.Message, "FODC0006");
                 xe.MaybeSetContext(context);
                 throw xe;
             }

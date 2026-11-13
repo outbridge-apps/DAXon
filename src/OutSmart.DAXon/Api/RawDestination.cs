@@ -23,6 +23,8 @@ namespace OutSmart.DAXon.Api
         // call through IDestination dispatches to AbstractDestination.GetReceiver -> NotImplementedException.
         public override IReceiver GetReceiver(PipelineConfiguration pipe, SerializationProperties @params)
         {
+            ArgumentCheck.NotNull(pipe, nameof(pipe));
+            ArgumentCheck.NotNull(@params, nameof(@params));
 
             // The IReceiver returned by this method is a SequenceOutputter. The SequenceOutputter
             // builds a list of all top-level items passed to it. A top-level document or element
@@ -34,24 +36,26 @@ namespace OutSmart.DAXon.Api
             sequenceOutputter = new SequenceCollector(pipe);
             closed = false;
             helper.OnClose(() => closed = true);
-            return new CloseNotifier(sequenceOutputter, helper.Listeners);
+            return new CloseNotifier(sequenceOutputter, helper.ListenersOfRun());
         }
 
         // method.
         public override void Close()
         {
+            // Before any run wrote to it there is nothing to close, and GetXdmValue still says so.
+            if (sequenceOutputter == null)
+            {
+                return;
+            }
+
             try
             {
                 sequenceOutputter.Close();
                 closed = true;
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 

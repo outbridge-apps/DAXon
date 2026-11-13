@@ -491,6 +491,7 @@ namespace OutSmart.DAXon.Functions
                         }
                         catch (DAXonApiException e)
                         {
+                            ThrowIfOverflow(e);
                             if (e.InnerException is XPathException)
                             {
                                 throw (XPathException)e.InnerException;
@@ -555,6 +556,7 @@ namespace OutSmart.DAXon.Functions
 
         private XsltExecutable ReportCompileError(DAXonApiException e, List<IXmlProcessingError> compileErrors)
         {
+            ThrowIfOverflow(e);
             foreach (IXmlProcessingError te in compileErrors)
             {
                 // The fn:transform spec requires FOXT0002 for a stylesheet compile error
@@ -570,6 +572,15 @@ namespace OutSmart.DAXon.Functions
             else
             {
                 throw new XPathException(e.Message, "FOXT0002");
+            }
+        }
+
+        // The nested run's stack overflow goes back to the guard's abort (see RecursionDepthError.FromNestedRun).
+        private static void ThrowIfOverflow(DAXonApiException e)
+        {
+            if (e.InnerException is XPathException.StackOverflow overflow)
+            {
+                throw RecursionDepthError.FromNestedRun(overflow);
             }
         }
 
@@ -680,7 +691,6 @@ namespace OutSmart.DAXon.Functions
 
             XsltCompiler xsltCompiler = processor.NewXsltCompiler();
             xsltCompiler.SetResourceResolver(context.GetResourceResolver());
-            xsltCompiler.SetJustInTimeCompilation(false);
             xsltCompiler.SetErrorReporter(context.GetErrorReporter());
             if (options.GetOrDefault("enable-assertions") != null)
             {
@@ -914,6 +924,7 @@ namespace OutSmart.DAXon.Functions
             }
             catch (DAXonApiException e)
             {
+                ThrowIfOverflow(e);
                 if (e.InnerException is XPathException)
                 {
                     XPathException e2 = (XPathException)e.InnerException;

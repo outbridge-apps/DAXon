@@ -13,7 +13,7 @@ using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Xslt
 {
     /// <summary>
-    /// A function library that recognizes the function name "xsl:original", which may appear within xsl:@override
+    /// A function library that recognizes the function name "xsl:original", which may appear within xsl:override
     /// </summary>
     internal sealed class XSLOriginalLibrary : IFunctionLibrary
     {
@@ -93,6 +93,5 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
     }
 }

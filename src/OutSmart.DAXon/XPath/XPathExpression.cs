@@ -182,8 +182,20 @@ namespace OutSmart.DAXon.XPath
             return Pull.Iterate(context.XPathContextObject);
         }
 
+        // A lazy result reads its local variables from the stack frame as the host pulls it, so it gets a copy of the frame:
+        // an evaluation of the same selector between two pulls rebound them, then cleared them (a raw NullReferenceException).
+        internal ISequenceIterator IterateInOwnFrame(XPathDynamicContext context)
+        {
+            context.CheckExternalVariables(stackFrameMap, numberOfExternalVariables);
+            XPathContextMajor own = context.XPathContextObject.NewContext();
+            StackFrame frame = context.XPathContextObject.GetStackFrame().Copy();
+            own.SetStackFrame(frame.GetStackFrameMap(), frame.StackFrameValues);
+            return Pull.Iterate(own);
+        }
+
         public virtual IList<IItem> Evaluate(XPathDynamicContext context)
         {
+            context.CheckExternalVariables(stackFrameMap, numberOfExternalVariables);
             IList<IItem> list = new List<IItem>(20);
 
             // Don't replace with list.add - C# doesn't like it because list.add() returns boolean
@@ -193,6 +205,7 @@ namespace OutSmart.DAXon.XPath
 
         public virtual IItem EvaluateSingle(XPathDynamicContext context)
         {
+            context.CheckExternalVariablesRead(stackFrameMap, numberOfExternalVariables, expression);
             ISequenceIterator iter = Pull.Iterate(context.XPathContextObject);   // as Iterate and so Evaluate() evaluate
             IItem result = iter.Next();
             iter.Dispose();
@@ -201,6 +214,7 @@ namespace OutSmart.DAXon.XPath
 
         public virtual bool EffectiveBooleanValue(XPathDynamicContext context)
         {
+            context.CheckExternalVariablesRead(stackFrameMap, numberOfExternalVariables, expression);
             return (boolean ??= expression.MakeElaborator().ElaborateForBoolean()).Eval(context.XPathContextObject);
         }
     }

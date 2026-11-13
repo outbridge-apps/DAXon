@@ -22,12 +22,11 @@ namespace OutSmart.DAXon.Xslt
 {
     public class StylesheetModule
     {
-        // Stack reserved per already-open module for the unwind of a failed include (measured ~11 KB
-        // on net472 x64 once the two no-op catch sites per level became filters; see
-        // LoadStylesheetModule). Caps nesting at ~43 modules on a 1 MB worker thread and >200 on a
-        // 4 MB one, against a measured ~95 (1 MB) from which an error can still be REPORTED rather
-        // than kill the process - i.e. the cap keeps roughly a 2x safety factor over the wall.
-        private const ulong UnwindReservePerModule = 16 * 1024;
+        // Stack reserved per already-open module beyond the ~2 KB its descent takes. No level of a failing include
+        // enters a handler (the XTSE0210 re-code is a filter), so the unwind of an error costs nothing per level:
+        // 100 nested modules report an error cleanly on a 256 KB thread with no reserve. This keeps ~2.5x of that:
+        // ~35 modules on 256 KB, ~250 on 1 MB.
+        private const ulong UnwindReservePerModule = 2 * 1024;
 
         private readonly StyleElement rootElement;
         private int precedence;
@@ -89,8 +88,11 @@ namespace OutSmart.DAXon.Xslt
         {
             string systemId = styleSource.SystemId;
             DocumentKey docURI = systemId == null ? null : new DocumentKey(systemId);
+            // The resource is closed by the parse: refused before it, it is closed here (a cycle left the module's file
+            // open after the failed compile).
             if (systemId != null && compilation.ImportStack.Contains(docURI))
             {
+                ParseOptions.Dispose(styleSource);
                 throw new XPathException("The stylesheet module includes/imports itself directly or indirectly", "XTSE0180");
             }
 
@@ -99,17 +101,16 @@ namespace OutSmart.DAXon.Xslt
             // cycle check above only catches a REPEATED uri, so a chain that hands out a fresh uri
             // per level recurses without bound and overflows the uncatchable .NET stack while
             // compiling (~900 levels on a 1 MB worker thread, round AW).
-            // The reserve scales with depth because FAILING here costs ~11 KB of stack per level -
-            // every level that catches and re-codes the error re-enters exception dispatch, so the
-            // stack grows on the unwind - against ~1.2 KB for the descent. A fixed margin, however
-            // large, cannot cover that: before this guard, ANY error raised 40 include levels deep
-            // killed a 1 MB thread (the pre-existing XTSE0180 cycle error included).
+            // The reserve scales with depth: a level that catches and re-codes the error re-enters
+            // exception dispatch, so its stack grows on the unwind. None does now (UseWhenFilter's
+            // filter), but a cycle error once killed a 256 KB thread 20 includes deep.
             try
             {
                 StackGuard.Probe(UnwindReservePerModule * (ulong)compilation.ImportStack.Count);
             }
             catch (RecursionDepthError e) when (!e.Described)
             {
+                ParseOptions.Dispose(styleSource);
                 throw e.Describe("Stylesheet include/import nesting is too deep (insufficient stack on this thread)", "XTSE0010", null);
             }
 
@@ -248,6 +249,11 @@ namespace OutSmart.DAXon.Xslt
                     }
 
                     IIPackageLoader loader = config.MakePackageLoader();
+                    if (loader == null)
+                    {
+                        throw new XPathException("A compiled package (SEF) cannot be loaded by this edition: compile the stylesheet from source");
+                    }
+
                     StylesheetPackage pack = loader.LoadPackageDoc(packageBuilder.CurrentRoot);
                     compilation.SetPackageData(pack);
                     PreparedStylesheet pss = new PreparedStylesheet(compilation);
@@ -412,7 +418,7 @@ namespace OutSmart.DAXon.Xslt
                         }
 
 
-                        // after processing the imported stylesheet and any others it brought @in,
+                        // after processing the imported stylesheet and any others it brought in,
                         // adjust the import precedence of this stylesheet if necessary
                         if (xslinc.IsImport())
                         {

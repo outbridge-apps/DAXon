@@ -72,6 +72,8 @@ namespace OutSmart.DAXon.Functions.HigherOrder
 
             public ISequence Call(IXPathContext context, ISequence[] arguments)
             {
+                // Fisher-Yates, inside out: an insertion at a random place shifted the list each time, quadratic with no
+                // look at the clock (300 000 items took 20 s under a 2 s limit).
                 ISequenceIterator iterator = arguments[0].Iterate();
                 List<IItem> output = new List<IItem>();
                 Random random = new Random(unchecked((int)nextSeed));
@@ -79,7 +81,17 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 while ((item = iterator.Next()) != null)
                 {
                     int p = random.Next(output.Count + 1);
-                    output.Insert(p, item);
+                    if (p == output.Count)
+                    {
+                        output.Add(item);
+                    }
+                    else
+                    {
+                        output.Add(output[p]);
+                        output[p] = item;
+                    }
+
+                    Core.MemoryLedger.Collected(output);
                 }
 
                 return SequenceExtent.MakeSequenceExtent(output);

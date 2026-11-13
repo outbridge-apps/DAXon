@@ -28,23 +28,28 @@ namespace OutSmart.DAXon.Patterns
         {
         }
 
+        // Left-deep chains recurse per operand: see UnionPattern.
         public override ItemType GetItemType()
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             return p1.GetItemType();
         }
 
         public override UType GetUType()
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             return p1.GetUType().Intersection(p2.GetUType());
         }
 
         public override bool Matches(IItem item, IXPathContext context)
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             return p1.Matches(item, context) && p2.Matches(item, context);
         }
 
         public override bool MatchesBeneathAnchor(NodeInfo node, NodeInfo anchor, IXPathContext context)
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             return p1.MatchesBeneathAnchor(node, anchor, context) && p2.MatchesBeneathAnchor(node, anchor, context);
         }
 
@@ -60,27 +65,6 @@ namespace OutSmart.DAXon.Patterns
             {
                 return new IntersectPattern(np1, np2);
             }
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other is IntersectPattern)
-            {
-                HashSet<Pattern> s0 = new HashSet<Pattern>();
-                GatherComponentPatterns(s0);
-                HashSet<Pattern> s1 = new HashSet<Pattern>();
-                ((IntersectPattern)other).GatherComponentPatterns(s1);
-                return s0.Equals(s1);
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        protected override int ComputeHashCode()
-        {
-            return 0x13d7dfa6 ^ p1.GetHashCode() ^ p2.GetHashCode();
         }
 
         public override Expression Copy(RebindingMap rebindings)

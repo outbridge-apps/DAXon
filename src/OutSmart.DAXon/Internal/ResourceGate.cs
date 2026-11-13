@@ -6,6 +6,8 @@
 using System;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Core;
+using OutSmart.DAXon.Internal.Net;
+using OutSmart.DAXon.Lib;
 
 namespace OutSmart.DAXon.Internal
 {
@@ -107,6 +109,27 @@ namespace OutSmart.DAXon.Internal
             catch (Exception e) when (!(e is OutOfMemoryException))
             {
                 return "Writing to " + uri + " is denied: the resource-access policy failed (" + e.Message + ")";
+            }
+        }
+
+        // The allowed-protocols feature for what collection() fetches itself (the collection, its catalog and directory
+        // members, an archive): only the default resource resolver applied it, so they were read under any protocol.
+        public static string CheckProtocol(Configuration config, string absoluteUri)
+        {
+            ProtocolRestrictor restrictor = config?.GetProtocolRestrictor();
+            if (restrictor == null || restrictor.ToString() == "all")
+            {
+                return null;
+            }
+
+            try
+            {
+                URI u = new URI(absoluteUri);
+                return restrictor.Test(u) ? null : "URIs using protocol " + u.Scheme + " are not permitted";
+            }
+            catch (URISyntaxException)
+            {
+                return "Unknown URI scheme requested " + absoluteUri;
             }
         }
 

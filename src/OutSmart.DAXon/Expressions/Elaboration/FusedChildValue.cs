@@ -103,18 +103,8 @@ namespace OutSmart.DAXon.Expressions.Elaboration
                 return false;
             }
 
-            if (!(atom.BaseExpression is AxisExpression axis) || axis.Axis != AxisInfo.CHILD)
-            {
-                return false;
-            }
-
-            if (!(axis.GetNodeTest() is NameTest nameTest) || nameTest.PrimitiveType != Types.Type.ELEMENT)
-            {
-                return false;
-            }
-
-            fp = nameTest.Fingerprint;
-            return true;
+            fp = TinyText.ElementStep(atom.BaseExpression, AxisInfo.CHILD);
+            return fp >= 0;
         }
 
         // The fused read; null means the generic evaluator must run (non-Tiny item,
@@ -128,40 +118,13 @@ namespace OutSmart.DAXon.Expressions.Elaboration
                 return null;
             }
 
+            // the one child named fp; a second leaves the read to the generic evaluator
             TinyTree tree = tiny.tree;
-            int p = tiny.nodeNr;
-            byte[] kinds = tree.nodeKind;
-            short[] depths = tree.depth;
-            int first = -1;
-            int child = p + 1;
-            if (child < tree.numberOfNodes && depths[child] == depths[p] + 1)
+            int n = TinyText.FirstChild(tree, tiny.nodeNr);
+            int first = TinyText.NextChildNamed(tree, fp, ref n);
+            if (first >= 0 && TinyText.NextChildNamed(tree, fp, ref n) >= 0)
             {
-                // sibling chain: next[] links siblings (PARENT_POINTER pseudo-nodes
-                // included), a backwards jump is the owner pointer = end
-                int[] nextArr = tree.next;
-                int[] nameCodes = tree.nameCode;
-                int n = child;
-                while (true)
-                {
-                    int k = kinds[n];
-                    if ((k == Types.Type.ELEMENT || k == Types.Type.TEXTUAL_ELEMENT) && (nameCodes[n] & NamePool.FP_MASK) == fp)
-                    {
-                        if (first >= 0)
-                        {
-                            return null;
-                        }
-
-                        first = n;
-                    }
-
-                    int n2 = nextArr[n];
-                    if (n2 <= n)
-                    {
-                        break;
-                    }
-
-                    n = n2;
-                }
+                return null;
             }
 
             if (first < 0)

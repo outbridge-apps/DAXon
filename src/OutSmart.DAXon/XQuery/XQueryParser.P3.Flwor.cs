@@ -59,7 +59,7 @@ namespace OutSmart.DAXon.XQuery
                     WhereClause clause = new WhereClause(flwor, condition);
                     SetLocation(clause, t.currentTokenStartOffset);
                     clause.SetRepeated(ContainsLoopingClause(clauseList));
-                    clauseList.Add(clause); //            } else if (t.currentToken == Token.WHILE || isKeyword("while")) {
+                    clauseList.Add(clause);
                 }
                 else if (IsKeyword("trace"))
                 {
@@ -327,7 +327,6 @@ namespace OutSmart.DAXon.XQuery
             while (t.currentToken == Token.COMMA);
         }
 
-        /*clause.getRangeVariable()*/
         private void CheckForClauseAllowingEmpty(ForClause clause)
         {
             if (!allowXPath30Syntax)
@@ -342,7 +341,6 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        /*clause.getRangeVariable()*/
         private void ParseLetClause(FLWORExpression flwor, IList<Clause> clauseList)
         {
             bool first = true;
@@ -388,7 +386,6 @@ namespace OutSmart.DAXon.XQuery
             while (t.currentToken == Token.COMMA);
         }
 
-        /*clause.getRangeVariable()*/
         private void ParseCountClause(IList<Clause> clauseList)
         {
             CountClause clause = new CountClause();
@@ -408,7 +405,6 @@ namespace OutSmart.DAXon.XQuery
             DeclareRangeVariable(v);
         }
 
-        /*clause.getRangeVariable()*/
         private void ParseTraceClause(FLWORExpression flwor, IList<Clause> clauseList)
         {
             DiagnosticClause clause = new DiagnosticClause();
@@ -419,7 +415,6 @@ namespace OutSmart.DAXon.XQuery
             clause.InitSequence(flwor, ParseExpression());
         }
 
-        /*clause.getRangeVariable()*/
         private void ParseGroupByClause(FLWORExpression flwor, IList<Clause> clauseList)
         {
             GroupByClause clause = new GroupByClause(env.GetConfiguration());
@@ -462,7 +457,13 @@ namespace OutSmart.DAXon.XQuery
                 {
                     NextToken();
                     Expect(Token.STRING_LITERAL);
-                    collations.Add(t.currentTokenValue);
+                    string collationName = ResolveCollationName(UriLiteral(t.currentTokenValue), "Collation name");
+                    if (env.GetConfiguration().GetCollation(collationName) == null)
+                    {
+                        Grumble("Unknown collation '" + collationName + '\'', "XQST0076");
+                    }
+
+                    collations.Add(collationName);
                     NextToken();
                 }
                 else
@@ -499,12 +500,15 @@ namespace OutSmart.DAXon.XQuery
 
             groupingTupleExpr.SetVariables(groupingRefs);
             clause.InitGroupingTupleExpression(flwor, groupingTupleExpr);
+            // Only the latest binding of each name is in the tuple; the ones it occludes are not retained. Saxon retains
+            // them all, so each group by doubled the bindings, and the oldest one, declared last, won the lookup.
             IList<LocalVariableBinding> ungroupedBindings = new List<LocalVariableBinding>();
+            var seenNames = new HashSet<StructuredQName>(variableNames);
             for (int i = clauseList.Count - 1; i >= 0; i--)
             {
                 foreach (LocalVariableBinding b in clauseList[i].RangeVariables)
                 {
-                    if (!groupedBindings.Contains(b))
+                    if (seenNames.Add(b.GetVariableQName()))
                     {
                         ungroupedBindings.Add(b);
                         retainedRefs.Add(new LocalVariableReference(b));
@@ -554,7 +558,6 @@ namespace OutSmart.DAXon.XQuery
             clauseList.Add(clause);
         }
 
-        /*clause.getRangeVariable()*/
         private bool LocateDeclaration(IList<Clause> clauseList, IList<LocalVariableReference> groupingRefs, IList<LocalVariableBinding> groupedBindings, StructuredQName q)
         {
             for (int i = clauseList.Count - 1; i >= 0; i--)
@@ -573,7 +576,6 @@ namespace OutSmart.DAXon.XQuery
             return false;
         }
 
-        /*clause.getRangeVariable()*/
         private StructuredQName ReadVariableName()
         {
             Expect(Token.DOLLAR);
@@ -584,7 +586,6 @@ namespace OutSmart.DAXon.XQuery
             return MakeStructuredQName(name, NamespaceUri.NULL);
         }
 
-        /*clause.getRangeVariable()*/
         private void ParseWindowClause(FLWORExpression flwor, IList<Clause> clauseList)
         {
             WindowClause clause = new WindowClause();
@@ -744,7 +745,6 @@ namespace OutSmart.DAXon.XQuery
             clauseList.Add(clause);
         }
 
-        /*clause.getRangeVariable()*/
         public static Expression MakeStringJoin(Expression exp, IStaticContext env)
         {
             exp = Atomizer.MakeAtomizer(exp, null);
@@ -768,7 +768,6 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        /*clause.getRangeVariable()*/
         private IList<SortSpec> ParseSortDefinition()
         {
             IList<SortSpec> sortSpecList = new List<SortSpec>(5);
@@ -828,30 +827,33 @@ namespace OutSmart.DAXon.XQuery
             return sortSpecList;
         }
 
-        /*clause.getRangeVariable()*/
         protected virtual string ReadCollationName()
         {
             NextToken();
             Expect(Token.STRING_LITERAL);
-            string collationName = UriLiteral(t.currentTokenValue);
-            URI collationURI;
+            string collationName = ResolveCollationName(UriLiteral(t.currentTokenValue), "Collation name");
+            NextToken();
+            return collationName;
+        }
+
+        // A collation URI resolved against the static base URI. With no base a relative URI stays as written, and the
+        // caller's check for an unknown collation reports it (XQST0038, XQST0076).
+        private string ResolveCollationName(string collationName, string what)
+        {
             try
             {
-                collationURI = new URI(collationName);
-                if (!collationURI.IsAbsolute())
+                URI collationURI = new URI(collationName);
+                if (!collationURI.IsAbsolute() && env.StaticBaseURI != null)
                 {
-                    URI @base = new URI(env.StaticBaseURI);
-                    collationURI = @base.Resolve(collationURI);
-                    collationName = collationURI.ToString();
+                    collationName = new URI(env.StaticBaseURI).Resolve(collationURI).ToString();
                 }
             }
             catch (URISyntaxException)
             {
-                Grumble("Collation name '" + collationName + "' is not a valid URI", "XQST0046");
+                Grumble(what + " '" + collationName + "' is not a valid URI", "XQST0046");
                 collationName = NamespaceConstant.CODEPOINT_COLLATION_URI;
             }
 
-            NextToken();
             return collationName;
         }
 

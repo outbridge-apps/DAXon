@@ -4,16 +4,8 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// excluded stubs.cs -- VendorFunctionSetHE
-//
-// #88 (2026-06-19): SURGICAL augmentation. The full poc VendorFunctionSetHE.cs is <Compile Remove>'d
-// because re-including it transitively pulls in excluded function classes (MapCreate / Doc_2 /
-// MapUntypedContains / ...). The xsl:catch err: variables (err:code/description/...) only need the
-// single `dynamic-error-info` vendor function (ExpressionContext compiles them to a
-// dynamic-error-info(<name>) call). So register JUST that one function here + port its
-// DynamicErrorInfoFn implementation, and inherit the working BuiltInFunctionSet.MakeFunction
-// (registry lookup). Other vendor functions stay unregistered -- they were NIE stubs before, so no
-// regression. DynamicErrorInfoFn body is ported verbatim from the real (excluded) nested class.
+// The vendor function set holds only dynamic-error-info: ExpressionContext compiles the xsl:catch variables
+// ($err:code, $err:description, ...) to calls of it. Saxon's other vendor functions are not ported.
 
 using System;
 using OutSmart.DAXon.Model;
@@ -37,14 +29,10 @@ namespace OutSmart.DAXon.Functions
         {
             public VendorFunctionSetHE_Inner()
             {
-                // #88: only dynamic-error-info (xsl:catch err: variables). Other vendor functions stay
-                // unregistered (they were NIE stubs before -> no regression). MakeFunction is inherited
-                // from BuiltInFunctionSet (registry lookup), so this resolves at compile + run.
                 Register("dynamic-error-info", 1, (e) => e.Populate(DynamicErrorInfoFn.New(), AnyItemType.GetInstance(), STAR, FOCUS | LATE | SIDE).Arg(0, BuiltInAtomicType.STRING, ONE, null));
             }
         }
 
-        // Ported verbatim from the (excluded) real VendorFunctionSetHE.DynamicErrorInfoFn.
         // Evaluates an xsl:catch error variable such as $err:code from the current caught exception.
         internal sealed class DynamicErrorInfoFn : SystemFunction
         {

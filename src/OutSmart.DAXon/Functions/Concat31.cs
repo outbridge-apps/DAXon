@@ -110,9 +110,10 @@ namespace OutSmart.DAXon.Functions
 
                         return new StringValue(builder.ToUnicodeString());
                     }
-                    catch (XPathException e)
+                    catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                     {
-                        throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                        // Decorated in the filter, never handled (XPathException.PassOn).
+                        throw;
                     }
                 };
             }

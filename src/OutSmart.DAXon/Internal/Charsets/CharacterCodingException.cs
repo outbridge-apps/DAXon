@@ -16,5 +16,7 @@ namespace OutSmart.DAXon.Internal.Charsets
     internal class CharacterCodingException : IOException
     {
         public CharacterCodingException() : base("character coding error") { }
+
+        public CharacterCodingException(string message, System.Exception cause) : base(message, cause) { }
     }
 }

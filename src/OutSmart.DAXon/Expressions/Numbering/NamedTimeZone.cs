@@ -6,25 +6,19 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Values;
+using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Collections.Generic;
-using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Expressions.Numbering
 {
     internal sealed class NamedTimeZone
     {
-        static readonly HashSet<string> knownTimeZones = new HashSet<string>();
         static readonly Dictionary<string, IList<string>> idForCountry = new Dictionary<string, IList<string>>(50);
         static readonly IList<string> worldTimeZones = new List<string>(20);
 
         static NamedTimeZone()
         {
 
-            knownTimeZones.Add("UTC");
-            foreach (TimeZoneInfo tz in TimeZoneInfo.GetSystemTimeZones())
-            {
-                knownTimeZones.Add(tz.Id);
-            }
             // The table starts with countries that use multiple timezones, then proceeds in alphabetical order
             Tz("us", "America/New_York", true);
             Tz("us", "America/Chicago", true);
@@ -235,7 +229,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
             }
         }
 
-        //@CSharpReplaceBody(code="return formatTimeZoneOffset(date);")
         public static string GetTimeZoneNameForDate(DateTimeValue date, string place)
         {
             if (!date.HasTimezone())
@@ -243,7 +236,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                 return "";
             }
 
-            TimeZoneInfo referenceTimezone = null;
+            ZoneRules referenceTimezone = null;
             if (place.StartsWith("America/", StringComparison.Ordinal))
             {
                 place = "us";
@@ -353,14 +346,18 @@ namespace OutSmart.DAXon.Expressions.Numbering
                 exampleId = possibleIds[0];
             }
 
-            TimeZoneInfo exampleZone = ZoneOf(exampleId);
+            ZoneRules exampleZone = ZoneOf(exampleId);
+            if (exampleZone == null)
+            {
+                return FormatTimeZoneOffset(date);
+            }
+
             bool inSummerTime = InDaylightTime(exampleZone, date.SecondsSinceEpoch().LongValue());
             int tzMinutes = date.TimezoneInMinutes;
             foreach (string olson in possibleIds)
             {
-                TimeZoneInfo possibleTimeZone = ZoneOf(olson);
-                int offsetSeconds = GetOffsetInSecondsAtDateTime(possibleTimeZone);
-                if (offsetSeconds == tzMinutes * 60)
+                ZoneRules possibleTimeZone = ZoneOf(olson);
+                if (possibleTimeZone != null && OffsetInSeconds(possibleTimeZone, date.SecondsSinceEpoch().LongValue()) == tzMinutes * 60)
                 {
                     return inSummerTime ? olson + "*" : olson;
                 }
@@ -389,63 +386,35 @@ namespace OutSmart.DAXon.Expressions.Numbering
                 olsonName = region;
             }
 
-            TimeZoneInfo zone = OlsonZoneOrUtc(olsonName);
+            ZoneRules zone = OlsonZoneOrUtc(olsonName);
             return (InDaylightTime(zone, date.SecondsSinceEpoch().LongValue()));
         }
 
-        private static TimeZoneInfo OlsonZoneOrUtc(string olsonName)
+        private static ZoneRules OlsonZoneOrUtc(string olsonName)
         {
-            try
-            {
-                return ZoneOf(olsonName);
-            }
-            catch (TimeZoneNotFoundException)
-            {
-                return TimeZoneInfo.Utc;
-            }
+            return ZoneOf(olsonName) ?? ZoneRules.Utc;
         }
 
-        private static bool InDaylightTime(TimeZoneInfo zone, long secondsSinceEpoch)
+        private static bool InDaylightTime(ZoneRules zone, long secondsSinceEpoch)
         {
-            try
-            {
-                return zone.IsDaylightSavingTime(DateTimeOffset.FromUnixTimeSeconds(secondsSinceEpoch));
-            }
-            catch (ArgumentOutOfRangeException)
-            {
-                // A year .NET's calendar does not reach - below 1, above 9999: standard time, as TimeZone.GetOffset has it.
-                return false;
-            }
+            return zone.IsDaylightAt(secondsSinceEpoch);
         }
 
-        public static TimeZoneInfo GetNamedTimeZone(string olsonName)
+        public static ZoneRules GetNamedTimeZone(string olsonName)
         {
-            if (knownTimeZones.Contains(olsonName))
-            {
-                return ZoneOf(olsonName);
-            }
-            else
-            {
-                return null;
-            }
+            return ZoneOf(olsonName);
         }
 
-        // Preserves the legacy offset-at-now behaviour: the old DateTimeValue.ToJavaInstant() returned
-        // Instant.now() (a stub that ignored the value), so the offset was taken at the current instant,
-        // not at dateTime. Reached only from GetOlsonTimeZoneName.
-        private static int GetOffsetInSecondsAtDateTime(TimeZoneInfo zone)
+        // The zone's offset at the instant, as Saxon takes it.
+        internal static int OffsetInSeconds(ZoneRules zone, long secondsSinceEpoch)
         {
-            return (int)zone.GetUtcOffset(DateTimeOffset.UtcNow).TotalSeconds;
+            return zone.OffsetAt(secondsSinceEpoch);
         }
 
-        // Java ZoneId.of(): resolve via the shared platform (TimeZoneInfo) resolver; an unknown id
-        // throws (the sole catcher is OlsonZoneOrUtc).
-        private static TimeZoneInfo ZoneOf(string id)
+        // Java ZoneId.of(); null for an id it does not know.
+        private static ZoneRules ZoneOf(string id)
         {
-            TimeZoneInfo tzi = OutSmart.DAXon.Internal.Collections.TimeZone.Resolve(id);
-            if (tzi == null)
-                throw new TimeZoneNotFoundException("Unknown time-zone ID: " + id);
-            return tzi;
+            return ZoneRules.Find(id);
         }
     }
 }

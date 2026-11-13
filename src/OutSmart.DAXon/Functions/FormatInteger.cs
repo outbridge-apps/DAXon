@@ -33,10 +33,15 @@ namespace OutSmart.DAXon.Functions
         // Cache). Cache successes only; invalid pictures (rare) fall through and throw as before.
         private static readonly ClockCache<string, NumericGroupFormatter> PicSeparatorCache
             = new ClockCache<string, NumericGroupFormatter>(128);
-        private static readonly IRegularExpression badDecimalHashPattern = ARegularExpression.Compile("(([\\dXx]+|\\w+)#+.*)|(#+[^\\dXx]+)", "");
-        private static readonly IRegularExpression modifierPattern = ARegularExpression.Compile("([co](\\(.*\\))?)?[at]?", "");
-        private static readonly IRegularExpression decimalDigitPattern = ARegularExpression.Compile("^((\\p{Nd}|#|[^\\p{N}\\p{L}])+?)$", "");
-        private static readonly IRegularExpression nonDecimalDigitPattern = ARegularExpression.Compile("^(([Xx#]|[^\\p{N}\\p{L}])+?)$", "");
+        // Compiled on first use, not in the type initializer: see FormatDate.componentPattern.
+        private static IRegularExpression badDecimalHashPatternLazy;
+        private static IRegularExpression badDecimalHashPattern => badDecimalHashPatternLazy ??= ARegularExpression.Compile("(([\\dXx]+|\\w+)#+.*)|(#+[^\\dXx]+)", "");
+        private static IRegularExpression modifierPatternLazy;
+        private static IRegularExpression modifierPattern => modifierPatternLazy ??= ARegularExpression.Compile("([co](\\(.*\\))?)?[at]?", "");
+        private static IRegularExpression decimalDigitPatternLazy;
+        private static IRegularExpression decimalDigitPattern => decimalDigitPatternLazy ??= ARegularExpression.Compile("^((\\p{Nd}|#|[^\\p{N}\\p{L}])+?)$", "");
+        private static IRegularExpression nonDecimalDigitPatternLazy;
+        private static IRegularExpression nonDecimalDigitPattern => nonDecimalDigitPatternLazy ??= ARegularExpression.Compile("^(([Xx#]|[^\\p{N}\\p{L}])+?)$", "");
         private Func<IntegerValue, string> formatter;
 
         // Per-call-site memo: the resolved formatter for the last-seen (picture, language) pair
@@ -213,7 +218,6 @@ namespace OutSmart.DAXon.Functions
             bool cardinal = modifier.StartsWith("c", StringComparison.Ordinal);
             bool ordinal = modifier.StartsWith("o", StringComparison.Ordinal);
 
-            //boolean traditional = modifier.endsWith("t");
             bool alphabetic = modifier.EndsWith("a", StringComparison.Ordinal);
             int leftParen = modifier.IndexOf('(');
             int rightParen = modifier.LastIndexOf(')');
@@ -260,7 +264,10 @@ namespace OutSmart.DAXon.Functions
                 {
                     try
                     {
-                        string s = numb.Format(num.Abs().LongValue(), adjustedPicture, picGroupFormat, finalLetterValue, "", ordinalValue);
+                        IntegerValue abs = (IntegerValue)num.Abs();
+                        string s = PastLong(abs, out System.Numerics.BigInteger big)
+                            ? FormatPastLong(numb, big, adjustedPicture, picGroupFormat, finalLetterValue, ordinalValue)
+                            : numb.Format(abs.LongValue(), adjustedPicture, picGroupFormat, finalLetterValue, "", ordinalValue);
                         return num.Signum() < 0 ? ("-" + s) : s;
                     }
                     catch (XPathException e)
@@ -277,7 +284,10 @@ namespace OutSmart.DAXon.Functions
                 {
                     try
                     {
-                        string s = numb.Format(num.Abs().LongValue(), token, null, finalLetterValue, cardinalValue, ordinalValue);
+                        IntegerValue abs = (IntegerValue)num.Abs();
+                        string s = PastLong(abs, out System.Numerics.BigInteger big)
+                            ? FormatPastLong(numb, big, token, null, finalLetterValue, ordinalValue)
+                            : numb.Format(abs.LongValue(), token, null, finalLetterValue, cardinalValue, ordinalValue);
                         return num.Signum() < 0 ? ("-" + s) : s;
                     }
                     catch (XPathException e)
@@ -286,6 +296,94 @@ namespace OutSmart.DAXon.Functions
                     }
                 };
             }
+        }
+
+        private static bool PastLong(IntegerValue abs, out System.Numerics.BigInteger big)
+        {
+            big = abs is BigIntegerValue ? abs.AsBigInteger() : default;
+            return big > long.MaxValue;
+        }
+
+        // format-integer takes any xs:integer and a numberer a long: past one the digits are written here, in the picture's
+        // digit family or radix and grouping, as xsl:number writes them (Saxon bug 2071); the low 64 bits were formatted
+        // (2^64 as 0). A picture of words, letters or numerals falls back to decimal digits, as there.
+        private static string FormatPastLong(INumberer numb, System.Numerics.BigInteger number, UnicodeString picture, NumericGroupFormatter grouping, string letterValue, string ordinal)
+        {
+            int[] digits = null;
+            if (letterValue.StartsWith("x", StringComparison.Ordinal) || letterValue.StartsWith("X", StringComparison.Ordinal))
+            {
+                int radix = int.Parse(letterValue.Substring(1), CultureInfo.InvariantCulture);
+                digits = Internal.Collections.ArrayTools.CopyOf(letterValue[0] == 'x' ? AbstractNumberer.lowerCaseAlphabet : AbstractNumberer.upperCaseAlphabet, radix);
+            }
+            else
+            {
+                int formchar = picture.Length() == 0 ? 'a' : picture.CodePointAt(0);
+                int digitValue = Alphanumeric.GetDigitValue(formchar);
+                if (digitValue >= 0)
+                {
+                    digits = new int[10];
+                    for (int d = 0; d < 10; d++)
+                    {
+                        digits[d] = formchar - digitValue + d;
+                    }
+                }
+            }
+
+            if (digits == null)
+            {
+                return OutSmart.DAXon.Internal.BigIntegers.ToDecimalString(number);
+            }
+
+            var places = new List<int>();
+            if (digits.Length == 10)
+            {
+                foreach (char c in OutSmart.DAXon.Internal.BigIntegers.ToDecimalString(number))
+                {
+                    places.Add(digits[c - '0']);
+                }
+            }
+            else
+            {
+                for (System.Numerics.BigInteger n = number; n > 0;)
+                {
+                    n = System.Numerics.BigInteger.DivRem(n, digits.Length, out System.Numerics.BigInteger r);
+                    places.Add(digits[(int)r]);
+                    Core.Controller.CheckActiveTimeout();
+                }
+
+                places.Reverse();
+            }
+
+            var sb = new StringBuilder(places.Count + 8);
+            for (int i = places.Count; i < picture.Length32(); i++)
+            {
+                sb.AppendCodePoint(digits[0]);   // the picture's mandatory digits
+            }
+
+            foreach (int place in places)
+            {
+                sb.AppendCodePoint(place);
+            }
+
+            string radical = sb.ToString();
+            if (grouping != null)
+            {
+                radical = grouping.Format(radical);
+            }
+
+            if (!string.IsNullOrEmpty(ordinal))
+            {
+                // The suffix of a stand-in with the same last six digits, which is all a suffix depends on.
+                long standIn = (long)(number % 1000000) + 1000000;
+                string formatted = numb.Format(standIn, StringView.Of("1"), null, "", "", ordinal);
+                string digitsOfStandIn = standIn.ToString(CultureInfo.InvariantCulture);
+                if (formatted.StartsWith(digitsOfStandIn, StringComparison.Ordinal))
+                {
+                    radical += formatted.Substring(digitsOfStandIn.Length);
+                }
+            }
+
+            return radical;
         }
 
         public static NumericGroupFormatter GetPicSeparators(UnicodeString picExpanded, bool hasExplicitRadix)
@@ -459,7 +557,6 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        //
         private static UnicodeString ExtractSeparators(UnicodeString arr)
         {
 
@@ -478,7 +575,6 @@ namespace OutSmart.DAXon.Functions
             return ub.ToUnicodeString();
         }
 
-        //
         public SystemFunction Copy()
         {
             FormatInteger fi2 = (FormatInteger)SystemFunction.MakeFunction(GetFunctionName().GetLocalPart(), GetRetainedStaticContext(), GetArity());

@@ -691,7 +691,7 @@ namespace OutSmart.DAXon.Transformation
                     Error("package", attName, location, "Requires a valid URI.");
                 }
 
-                string file = new Uri(uri.ToString()).LocalPath;
+                string file = OutSmart.DAXon.Internal.Net.BidiUri.LocalPath(uri.ToString());
                 try
                 {
                     packageLibrary.AddPackage(file);
@@ -1096,7 +1096,6 @@ namespace OutSmart.DAXon.Transformation
             buffer.Append(chars.ToString());
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual void Append(IItem item, ILocation locationId, int properties) => throw new InvalidOperationException("This receiver only accepts character events");
         public virtual void Append(IItem item) => throw new InvalidOperationException("This receiver only accepts character events");
         public virtual bool UsesTypeAnnotations() => false;

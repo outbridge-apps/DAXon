@@ -17,6 +17,7 @@ namespace OutSmart.DAXon.Expressions
         private static readonly OperandRole REPEATED_ACTION_ROLE = new OperandRole(OperandRole.HIGHER_ORDER, OperandUsage.TRANSMISSION);
         private readonly Operand sequenceOp;
         private readonly Operand actionOp;
+        private readonly Operand[] operands;   // made once: a walk of 2800 nested variables asks each many times
         protected int slotNumber = -999; // slot number for range variable
         protected StructuredQName variableName;
         protected SequenceType requiredType;
@@ -100,11 +101,12 @@ namespace OutSmart.DAXon.Expressions
         {
             sequenceOp = new Operand(this, null, OperandRole.NAVIGATE);
             actionOp = new Operand(this, null, this is LetExpression ? OperandRole.SAME_FOCUS_ACTION : REPEATED_ACTION_ROLE);
+            operands = new[] { sequenceOp, actionOp };
         }
 
         public override IEnumerable<Operand> Operands()
         {
-            return OperandList(sequenceOp, actionOp);
+            return operands;
         }
 
         public virtual void SetRequiredType(SequenceType requiredType)
@@ -216,13 +218,6 @@ namespace OutSmart.DAXon.Expressions
         public override void SuppressValidation(int validationMode)
         {
             GetAction().SuppressValidation(validationMode);
-        }
-
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet varPath = Sequence.AddToPathMap(pathMap, pathMapNodeSet);
-            pathMap.RegisterPathForVariable(this, varPath);
-            return GetAction().AddToPathMap(pathMap, pathMapNodeSet);
         }
 
         public virtual void RefineTypeInformation(ItemType type, int cardinality, IGroundedValue constantValue, int properties, Assignation currentExpression)

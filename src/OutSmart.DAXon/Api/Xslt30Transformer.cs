@@ -27,7 +27,6 @@ namespace OutSmart.DAXon.Api
         private IItem globalContextItem;
         private bool alreadyStripped;
 
-        /*staticParameters*/
         public virtual XdmItem GlobalContextItem
         {
             get => XdmItem.WrapItem(this.globalContextItem); set
@@ -40,7 +39,6 @@ namespace OutSmart.DAXon.Api
             globalParameterSet = new GlobalParameterSet();
         }
 
-        /*staticParameters*/
         public virtual void SetGlobalContextItem(XdmItem globalContextItem, bool alreadyStripped)
         {
             lock (syncLock)
@@ -55,7 +53,6 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        /*staticParameters*/
         public virtual void SetStylesheetParameters<T>(Dictionary<QName, T> parameters)
         {
             lock (syncLock)
@@ -70,23 +67,23 @@ namespace OutSmart.DAXon.Api
                     globalParameterSet = new GlobalParameterSet();
                 }
 
+                ArgumentCheck.NotNull(parameters, nameof(parameters));
                 foreach (KeyValuePair<QName, T> param in parameters)
                 {
                     StructuredQName name = param.Key.GetStructuredQName();
-                    XdmValue value = (XdmValue)(object)param.Value;
+                    XdmValue value = ArgumentCheck.ParameterValue(param.Key, param.Value, nameof(parameters));
                     try
                     {
                         globalParameterSet.Put(name, (IGroundedValue)(value.UnderlyingValue));
                     }
-                    catch (UncheckedXPathException e)
+                    catch (Exception e) when (ApiErrors.IsEngineError(e))
                     {
-                        throw new DAXonApiException(e);
+                        throw ApiErrors.Wrap(e);
                     }
                 }
             }
         }
 
-        /*staticParameters*/
         private void Prime()
         {
             if (!primed)
@@ -96,23 +93,13 @@ namespace OutSmart.DAXon.Api
                     globalParameterSet = new GlobalParameterSet();
                 }
 
-                try
-                {
-                    controller.SetGlobalContextItem(globalContextItem, alreadyStripped);
-                    controller.InitializeController(globalParameterSet);
-                }
-                catch (XPathException e)
-                {
-                    throw new DAXonApiException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiException(e.ToXPathException());
-                }
+                controller.SetGlobalContextItem(globalContextItem, alreadyStripped);
+                controller.InitializeController(globalParameterSet);
             }
 
             // Arm the Processor-wide cooperative deadline relative to the start of this run.
             controller.SetTimeout(processor.TransformTimeout);
+            RestoreBaseOutputURI();
             primed = true;
         }
 
@@ -128,16 +115,16 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        /*staticParameters*/
         public virtual void SetInitialTemplateParameters<T>(Dictionary<QName, T> parameters, bool tunnel)
         {
             lock (syncLock)
             {
+                ArgumentCheck.NotNull(parameters, nameof(parameters));
                 Dictionary<StructuredQName, ISequence> templateParams = new Dictionary<StructuredQName, ISequence>();
                 foreach (KeyValuePair<QName, T> entry in parameters)
                 {
                     QName key = entry.Key;
-                    XdmValue value = (XdmValue)(object)entry.Value;
+                    XdmValue value = ArgumentCheck.ParameterValue(key, entry.Value, nameof(parameters));
                     templateParams[key.GetStructuredQName()] = (ISequence)(value.UnderlyingValue);
                 }
 
@@ -152,73 +139,47 @@ namespace OutSmart.DAXon.Api
             using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
-                if (destination == null)
-                    throw new NullReferenceException();
+                ArgumentCheck.NotNull(destination, nameof(destination));
                 if (input == null)
-                    throw new NullReferenceException("input");
-                controller.OpenTraceEpisode();
-                Prime();
-                bool closed = false;
-                try
                 {
+                    // No source is no initial match selection, as in s9api; a null selection is a bad argument there too.
+                    throw new DAXonApiException(new XPathException("No initial match selection supplied", "XTDE0044"));
+                }
+
+                Run(destination, systemId, () =>
+                {
+                    Prime();
                     IReceiver sOut = GetDestinationReceiver(controller, destination);
                     long length = Resources.ActiveStreamSource.RemainingLength(input);
                     Stream capped = InputSizeLimit.Apply(input, length, InputSizeLimit.MaxFor(processor.UnderlyingConfiguration), systemId, "FODC0002");
                     Configuration config = processor.UnderlyingConfiguration;
-                    using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(null, capped, systemId, null, XmlReaderToReceiver.DtdUseFor(config.GetParseOptions()), config, 0, GetErrorReporter()))
+                    try
                     {
-                        ApplyTemplatesToXmlReader(reader, systemId, sOut, length);
+                        using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(null, capped, systemId, null, XmlReaderToReceiver.DtdUseFor(config.GetParseOptions()), config, 0, GetErrorReporter()))
+                        {
+                            ApplyTemplatesToXmlReader(reader, systemId, sOut, length);
+                        }
                     }
-
-                    destination.CloseAndNotify();
-                    closed = true;
-                }
-                catch (XPathException e)
-                {
-                    if (!e.HasBeenReported())
+                    catch (Exception e) when (DAXonApiException.IsIO(e))
                     {
-                        GetErrorReporter().Report(new XmlProcessingException(e));
+                        // the input failed to read (output errors are the emitters' XPathExceptions): as DocumentBuilder
+                        throw ApiErrors.ErrorOf(e, systemId);
                     }
-
-                    throw new DAXonApiException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiException(e.ToXPathException());
-                }
-                catch (System.Xml.XmlException e)
-                {
-                    DAXonApiException err = DAXonApiException.FromXmlParser(e, systemId);
-                    GetErrorReporter().Report(new XmlProcessingException((XPathException)err.InnerException));
-                    throw err;
-                }
-                finally
-                {
-                    controller.CloseTraceEpisode();
-                    if (!closed)
-                    {
-                        DestinationHelper.ReleaseUnclosed(destination);
-                    }
-                }
+                });
             }
         }
 
-        /*staticParameters*/
         public virtual void ApplyTemplates(XdmValue selection, IDestination destination)
         {
             using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
-                if (selection == null)
-                    throw new NullReferenceException();
-                if (destination == null)
-                    throw new NullReferenceException();
-                controller.OpenTraceEpisode();
-                Prime();
-                controller.ChargeInput((ISequence)(selection.UnderlyingValue));
-                bool closed = false;
-                try
+                ArgumentCheck.NotNull(selection, nameof(selection));
+                ArgumentCheck.NotNull(destination, nameof(destination));
+                Run(destination, null, () =>
                 {
+                    Prime();
+                    controller.ChargeInput((ISequence)(selection.UnderlyingValue));
                     IReceiver sOut = GetDestinationReceiver(controller, destination);
                     if (baseOutputUriWasSet)
                     {
@@ -226,103 +187,43 @@ namespace OutSmart.DAXon.Api
                     }
 
                     controller.ApplyTemplates((ISequence)(selection.UnderlyingValue), sOut);
-                    destination.CloseAndNotify();
-                    closed = true;
-                }
-                catch (XPathException e)
-                {
-                    if (!e.HasBeenReported())
-                    {
-                        GetErrorReporter().Report(new XmlProcessingException(e));
-                    }
-
-                    throw new DAXonApiException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiException(e.ToXPathException());
-                }
-                finally
-                {
-                    controller.CloseTraceEpisode();
-                    if (!closed)
-                    {
-                        DestinationHelper.ReleaseUnclosed(destination);
-                    }
-                }
+                });
             }
         }
 
-        /*staticParameters*/
         public virtual XdmValue ApplyTemplates(XdmValue selection)
         {
             using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
-                if (selection == null)
-                    throw new NullReferenceException();
+                ArgumentCheck.NotNull(selection, nameof(selection));
                 RawDestination raw = new RawDestination();
                 ApplyTemplates(selection, raw);
                 return raw.GetXdmValue();
             }
         }
 
-        /*staticParameters*/
         public virtual void CallTemplate(QName templateName, IDestination destination)
         {
             using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
-                if (destination == null)
-                    throw new NullReferenceException();
-                controller.OpenTraceEpisode();
-                Prime();
-                if (templateName == null)
+                ArgumentCheck.NotNull(destination, nameof(destination));
+                StructuredQName name = (templateName ?? new QName("xsl", NamespaceConstant.XSLT, "initial-template")).GetStructuredQName();
+                Run(destination, null, () =>
                 {
-                    templateName = new QName("xsl", NamespaceConstant.XSLT, "initial-template");
-                }
-
-                bool closed = false;
-                try
-                {
+                    Prime();
                     IReceiver sOut = GetDestinationReceiver(controller, destination);
                     if (baseOutputUriWasSet)
                     {
                         sOut.SetSystemId(GetBaseOutputURI());
                     }
 
-                    controller.CallTemplate(templateName.GetStructuredQName(), sOut);
-                    destination.CloseAndNotify();
-                    closed = true;
-                }
-                catch (XPathException e)
-                {
-                    // The failing path used to CloseAndNotify here, which fired the host's OnClose
-                    // listeners for a run that produced no result; the finally now releases the
-                    // destination without notifying, as every other entry point does.
-                    if (!e.HasBeenReported())
-                    {
-                        GetErrorReporter().Report(new XmlProcessingException(e));
-                    }
-
-                    throw new DAXonApiException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiException(e.ToXPathException());
-                }
-                finally
-                {
-                    controller.CloseTraceEpisode();
-                    if (!closed)
-                    {
-                        DestinationHelper.ReleaseUnclosed(destination);
-                    }
-                }
+                    controller.CallTemplate(name, sOut);
+                });
             }
         }
 
-        /*staticParameters*/
         public virtual XdmValue CallTemplate(QName templateName)
         {
             using RunResources run = RunResources.Enter();
@@ -334,53 +235,26 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        /*staticParameters*/
         public virtual XdmValue CallFunction(QName function, XdmValue[] arguments)
         {
             using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
-                if (function == null)
-                    throw new NullReferenceException();
-                if (arguments == null)
-                    throw new NullReferenceException();
-                controller.OpenTraceEpisode();
-                Prime();
-                ChargeArguments(arguments);
-                try
+                ArgumentCheck.NotNull(function, nameof(function));
+                ArgumentCheck.NoNulls(arguments, nameof(arguments));
+                return Run(null, null, () =>
                 {
+                    Prime();
+                    ChargeArguments(arguments);
                     Component f = GetFunctionComponent(function, arguments);
                     UserFunction uf = (UserFunction)f.GetActor();
                     ISequence[] vr = TypeCheckFunctionArguments(uf, arguments);
-                    XPathContextMajor context = controller.NewXPathContext();
-                    context.SetCurrentComponent(f);
-                    context.TemporaryOutputState = StandardNames.XSL_FUNCTION;
-                    context.CurrentOutputUri = null;
-                    ISequence result = uf.Call(context, vr);
-                    result = result.Materialize();
-                    return XdmValue.Wrap(result);
-                }
-                catch (XPathException e)
-                {
-                    if (!e.HasBeenReported())
-                    {
-                        GetErrorReporter().Report(new XmlProcessingException(e));
-                    }
-
-                    throw new DAXonApiException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiException(e.ToXPathException());
-                }
-                finally
-                {
-                    controller.CloseTraceEpisode();
-                }
+                    ISequence result = uf.Call(FunctionContext(f), vr);
+                    return XdmValue.Wrap(result.Materialize());
+                });
             }
         }
 
-        /*staticParameters*/
         private Component GetFunctionComponent(QName function, XdmValue[] arguments)
         {
             lock (syncLock)
@@ -401,7 +275,16 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        /*staticParameters*/
+        // The context of a stylesheet function the host calls.
+        private XPathContextMajor FunctionContext(Component f)
+        {
+            XPathContextMajor context = controller.NewXPathContext();
+            context.SetCurrentComponent(f);
+            context.TemporaryOutputState = StandardNames.XSL_FUNCTION;
+            context.CurrentOutputUri = null;
+            return context;
+        }
+
         private ISequence[] TypeCheckFunctionArguments(UserFunction uf, XdmValue[] arguments)
         {
             Configuration config = processor.UnderlyingConfiguration;
@@ -411,6 +294,11 @@ namespace OutSmart.DAXon.Api
             {
                 Values.SequenceType type = @params[i].GetRequiredType();
                 vr[i] = (IGroundedValue)arguments[i].UnderlyingValue;
+                if (controller.GetConfiguration().HoldsForeignNode(vr[i]))
+                {
+                    throw new XPathException(ApiErrors.ForeignArgument, DAXonErrorCode.SXXP0004);
+                }
+
                 if (!type.Matches(vr[i], config.GetTypeHierarchy()))
                 {
                     int pos = i;
@@ -423,25 +311,22 @@ namespace OutSmart.DAXon.Api
             return vr;
         }
 
-        /*staticParameters*/
         public virtual void CallFunction(QName function, XdmValue[] arguments, IDestination destination)
         {
+            ArgumentCheck.NotNull(function, nameof(function));
+            ArgumentCheck.NoNulls(arguments, nameof(arguments));
+            ArgumentCheck.NotNull(destination, nameof(destination));
             using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
-                controller.OpenTraceEpisode();
-                Prime();
-                ChargeArguments(arguments);
-                bool ran = false;
-                try
+                Run(destination, null, () =>
                 {
+                    Prime();
+                    ChargeArguments(arguments);
                     Component f = GetFunctionComponent(function, arguments);
                     UserFunction uf = (UserFunction)f.GetActor();
                     ISequence[] vr = TypeCheckFunctionArguments(uf, arguments);
-                    XPathContextMajor context = controller.NewXPathContext();
-                    context.SetCurrentComponent(f);
-                    context.TemporaryOutputState = StandardNames.XSL_FUNCTION;
-                    context.CurrentOutputUri = null;
+                    XPathContextMajor context = FunctionContext(f);
                     SerializationProperties @params = controller.GetExecutable().PrimarySerializationProperties;
                     using (IReceiver receiver = destination.GetReceiver(controller.MakePipelineConfiguration(), @params))
                     {
@@ -449,41 +334,15 @@ namespace OutSmart.DAXon.Api
                         uf.Process(context, vr, new ComplexContentOutputter(receiver));
                         receiver.Close();
                     }
-
-                    ran = true;
-                }
-                catch (XPathException e)
-                {
-                    GetErrorReporter().Report(new XmlProcessingException(e));
-                    throw new DAXonApiException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiException(e.ToXPathException());
-                }
-                finally
-                {
-                    controller.CloseTraceEpisode();
-
-                    // CloseAndNotify below is unreachable once the catch rethrows, so the
-                    // destination has to be released here or its output file stays open.
-                    if (!ran)
-                    {
-                        DestinationHelper.ReleaseUnclosed(destination);
-                    }
-                }
-
-                destination.CloseAndNotify();
+                });
             }
         }
 
-        /*staticParameters*/
         public virtual IDestination AsDocumentDestination(IDestination finalDestination)
         {
             return new AnonymousAbstractDestination(this, finalDestination);
         }
 
-        /*staticParameters*/
         public virtual Serializer NewSerializer()
         {
             Serializer serializer = processor.NewSerializer();
@@ -491,14 +350,13 @@ namespace OutSmart.DAXon.Api
             return serializer;
         }
 
-        /*staticParameters*/
         public virtual Serializer NewSerializer(string file)
         {
             Serializer serializer = processor.NewSerializer(file);
             serializer.SetOutputProperties(controller.GetExecutable().PrimarySerializationProperties);
             try
             {
-                SetBaseOutputURI(new Uri(Path.GetFullPath(file)).AbsoluteUri);
+                SetBaseOutputURI(OutSmart.DAXon.Internal.Net.FileUris.Of(Path.GetFullPath(file)));
             }
             catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is IOException || e is FormatException || e is System.Security.SecurityException)
             {
@@ -508,7 +366,6 @@ namespace OutSmart.DAXon.Api
             return serializer;
         }
 
-        /*staticParameters*/
         public virtual Serializer NewSerializer(TextWriter writer)
         {
             Serializer serializer = NewSerializer();
@@ -516,7 +373,6 @@ namespace OutSmart.DAXon.Api
             return serializer;
         }
 
-        /*staticParameters*/
         public virtual Serializer NewSerializer(System.IO.Stream stream)
         {
             Serializer serializer = NewSerializer();
@@ -524,8 +380,10 @@ namespace OutSmart.DAXon.Api
             return serializer;
         }
 
-        private sealed class AnonymousAbstractDestination : AbstractDestination
+        private sealed class AnonymousAbstractDestination : AbstractDestination, IChainedDestination
         {
+
+            IDestination IChainedDestination.Next => finalDestination;
 
             private readonly Xslt30Transformer parent;
             private readonly IDestination finalDestination;
@@ -545,17 +403,19 @@ namespace OutSmart.DAXon.Api
 
             public override void Close()
             {
+                // Closed before anything was pushed into it: there is no run to finish.
+                if (receiver == null)
+                {
+                    return;
+                }
+
                 try
                 {
                     receiver.Close();
                 }
-                catch (XPathException e)
+                catch (Exception e) when (ApiErrors.IsEngineError(e))
                 {
-                    throw new DAXonApiException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiException(e.ToXPathException());
+                    throw ApiErrors.Wrap(e);
                 }
             }
         }

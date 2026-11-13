@@ -58,7 +58,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override int Dependencies => Select.Dependencies;
 
-        /* && visitor.isOptimizeForStreaming() */
         public override string StreamerName => "CopyOf";
         public CopyOf(Expression select, bool copyNamespaces, int validation, ISchemaType schemaType, bool rejectDuplicateAttributes)
         {
@@ -372,7 +371,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return this;
         }
 
-        /* && visitor.isOptimizeForStreaming() */
         public override void Export(ExpressionPresenter @out)
         {
             @out.StartElement("copyOf", this);
@@ -436,26 +434,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             @out.EndElement();
         }
 
-        /* && visitor.isOptimizeForStreaming() */
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet result = base.AddToPathMap(pathMap, pathMapNodeSet);
-            result.SetReturnable(false);
-            TypeHierarchy th = GetConfiguration().GetTypeHierarchy();
-            Types.ItemType type = GetItemType();
-            if (th.Relationship(type, NodeKindTest.ELEMENT) != Affinity.DISJOINT || th.Relationship(type, NodeKindTest.DOCUMENT) != Affinity.DISJOINT)
-            {
-                result.AddDescendants();
-            }
-
-            return new PathMap.PathMapNodeSet(pathMap.MakeNewRoot(this));
-        }
-
-        /* && visitor.isOptimizeForStreaming() */
-        //
-        //
-        //
-        //    }
         private void CopyOneNode(IXPathContext context, Outputter @out, NodeInfo item, int copyOptions)
         {
             Controller controller = context.GetController();
@@ -598,10 +576,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         }
 
 
-                        //                        if (val != @out) {
-                        //                            See bug 2403
-                        //                            val.close(); // needed to flush out unresolved IDREF values when validating: test copy-5021
-                        //                        }
                         break;
                     }
 
@@ -610,11 +584,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        /* && visitor.isOptimizeForStreaming() */
-        //
-        //
-        //
-        //    }
         public static string ComputeNewBaseUri(NodeInfo source, string staticBaseURI)
         {
 
@@ -656,11 +625,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return newBaseUri;
         }
 
-        /* && visitor.isOptimizeForStreaming() */
-        //
-        //
-        //
-        //    }
         public static void CopyAttribute(NodeInfo source, ISimpleType schemaType, int validation, Instruction instruction, Outputter output, IXPathContext context, bool rejectDuplicates)
         {
             int opt = rejectDuplicates ? ReceiverOption.REJECT_DUPLICATES : ReceiverOption.NONE;
@@ -681,7 +645,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        /* && visitor.isOptimizeForStreaming() */
         public static ISimpleType ValidateAttribute(NodeInfo source, ISimpleType schemaType, int validation, IXPathContext context)
         {
             UnicodeString value = source.UnicodeStringValue;
@@ -734,26 +697,20 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return annotation;
         }
 
-        /* && visitor.isOptimizeForStreaming() */
         private bool MustPush()
         {
             return schemaType != null || validation == Validation.LAX || validation == Validation.STRICT || copyForUpdate;
         }
 
-        /* && visitor.isOptimizeForStreaming() */
-        /*!copyNamespaces ||*/
         public override ISequenceIterator Iterate(IXPathContext context)
         {
             IPullEvaluator pull = MakeElaborator().ElaborateForPull();
-            return pull.Iterate(context); //        final Controller controller = context.getController();
+            return pull.Iterate(context);
             //        assert controller != null;
             //                return result;
-            //        SequenceCollector @out = new SequenceCollector(pipe);
             //        try {
         }
 
-        /* && visitor.isOptimizeForStreaming() */
-        /*!copyNamespaces ||*/
         private ItemMappingIterator MakeVirtualCopy(ISequenceIterator input, Controller controller, bool isXSLT)
         {
             if (validation == Validation.PRESERVE)
@@ -839,15 +796,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        /* && visitor.isOptimizeForStreaming() */
-        /*!copyNamespaces ||*/
         public override Elaborator GetElaborator()
         {
             return new CopyOfElaborator();
         }
 
-        /* && visitor.isOptimizeForStreaming() */
-        /*!copyNamespaces ||*/
         private sealed class CopyOfElaborator : PushElaborator
         {
             public override IPullEvaluator ElaborateForPull()
@@ -871,7 +824,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     {
                         Controller controller = context.GetController();
                         PipelineConfiguration pipe = controller.MakePipelineConfiguration();
-                        pipe.XPathContext = context;
                         SequenceCollector @out = new SequenceCollector(pipe, (int)(expr.numberOfItems / expr.invocations));
                         if (expr.copyForUpdate)
                         {
@@ -884,10 +836,9 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             ITailCall tc = push.ProcessLeavingTail(new ComplexContentOutputter(@out), context);
                             Expression.DispatchTailCall(tc);
                         }
-                        catch (XPathException err)
+                        catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                         {
-                            err.MaybeSetLocation(expr.GetLocation());
-                            err.MaybeSetContext(context);
+                            // Decorated in the filter, never handled (XPathException.PassOn).
                             throw;
                         }
 

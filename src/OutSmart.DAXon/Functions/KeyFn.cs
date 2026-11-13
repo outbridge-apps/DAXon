@@ -60,36 +60,6 @@ namespace OutSmart.DAXon.Functions
             return null;
         }
 
-        public PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            if (staticKeySet != null)
-            {
-                PathMap.PathMapNodeSet result = new PathMap.PathMapNodeSet();
-                foreach (KeyDefinition kd in staticKeySet.KeyDefinitions)
-                {
-                    Patterns.Pattern pat = kd.Match;
-                    if (pat is NodeSetPattern)
-                    {
-                        Expression selector = ((NodeSetPattern)pat).SelectionExpression;
-                        PathMap.PathMapNodeSet selected = selector.AddToPathMap(pathMap, pathMapNodeSet);
-                        Expression use = kd.Use;
-                        PathMap.PathMapNodeSet used = use.AddToPathMap(pathMap, selected);
-                        result.AddNodeSet(selected);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Can't add key() call to pathmap");
-                    }
-                }
-
-                return result;
-            }
-            else
-            {
-                throw new InvalidOperationException("Can't add dynamic key() call to pathmap");
-            }
-        }
-
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
             NodeInfo origin;

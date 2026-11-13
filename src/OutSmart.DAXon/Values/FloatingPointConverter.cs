@@ -293,16 +293,12 @@ namespace OutSmart.DAXon.Values
         private static void FppfppBig(UnicodeBuilder sb, int e, long f, int p)
         {
 
-            //long R = f << Math.max(e-p, 0);
             BigInteger R = new BigInteger(f) << Math.Max(e - p, 0);
 
-            //long S = 1L << Math.max(0, -(e-p));
             BigInteger S = BigInteger.One << Math.Max(0, -(e - p));
 
-            //long Mminus = 1 << Math.max(e-p, 0);
             BigInteger Mminus = BigInteger.One << Math.Max(e - p, 0);
 
-            //long Mplus = Mminus;
             BigInteger Mplus = Mminus;
             bool initial = true;
 
@@ -549,16 +545,12 @@ namespace OutSmart.DAXon.Values
                 return;
             }
 
-            //long R = f << Math.max(e-p, 0);
             BigInteger R = new BigInteger(f) << Math.Max(e - p, 0);
 
-            //long S = 1L << Math.max(0, -(e-p));
             BigInteger S = BigInteger.One << Math.Max(0, -(e - p));
 
-            //long Mminus = 1 << Math.max(e-p, 0);
             BigInteger Mminus = BigInteger.One << Math.Max(e - p, 0);
 
-            //long Mplus = Mminus;
             BigInteger Mplus = Mminus;
             bool initial = true;
             bool doneDot = false;
@@ -632,7 +624,6 @@ namespace OutSmart.DAXon.Values
             AppendInt(sb, H);
         }
 
-        //@CSharpReplaceBody(code = "return OutSmart.DAXon.Text.BMPString.of(d.ToString(System.Globalization.CultureInfo.InvariantCulture));") // for now...
         public static UnicodeString ConvertDouble(double d, bool useExponential)
         {
             UnicodeBuilder s = new UnicodeBuilder(32);
@@ -691,10 +682,10 @@ namespace OutSmart.DAXon.Values
                 int exp = (int)rawExp - doubleExpBias;
                 if (rawExp == 0)
                 {
-
-                    // subnormal double: fall back to the round-trip shortest representation
-                    s.Append(d.ToString("R", CultureInfo.InvariantCulture));
-                    return s.ToUnicodeString();
+                    // Subnormal: no hidden bit, the exponent of the smallest normal; Dragon4 gives Java's 1.0E-310 where
+                    // .NET Framework's "R" gave 9.99999999999997E-311.
+                    fraction = bits & doubleFractMask;
+                    exp = 1 - doubleExpBias;
                 }
 
                 if (useExponential)
@@ -717,7 +708,6 @@ namespace OutSmart.DAXon.Values
             return s.ToUnicodeString();
         }
 
-        //@CSharpReplaceBody(code="return s.append(f.ToString(System.Globalization.CultureInfo.InvariantCulture)).toUnicodeString();")  // for now...
         public static UnicodeString AppendFloat(UnicodeBuilder s, float f, bool forceExponential)
         {
             if (f == float.NegativeInfinity)
@@ -772,10 +762,9 @@ namespace OutSmart.DAXon.Values
                 int precision = 23;
                 if (rawExp == 0)
                 {
-
-                    // subnormal float: fall back to the round-trip shortest representation
-                    s.Append(f.ToString("R", CultureInfo.InvariantCulture));
-                    return s.ToUnicodeString();
+                    // Subnormal, as for double.
+                    fraction = bits & floatFractMask;
+                    exp = 1 - floatExpBias;
                 }
 
                 if (forceExponential || (f >= 1000000 || f < 1E-06F))

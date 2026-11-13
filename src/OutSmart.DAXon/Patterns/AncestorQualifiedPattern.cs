@@ -16,11 +16,8 @@ using OutSmart.DAXon.Types;
 
 namespace OutSmart.DAXon.Patterns
 {
-    // Faithful port of net/sf/saxon/pattern/AncestorQualifiedPattern.java (runtime-matching members only).
-    // Was a hollow stub (NOT : Pattern, implicit operator Pattern => null) which nulled every A/B path
-    // match pattern -> NRE at PatternParser.ParsePattern:192. Now a real Pattern subclass; csproj keeps the
-    // transpiled AncestorQualifiedPattern.cs excluded (re-including it cascades). Depends only on already-
-    // compiled types. Construction sites (3-arg): SlashExpression:1383, PackageLoaderHE:6367.
+    // Port of net/sf/saxon/pattern/AncestorQualifiedPattern.java (the runtime-matching members): the A/B and A//B
+    // patterns.
     internal sealed class AncestorQualifiedPattern : Pattern
     {
         private Pattern basePattern;
@@ -111,6 +108,8 @@ namespace OutSmart.DAXon.Patterns
 
         private bool MatchesUpperPattern(NodeInfo node, NodeInfo anchor, IXPathContext context)
         {
+            // One level per step of a path pattern (up to the parser's 3000) while the ancestors match.
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             switch (upwardsAxis)
             {
                 case AxisInfo.SELF:

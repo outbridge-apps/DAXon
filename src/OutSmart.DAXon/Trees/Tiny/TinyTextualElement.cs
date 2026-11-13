@@ -507,20 +507,14 @@ namespace OutSmart.DAXon.Trees.Tiny
                 return n == 0 ? (IItem)this : null;
             }
 
-            public IGroundedValue Subsequence(int start, int length)
-            {
-                return (start <= 0 && (long)start + length > 0) ? (IGroundedValue)this : OutSmart.DAXon.Values.EmptySequence.GetInstance();
-            }
+            public IGroundedValue Subsequence(int start, int length) => GroundedValueDefaults.Subsequence(this, start, length);
 
             public int GetLength()
             {
                 return 1;
             }
 
-            public bool EffectiveBooleanValue()
-            {
-                return ExpressionTool.EffectiveBooleanValue(Iterate());
-            }
+            public bool EffectiveBooleanValue() => true; // a single node
 
             public IGroundedValue Reduce()
             {
@@ -532,16 +526,9 @@ namespace OutSmart.DAXon.Trees.Tiny
                 return this;
             }
 
-            public bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
+            public bool ContainsNode(NodeInfo sought) => GroundedValueDefaults.ContainsNode(this, sought);
 
-            public IGroundedValue Concatenate(params IGroundedValue[] others)
-            {
-                // upstream GroundedValue default: chain this value's items with the others
-                var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-                foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                    __chain = __chain.AddAll(__v.AsIterable());
-                return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-            }
+            public IGroundedValue Concatenate(params IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
 
             public ISequence MakeRepeatable()
             {

@@ -148,18 +148,23 @@ namespace OutSmart.DAXon.Expressions
         // and regardless of whether the argument is ever consumed. Fused eager-item call paths
         // cannot reproduce that timing, so they gate on this test and fall back to the generic
         // elaborator when a (constant-folded) error sits anywhere in an argument subtree.
+        // A loop, not a recursion: elaborators ask it of their arguments on the thread that first runs the expression,
+        // which may have far less stack than the one that compiled it (a 2900-term || chain killed a 256 KB thread).
         internal static bool IsContainedIn(Expression e)
         {
-            if (e is ErrorExpression)
+            var todo = new System.Collections.Generic.Stack<Expression>();
+            todo.Push(e);
+            while (todo.Count > 0)
             {
-                return true;
-            }
-
-            foreach (Operand o in e.Operands())
-            {
-                if (IsContainedIn(o.GetChildExpression()))
+                Expression x = todo.Pop();
+                if (x is ErrorExpression)
                 {
                     return true;
+                }
+
+                foreach (Operand o in x.Operands())
+                {
+                    todo.Push(o.GetChildExpression());
                 }
             }
 

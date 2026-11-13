@@ -77,21 +77,5 @@ namespace OutSmart.DAXon.Expressions.Instructions
         {
             return true;
         }
-
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-
-            // This logic is assuming the mode is streamable (so called templates can't return streamed nodes)
-            //PathMap.PathMapNodeSet result = super.addToPathMap(pathMap, pathMapNodeSet);
-            if (pathMapNodeSet == null)
-            {
-                ContextItemExpression cie = new ContextItemExpression();
-
-                pathMapNodeSet = new PathMap.PathMapNodeSet(pathMap.MakeNewRoot(cie));
-            }
-
-            pathMapNodeSet.AddDescendants();
-            return new PathMap.PathMapNodeSet(pathMap.MakeNewRoot(this));
-        }
     }
 }

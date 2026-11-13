@@ -47,9 +47,9 @@ namespace OutSmart.DAXon.Functions
             Register("pi", 0, (e) => e.Populate(() => new PiFn(), BuiltInAtomicType.DOUBLE, ONE, 0));
 
             // Arity 1
-            Reg1("sin", Math.Sin);
-            Reg1("cos", Math.Cos);
-            Reg1("tan", Math.Tan);
+            Reg1("sin", Trigonometry.Sin);
+            Reg1("cos", Trigonometry.Cos);
+            Reg1("tan", Trigonometry.Tan);
             Reg1("asin", Math.Asin);
             Reg1("acos", Math.Acos);
             Reg1("atan", Math.Atan);
@@ -57,7 +57,7 @@ namespace OutSmart.DAXon.Functions
             Reg1("log", Math.Log);
             Reg1("log10", Math.Log10);
             Reg1("exp", Math.Exp);
-            Reg1("exp10", (input) => Math.Pow(10, input));
+            Reg1("exp10", (input) => OutSmart.DAXon.Internal.Numerics.PrecisePow.Pow(10, input));
 
             // Arity 2
             Register("pow", 2, (e) => e.Populate(() => new PowFn(), BuiltInAtomicType.DOUBLE, OPT, CARD0)
@@ -133,9 +133,10 @@ namespace OutSmart.DAXon.Functions
                             NumericValue @in = (NumericValue)argEval.Eval(context);
                             return @in == null ? null : (IItem)new DoubleValue(fn.method(@in.GetDoubleValue()));
                         }
-                        catch (XPathException e)
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                         {
-                            throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     };
                 }
@@ -181,7 +182,7 @@ namespace OutSmart.DAXon.Functions
                     }
                     else
                     {
-                        result = new DoubleValue(Math.Pow(dx, dy));
+                        result = new DoubleValue(OutSmart.DAXon.Internal.Numerics.PrecisePow.Pow(dx, dy));
                     }
                 }
 
@@ -249,11 +250,12 @@ namespace OutSmart.DAXon.Functions
                                 return new DoubleValue(Math.Sqrt(dx));
                             }
 
-                            return new DoubleValue(Math.Pow(dx, dy));
+                            return new DoubleValue(OutSmart.DAXon.Internal.Numerics.PrecisePow.Pow(dx, dy));
                         }
-                        catch (XPathException e)
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                         {
-                            throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     };
                 }
@@ -263,11 +265,22 @@ namespace OutSmart.DAXon.Functions
         /// <summary>math:atan2</summary>
         internal sealed class Atan2Fn : SystemFunction
         {
+            // IEEE 754-2008 9.2.1 for two infinities (+-pi/4, +-3pi/4): .NET Framework's Math.Atan2 gives NaN there.
+            internal static double Atan2(double y, double x)
+            {
+                if (double.IsInfinity(y) && double.IsInfinity(x))
+                {
+                    return (x > 0 ? Math.PI / 4 : 3 * Math.PI / 4) * (y > 0 ? 1 : -1);
+                }
+
+                return Math.Atan2(y, x);
+            }
+
             public override ISequence Call(IXPathContext context, ISequence[] arguments)
             {
                 NumericValue y = (NumericValue)arguments[0].Head();
                 NumericValue x = (NumericValue)arguments[1].Head();
-                double result = Math.Atan2(y.GetDoubleValue(), x.GetDoubleValue());
+                double result = Atan2(y.GetDoubleValue(), x.GetDoubleValue());
                 return new DoubleValue(result);
             }
 
@@ -303,11 +316,12 @@ namespace OutSmart.DAXon.Functions
                             IItem pre1 = eager1 ? xEval.Eval(context) : null;
                             NumericValue y = (NumericValue)(eager0 ? pre0 : yEval.Eval(context));
                             NumericValue x = (NumericValue)(eager1 ? pre1 : xEval.Eval(context));
-                            return new DoubleValue(Math.Atan2(y.GetDoubleValue(), x.GetDoubleValue()));
+                            return new DoubleValue(Atan2(y.GetDoubleValue(), x.GetDoubleValue()));
                         }
-                        catch (XPathException e)
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                         {
-                            throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     };
                 }

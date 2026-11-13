@@ -37,7 +37,33 @@ namespace OutSmart.DAXon.Regex
         static readonly int MAX_PAREN = 16; // Number of paren pairs
         // State of current program
         public REProgram program; // Compiled regular expression 'program'
-        public UnicodeString search; // The string being matched against
+        private UnicodeString searchString;   // The string being matched against
+        private string searchChars;
+        private byte[] searchBytes;
+        private int searchOffset;
+        private int searchLength;
+
+        // Set with its backing characters or Latin-1 bytes, so the operations read the subject without a virtual call
+        // per character.
+        public UnicodeString search
+        {
+            get => searchString;
+            set
+            {
+                searchString = value;
+                (searchChars, searchBytes, searchOffset) = value == null ? (null, null, 0) : Backing(value);
+                searchLength = value == null ? 0 : value.Length32();
+            }
+        }
+
+        internal int SearchLength => searchLength;
+
+        // The codepoint at i, 0 <= i < SearchLength.
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal int CharAt(int i)
+        {
+            return searchChars != null ? searchChars[searchOffset + i] : searchBytes != null ? searchBytes[searchOffset + i] & 0xff : searchString.CodePointAt(i);
+        }
         public History history = new History();
         int maxParen = MAX_PAREN;
         // Parenthesized subexpressions
@@ -166,7 +192,16 @@ namespace OutSmart.DAXon.Regex
             int n = ++backtrackSteps;
             if (backtrackLimit >= 0 && n > backtrackLimit)
             {
-                throw new OutSmart.DAXon.Transformation.UncheckedXPathException(new OutSmart.DAXon.Transformation.XPathException("Regex backtracking limit exceeded processing " + operation.Display() + ". Simplify the regular expression, " + "or set Feature<int>.REGEX_BACKTRACKING_LIMIT to -1 to remove this limit."));
+                string op = operation.Display();   // the whole compiled program: a 200 KB pattern made a 200 KB message
+                if (op.Length > 200)
+                {
+                    op = op.Substring(0, 200) + "...";
+                }
+
+                string message = "Regex backtracking limit exceeded processing " + op + ". Simplify the regular expression, "
+                    + "or set Feature<int>.REGEX_BACKTRACKING_LIMIT to -1 to remove this limit.";
+                throw new OutSmart.DAXon.Transformation.UncheckedXPathException(   // SXRE0002: Saxon gives it no code
+                    new OutSmart.DAXon.Transformation.XPathException(message, OutSmart.DAXon.Transformation.DAXonErrorCode.SXRE0002));
             }
 
             if ((n & 63) == 0)
@@ -246,13 +281,9 @@ namespace OutSmart.DAXon.Regex
             {
                 return (sl.Backing, null, sl.Start);
             }
-            else if (s is Slice8 s8)
+            else if (Slice8.Latin1Span(s, out byte[] b, out int start, out _))
             {
-                return (null, s8.ByteArray, s8.Start);
-            }
-            else if (s is Twine8 t8)
-            {
-                return (null, t8.ByteArray, 0);
+                return (null, b, start);
             }
 
             return (null, null, 0);
@@ -521,6 +552,13 @@ namespace OutSmart.DAXon.Regex
             return false;
         }
 
+        // Takes a match found earlier on the same string, as Match found it: its captured groups become the current ones.
+        internal void Replay(UnicodeString search, State state)
+        {
+            this.search = search;
+            _captureState = state;
+        }
+
         public bool Match(UnicodeString search, int i)
         {
 
@@ -528,7 +566,7 @@ namespace OutSmart.DAXon.Regex
                 throw new NullReferenceException();
 
             // Save string to search
-            this.search = search.Tidy();
+            this.search = search;
             OutSmart.DAXon.Core.Controller.CheckActiveTimeout();   // one call per token of tokenize, per match of analyze-string
 
             // Clear the captured group state
@@ -1009,72 +1047,6 @@ namespace OutSmart.DAXon.Regex
             return result.ToUnicodeString();
         }
 
-        public UnicodeString ReplaceWith(UnicodeString @in, Func<UnicodeString, UnicodeString[], UnicodeString> replacer)
-        {
-
-            // String to return
-            UnicodeBuilder sb = new UnicodeBuilder();
-
-            // Start at position 0 and search the whole string
-            int pos = 0;
-            int len = @in.Length32();
-
-            // Try a match at each position
-            while (pos < len && Match(@in, pos))
-            {
-
-                // Append chars from input string before match
-                for (long i = pos; i < GetParenStart(0); i++)
-                {
-                    sb.Append(@in.CodePointAt(i));
-                }
-
-                UnicodeString matchingSubstring = @in.Substring(GetParenStart(0), GetParenEnd(0));
-                int nrOfGroups = program.maxParens - 1;
-                UnicodeString[] groups = new UnicodeString[nrOfGroups];
-                for (int i = 0; i < nrOfGroups; i++)
-                {
-                    groups[i] = GetParen(i + 1);
-                    if (groups[i] == null)
-                    {
-                        groups[i] = EmptyUnicodeString.GetInstance();
-                    }
-                }
-
-                UnicodeString replacement = replacer(matchingSubstring,groups);
-                IIntIterator iter = replacement.CodePoints();
-                while (iter.MoveNext())
-                {
-                    sb.Append(iter.Current);
-                }
-
-
-                // Move forward, skipping past match
-                int newpos = GetParenEnd(0);
-
-                // We always want to make progress!
-                if (newpos == pos)
-                {
-                    newpos++;
-                }
-
-
-                // Try new position
-                pos = newpos;
-            }
-
-
-            // If there's remaining input, append it
-            for (int i = pos; i < len; i++)
-            {
-                sb.Append(@in.CodePointAt(i));
-            }
-
-
-            // Return string buffer
-            return sb.ToUnicodeString();
-        }
-
         public bool IsNewline(int i)
         {
             return search.CodePointAt(i) == '\n';
@@ -1082,20 +1054,7 @@ namespace OutSmart.DAXon.Regex
 
         public bool EqualCaseBlind(int c1, int c2)
         {
-            if (c1 == c2)
-            {
-                return true;
-            }
-
-            foreach (int v in CaseVariants.GetCaseVariants(c2))
-            {
-                if (c1 == v)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return c1 == c2 || CaseVariants.IsCaseVariant(c2, c1);
         }
 
         // A snapshot is one array (parenCount, both lengths, starts, ends): a save is one allocation and

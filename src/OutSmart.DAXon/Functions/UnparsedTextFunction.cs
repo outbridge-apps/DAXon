@@ -51,8 +51,9 @@ namespace OutSmart.DAXon.Functions
             }
             catch (IOException ioErr)
             {
-
-                throw HandleIOError(absoluteURI, ioErr);
+                // Bytes the given encoding cannot decode are FOUT1190; FOUT1200 is for an inferred one.
+                XPathException err = HandleIOError(absoluteURI, ioErr);
+                throw encoding == null ? err : err.ReplacingErrorCode("FOUT1200", "FOUT1190");
             }
         }
 
@@ -183,6 +184,15 @@ namespace OutSmart.DAXon.Functions
         /// </summary>
         public static string ReadFileToString(TextReader reader)
         {
+            // The reader is closed on a failed read too: a file left open stays locked until a finalizer runs.
+            using (reader)
+            {
+                return ReadAll(reader);
+            }
+        }
+
+        private static string ReadAll(TextReader reader)
+        {
             StringBuilder sb = new StringBuilder();
             // Small first, as most JSON texts are; a read that fills it moves to 8192.
             char[] buffer = new char[512];
@@ -194,9 +204,14 @@ namespace OutSmart.DAXon.Functions
                 {
                     actual = reader.Read(buffer, 0, buffer.Length);
                 }
+                catch (System.Text.DecoderFallbackException e)
+                {
+                    // A strict decoder's refusal: FOUT1200, FOUT1190 when the encoding was given (the caller's)
+                    throw new Internal.Charsets.MalformedInputException(e);
+                }
                 catch (InvalidOperationException e)
                 {
-                    // Proxy for a decode failure (System.Text.DecoderFallbackException), as in ReadFile
+                    // Proxy for a decode failure of a host's reader
                     throw new IOException(e.Message, e);
                 }
 
@@ -225,11 +240,19 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            reader.Dispose();
             return sb.ToString();
         }
 
         public static void ReadFile(IIntPredicateProxy checker, TextReader reader, IUniStringConsumer output)
+        {
+            // As ReadFileToString: closed whatever ends the read (a bad character, a decode error, the time limit).
+            using (reader)
+            {
+                ReadChecked(checker, reader, output);
+            }
+        }
+
+        private static void ReadChecked(IIntPredicateProxy checker, TextReader reader, IUniStringConsumer output)
         {
             char[] buffer = new char[2048];
             bool first = true;
@@ -243,10 +266,14 @@ namespace OutSmart.DAXon.Functions
                 {
                     actual = reader.Read(buffer, 0, buffer.Length);
                 }
+                catch (System.Text.DecoderFallbackException e)
+                {
+                    // A strict decoder's refusal: FOUT1200, FOUT1190 when the encoding was given (the caller's)
+                    throw new Internal.Charsets.MalformedInputException(e);
+                }
                 catch (InvalidOperationException e)
                 {
-
-                    // Proxy for C# System.Text.DecoderFallbackException
+                    // Proxy for a decode failure of a host's reader
                     throw new IOException(e.Message, e);
                 }
 
@@ -349,7 +376,7 @@ namespace OutSmart.DAXon.Functions
                 }
                 else if (mask <= 0xffff)
                 {
-                    output.Accept(new Twine16(buffer, start, actual));
+                    output.Accept(new BMPString(new string(buffer, start, actual)));
                 }
                 else
                 {
@@ -360,8 +387,6 @@ namespace OutSmart.DAXon.Functions
                     output.Accept(StringTool.FromCharSequence(new string(buffer, start, actual)));
                 }
             }
-
-            reader.Dispose();
         }
 
         private static bool IsEndOfFile(int bytesRead)

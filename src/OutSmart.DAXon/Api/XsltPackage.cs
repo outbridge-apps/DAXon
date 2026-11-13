@@ -10,6 +10,7 @@ using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Internal;
 using System.IO;
+using System;
 namespace OutSmart.DAXon.Api
 {
     public class XsltPackage
@@ -22,6 +23,8 @@ namespace OutSmart.DAXon.Api
         public virtual StylesheetPackage UnderlyingPreparedPackage => stylesheetPackage;
         public XsltPackage(XsltCompiler compiler, StylesheetPackage pp)
         {
+            ArgumentCheck.NotNull(compiler, nameof(compiler));
+            ArgumentCheck.NotNull(pp, nameof(pp));
             this.compiler = compiler;
             this.stylesheetPackage = pp;
         }
@@ -60,18 +63,15 @@ namespace OutSmart.DAXon.Api
                 pss.AddPackage(stylesheetPackage);
                 return new XsltExecutable(GetProcessor(), pss);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
         public virtual void Save(string file)
         {
+            ArgumentCheck.NotNull(file, nameof(file));
             string target = stylesheetPackage.TargetEdition;
             if (target == null)
             {
@@ -83,20 +83,24 @@ namespace OutSmart.DAXon.Api
 
         public virtual void Save(string file, string target)
         {
+            ArgumentCheck.NotNull(file, nameof(file));
             try
             {
-                XQuery.Query.CreateFileIfNecessary(file);
-                ExpressionPresenter presenter = GetProcessor().UnderlyingConfiguration.NewExpressionExporter(target, OutSmart.DAXon.Internal.Streams.FileNames.Create(file), stylesheetPackage);
+                // Exported first, the file written after: the edition's refusal (HE) truncated the file and left it open.
+                var exported = new MemoryStream();
+                ExpressionPresenter presenter = GetProcessor().UnderlyingConfiguration.NewExpressionExporter(target, exported, stylesheetPackage);
                 presenter.GetOptions().relocatable = stylesheetPackage.IsRelocatable();
                 stylesheetPackage.Export(presenter);
+                XQuery.Query.CreateFileIfNecessary(file);
+                using (Stream output = OutSmart.DAXon.Internal.Streams.FileNames.Create(file))
+                {
+                    byte[] bytes = exported.ToArray();
+                    output.Write(bytes, 0, bytes.Length);
+                }
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
             catch (IOException e)
             {

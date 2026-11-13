@@ -21,7 +21,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
         public static int[] lowerCaseAlphabet = StringTool.Expand(new Twine8("0123456789abcdefghijklmnopqrstuvwxyz"));
         public static int[] upperCaseAlphabet = StringTool.Expand(new Twine8("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
 
-        /*if (formchar == 'w')*/
         protected static readonly int[] westernDigits = new int[]
         {
             '0',
@@ -35,30 +34,18 @@ namespace OutSmart.DAXon.Expressions.Numbering
             '8',
             '9'
         };
-        /*if (formchar == 'w')*/
         protected static readonly string latinUpper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        /*if (formchar == 'w')*/
         protected static readonly string latinLower = "abcdefghijklmnopqrstuvwxyz";
-        /*if (formchar == 'w')*/
         protected static readonly string greekUpper = "ΑΒΓΔΕΖΗΘΙΚ" + "ΛΜΝΞΟΠΡ\u03a2ΣΤ" + "ΥΦΧΨΩ";
-        /*if (formchar == 'w')*/
         protected static readonly string greekLower = "αβγδεζηθικ" + "λμνξοπρςστ" + "υφχψω";
-        /*if (formchar == 'w')*/
         protected static readonly string cyrillicUpper = "АБВГДЕЖЗИ" + "КЛМНОПРССУ" + "ФХЦЧШЩЫЭЮЯ";
-        /*if (formchar == 'w')*/
         protected static readonly string cyrillicLower = "абвгдежзи" + "клмнопрссу" + "фхцчшщыэюя";
-        /*if (formchar == 'w')*/
         protected static readonly string hebrew = "אבגדהוזחטיכל" + "מנסעפצקרשת";
-        /*if (formchar == 'w')*/
         protected static readonly string hiraganaA = "あいうえおかきくけこ" + "さしすせそたちつてと" + "なにぬねのはひふへほ" + "まみむめもやゆよらり" + "るれろわをん";
-        /*if (formchar == 'w')*/
         protected static readonly string katakanaA = "アイウエオカキクケコ" + "サシスセソタチツテト" + "ナニヌネノハヒフヘホ" + "マミムメモヤユヨラリ" + "ルレロワヲン";
-        /*if (formchar == 'w')*/
         protected static readonly string hiraganaI = "いろはにほへとちりぬ" + "るをわかよたれそつね" + "ならむうゐのおくやま" + "けふこえてあさきゆめ" + "みしゑひもせす";
-        /*if (formchar == 'w')*/
         protected static readonly string katakanaI = "イロハニホヘトチリヌ" + "ルヲワカヨタレソツネ" + "ナラムウヰノオクヤマ" + "ケフコエテアサキユメ" + "ミシヱヒモセス";
 
-        /*if (formchar == 'w')*/
         private static readonly string[] romanThousands = new[]
         {
             "",
@@ -72,7 +59,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
             "mmmmmmmm",
             "mmmmmmmmm"
         };
-        /*if (formchar == 'w')*/
         private static readonly string[] romanHundreds = new[]
         {
             "",
@@ -86,7 +72,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
             "dccc",
             "cm"
         };
-        /*if (formchar == 'w')*/
         private static readonly string[] romanTens = new[]
         {
             "",
@@ -100,7 +85,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
             "lxxx",
             "xc"
         };
-        /*if (formchar == 'w')*/
         private static readonly string[] romanUnits = new[]
         {
             "",
@@ -115,7 +99,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
             "ix"
         };
 
-        /*if (formchar == 'w')*/
         // no action (not used at top level)
         private static readonly int[] kanjiDigits = new[]
         {
@@ -554,12 +537,10 @@ namespace OutSmart.DAXon.Expressions.Numbering
             return sb.ToString();
         }
 
-        /*if (formchar == 'w')*/
         protected virtual string OrdinalSuffix(string ordinalParam, long number)
         {
             return "";
         }
-        /*if (formchar == 'w')*/
         protected virtual void AlphaDefault(long number, char formchar, StringBuilder sb)
         {
             int min = formchar;
@@ -574,7 +555,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
             sb.Append(ToAlpha(number, min, max));
         }
 
-        /*if (formchar == 'w')*/
         protected virtual string ToAlpha(long number, int min, int max)
         {
             if (number <= 0)
@@ -591,19 +571,12 @@ namespace OutSmart.DAXon.Expressions.Numbering
             {
                 sb.Append((char)(((number - 1) % range) + min));
                 number = (number - 1) / range;
-                // Only the range==1 case reaches four digits; the deadline then bounds an output
-                // that would otherwise run to a billion characters. Common runs (log depth) never
-                // trip this, so it costs the ordinary format-integer nothing.
-                if ((sb.Length & 0xfff) == 0)
-                {
-                    OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
-                }
+                Grown(sb);
             }
 
             return Reversed(sb);
         }
 
-        /*if (formchar == 'w')*/
         protected virtual string ToAlphaSequence(long number, string alphabet)
         {
             if (number <= 0)
@@ -619,10 +592,29 @@ namespace OutSmart.DAXon.Expressions.Numbering
             {
                 sb.Append(alphabet[(int)((number - 1) % range)]);
                 number = (number - 1) / range;
+                Grown(sb);
             }
 
             return Reversed(sb);
         }
+
+        // Only a one-letter range makes a long numeral, as long as the number (up to 2^63 characters): past four
+        // thousand the clock is read, past 64K the numeral is held in the memory ledger as it grows. Common numerals
+        // (log length) never reach either.
+        private static void Grown(StringBuilder sb)
+        {
+            if ((sb.Length & 0xfff) == 0)
+            {
+                if (sb.Length == 1 << 16)
+                {
+                    OutSmart.DAXon.Core.MemoryLedger.Hold(sb, NumeralSizer);
+                }
+
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+            }
+        }
+
+        private static readonly Func<object, long> NumeralSizer = o => 24 + 2L * ((StringBuilder)o).Capacity;
 
         private static string Reversed(StringBuilder sb)
         {
@@ -635,7 +627,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
             return new string(a);
         }
 
-        /*if (formchar == 'w')*/
         private string ToRadical(long number, int[] digits, int pictureLength, NumericGroupFormatter numGroupFormatter)
         {
             string temp = ConvertDigitSystem(number, digits, pictureLength);
@@ -647,7 +638,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
             return numGroupFormatter.Format(temp);
         }
 
-        /*if (formchar == 'w')*/
         public static string ConvertDigitSystem(long number, int[] digits, int requiredLength)
         {
             if (ReferenceEquals(digits, westernDigits))
@@ -681,7 +671,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
             return temp.ToString();
         }
 
-        /*if (formchar == 'w')*/
         public static string ToRoman(long n)
         {
             if (n <= 0 || n > 9999)
@@ -691,7 +680,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
 
             return romanThousands[(int)n / 1000] + romanHundreds[((int)n / 100) % 10] + romanTens[((int)n / 10) % 10] + romanUnits[(int)n % 10];
         }
-        /*if (formchar == 'w')*/
         public virtual string ToJapanese(long number)
         {
             StringBuilder fsb = new StringBuilder(16);
@@ -711,7 +699,6 @@ namespace OutSmart.DAXon.Expressions.Numbering
             return fsb.ToString();
         }
 
-        /*if (formchar == 'w')*/
         private static void ToJapanese(int nr, StringBuilder fsb, bool isInitial)
         {
             if (nr == 0)
@@ -747,9 +734,7 @@ namespace OutSmart.DAXon.Expressions.Numbering
                 ToJapanese(nr % 1000, fsb, false);
             }
         }
-        /*if (formchar == 'w')*/
         public abstract string ToWords(string cardinal, long number);
-        /*if (formchar == 'w')*/
         public virtual string ToWords(string cardinal, long number, int wordCase)
         {
             string s;
@@ -773,19 +758,14 @@ namespace OutSmart.DAXon.Expressions.Numbering
             }
         }
 
-        /*if (formchar == 'w')*/
         public virtual string Zero()
         {
             return "Zero";
         }
 
-        /*if (formchar == 'w')*/
         public abstract string ToOrdinalWords(string ordinalParam, long number, int wordCase);
-        /*if (formchar == 'w')*/
         public abstract string MonthName(int month, int minWidth, int maxWidth);
-        /*if (formchar == 'w')*/
         public abstract string DayName(int day, int minWidth, int maxWidth);
-        /*if (formchar == 'w')*/
         public virtual string HalfDayName(int minutes, int minWidth, int maxWidth)
         {
             string s;
@@ -833,19 +813,16 @@ namespace OutSmart.DAXon.Expressions.Numbering
             return s;
         }
 
-        /*if (formchar == 'w')*/
         public virtual string GetOrdinalSuffixForDateTime(string component)
         {
             return "yes";
         }
 
-        /*if (formchar == 'w')*/
         public virtual string GetEraName(int year)
         {
             return year > 0 ? "AD" : "BC";
         }
 
-        /*if (formchar == 'w')*/
         public virtual string GetCalendarName(string code)
         {
             if (code.Equals("AD"))

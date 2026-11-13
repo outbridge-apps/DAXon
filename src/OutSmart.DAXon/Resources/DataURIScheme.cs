@@ -33,7 +33,7 @@ namespace OutSmart.DAXon.Resources
             string contentType = isBase64 ? header.Substring(0, comma - 7) : header;
             if (isBase64)
             {
-                byte[] octets = Base64BinaryValue.Decode(StringView.Of(content).Tidy());
+                byte[] octets = Base64BinaryValue.Decode(StringView.Of(content));
                 return new BinaryResource(uri, contentType, octets);
             }
 

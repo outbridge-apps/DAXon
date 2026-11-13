@@ -16,11 +16,11 @@ namespace OutSmart.DAXon.Api
     /// </summary>
     public class DAXonApiException : Exception
     {
-        public DAXonApiException(Exception cause) : base(cause?.Message, cause)
+        public DAXonApiException(Exception cause) : base(ArgumentCheck.Checked(cause, nameof(cause)).Message, cause)
         {
         }
 
-        public DAXonApiException(UncheckedXPathException cause) : base(cause.GetXPathException()?.Message, cause.GetXPathException())
+        public DAXonApiException(UncheckedXPathException cause) : base(ArgumentCheck.Checked(cause, nameof(cause)).GetXPathException()?.Message, cause.GetXPathException())
         {
         }
 
@@ -32,27 +32,12 @@ namespace OutSmart.DAXon.Api
         {
         }
 
-        // .NET's XmlReader reports malformed input as a raw XmlException; Java's parser surfaced it as
-        // SXXP0003 inside the API exception. The XmlException stays reachable as the inner cause.
-        internal static DAXonApiException FromXmlParser(System.Xml.XmlException e, string systemId)
-        {
-            XPathException err = new XPathException("Error reported by XML parser: " + e.Message, e)
-                .WithErrorCode(DAXonErrorCode.SXXP0003)
-                .WithLocation(new Expressions.Parsing.Loc(string.IsNullOrEmpty(e.SourceUri) ? systemId : e.SourceUri, e.LineNumber, e.LinePosition));
-            return new DAXonApiException(err);
-        }
-
-        // An input the reader could not open or read - missing, locked, a directory: SXXP0003, as the resolver path
-        // (ActiveStreamSource) reports it, not a raw IOException. The I/O exception stays reachable as the inner cause.
-        internal static DAXonApiException FromIO(Exception e, string systemId)
-        {
-            return new DAXonApiException(Resources.ActiveStreamSource.IOFailure(e, systemId));
-        }
-
         internal static bool IsIO(Exception e)
         {
             // UriFormatException: a name that is no path either - a device ("CON"), "c:relative", "\.\pipe\x".
-            return e is System.IO.IOException || e is UnauthorizedAccessException || e is UriFormatException || IsPathRefused(e);
+            // ObjectDisposedException: a reader or stream the host had closed (SXXP0003 as Java's, not raw).
+            return e is System.IO.IOException || e is UnauthorizedAccessException || e is UriFormatException || e is ObjectDisposedException
+                || IsPathRefused(e);
         }
 
         // .NET Framework refusing a path by its form ("Illegal characters in path.", "The given path's format is not

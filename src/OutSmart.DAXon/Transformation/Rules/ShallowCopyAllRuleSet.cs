@@ -38,19 +38,8 @@ namespace OutSmart.DAXon.Transformation.Rules
                 ProxyOutputter checker = new ShallowCopyProxyOutputterForArrays(cco, locationId);
                 collector.SetSystemId(@out.GetSystemId());
                 ISequenceIterator iter = ((ArrayItem)item).Parcels();
-                PipelineConfiguration pipe = @out.GetPipelineConfiguration();
-                XPathContextMajor c2 = context.NewContext();
-                c2.Origin = this;
-                c2.TrackFocus(iter);
-                c2.SetCurrentComponent(c2.GetCurrentMode());
-                pipe.XPathContext = c2;
-                ITailCall tc = context.GetCurrentMode().GetActor().ApplyTemplates(parameters, tunnelParams, null, checker, c2, locationId);
-                while (tc != null)
-                {
-                    tc = tc.ProcessLeavingTail();
-                }
+                BuiltInRuleSets.ApplyTo(this, iter, parameters, tunnelParams, checker, context, locationId);
 
-                pipe.XPathContext = context;
                 IList<IGroundedValue> members = new List<IGroundedValue>();
                 foreach (IItem it in collector.List)
                 {
@@ -80,19 +69,8 @@ namespace OutSmart.DAXon.Transformation.Rules
                     ComplexContentOutputter cco = new ComplexContentOutputter(collector);
                     collector.SetSystemId(@out.GetSystemId());
                     ISequenceIterator iter = singletonValue.Iterate();
-                    PipelineConfiguration pipe = @out.GetPipelineConfiguration();
-                    XPathContextMajor c2 = context.NewContext();
-                    c2.Origin = this;
-                    c2.TrackFocus(iter);
-                    c2.SetCurrentComponent(c2.GetCurrentMode());
-                    pipe.XPathContext = c2;
-                    ITailCall tc = context.GetCurrentMode().GetActor().ApplyTemplates(parameters, tunnelParams, null, cco, c2, locationId);
-                    while (tc != null)
-                    {
-                        tc = tc.ProcessLeavingTail();
-                    }
+                    BuiltInRuleSets.ApplyTo(this, iter, parameters, tunnelParams, cco, context, locationId);
 
-                    pipe.XPathContext = context;
                     MapItem singletonMap = new SingleEntryMap(key, collector.Sequence);
                     @out.Append(singletonMap, locationId, 0);
                 }
@@ -103,19 +81,8 @@ namespace OutSmart.DAXon.Transformation.Rules
                     ProxyOutputter checker = new ShallowCopyProxyOutputterForMaps(cco, locationId);
                     collector.SetSystemId(@out.GetSystemId());
                     ISequenceIterator iter = ((MapItem)item).Entries();
-                    PipelineConfiguration pipe = @out.GetPipelineConfiguration();
-                    XPathContextMajor c2 = context.NewContext();
-                    c2.Origin = this;
-                    c2.TrackFocus(iter);
-                    c2.SetCurrentComponent(c2.GetCurrentMode());
-                    pipe.XPathContext = c2;
-                    ITailCall tc = context.GetCurrentMode().GetActor().ApplyTemplates(parameters, tunnelParams, null, checker, c2, locationId);
-                    while (tc != null)
-                    {
-                        tc = tc.ProcessLeavingTail();
-                    }
+                    BuiltInRuleSets.ApplyTo(this, iter, parameters, tunnelParams, checker, context, locationId);
 
-                    pipe.XPathContext = context;
                     MapItem mergedMap = MapFunctionSet.MapMerge.MergeMaps(collector.Iterate(), context, "use-last", null, null);
                     @out.Append(mergedMap, locationId, 0);
                 }

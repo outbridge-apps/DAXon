@@ -8,6 +8,13 @@ using System.Collections.Generic;
 
 namespace OutSmart.DAXon.Internal
 {
+    // A tracked resource that can give up what it holds and take it again on its next use.
+    internal interface ISuspendableResource
+    {
+        long OpenedAt { get; }   // RunResources.Opened right after it was tracked
+        void Suspend();
+    }
+
     // Readers an evaluation opened and never closed: one that stops early - head(unparsed-text-lines(..))
     // - or fails part-way leaves its reader to the finalizer, and on Windows the file stays locked
     // until a GC. Each API entry point runs inside a scope; leaving the scope closes what is still open.
@@ -22,6 +29,7 @@ namespace OutSmart.DAXon.Internal
         private HashSet<WeakReference<IDisposable>> open;
         private List<Action> onClose;   // the end of the evaluation the scope belongs to: once, when it closes
         private int sweepAt = 64;
+        private long opened;   // resources tracked so far: what a try was begun at
 
         private RunResources(RunResources outer, bool entered)
         {
@@ -90,10 +98,51 @@ namespace OutSmart.DAXon.Internal
                     }
 
                     scope.open.Add(ticket);
+                    scope.opened++;
                 }
             }
 
             return scope;
+        }
+
+        // How many resources the running call has opened, for a try to hand to SuspendOpenedSince when it catches.
+        internal static long Mark()
+        {
+            return current?.opened ?? 0;
+        }
+
+        internal long Opened => opened;
+
+        // A caught error abandons the iterations under its try, and until the call ends their files stayed locked; a long
+        // run that recovers held them for all of it. Let go, not closed: a lazy variable read inside the try may still
+        // go on with one after it.
+        internal static void SuspendOpenedSince(long mark)
+        {
+            RunResources scope = current;
+            if (scope == null || scope.opened == mark)
+            {
+                return;
+            }
+
+            var taken = new List<ISuspendableResource>();
+            lock (scope)
+            {
+                if (scope.open != null)
+                {
+                    foreach (WeakReference<IDisposable> ticket in scope.open)
+                    {
+                        if (ticket.TryGetTarget(out IDisposable resource) && resource is ISuspendableResource suspendable && suspendable.OpenedAt > mark)
+                        {
+                            taken.Add(suspendable);
+                        }
+                    }
+                }
+            }
+
+            foreach (ISuspendableResource suspendable in taken)
+            {
+                suspendable.Suspend();
+            }
         }
 
         public void Untrack(WeakReference<IDisposable> ticket)

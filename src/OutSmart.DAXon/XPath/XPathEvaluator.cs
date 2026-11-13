@@ -73,10 +73,10 @@ namespace OutSmart.DAXon.XPath
                 exp = exp.Optimize(visitor, cit);
             }
 
+            exp.ParentExpression = null;
             if (opt.IsOptionSet(OptimizerOptions.LOOP_LIFTING))
             {
-                exp.ParentExpression = null;
-                exp = LoopLifter.Process(exp);
+                exp = LoopLifter.Process(exp, visitor, cit);
             }
 
             exp = PostProcess(exp);
@@ -105,7 +105,6 @@ namespace OutSmart.DAXon.XPath
             int slots = map.NumberOfVariables;
             slots = pat.AllocateSlots(map, slots);
 
-            //PatternSponsor sponsor = new PatternSponsor(pat);
             XPathExpression xpe = new XPathExpression(staticContext, pat, exec);
             xpe.SetStackFrameMap(map, slots);
             return xpe;

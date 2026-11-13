@@ -4,7 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.validate.SkipValidator;
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Parsing;
@@ -442,14 +441,6 @@ namespace OutSmart.DAXon.Trees.Tiny
             }
         }
 
-        //
-        //
-        //
-        //
-        //
-        //
-        //
-        //    }
         protected virtual void CheckNotNamespaceSensitiveElement(ISchemaType type, int nodeNr)
         {
             if (type is ISimpleType && ((ISimpleType)type).IsNamespaceSensitive())
@@ -474,14 +465,6 @@ namespace OutSmart.DAXon.Trees.Tiny
             }
         }
 
-        //
-        //
-        //
-        //
-        //
-        //
-        //
-        //    }
         private void CheckNotNamespaceSensitiveAttribute(ISimpleType type, int nodeNr)
         {
             if (type.IsNamespaceSensitive())
@@ -506,13 +489,6 @@ namespace OutSmart.DAXon.Trees.Tiny
             }
         }
 
-        //
-        //
-        //
-        //
-        //
-        //
-        //
         public override bool IsId()
         {
 
@@ -520,22 +496,9 @@ namespace OutSmart.DAXon.Trees.Tiny
             return tree.IsIdElement(nodeNr);
         }
 
-        //
-        //
-        //
-        //
-        //
-        //
-        //
         public override bool IsIdref()
         {
             return tree.IsIdrefElement(nodeNr);
         }
-        //
-        //        private final boolean typed;
-        //
-        //        public LocalAttributeMap(boolean typed) {
-        //            this.typed = typed;
-        //
     }
 }

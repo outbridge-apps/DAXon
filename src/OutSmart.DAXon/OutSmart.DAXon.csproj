@@ -30,9 +30,9 @@
   <PropertyGroup>
     <!-- Assembly identity. AssemblyVersion is the binding identity: bump only on a breaking
          change, so consumers are not forced to re-bind on every patch. -->
-    <Version>1.4.0</Version>
-    <AssemblyVersion>1.4.0.0</AssemblyVersion>
-    <FileVersion>1.4.0.0</FileVersion>
+    <Version>1.5.0</Version>
+    <AssemblyVersion>1.5.0.0</AssemblyVersion>
+    <FileVersion>1.5.0.0</FileVersion>
     <!-- Derived from Version, not spelled out: a literal here silently went stale in 1.3.0. -->
     <InformationalVersion>$(Version) (port of Saxon-HE 12.9)</InformationalVersion>
     <!-- Off: the SDK would otherwise append the building repository's commit SHA to
@@ -59,6 +59,7 @@
          but keep them byte-stable anyway) -->
     <EmbeddedResource Include="data\casevariants.xml" LogicalName="Net.Sf.Saxon.casevariants.xml" />
     <EmbeddedResource Include="data\categories.xml" LogicalName="Net.Sf.Saxon.categories.xml" />
+    <EmbeddedResource Include="data\tzdb.bin" LogicalName="Net.Sf.Saxon.tzdb.bin" />
     <EmbeddedResource Include="data\unicodeBlocks.xml" LogicalName="Net.Sf.Saxon.unicodeBlocks.xml" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net472'">

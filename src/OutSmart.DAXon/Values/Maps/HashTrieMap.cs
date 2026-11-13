@@ -18,22 +18,14 @@ namespace OutSmart.DAXon.Values.Maps
     internal sealed class HashTrieMap : MapItem
     {
         private object root;   // MapTrie node, null = empty
-        // type.
         private UType keyUType = UType.VOID;
-        // type.
         private UType valueUType = UType.VOID;
-        // type.
         private IAtomicType keyAtomicType = ErrorType.GetInstance();
-        // type.
         private ItemType valueItemType = ErrorType.GetInstance();
-        // type.
         private int valueCardinality;
-        // type.
         private int entries = -1;
 
-        // type.
         public override UType KeyUType => keyUType;
-        // type.
         public HashTrieMap()
         {
             this.root = null;
@@ -41,7 +33,6 @@ namespace OutSmart.DAXon.Values.Maps
             MemoryLedger.SampleSmall(this, 72);   // its entries are sampled on their own
         }
 
-        // type.
         private HashTrieMap(object root)
         {
             this.root = root;
@@ -49,7 +40,6 @@ namespace OutSmart.DAXon.Values.Maps
             MemoryLedger.SampleSmall(this, 72);
         }
 
-        // type.
         public static HashTrieMap Copy(MapItem map)
         {
             if (map is HashTrieMap)
@@ -66,7 +56,6 @@ namespace OutSmart.DAXon.Values.Maps
             return m2;
         }
 
-        // type.
         private void UpdateTypeInformation(AtomicValue key, ISequence val, bool wasEmpty)
         {
 
@@ -95,7 +84,6 @@ namespace OutSmart.DAXon.Values.Maps
             }
         }
 
-        // type.
         public override int Size()
         {
             if (entries >= 0)
@@ -113,13 +101,11 @@ namespace OutSmart.DAXon.Values.Maps
             return entries = count;
         }
 
-        // type.
         public override bool IsEmpty()
         {
             return entries == 0 || root == null;
         }
 
-        // type.
         public override bool Conforms(IPlainType requiredKeyType, SequenceType requiredValueType, TypeHierarchy th)
         {
             if (IsEmpty())
@@ -197,7 +183,6 @@ namespace OutSmart.DAXon.Values.Maps
             return true;
         }
 
-        // type.
         public override ItemType GetItemType(TypeHierarchy th)
         {
             UType keyType = UType.VOID;
@@ -232,7 +217,6 @@ namespace OutSmart.DAXon.Values.Maps
             }
         }
 
-        // type.
         public override MapItem AddEntry(AtomicValue key, IGroundedValue value)
         {
             IAtomicMatchKey amk = MakeKey(key);
@@ -334,7 +318,6 @@ namespace OutSmart.DAXon.Values.Maps
             }
         }
 
-        // type.
         public bool InitialPut(AtomicValue key, IGroundedValue value)
         {
 
@@ -349,13 +332,11 @@ namespace OutSmart.DAXon.Values.Maps
             return exists;
         }
 
-        // type.
         private IAtomicMatchKey MakeKey(AtomicValue key)
         {
             return key.AsMapKey();
         }
 
-        // type.
         public override MapItem Remove(AtomicValue key)
         {
 
@@ -383,20 +364,17 @@ namespace OutSmart.DAXon.Values.Maps
             return result;
         }
 
-        // type.
         public override IGroundedValue Get(AtomicValue key)
         {
             KeyValuePair o = MapTrie.Get(root, MakeKey(key));
             return o == null ? null : o.value;
         }
 
-        // type.
         public override IAtomicIterator Keys()
         {
             return new AnonymousAtomicIterator(this);
         }
 
-        // type.
         public override IEnumerable<KeyValuePair> KeyValuePairs()
         {
 

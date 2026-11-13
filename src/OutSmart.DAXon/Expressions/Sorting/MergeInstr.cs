@@ -4,7 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.stream.adjunct.MergeInstrAdjunct;
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Accumulators;
@@ -32,7 +31,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private static readonly OperandRole ROW_SELECT = new OperandRole(OperandRole.USES_NEW_FOCUS | OperandRole.HIGHER_ORDER, OperandUsage.INSPECTION, Values.SequenceType.ANY_SEQUENCE);
         protected MergeSource[] mergeSources;
         private Operand actionOp;
-        protected IAtomicComparer[] comparators;
 
         public MergeSource[] MergeSources => mergeSources;
 
@@ -293,14 +291,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return this;
         }
 
-        public override void PrepareForStreaming()
-        {
-            foreach (MergeSource mergeSource in mergeSources)
-            {
-                mergeSource.PrepareForStreaming();
-            }
-        }
-
         private void CheckMergeAtt(SortKeyDefinition[] sortKeyDefs)
         {
             for (int i = 1; i < sortKeyDefs.Length; i++)
@@ -319,40 +309,41 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
         public override ISequenceIterator Iterate(IXPathContext context)
         {
+            return Merge(context, (cxt) => GetAction().Iterate(cxt));
+        }
+
+        // Merges the inputs into groups of equal keys and applies the action to each group.
+        private ISequenceIterator Merge(IXPathContext context, IContextMappingFunction action)
+        {
             try
             {
-                IAtomicComparer[] comps = GetComparators(context);
-
-                //final XPathContextMajor c1 = context.newContext();
-                ISequenceIterator inputIterator = GetMergedInputIterator(context, comps);
-
-                // Now perform the merge into a grouped sequence
-                inputIterator = (ISequenceIterator)new MergeGroupingIterator(inputIterator, GetComparer(mergeSources[0].mergeKeyDefinitions, comps), GetLastPositionFinder(context));
-
-                // and apply the merging action to each group of duplicate items within this sequence
+                MergeGroupingIterator groups = Grouped(context, GetComparators(context), GetLastPositionFinder(context));
                 XPathContextMajor c3 = context.NewContext();
-                c3.SetCurrentMergeGroupIterator((IGroupIterator)inputIterator);
-                c3.TrackFocus(inputIterator);
-                return new ContextMappingIterator((cxt) => GetAction().Iterate(cxt), c3);
+                c3.SetCurrentMergeGroupIterator(groups);
+                c3.TrackFocus(groups);
+                return new ContextMappingIterator(action, c3);
             }
-            catch (XPathException e)
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation())))
             {
-                throw e.MaybeWithLocation(GetLocation());
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
+        }
+
+        private MergeGroupingIterator Grouped(IXPathContext context, IAtomicComparer[] comps, ILastPositionFinder last)
+        {
+            return new MergeGroupingIterator(GetMergedInputIterator(context, comps), GetComparer(mergeSources[0].mergeKeyDefinitions, comps), last);
         }
 
         private ISequenceIterator GetMergedInputIterator(IXPathContext context, IAtomicComparer[] comps)
         {
 
-            // Now construct a tree of merge iterators, one for each merge sequence, for each merge source.
-            ISequenceIterator inputIterator = EmptyIterator.GetInstance();
+            // One input per merge sequence of each merge source, in order, all merged by one MergeIterator.
+            var inputs = new List<ISequenceIterator>();
             foreach (MergeSource ms in mergeSources)
             {
                 ISequenceIterator anchorsIter;
-                if (ms.streamable && ms.ForEachSource != null)
-                {
-                }
-                else if (ms.ForEachSource != null)
+                if (ms.ForEachSource != null)
                 {
                     ParseOptions options = context.GetConfiguration().GetParseOptions().WithSchemaValidationMode(ms.validation).WithTopLevelType(ms.schemaType).WithApplicableAccumulators(ms.accumulators);
                     ISequenceIterator uriIter = ms.ForEachSource.Iterate(context);
@@ -373,11 +364,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     IFocusIterator anchorsIterFocus = c2.TrackFocus(anchorsIter);
                     while (anchorsIterFocus.Next() != null)
                     {
-                        IXPathContext c4 = c2.NewMinorContext();
-                        c4.TrackFocus(ms.RowSelect.Iterate(c2));
-                        MergeKeyMappingFunction addMergeKeys = new MergeKeyMappingFunction(c4, ms);
-                        ContextMappingIterator contextMapKeysItr = new ContextMappingIterator(addMergeKeys.IMap, c4);
-                        inputIterator = MakeMergeIterator(inputIterator, comps, ms, contextMapKeysItr);
+                        inputs.Add(GetInputIterator(ms, c2));
                     }
                 }
                 else if (ms.ForEachItem != null)
@@ -387,77 +374,61 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     IFocusIterator anchorsIterFocus = c2.TrackFocus(anchorsIter);
                     while (anchorsIterFocus.Next() != null)
                     {
-                        inputIterator = GetInputIterator(comps, inputIterator, ms, c2);
+                        inputs.Add(GetInputIterator(ms, c2));
                     }
                 }
                 else
                 {
-                    inputIterator = GetInputIterator(comps, inputIterator, ms, context);
+                    inputs.Add(GetInputIterator(ms, context));
                 }
             }
 
-            return inputIterator;
+            if (inputs.Count <= 1)
+            {
+                return inputs.Count == 0 ? EmptyIterator.GetInstance() : inputs[0];
+            }
+
+            return new MergeIterator(inputs, GetComparer(mergeSources[0].mergeKeyDefinitions, comps));
         }
 
-        private ISequenceIterator GetInputIterator(IAtomicComparer[] comps, ISequenceIterator inputIterator, MergeSource ms, IXPathContext c2)
+        private ISequenceIterator GetInputIterator(MergeSource ms, IXPathContext c2)
         {
             IXPathContext c4 = c2.NewMinorContext();
             c4.TemporaryOutputState = StandardNames.XSL_MERGE_KEY;
             c4.TrackFocus(ms.RowSelect.Iterate(c2));
             MergeKeyMappingFunction addMergeKeys = new MergeKeyMappingFunction(c4, ms);
-            ContextMappingIterator contextMapKeysItr = new ContextMappingIterator(addMergeKeys.IMap, c4);
-            inputIterator = MakeMergeIterator(inputIterator, comps, ms, contextMapKeysItr);
-            return inputIterator;
+            return new ContextMappingIterator(addMergeKeys.IMap, c4);
         }
 
         private IAtomicComparer[] GetComparators(IXPathContext context)
         {
-
-            // First establish an array of comparators to be used for comparing items according to their
-            // merge keys. Ideally this will have been done at compile time.
-            IAtomicComparer[] comps = comparators;
-            if (comparators == null)
+            // The comparators for the merge keys, fixed against this context.
+            SortKeyDefinition[] tempSKeys = new SortKeyDefinition[mergeSources.Length];
+            for (int i = 0; i < mergeSources[0].mergeKeyDefinitions.Count; i++)
             {
-                SortKeyDefinition[] tempSKeys = new SortKeyDefinition[mergeSources.Length];
-                for (int i = 0; i < mergeSources[0].mergeKeyDefinitions.Count; i++)
+                for (int j = 0; j < mergeSources.Length; j++)
                 {
-                    for (int j = 0; j < mergeSources.Length; j++)
-                    {
-                        tempSKeys[j] = mergeSources[j].mergeKeyDefinitions.GetSortKeyDefinition(i).Fix(context);
-                    }
-
-                    CheckMergeAtt(tempSKeys);
+                    tempSKeys[j] = mergeSources[j].mergeKeyDefinitions.GetSortKeyDefinition(i).Fix(context);
                 }
 
-                comps = new IAtomicComparer[mergeSources[0].mergeKeyDefinitions.Count];
-                for (int s = 0; s < mergeSources[0].mergeKeyDefinitions.Count; s++)
-                {
-                    IAtomicComparer comp = mergeSources[0].mergeKeyDefinitions.GetSortKeyDefinition(s).FinalComparator;
-                    if (comp == null)
-                    {
-                        comp = mergeSources[0].mergeKeyDefinitions.GetSortKeyDefinition(s).MakeComparator(context);
-                    }
+                CheckMergeAtt(tempSKeys);
+            }
 
-                    comps[s] = comp;
+            IAtomicComparer[] comps = new IAtomicComparer[mergeSources[0].mergeKeyDefinitions.Count];
+            for (int s = 0; s < mergeSources[0].mergeKeyDefinitions.Count; s++)
+            {
+                IAtomicComparer comp = mergeSources[0].mergeKeyDefinitions.GetSortKeyDefinition(s).FinalComparator;
+                if (comp == null)
+                {
+                    comp = mergeSources[0].mergeKeyDefinitions.GetSortKeyDefinition(s).MakeComparator(context);
                 }
+
+                comps[s] = comp;
             }
 
             return comps;
         }
 
-        private ISequenceIterator MakeMergeIterator(ISequenceIterator result, IAtomicComparer[] comps, MergeSource ms, ContextMappingIterator contextMapKeysItr)
-        {
-            if (result == null || result is EmptyIterator)
-            {
-                result = contextMapKeysItr;
-            }
-            else
-            {
-                result = (ISequenceIterator)new MergeIterator(result, contextMapKeysItr, GetComparer(ms.mergeKeyDefinitions, comps));
-            }
-
-            return result;
-        }
         public override IEnumerable<Operand> Operands()
         {
             IList<Operand> list = new List<Operand>(6);
@@ -548,11 +519,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     @out.EmitAttribute("accum", fsb.ToString());
                 }
 
-                if (mergeSource.streamable)
-                {
-                    @out.EmitAttribute("flags", "s");
-                }
-
                 if (mergeSource.ForEachItem != null)
                 {
                     @out.SetChildRole("forEachItem");
@@ -592,7 +558,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
             public string baseURI;
             public int validation;
             public ISchemaType schemaType;
-            public bool streamable;
             public HashSet<Accumulator> accumulators;
 
             public Expression ForEachItem => forEachItemOp == null ? null : forEachItemOp.GetChildExpression();
@@ -657,17 +622,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 rowSelectOp = new Operand(instruction, rowSelect, ROW_SELECT);
             }
 
-            public void SetStreamable(bool streamable)
-            {
-                this.streamable = streamable;
-                if (streamable && instruction.GetConfiguration().GetBooleanProperty(Feature<bool>.STREAMING_FALLBACK))
-                {
-                    this.streamable = false;
-                    Expression select = rowSelectOp.GetChildExpression();
-                    rowSelectOp.SetChildExpression(SystemFunction.MakeCall("snapshot", select.GetRetainedStaticContext(), select));
-                }
-            }
-
             public MergeSource CopyMergeSource(MergeInstr newInstr, RebindingMap rebindings)
             {
                 SortKeyDefinition[] newKeyDef = new SortKeyDefinition[mergeKeyDefinitions.Count];
@@ -679,7 +633,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 MergeSource ms = new MergeSource(newInstr, Copy(ForEachItem, rebindings), Copy(ForEachSource, rebindings), Copy(RowSelect, rebindings), sourceName, new SortKeyDefinitionList(newKeyDef), baseURI);
                 ms.validation = validation;
                 ms.schemaType = schemaType;
-                ms.streamable = streamable;
                 ms.location = location;
                 return ms;
             }
@@ -695,10 +648,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 {
                     forEachStreamOp.SetChildExpression(forEachStream);
                 }
-            }
-
-            public void PrepareForStreaming()
-            {
             }
         }
 
@@ -728,15 +677,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     }
                     else
                     {
-                        IAtomicComparer[] comps = parent.GetComparators(context);
-                        IGroupIterator mgi = context.GetCurrentMergeGroupIterator();
-                        XPathContextMajor c1 = context.NewContext();
-                        c1.SetCurrentMergeGroupIterator(mgi);
-                        ISequenceIterator inputIterator = parent.GetMergedInputIterator(context, comps);
-
-                        // Now perform the merge into a grouped sequence
-                        inputIterator = (ISequenceIterator)(new MergeGroupingIterator(inputIterator, parent.GetComparer(parent.mergeSources[0].mergeKeyDefinitions, comps), null));
-                        return last = Count.SteppingCount(inputIterator);
+                        return last = Count.SteppingCount(parent.Grouped(context, parent.GetComparators(context), null));
                     }
                 }
                 catch (XPathException e)
@@ -815,28 +756,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             {
                 MergeInstr expr = (MergeInstr)GetExpression();
                 IPullEvaluator actionPull = expr.GetAction().MakeElaborator().ElaborateForPull();
-                return (context) =>
-                {
-                    try
-                    {
-                        IAtomicComparer[] comps = expr.GetComparators(context);
-                        ISequenceIterator inputIterator = expr.GetMergedInputIterator(context, comps);
-
-                        // Now perform the merge into a grouped sequence
-                        inputIterator = (ISequenceIterator)new MergeGroupingIterator(inputIterator, expr.GetComparer(expr.mergeSources[0].mergeKeyDefinitions, comps), expr.GetLastPositionFinder(context));
-
-                        // and apply the merging action to each group of duplicate items within this sequence
-                        XPathContextMajor c3 = context.NewContext();
-                        c3.SetCurrentMergeGroupIterator((IGroupIterator)inputIterator);
-                        c3.TrackFocus(inputIterator);
-
-                        return new ContextMappingIterator((cxt) => actionPull.Iterate(cxt), c3);
-                    }
-                    catch (XPathException e)
-                    {
-                        throw e.MaybeWithLocation(expr.GetLocation());
-                    }
-                };
+                return (context) => expr.Merge(context, (cxt) => actionPull.Iterate(cxt));
             }
 
             public override IPushEvaluator ElaborateForPush()

@@ -22,17 +22,14 @@ namespace OutSmart.DAXon.Api
     /// <summary>
     /// A class that exists to contain common code shared between XsltTransformer and Xslt30Transformer
     /// </summary>
-    //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(Action<OutSmart.DAXon.Api.IXmlProcessingError> reporter) {"
-    //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
-    //                + "    }"
-    //})
     public abstract class AbstractXsltTransformer
     {
         protected readonly object syncLock = new object();
         protected Processor processor;
         protected XsltController controller;
         protected bool baseOutputUriWasSet;
+        // The host's base output URI: the controller forgets its copy at the end of every run.
+        private string baseOutputUri;
         private IMessageListener2 messageListener2;
 
         public virtual IMessageListener2 MessageListener2 => messageListener2;
@@ -57,13 +54,9 @@ namespace OutSmart.DAXon.Api
                 {
                     controller.SetInitialMode(value == null ? null : value.GetStructuredQName());
                 }
-                catch (XPathException e)
+                catch (Exception e) when (ApiErrors.IsEngineError(e))
                 {
-                    throw new DAXonApiException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiException(e.ToXPathException());
+                    throw ApiErrors.Wrap(e);
                 }
             }
         }
@@ -71,6 +64,8 @@ namespace OutSmart.DAXon.Api
         public virtual XsltController UnderlyingController => controller;
         public AbstractXsltTransformer(Processor processor, XsltController controller)
         {
+            ArgumentCheck.NotNull(processor, nameof(processor));
+            ArgumentCheck.NotNull(controller, nameof(controller));
             this.processor = processor;
             this.controller = controller;
         }
@@ -80,13 +75,51 @@ namespace OutSmart.DAXon.Api
             lock (syncLock)
             {
                 controller.BaseOutputURI = uri;
+                baseOutputUri = uri;
                 baseOutputUriWasSet = uri != null;
             }
         }
 
         public virtual string GetBaseOutputURI()
         {
-            return controller.BaseOutputURI;
+            return baseOutputUriWasSet ? baseOutputUri : controller.BaseOutputURI;
+        }
+
+        // Gives the controller the host's base output URI again before a run: the previous run cleared it.
+        private protected void RestoreBaseOutputURI()
+        {
+            if (baseOutputUriWasSet)
+            {
+                controller.BaseOutputURI = baseOutputUri;
+            }
+        }
+
+        // One run of the stylesheet, as every entry point makes it: the copies had drifted (a failure reported twice, the
+        // trace episode left open when priming failed). A failed run's destination is released, not notified.
+        private protected T Run<T>(IDestination destination, string systemId, Func<T> body)
+        {
+            controller.OpenTraceEpisode();
+            try
+            {
+                return DestinationHelper.RunTo(destination, body);
+            }
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
+            {
+                throw ApiErrors.Reported(e, GetErrorReporter(), systemId);
+            }
+            finally
+            {
+                controller.CloseTraceEpisode();
+            }
+        }
+
+        private protected void Run(IDestination destination, string systemId, Action body)
+        {
+            Run<object>(destination, systemId, () =>
+            {
+                body();
+                return null;
+            });
         }
 
         public virtual void SetResourceResolver(IResourceResolver resolver)
@@ -111,7 +144,8 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetErrorReporter(IErrorReporter reporter)
         {
-            controller.ErrorReporter = reporter;
+            // null clears it (HOSTING, "A null argument"): back to the default, which the run's errors are reported to.
+            controller.ErrorReporter = reporter ?? controller.GetConfiguration().MakeErrorReporter();
         }
 
         public virtual IErrorReporter GetErrorReporter()
@@ -121,7 +155,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetResultDocumentHandler(Func<URI, IDestination> handler)
         {
-            controller.ResultDocumentResolver = new AnonymousIResultDocumentResolver(handler);
+            controller.ResultDocumentResolver = handler == null ? null : new AnonymousIResultDocumentResolver(handler);
         }
 
         public virtual void SetMessageListener(IMessageListener2 listener)
@@ -170,28 +204,19 @@ namespace OutSmart.DAXon.Api
 
         protected virtual void ApplyTemplatesToSource(IActiveSource source, IReceiver @out)
         {
-            if (source == null)
-                throw new NullReferenceException();
-            if (@out == null)
-                throw new NullReferenceException();
-            if (controller.GetInitialMode().IsDeclaredStreamable())
+            ArgumentCheck.NotNull(source, nameof(source));
+            ArgumentCheck.NotNull(@out, nameof(@out));
+            NodeInfo node;
+            if (source is NodeInfo)
             {
-                controller.ApplyStreamingTemplates(source, @out);
+                node = (NodeInfo)source;
             }
             else
             {
-                NodeInfo node;
-                if (source is NodeInfo)
-                {
-                    node = (NodeInfo)source;
-                }
-                else
-                {
-                    node = controller.MakeSourceTree(source, controller.SchemaValidationMode);
-                }
-
-                controller.ApplyTemplates(node, @out);
+                node = controller.MakeSourceTree(source, controller.SchemaValidationMode);
             }
+
+            controller.ApplyTemplates(node, @out);
         }
 
         // Source-free apply-templates (P5): build the source tree from a System.Xml.XmlReader (with the
@@ -205,10 +230,8 @@ namespace OutSmart.DAXon.Api
         // inputLength: of what the reader parses, when known (sizes the source tree), else -1.
         internal void ApplyTemplatesToXmlReader(System.Xml.XmlReader reader, string systemId, IReceiver @out, long inputLength)
         {
-            if (reader == null)
-                throw new NullReferenceException();
-            if (@out == null)
-                throw new NullReferenceException();
+            ArgumentCheck.NotNull(reader, nameof(reader));
+            ArgumentCheck.NotNull(@out, nameof(@out));
             NodeInfo node = controller.MakeSourceTree(reader, systemId, controller.SchemaValidationMode, inputLength);
             controller.ApplyTemplates(node, @out);
         }
@@ -221,31 +244,29 @@ namespace OutSmart.DAXon.Api
 
         public virtual ValidationMode GetSchemaValidationMode()
         {
-            return (ValidationMode)controller.SchemaValidationMode;
+            return ValidationModeExtensions.Get(controller.SchemaValidationMode);   // the engine's number, not the enum's
         }
 
         public virtual IReceiver GetDestinationReceiver(XsltController controller, IDestination destination)
         {
+            ArgumentCheck.NotNull(controller, nameof(controller));
+            ArgumentCheck.NotNull(destination, nameof(destination));
             IReceiver receiver;
             controller.PrincipalDestination = destination;
             PipelineConfiguration pipe = controller.MakePipelineConfiguration();
             SerializationProperties @params = controller.GetExecutable().PrimarySerializationProperties;
             receiver = destination.GetReceiver(pipe, @params);
-            if (Configuration.IsAssertionsEnabled())
-            {
-                receiver = new RegularSequenceChecker(receiver, true);
-            }
 
-
-            //receiver = new TracingFilter(receiver);
             receiver.GetPipelineConfiguration().SetController(controller);
+            RestoreBaseOutputURI();
             if (baseOutputUriWasSet)
             {
                 try
                 {
-                    if (destination.DestinationBaseURI == null)
+                    URI baseOutput = new URI(controller.BaseOutputURI);
+                    if (destination.DestinationBaseURI == null && baseOutput.IsAbsolute())
                     {
-                        destination.DestinationBaseURI = new URI(controller.BaseOutputURI);
+                        destination.DestinationBaseURI = baseOutput;   // a destination takes an absolute base only
                     }
                 }
                 catch (URISyntaxException)
@@ -264,45 +285,27 @@ namespace OutSmart.DAXon.Api
         protected virtual IReceiver GetReceivingTransformer(XsltController controller, GlobalParameterSet parameters, IDestination finalDestination)
         {
             Configuration config = controller.GetConfiguration();
-            if (controller.GetInitialMode().IsDeclaredStreamable())
-            {
-                IReceiver sOut = GetDestinationReceiver(controller, finalDestination);
-                Controller.DeadlineToken limitsBefore = Controller.ActiveLimits;
-                try
-                {
-                    controller.InitializeController(parameters);
-                    controller.SetTimeout(processor.TransformTimeout);
-                    return controller.GetStreamingReceiver(controller.GetInitialMode(), sOut);
-                }
-                catch (XPathException e)
-                {
-                    Controller.RestoreThreadDeadline(limitsBefore);   // no run to keep them for
-                    throw new DAXonApiException(e);
-                }
-            }
-            else
-            {
-                // The caller streams the source into the returned receiver BEFORE Dispose() arms
-                // the run's deadline - arm now so that parse runs under this run's fresh budget,
-                // not a spent token left on the thread by an earlier run. Dispose() re-arms for
-                // the transform phase itself, and Close() gives the thread's limits back.
-                Controller.DeadlineToken limitsBefore = Controller.ActiveLimits;
-                controller.SetTimeout(processor.TransformTimeout);
-                Builder sourceTreeBuilder = controller.MakeBuilder();
-                sourceTreeBuilder.SetDurability(Durability.LASTING);
-                if (sourceTreeBuilder is TinyBuilder)
-                {
-                    ((TinyBuilder)sourceTreeBuilder).SetStatistics(config.GetTreeStatistics().SOURCE_DOCUMENT_STATISTICS);
-                }
 
-                IReceiver stripper = controller.MakeStripper(sourceTreeBuilder);
-                if (controller.IsStylesheetStrippingTypeAnnotations())
-                {
-                    stripper = controller.GetConfiguration().GetAnnotationStripper(stripper);
-                }
-
-                return MakeTreeReceiver(controller, parameters, finalDestination, sourceTreeBuilder, stripper, limitsBefore);
+            // The caller streams the source into the returned receiver BEFORE Dispose() arms
+            // the run's deadline - arm now so that parse runs under this run's fresh budget,
+            // not a spent token left on the thread by an earlier run. Dispose() re-arms for
+            // the transform phase itself, and Close() gives the thread's limits back.
+            Controller.DeadlineToken limitsBefore = Controller.ActiveLimits;
+            controller.SetTimeout(processor.TransformTimeout);
+            Builder sourceTreeBuilder = controller.MakeBuilder();
+            sourceTreeBuilder.SetDurability(Durability.LASTING);
+            if (sourceTreeBuilder is TinyBuilder)
+            {
+                ((TinyBuilder)sourceTreeBuilder).SetStatistics(config.GetTreeStatistics().SOURCE_DOCUMENT_STATISTICS);
             }
+
+            IReceiver stripper = controller.MakeStripper(sourceTreeBuilder);
+            if (controller.IsStylesheetStrippingTypeAnnotations())
+            {
+                stripper = controller.GetConfiguration().GetAnnotationStripper(stripper);
+            }
+
+            return MakeTreeReceiver(controller, parameters, finalDestination, sourceTreeBuilder, stripper, limitsBefore);
         }
 
         private TreeReceiver MakeTreeReceiver(XsltController controller, GlobalParameterSet parameters, IDestination finalDestination, Builder sourceTreeBuilder, IReceiver stripper, Controller.DeadlineToken limitsBefore)
@@ -382,17 +385,10 @@ namespace OutSmart.DAXon.Api
                         {
                             doc.GetTreeInfo().SpaceStrippingRule = controller.SpaceStrippingRule;
                             IReceiver result = parent.GetDestinationReceiver(controller, finalDestination);
-                            try
-                            {
-                                controller.GlobalContextItem = doc;
-                                controller.InitializeController(parameters);
-                                controller.SetTimeout(parent.processor.TransformTimeout);
-                                controller.ApplyTemplates(doc, result);
-                            }
-                            catch (XPathException e)
-                            {
-                                throw new DAXonApiException(e);
-                            }
+                            controller.GlobalContextItem = doc;
+                            controller.InitializeController(parameters);
+                            controller.SetTimeout(parent.processor.TransformTimeout);
+                            controller.ApplyTemplates(doc, result);
                         }
                     }
                     catch (DAXonApiException e)

@@ -95,7 +95,7 @@ namespace OutSmart.DAXon.Types
                     CheckAllowsMany(locationId);
                 }
 
-                CheckItemType(NodeKindTest.TEXT, NodeSupplier((short)Types.Type.TEXT, null, null, chars.Tidy()), locationId);
+                CheckItemType(NodeKindTest.TEXT, NodeSupplier((short)Types.Type.TEXT, null, null, chars), locationId);
             }
 
             NextOutputter.Characters(chars, locationId, properties);
@@ -110,7 +110,7 @@ namespace OutSmart.DAXon.Types
                     CheckAllowsMany(locationId);
                 }
 
-                CheckItemType(NodeKindTest.COMMENT, NodeSupplier((short)Types.Type.COMMENT, null, null, chars.Tidy()), locationId);
+                CheckItemType(NodeKindTest.COMMENT, NodeSupplier((short)Types.Type.COMMENT, null, null, chars), locationId);
             }
 
             NextOutputter.Comment(chars, locationId, properties);
@@ -126,7 +126,7 @@ namespace OutSmart.DAXon.Types
                 }
 
                 CheckItemType(NodeKindTest.PROCESSING_INSTRUCTION,
-                    NodeSupplier((short)Types.Type.PROCESSING_INSTRUCTION, new NoNamespaceName(target), null, data.Tidy()), locationId);
+                    NodeSupplier((short)Types.Type.PROCESSING_INSTRUCTION, new NoNamespaceName(target), null, data), locationId);
             }
 
             NextOutputter.ProcessingInstruction(target, data, locationId, properties);

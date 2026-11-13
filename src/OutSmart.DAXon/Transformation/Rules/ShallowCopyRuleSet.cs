@@ -40,33 +40,21 @@ namespace OutSmart.DAXon.Transformation.Rules
                 {
                     case Types.Type.DOCUMENT:
                         {
-                            PipelineConfiguration pipe = @out.GetPipelineConfiguration();
                             if (@out.GetSystemId() == null)
                             {
                                 @out.SetSystemId(node.GetBaseURI());
                             }
 
                             @out.StartDocument(ReceiverOption.NONE);
-                            XPathContextMajor c2 = context.NewContext();
-                            c2.Origin = this;
-                            c2.TrackFocus(node.IterateAxis(AxisInfo.CHILD));
-                            c2.SetCurrentComponent(c2.GetCurrentMode()); // Bug 3508
-                            pipe.XPathContext = c2;
-                            ITailCall tc = context.GetCurrentMode().GetActor().ApplyTemplates(parameters, tunnelParams, null, @out, c2, locationId);
-                            while (tc != null)
-                            {
-                                tc = tc.ProcessLeavingTail();
-                            }
+                            BuiltInRuleSets.ApplyTo(this, node.IterateAxis(AxisInfo.CHILD), parameters, tunnelParams, @out, context, locationId);
 
                             @out.EndDocument();
-                            pipe.XPathContext = context;
                             return;
                         }
 
                     case Types.Type.ELEMENT:
                         {
                             bool schemaAware = context.GetController().GetExecutable().IsSchemaAware();
-                            PipelineConfiguration pipe = @out.GetPipelineConfiguration();
                             if (@out.GetSystemId() == null)
                             {
                                 @out.SetSystemId(node.GetBaseURI());
@@ -81,7 +69,6 @@ namespace OutSmart.DAXon.Transformation.Rules
 
                             XPathContextMajor c2 = context.NewContext();
                             c2.SetCurrentComponent(c2.GetCurrentMode()); // Bug 3508
-                            pipe.XPathContext = c2;
 
                             // apply-templates to all attributes
                             IAxisIterator attributes = node.IterateAxis(AxisInfo.ATTRIBUTE);
@@ -109,7 +96,6 @@ namespace OutSmart.DAXon.Transformation.Rules
                             }
 
                             @out.EndElement();
-                            pipe.XPathContext = context;
                             return;
                         }
 

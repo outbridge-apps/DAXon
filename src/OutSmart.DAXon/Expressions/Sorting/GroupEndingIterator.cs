@@ -5,7 +5,6 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Expressions.Elaboration;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
 using System.Collections.Generic;
@@ -14,40 +13,20 @@ namespace OutSmart.DAXon.Expressions.Sorting
 {
     internal sealed class GroupEndingIterator : GroupMatchingIterator, IGroupIterator, ILookaheadIterator
     {
-        public GroupEndingIterator(IPullEvaluator select, Patterns.Pattern endPattern, IXPathContext context)
+        public GroupEndingIterator(IPullEvaluator select, Patterns.Pattern endPattern, IXPathContext context) : base(select, endPattern, context)
         {
-            this.select = select;
-            this.pattern = endPattern;
-            baseContext = context;
-            runningContext = context.NewMinorContext();
-            this.population = runningContext.TrackFocus(select.Iterate(context));
-
-            // the first item in the population always starts a new group
-            nextItem = population.Next();
         }
 
-        public override bool SupportsGetLength()
+        protected override GroupMatchingIterator Restart()
         {
-            return true;
-        }
-
-        public override int GetLength()
-        {
-            try
-            {
-                GroupEndingIterator another = new GroupEndingIterator(select, pattern, baseContext);
-                return Count.SteppingCount(another);
-            }
-            catch (XPathException e)
-            {
-                throw new UncheckedXPathException(e);
-            }
+            return new GroupEndingIterator(select, pattern, baseContext);
         }
 
         protected override void Advance()
         {
             currentMembers = new List<IItem>(20);
             currentMembers.Add(current);
+            Core.MemoryLedger.Collected(currentMembers);
             nextItem = current;
             while (nextItem != null)
             {
@@ -65,6 +44,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     if (nextItem != null)
                     {
                         currentMembers.Add(nextItem);
+                        Core.MemoryLedger.Collected(currentMembers);
                     }
                 }
             }

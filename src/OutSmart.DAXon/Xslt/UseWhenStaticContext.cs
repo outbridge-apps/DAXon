@@ -79,7 +79,7 @@ namespace OutSmart.DAXon.Xslt
         }
 
         /// <summary>
-        /// Get the default function @namespace
+        /// Get the default function namespace
         /// </summary>
         public override NamespaceUri GetDefaultFunctionNamespace()
         {

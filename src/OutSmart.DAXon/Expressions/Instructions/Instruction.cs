@@ -66,12 +66,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 ITailCall tc = MakeElaborator().ElaborateForPush().ProcessLeavingTail(output, context);
                 DispatchTailCall(tc);
             }
-            catch (XPathException err) when (!(err is XPathException.StackOverflow))
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithFailingExpression(this).MaybeWithContext(context)))
             {
-                // Filtered: this sits under EVERY instruction, so on a recursive template it is
-                // one catch-and-rethrow per level - the most expensive shape there is for a
-                // stack-guard abort, which must reach the host instead of being re-decorated.
-                throw err.MaybeWithFailingExpression(this).MaybeWithContext(context);
+                // Decorated in the filter, never handled: this sits under EVERY instruction, so on a recursion
+                // a rethrow from here cost a dispatch per level (XPathException.PassOn).
+                throw;
             }
         }
 
@@ -173,7 +172,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override IItem EvaluateItem(IXPathContext context)
         {
-            return MakeElaborator().ElaborateForItem().Eval(context); //        int m = getImplementationMethod();
+            return MakeElaborator().ElaborateForItem().Eval(context);
             //        if ((m & EVALUATE_METHOD) != 0) {
             //            throw new AssertionError(
             //                    "evaluateItem() is not implemented in the subclass " + getClass());
@@ -192,8 +191,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 throw new InvalidOperationException("No iterate() method available for expression " + ToShortString());
             }
 
-            return elaborator.ElaborateForPull().Iterate(context); //        int m = getImplementationMethod();
-            //                return EmptyIterator.emptyIterator();
+            return elaborator.ElaborateForPull().Iterate(context);
         }
 
         public override UnicodeString EvaluateAsString(IXPathContext context)

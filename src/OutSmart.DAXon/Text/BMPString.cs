@@ -78,8 +78,9 @@ namespace OutSmart.DAXon.Text
 
             return base.CompareTo(other);
         }
-        public override long IndexOf(int codePoint) => _s.IndexOf((char)codePoint);
-        public override long IndexOf(int codePoint, long from) => _s.IndexOf((char)codePoint, (int)from);
+        // Only BMP characters here: a supplementary code point cast to char would find its low 16 bits.
+        public override long IndexOf(int codePoint) => IndexOf(codePoint, 0);
+        public override long IndexOf(int codePoint, long from) => codePoint > char.MaxValue ? -1 : _s.IndexOf((char)codePoint, (int)from);
         public override IIntIterator CodePoints() => new StrCodePointIterator(ToString());
         // The serializer scans every text node with it: a long string is one call, which looks at the limits as it goes.
         public override long IndexWhere(Func<int, bool> predicate, long from)
@@ -111,8 +112,18 @@ namespace OutSmart.DAXon.Text
         }
 
         public override void Copy16bit(char[] target, int offset) { _s.CopyTo(0, target, offset, _s.Length); }
-        // NOTE: no Copy24bit override - the former empty-body override shadowed the base
-        // implementation, so appending a BMPString to a 24-bit segment wrote nothing
+        // Three bytes a character, high first, as Slice24 reads them back.
+        public override void Copy24bit(byte[] target, int offset)
+        {
+            for (int i = 0; i < _s.Length; i++)
+            {
+                char c = _s[i];
+                target[offset++] = 0;
+                target[offset++] = (byte)(c >> 8);
+                target[offset++] = (byte)c;
+            }
+        }
+
         public override void Copy32bit(int[] target, int offset)
         {
             for (int i = 0; i < _s.Length; i++)
@@ -176,10 +187,36 @@ namespace OutSmart.DAXon.Text
 
             if (other is BMPString b)
             {
-                return _s.IndexOf(b._s, (int)from, StringComparison.Ordinal);
+                return OrdinalIndexOf(_s, b._s, (int)from);
             }
 
             return base.IndexOf(other, from);
+        }
+
+        // string.IndexOf, which compares up to needle-length characters at each start (200 000 against 20 000: 26 s) in
+        // one call the time limit cannot stop: a long needle is looked for in windows of starts that cost about 2^24
+        // comparisons each, the clock read between.
+        internal static int OrdinalIndexOf(string haystack, string needle, int from)
+        {
+            if (needle.Length <= 64)
+            {
+                return haystack.IndexOf(needle, from, StringComparison.Ordinal);
+            }
+
+            int window = Math.Max(1, (1 << 24) / needle.Length);
+            for (int start = from; start <= haystack.Length - needle.Length; start += window)
+            {
+                int starts = Math.Min(window, haystack.Length - needle.Length - start + 1);
+                int i = haystack.IndexOf(needle, start, starts + needle.Length - 1, StringComparison.Ordinal);
+                if (i >= 0)
+                {
+                    return i;
+                }
+
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();   // a window costs about 20 ms: a strided check let thousands run
+            }
+
+            return -1;
         }
 
         public override bool HasSubstring(UnicodeString other, long offset)

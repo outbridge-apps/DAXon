@@ -59,7 +59,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetProcessor(Processor processor)
         {
-            this.processor = processor ?? throw new NullReferenceException();
+            this.processor = processor ?? throw new ArgumentNullException(nameof(processor));
         }
 
         public virtual Processor GetProcessor()
@@ -69,6 +69,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetOutputProperties(Properties suppliedProperties)
         {
+            ArgumentCheck.NotNull(suppliedProperties, nameof(suppliedProperties));
             foreach (string name in suppliedProperties.StringPropertyNames())
             {
                 properties[StructuredQName.FromClarkName(name)] = suppliedProperties.GetProperty(name);
@@ -77,6 +78,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetOutputProperties(SerializationProperties suppliedProperties)
         {
+            ArgumentCheck.NotNull(suppliedProperties, nameof(suppliedProperties));
             SetOutputProperties(suppliedProperties.GetProperties());
             SetCharacterMap(suppliedProperties.GetCharacterMapIndex());
         }
@@ -157,6 +159,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetOutputProperty(QName property, string value)
         {
+            ArgumentCheck.NotNull(property, nameof(property));
             SerializerFactory sf = processor.UnderlyingConfiguration.SerializerFactory;
             value = WithoutHalfPairs(value);
             NamespaceUri uri = property.GetNamespaceUri();
@@ -191,6 +194,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual string GetOutputProperty(QName property)
         {
+            ArgumentCheck.NotNull(property, nameof(property));
             return properties.GetOrDefault(property.GetStructuredQName());
         }
 
@@ -217,7 +221,7 @@ namespace OutSmart.DAXon.Api
             result.SetSystemId(file);
             try
             {
-                DestinationBaseURI = new Uri(Path.GetFullPath(file)).AbsoluteUri;
+                DestinationBaseURI = FileUris.Of(Path.GetFullPath(file));
             }
             catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is IOException || e is FormatException || e is System.Security.SecurityException)
             {
@@ -231,71 +235,88 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SerializeNode(XdmNode node)
         {
+            ArgumentCheck.NotNull(node, nameof(node));
             StreamResult res = result;
             if (res.GetOutputStream() == null && res.GetWriter() == null && res.GetSystemId() == null)
             {
                 throw new InvalidOperationException("Either an outputStream, or a TextWriter, or a string must be supplied");
             }
 
-            SerializeNodeToResult(node, res);
+            // Not closed nor notified when it succeeds, as Saxon's; released when it fails, which left the file it had
+            // opened locked (SerializeXdmValue's own fix, for its sibling).
+            bool done = false;
+            try
+            {
+                SerializeNodeToResult(node, res);
+                done = true;
+                if (mustClose)
+                {
+                    // The run closed the file it opened from the system ID: the next use opens it again (Saxon's
+                    // overwrites it), where it found the closed stream (ObjectDisposedException).
+                    res.GetOutputStream()?.Dispose();
+                    res.SetOutputStream(null);
+                }
+            }
+            finally
+            {
+                if (!done)
+                {
+                    DestinationHelper.ReleaseUnclosed(this);
+                }
+            }
         }
 
         public virtual void SerializeXdmValue(XdmValue value)
         {
-            if (value is XdmNode)
+            ArgumentCheck.NotNull(value, nameof(value));
+            try
             {
-                SerializeNode((XdmNode)value);
+                DestinationHelper.RunTo(this, () =>
+                {
+                    if (value is XdmNode)
+                    {
+                        SerializeNode((XdmNode)value);
+                    }
+                    else
+                    {
+                        SerializationProperties properties = new SerializationProperties(LocallyDefinedProperties, characterMapIndex);
+                        QueryResult.SerializeSequence(((IGroundedValue)value.UnderlyingValue).Iterate(), processor.UnderlyingConfiguration, result, properties);
+                    }
+                });
             }
-            else
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                try
-                {
-                    SerializationProperties properties = new SerializationProperties(LocallyDefinedProperties, characterMapIndex);
-                    QueryResult.SerializeSequence(((IGroundedValue)value.UnderlyingValue).Iterate(), processor.UnderlyingConfiguration, result, properties);
-                }
-                catch (XPathException e)
-                {
-                    throw new DAXonApiException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiException(e.ToXPathException());
-                }
+                throw ApiErrors.Wrap(e);
             }
-
-            CloseAndNotify();
         }
 
         public virtual void Serialize(ResolvedResource source)
         {
+            ArgumentCheck.NotNull(source, nameof(source));
             // Parses the source: claims the deadline slot as DocumentBuilder does, or a spent token from an earlier
             // run on this thread failed it at once.
-            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(processor.UnderlyingConfiguration, "Parsing");
+            using OutSmart.DAXon.Core.Controller.ThreadLimits deadline = OutSmart.DAXon.Core.Controller.ArmScope(processor.UnderlyingConfiguration, "Parsing");
             try
             {
-                SerializerFactory sf = processor.UnderlyingConfiguration.SerializerFactory;
-                IReceiver tr = sf.GetReceiver(result, new SerializationProperties(LocallyDefinedProperties));
-                Sender.Send(InputSizeLimit.Apply(source, InputSizeLimit.MaxFor(processor.UnderlyingConfiguration), "FODC0002"), tr, processor.UnderlyingConfiguration.GetParseOptions());
-                CloseAndNotify();
+                // an output file opened for this run is released, not left locked, when the run fails
+                DestinationHelper.RunTo(this, () =>
+                {
+                    SerializerFactory sf = processor.UnderlyingConfiguration.SerializerFactory;
+                    IReceiver tr = sf.GetReceiver(result, new SerializationProperties(LocallyDefinedProperties));
+                    Sender.Send(InputSizeLimit.Apply(source, InputSizeLimit.MaxFor(processor.UnderlyingConfiguration), "FODC0002"), tr, processor.UnderlyingConfiguration.GetParseOptions());
+                });
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsInputError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            finally
-            {
-                OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e, source.SystemId);
             }
         }
 
         public virtual string SerializeToString(ResolvedResource source)
         {
+            ArgumentCheck.NotNull(source, nameof(source));
             // Parses the source: claims the deadline slot (see Serialize(ResolvedResource)).
-            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(processor.UnderlyingConfiguration, "Parsing");
+            using OutSmart.DAXon.Core.Controller.ThreadLimits deadline = OutSmart.DAXon.Core.Controller.ArmScope(processor.UnderlyingConfiguration, "Parsing");
             try
             {
                 SerializerFactory sf = processor.UnderlyingConfiguration.SerializerFactory;
@@ -305,22 +326,15 @@ namespace OutSmart.DAXon.Api
                 CloseAndNotify();
                 return sw.ToString();
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsInputError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            finally
-            {
-                OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e, source.SystemId);
             }
         }
 
         public virtual string SerializeNodeToString(XdmNode node)
         {
+            ArgumentCheck.NotNull(node, nameof(node));
             StringWriter sw = new StringWriter();
             StreamResult sr = new StreamResult((TextWriter)sw);
             SerializeNodeToResult(node, sr);
@@ -334,13 +348,9 @@ namespace OutSmart.DAXon.Api
                 SerializationProperties props = new SerializationProperties(LocallyDefinedProperties, characterMapIndex);
                 QueryResult.Serialize(node.UnderlyingNode, res, props);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -349,7 +359,6 @@ namespace OutSmart.DAXon.Api
         {
             PipelineConfiguration pipe = processor.UnderlyingConfiguration.MakePipelineConfiguration();
             IReceiver r = GetReceiver(pipe, GetSerializationProperties());
-            r = new NamespaceReducer(r);
             return new StreamWriterToReceiver(r);
         }
 
@@ -371,11 +380,23 @@ namespace OutSmart.DAXon.Api
             {
                 try
                 {
-                    return new Uri(new URI(systemId).ToString()).LocalPath;
+                    return BidiUri.LocalPath(new URI(systemId).ToString());
                 }
                 catch (URISyntaxException)
                 {
                     return null;
+                }
+                catch (UriFormatException)
+                {
+                    // A relative file name as SetOutputFile took it: the file it names (Saxon's absolute File).
+                    try
+                    {
+                        return Path.GetFullPath(systemId);
+                    }
+                    catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is IOException || e is System.Security.SecurityException)
+                    {
+                        return null;
+                    }
                 }
             }
             else
@@ -386,6 +407,8 @@ namespace OutSmart.DAXon.Api
 
         public override IReceiver GetReceiver(PipelineConfiguration pipe, SerializationProperties @params)
         {
+            ArgumentCheck.NotNull(pipe, nameof(pipe));
+            ArgumentCheck.NotNull(@params, nameof(@params));
             try
             {
                 SerializerFactory sf = pipe.GetConfiguration().SerializerFactory;
@@ -395,11 +418,11 @@ namespace OutSmart.DAXon.Api
                 {
                     if (target is SequenceNormalizer)
                     {
-                        ((SequenceNormalizer)target).OnClose(helper.Listeners);
+                        ((SequenceNormalizer)target).OnClose(helper.ListenersOfRun());
                     }
                     else
                     {
-                        target = new CloseNotifier(target, helper.Listeners);
+                        target = new CloseNotifier(target, helper.ListenersOfRun());
                     }
                 }
 
@@ -410,13 +433,9 @@ namespace OutSmart.DAXon.Api
 
                 return target;
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -509,6 +528,7 @@ namespace OutSmart.DAXon.Api
 
         public static Property GetProperty(QName name)
         {
+            ArgumentCheck.NotNull(name, nameof(name));
             string clarkName = name.ClarkName;
             // TryGetValue, not Get-then-null-test: Property is an enum, so the Java null-check
             // was always true and an unknown name silently answered enum value 0 (METHOD)
@@ -600,12 +620,6 @@ namespace OutSmart.DAXon.Api
             SAXON_REQUIRE_WELL_FORMED,
             SAXON_WRAP,
             SAXON_SUPPLY_SOURCE_LOCATOR
-
-            // --------------------
-            // private final String name;
-            // Property(String propertyName) {
-            //     this.name = propertyName;
-            // }
         }
     }
 }

@@ -71,7 +71,7 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        public virtual int JulianDayNumber => GetJulianDayNumber(year, month, day);
+        public virtual int JulianDayNumber => CheckedJulian(JulianDay(year, month, day));
         private DateValue(MutableGDateValue m) : base(m)
         {
         }
@@ -134,7 +134,7 @@ namespace OutSmart.DAXon.Values
             }
             else
             {
-                return new DateValue(year + 1, (byte)1, (byte)1, true);
+                return new DateValue(CheckedYear(year + 1L), (byte)1, (byte)1, true);
             }
         }
 
@@ -157,7 +157,7 @@ namespace OutSmart.DAXon.Values
             }
             else
             {
-                return new DateValue(year - 1, (byte)12, (byte)31, true);
+                return new DateValue(CheckedYear(year - 1L), (byte)12, (byte)31, true);
             }
         }
 
@@ -178,13 +178,12 @@ namespace OutSmart.DAXon.Values
         {
             if (duration is DayTimeDurationValue)
             {
-                long microseconds = ((DayTimeDurationValue)duration).LengthInMicroseconds;
-                bool negative = microseconds < 0;
-                microseconds = Math.Abs(microseconds);
-                int days = (int)Math.Floor((double)microseconds / (1000000.0 * 60 * 60 * 24));
-                bool partDay = (microseconds % (1000000.0 * 60 * 60 * 24)) > 0;
-                int julian = JulianDayNumber;
-                MutableGDateValue d = MutableDateFromJulianDayNumber(julian + (negative ? -days : days));
+                // Whole days from the seconds: LengthInMicroseconds threw a raw ArithmeticException past 106 751 991 days.
+                DayTimeDurationValue dtd = (DayTimeDurationValue)duration;
+                bool negative = dtd.IsNegative;
+                long days = dtd.WholeDays;
+                bool partDay = dtd.AbsoluteSeconds % (60 * 60 * 24) != 0 || dtd.AbsoluteNanoseconds >= 1000;
+                MutableGDateValue d = MutableDateFromJulianDayNumber(CheckedJulian((long)JulianDayNumber + (negative ? -days : days)));
                 if (partDay)
                 {
                     if (negative)
@@ -199,17 +198,20 @@ namespace OutSmart.DAXon.Values
             }
             else if (duration is YearMonthDurationValue)
             {
+                // In long, and refused past the years the type holds: in int the year wrapped (2147483647-12-31 + P1Y
+                // gave -3648-12-31).
                 int months = ((YearMonthDurationValue)duration).LengthInMonths;
-                int m = (month - 1) + months;
-                int y = year + m / 12;
-                m = m % 12;
-                if (m < 0)
+                long lm = (month - 1) + (long)months;
+                long ly = year + lm / 12;
+                lm = lm % 12;
+                if (lm < 0)
                 {
-                    m += 12;
-                    y -= 1;
+                    lm += 12;
+                    ly -= 1;
                 }
 
-                m++;
+                int y = DateValue.CheckedYear(ly);
+                int m = (int)lm + 1;
                 int d = day;
                 while (!IsValidDate(y, m, d))
                 {
@@ -271,20 +273,46 @@ namespace OutSmart.DAXon.Values
 
         public static int GetJulianDayNumber(int year, int month, int day)
         {
-            int z = year - (month < 3 ? 1 : 0);
-            short f = monthData[month - 1];
-            if (z >= 0)
-            {
-                return day + f + 365 * z + z / 4 - z / 100 + z / 400 + 1721118;
-            }
-            else
-            {
+            return unchecked((int)JulianDay(year, month, day));   // differences within a year (day of the year, of the week)
+        }
 
-                // for negative years, add 12000 years and then subtract the days!
-                z += 12000;
-                int j = day + f + 365 * z + z / 4 - z / 100 + z / 400 + 1721118;
-                return j - (365 * 12000 + 12000 / 4 - 12000 / 100 + 12000 / 400); // number of leap years in 12000 years
+        // The Julian day number in long, with floor division (the same as Saxon's 12000-year shift where that reaches): in
+        // int it wrapped past about 5.88 million years, and subtracting and comparing such dates answered silently wrong.
+        internal static long JulianDay(long year, int month, int day)
+        {
+            long z = year - (month < 3 ? 1 : 0);
+            short f = monthData[month - 1];
+            return day + f + 365 * z + FloorDiv(z, 4) - FloorDiv(z, 100) + FloorDiv(z, 400) + 1721118;
+        }
+
+        private static long FloorDiv(long a, long b)
+        {
+            long q = a / b;
+            return (a % b != 0 && a < 0) ? q - 1 : q;
+        }
+
+        // A year the types hold (the parser takes up to 2^31 - 1 either way), or FODT0001.
+        internal static int CheckedYear(long year)
+        {
+            if (year > int.MaxValue || year < -int.MaxValue)
+            {
+                throw new XPathException("Date arithmetic goes beyond the supported range of years", "FODT0001");
             }
+
+            return (int)year;
+        }
+
+        // MutableDateFromJulianDayNumber computes in int (4 * L): beyond about 1.4 million years from now it wraps.
+        internal const long MaxJulianDayNumber = 500000000;
+
+        internal static int CheckedJulian(long julianDayNumber)
+        {
+            if (julianDayNumber > MaxJulianDayNumber || julianDayNumber < -MaxJulianDayNumber)
+            {
+                throw new XPathException("Date arithmetic goes beyond the supported range of years", "FODT0001");
+            }
+
+            return (int)julianDayNumber;
         }
 
         public static DateValue DateFromJulianDayNumber(int julianDayNumber)

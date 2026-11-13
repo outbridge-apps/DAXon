@@ -45,17 +45,22 @@ namespace OutSmart.DAXon.Expressions
                 if (@base.Next() != null)
                 {
 
-                    // Call the supplied mapping function
+                    // Call the supplied mapping function. `!` over a recursive function nests this iterator once per
+                    // level: the error is wrapped after the try, since a throw from the catch itself re-entered
+                    // dispatch on the stack below (~20 KB per level).
+                    XPathException failure = null;
                     try
                     {
                         stepIterator = action.IMap(context);
                     }
-                    catch (XPathException e) when (!(e is XPathException.StackOverflow))
+                    catch (XPathException e)
                     {
-                        // Filtered: `!` over a recursive function nests this iterator once per
-                        // level, and wrapping from inside a catch costs ~20KB of stack per level -
-                        // enough to overrun the guard's headroom before the abort reaches the host.
-                        throw new UncheckedXPathException(e);
+                        failure = e;
+                    }
+
+                    if (failure != null)
+                    {
+                        throw new UncheckedXPathException(failure);
                     }
 
                     nextItem = stepIterator.Next();
@@ -119,15 +124,20 @@ namespace OutSmart.DAXon.Expressions
                     return null;
                 }
 
-                IItem item;
+                IItem item = null;
+                XPathException failure = null;
                 try
                 {
                     item = action(context);
                 }
-                catch (XPathException e) when (!(e is XPathException.StackOverflow))
+                catch (XPathException e)
                 {
-                    // Filtered: see above - same per-level wrap on the singleton mapping path.
-                    throw new UncheckedXPathException(e);
+                    failure = e;   // wrapped after the try, as above
+                }
+
+                if (failure != null)
+                {
+                    throw new UncheckedXPathException(failure);
                 }
 
                 if (item != null)

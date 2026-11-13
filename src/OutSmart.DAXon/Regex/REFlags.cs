@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Regex
         private readonly bool xpath20;
         private readonly bool xpath30;
         private readonly bool xsd11;
-        private readonly bool allowUnknownBlockNames; //flags = ";k"
+        private readonly bool allowUnknownBlockNames;
         public REFlags(string flags, string language)
         {
             if (language.Equals("XSD10"))
@@ -38,9 +38,7 @@ namespace OutSmart.DAXon.Regex
                 xpath30 = true;
             }
 
-            int semi = flags.IndexOf(';');
-            int endStd = semi >= 0 ? semi : flags.Length;
-            for (int i = 0; i < endStd; i++)
+            for (int i = 0; i < flags.Length; i++)
             {
                 char c = flags[i];
                 switch (c)
@@ -67,22 +65,6 @@ namespace OutSmart.DAXon.Regex
                         break;
                     default:
                         throw new RESyntaxException("Unrecognized flag '" + c + "'");
-                }
-            }
-
-            for (int i = semi + 1; i < flags.Length; i++)
-            {
-                char c = flags[i];
-                switch (c)
-                {
-                    case 'g':
-                        break;
-                    case 'k':
-                        allowUnknownBlockNames = true;
-                        break;
-                    case 'K':
-                        allowUnknownBlockNames = false;
-                        break;
                 }
             }
         }

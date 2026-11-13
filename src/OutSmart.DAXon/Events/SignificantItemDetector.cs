@@ -34,7 +34,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        /*level==0 && */
         /// <summary>
         /// Start of a document node.
         /// </summary>
@@ -46,7 +45,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        /*level==0 && */
         /// <summary>
         /// Start of a document node.
         /// </summary>
@@ -57,7 +55,6 @@ namespace OutSmart.DAXon.Events
             NextOutputter.StartElement(elemName, type, location, properties);
         }
 
-        /*level==0 && */
         /// <summary>
         /// Notify the start of an element, supplying all attributes and namespaces
         /// </summary>
@@ -68,7 +65,6 @@ namespace OutSmart.DAXon.Events
             NextOutputter.StartElement(elemName, type, attributes, namespaces, location, properties);
         }
 
-        /*level==0 && */
         /// <summary>
         /// Notify a namespace binding.
         /// </summary>
@@ -78,7 +74,6 @@ namespace OutSmart.DAXon.Events
             NextOutputter.Namespace(prefix, namespaceUri, properties);
         }
 
-        /*level==0 && */
         /// <summary>
         /// Notify an attribute.
         /// </summary>
@@ -88,13 +83,11 @@ namespace OutSmart.DAXon.Events
             NextOutputter.Attribute(attName, typeCode, value, location, properties);
         }
 
-        /*level==0 && */
         public override void StartContent()
         {
             NextOutputter.StartContent();
         }
 
-        /*level==0 && */
         public override void Characters(UnicodeString chars, ILocation locationId, int properties)
         {
             if (!chars.IsEmpty())
@@ -105,21 +98,18 @@ namespace OutSmart.DAXon.Events
             NextOutputter.Characters(chars, locationId, properties);
         }
 
-        /*level==0 && */
         public override void ProcessingInstruction(string target, UnicodeString data, ILocation locationId, int properties)
         {
             Start();
             NextOutputter.ProcessingInstruction(target, data, locationId, properties);
         }
 
-        /*level==0 && */
         public override void Comment(UnicodeString chars, ILocation locationId, int properties)
         {
             Start();
             NextOutputter.Comment(chars, locationId, properties);
         }
 
-        /*level==0 && */
         public static bool IsSignificant(IItem item)
         {
             if (item is NodeInfo)
@@ -141,6 +131,8 @@ namespace OutSmart.DAXon.Events
                 {
                     // Each nested array is a level of recursion: the depth is the value's.
                     StackGuard.Probe();
+                    // A level may hold the one below twice (60 levels of empty arrays, 2^60 visits): the clock decides.
+                    Core.Controller.CheckActiveTimeout();
                     try
                     {
                         foreach (ISequence mem in ((ArrayItem)item).Members())
@@ -175,7 +167,6 @@ namespace OutSmart.DAXon.Events
             return true;
         }
 
-        /*level==0 && */
         public override void Append(IItem item, ILocation locationId, int copyNamespaces)
         {
             if (IsSignificant(item))
@@ -186,7 +177,6 @@ namespace OutSmart.DAXon.Events
             base.Append(item, locationId, copyNamespaces);
         }
 
-        /*level==0 && */
         public override void Append(IItem item)
         {
             if (IsSignificant(item))
@@ -197,7 +187,6 @@ namespace OutSmart.DAXon.Events
             base.Append(item);
         }
 
-        /*level==0 && */
         /// <summary>
         /// Notify the end of a document node
         /// </summary>
@@ -209,7 +198,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        /*level==0 && */
         /// <summary>
         /// End of element
         /// </summary>
@@ -219,7 +207,6 @@ namespace OutSmart.DAXon.Events
             NextOutputter.EndElement();
         }
 
-        /*level==0 && */
         /// <summary>
         /// End of element
         /// </summary>

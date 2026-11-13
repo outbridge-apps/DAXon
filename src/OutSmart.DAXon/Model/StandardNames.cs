@@ -186,7 +186,6 @@ namespace OutSmart.DAXon.Model
         public const int XS_DATE_TIME_STAMP = XS + 53;
         public const int XS_ANY_TYPE = XS + 60;
         public const int XS_ANY_SIMPLE_TYPE = XS + 61;
-        //public static final int XS_INVALID_NAME = XS + 62;
         public const int XS_ERROR = XS + 63;
         public const int XS_ALL = XS + 64;
         public const int XS_ALTERNATIVE = XS + 65;

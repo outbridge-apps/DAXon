@@ -32,23 +32,8 @@ namespace OutSmart.DAXon.Expressions.Elaboration
                 return false;
             }
 
-            if (!(conv.BaseExpression is Atomizer atom))
-            {
-                return false;
-            }
-
-            if (!(atom.BaseExpression is AxisExpression axis) || axis.Axis != AxisInfo.CHILD)
-            {
-                return false;
-            }
-
-            if (!(axis.GetNodeTest() is NameTest nameTest) || nameTest.PrimitiveType != Types.Type.ELEMENT)
-            {
-                return false;
-            }
-
-            fp = nameTest.Fingerprint;
-            return true;
+            fp = conv.BaseExpression is Atomizer atom ? TinyText.ElementStep(atom.BaseExpression, AxisInfo.CHILD) : -1;
+            return fp >= 0;
         }
 
         // Item (head) read: the first matching child's string, or null when there is no match or the
@@ -61,33 +46,9 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             }
 
             TinyTree tree = tiny.tree;
-            int p = tiny.nodeNr;
-            int child = p + 1;
-            if (child >= tree.numberOfNodes || tree.depth[child] != tree.depth[p] + 1)
-            {
-                return null;   // no children
-            }
-
-            byte[] kinds = tree.nodeKind;
-            int[] nextArr = tree.next;
-            int[] nameCodes = tree.nameCode;
-            int n = child;
-            while (true)
-            {
-                int k = kinds[n];
-                if ((k == Types.Type.ELEMENT || k == Types.Type.TEXTUAL_ELEMENT) && (nameCodes[n] & NamePool.FP_MASK) == fp)
-                {
-                    return new StringValue(TinyParentNodeImpl.GetStringValue(tree, n));
-                }
-
-                int n2 = nextArr[n];
-                if (n2 <= n)
-                {
-                    return null;
-                }
-
-                n = n2;
-            }
+            int n = TinyText.FirstChild(tree, tiny.nodeNr);
+            int cur = TinyText.NextChildNamed(tree, fp, ref n);
+            return cur < 0 ? null : new StringValue(TinyParentNodeImpl.GetStringValue(tree, cur));
         }
 
         internal static bool CanFuse(IXPathContext context)
@@ -102,74 +63,16 @@ namespace OutSmart.DAXon.Expressions.Elaboration
         // (NOT a StringValue) to keep current-grouping-key()'s type identical.
         internal static bool MatchAtomizer(Expression keyExpr, out int fp)
         {
-            fp = -1;
-            if (!(keyExpr is Atomizer atom))
-            {
-                return false;
-            }
-
-            if (!(atom.BaseExpression is AxisExpression axis) || axis.Axis != AxisInfo.CHILD)
-            {
-                return false;
-            }
-
-            if (!(axis.GetNodeTest() is NameTest nameTest) || nameTest.PrimitiveType != Types.Type.ELEMENT)
-            {
-                return false;
-            }
-
-            fp = nameTest.Fingerprint;
-            return true;
+            fp = keyExpr is Atomizer atom ? TinyText.ElementStep(atom.BaseExpression, AxisInfo.CHILD) : -1;
+            return fp >= 0;
         }
 
         // Bare `child::NAME` element step (SingletonAtomizer's base in fn:number(childName),
         // xs:decimal(childName) and friends).
         internal static bool MatchAxis(Expression e, out int fp)
         {
-            fp = -1;
-            if (!(e is AxisExpression axis) || axis.Axis != AxisInfo.CHILD)
-            {
-                return false;
-            }
-
-            if (!(axis.GetNodeTest() is NameTest nameTest) || nameTest.PrimitiveType != Types.Type.ELEMENT)
-            {
-                return false;
-            }
-
-            fp = nameTest.Fingerprint;
-            return true;
-        }
-
-        // The first child of node p in the sibling chain, or -1.
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private static int FirstChild(TinyTree tree, int p)
-        {
-            int child = p + 1;
-            return child < tree.numberOfNodes && tree.depth[child] == tree.depth[p] + 1 ? child : -1;
-        }
-
-        // The next element child named fp from n along the sibling chain, or -1; n moves past it (-1 at the end:
-        // a backwards jump in the chain is the owner pointer).
-        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        private static int NextChildNamed(TinyTree tree, int fp, ref int n)
-        {
-            byte[] kinds = tree.nodeKind;
-            int[] nextArr = tree.next;
-            int[] nameCodes = tree.nameCode;
-            while (n >= 0)
-            {
-                int cur = n;
-                int n2 = nextArr[cur];
-                n = n2 > cur ? n2 : -1;
-                int k = kinds[cur];
-                if ((k == Types.Type.ELEMENT || k == Types.Type.TEXTUAL_ELEMENT) && (nameCodes[cur] & NamePool.FP_MASK) == fp)
-                {
-                    return cur;
-                }
-            }
-
-            return -1;
+            fp = TinyText.ElementStep(e, AxisInfo.CHILD);
+            return fp >= 0;
         }
 
         // Single-child atomize for SingletonAtomizer(child::NAME): the one matching child's
@@ -193,9 +96,9 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             }
 
             TinyTree tree = tiny.tree;
-            int n = FirstChild(tree, tiny.nodeNr);
-            int cur = NextChildNamed(tree, fp, ref n);
-            if (cur >= 0 && NextChildNamed(tree, fp, ref n) >= 0)
+            int n = TinyText.FirstChild(tree, tiny.nodeNr);
+            int cur = TinyText.NextChildNamed(tree, fp, ref n);
+            if (cur >= 0 && TinyText.NextChildNamed(tree, fp, ref n) >= 0)
             {
                 offPath = true;
                 return null;
@@ -224,9 +127,9 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             }
 
             TinyTree tree = tiny.tree;
-            int n = FirstChild(tree, tiny.nodeNr);
-            int cur = NextChildNamed(tree, fp, ref n);
-            if (cur >= 0 && NextChildNamed(tree, fp, ref n) >= 0)
+            int n = TinyText.FirstChild(tree, tiny.nodeNr);
+            int cur = TinyText.NextChildNamed(tree, fp, ref n);
+            if (cur >= 0 && TinyText.NextChildNamed(tree, fp, ref n) >= 0)
             {
                 offPath = true;
                 return null;
@@ -255,12 +158,12 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             {
                 tree = parent.tree;
                 fp = fingerprint;
-                n = FirstChild(tree, parent.nodeNr);
+                n = TinyText.FirstChild(tree, parent.nodeNr);
             }
 
             public IItem Next()
             {
-                int cur = NextChildNamed(tree, fp, ref n);
+                int cur = TinyText.NextChildNamed(tree, fp, ref n);
                 return cur < 0 ? null : StringValue.MakeUntypedAtomic(TinyParentNodeImpl.GetStringValue(tree, cur));
             }
 
@@ -396,12 +299,12 @@ namespace OutSmart.DAXon.Expressions.Elaboration
             {
                 tree = parent.tree;
                 this.fp = fp;
-                n = FirstChild(tree, parent.nodeNr);
+                n = TinyText.FirstChild(tree, parent.nodeNr);
             }
 
             public IItem Next()
             {
-                int cur = NextChildNamed(tree, fp, ref n);
+                int cur = TinyText.NextChildNamed(tree, fp, ref n);
                 return cur < 0 ? null : new StringValue(TinyParentNodeImpl.GetStringValue(tree, cur));
             }
 

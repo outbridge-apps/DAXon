@@ -145,7 +145,7 @@ namespace OutSmart.DAXon.Resources
 
         private ZipArchive OpenArchive()
         {
-            string denied = ResourceGate.CheckRead(config, archiveURI, Api.ResourceKind.Collection);
+            string denied = ResourceGate.CheckProtocol(config, archiveURI) ?? ResourceGate.CheckRead(config, archiveURI, Api.ResourceKind.Collection);
             if (denied != null)
             {
                 throw new XPathException(denied, "FODC0002");

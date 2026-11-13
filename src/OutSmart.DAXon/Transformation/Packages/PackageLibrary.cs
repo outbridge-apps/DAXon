@@ -49,10 +49,19 @@ namespace OutSmart.DAXon.Transformation.Packages
             this.config = compilerInfo.GetConfiguration();
         }
 
+        // The version lists are copied too: shared, a package added to the copy was a version the original had no details for.
         public PackageLibrary(PackageLibrary library)
         {
-            packageVersions = new Dictionary<string, IList<PackageVersion>>(library.packageVersions);
-            packages = new Dictionary<VersionedPackageName, PackageDetails>(library.packages);
+            lock (library.syncLock)
+            {
+                foreach (KeyValuePair<string, IList<PackageVersion>> entry in library.packageVersions)
+                {
+                    packageVersions[entry.Key] = new List<PackageVersion>(entry.Value);
+                }
+
+                packages = new Dictionary<VersionedPackageName, PackageDetails>(library.packages);
+            }
+
             compilerInfo = library.compilerInfo;
             config = library.config;
         }
@@ -63,21 +72,7 @@ namespace OutSmart.DAXon.Transformation.Packages
             config = info.GetConfiguration();
             foreach (string file in files)
             {
-                PackageInspector inspector = new PackageInspector(config.MakePipelineConfiguration());
-                PackageDetails details = inspector.GetPackageDetails(file);
-                if (details == null)
-                {
-                    string message = "Unable to get package name and version for file " + Path.GetFileName(file);
-                    string diagnostics = inspector.Diagnostics;
-                    if (diagnostics != null)
-                    {
-                        message += " (" + diagnostics + ")";
-                    }
-
-                    throw new XPathException(message);
-                }
-
-                AddPackage(details);
+                AddPackage(file);
             }
         }
 
@@ -253,6 +248,11 @@ namespace OutSmart.DAXon.Transformation.Packages
                 {
                     ResolvedResource input = details.exportLocation;
                     IIPackageLoader loader = config.MakePackageLoader();
+                    if (loader == null)
+                    {
+                        throw new XPathException("A compiled package (SEF) cannot be loaded by this edition: compile the stylesheet from source");
+                    }
+
                     StylesheetPackage pack = loader.LoadPackage(input);
                     CheckNameAndVersion(pack, details);
                     details.loadedPackage = pack;

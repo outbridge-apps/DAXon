@@ -190,7 +190,6 @@ namespace OutSmart.DAXon.XQuery
             return qfl;
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
 
         public class UnboundFunctionCallDetails
         {

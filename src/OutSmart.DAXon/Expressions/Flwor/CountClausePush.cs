@@ -5,7 +5,9 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Events;
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Values;
+
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     internal sealed class CountClausePush : TuplePush
@@ -21,12 +23,14 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void ProcessTuple(IXPathContext context)
         {
+            StackGuard.Probe();
             context.SetLocalVariable(slot, new Int64Value(++count));
             destination.ProcessTuple(context);
         }
 
         public override void Dispose()
         {
+            StackGuard.Probe();
             destination.Dispose();
         }
     }

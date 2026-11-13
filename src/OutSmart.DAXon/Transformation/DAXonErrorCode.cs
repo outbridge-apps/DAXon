@@ -14,6 +14,10 @@ namespace OutSmart.DAXon.Transformation
         /// </summary>
         public const string SXLM0001 = "SXLM0001";
         /// <summary>
+        /// SXED0001: a feature of Saxon-PE or Saxon-EE (XPath or XQuery 4.0 among them) that this edition does not have
+        /// </summary>
+        public const string SXED0001 = "SXED0001";
+        /// <summary>
         /// SXLM0002: a tree is nested deeper than the implementation's depth limit
         /// </summary>
         public const string SXLM0002 = "SXLM0002";
@@ -21,6 +25,10 @@ namespace OutSmart.DAXon.Transformation
         /// SXLM0003: a call went over its memory limit (ProcessorOptions.MaxMemoryBytes)
         /// </summary>
         public const string SXLM0003 = "SXLM0003";
+        /// <summary>
+        /// SXLM0004: the configuration's name pool is full (about a million distinct names); a new Processor is needed
+        /// </summary>
+        public const string SXLM0004 = "SXLM0004";
         /// <summary>
         /// SXCH0002: cannot supply output to ContentHandler because it is not well-formed
         /// </summary>
@@ -41,6 +49,10 @@ namespace OutSmart.DAXon.Transformation
         /// SXRE0001: stack overflow within regular expression evaluation
         /// </summary>
         public const string SXRE0001 = "SXRE0001";
+        /// <summary>
+        /// SXRE0002: a regular expression exceeded its backtracking limit (Feature&lt;int&gt;.REGEX_BACKTRACKING_LIMIT)
+        /// </summary>
+        public const string SXRE0002 = "SXRE0002";
         /// <summary>
         /// SXSE0001: cannot use character maps in an environment with no Controller
         /// </summary>
@@ -246,7 +258,7 @@ namespace OutSmart.DAXon.Transformation
         public const string SXWN9005 = "SXWN9005";
         public const string SXWN9006 = "SXWN9006";
         /// <summary>
-        /// SXWN9007: Cannot use reserved @namespace in extension-element-prefixes
+        /// SXWN9007: Cannot use reserved namespace in extension-element-prefixes
         /// </summary>
         public const string SXWN9007 = "SXWN9007";
         public const string SXWN9008 = "SXWN9008";
@@ -383,7 +395,7 @@ namespace OutSmart.DAXon.Transformation
         /// </summary>
         public const string SXWN9041 = "SXWN9041";
         /// <summary>
-        /// SXWN9042: Unrecognized or invalid extension in Saxon @namespace
+        /// SXWN9042: Unrecognized or invalid extension in Saxon namespace
         /// </summary>
         public const string SXWN9042 = "SXWN9042";
         /// <summary>
@@ -475,7 +487,7 @@ namespace OutSmart.DAXon.Transformation
         /// </summary>
         public const string SXSD1015 = "SXSD1015";
         /// <summary>
-        /// SXSD1016: redefined component @is in the wrong schema module
+        /// SXSD1016: redefined component is in the wrong schema module
         /// </summary>
         public const string SXSD1016 = "SXSD1016";
         /// <summary>

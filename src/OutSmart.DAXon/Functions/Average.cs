@@ -9,6 +9,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Expressions;
+using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Values;
 namespace OutSmart.DAXon.Functions
 {
@@ -29,12 +30,34 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
+
+        public override Elaborator GetElaborator()
+        {
+            return new AverageElaborator();
+        }
+
+        private sealed class AverageElaborator : ItemElaborator
+        {
+            public override IItemEvaluator ElaborateForItem()
+            {
+                SystemFunctionCall fnc = (SystemFunctionCall)GetExpression();
+                IItemEvaluator nodes = TryNodeFold(fnc, context => new AverageFold(context), true);
+                if (nodes != null)
+                {
+                    return nodes;
+                }
+
+                IPullEvaluator puller = fnc.GetArg(0).MakeElaborator().ElaborateForPull();
+                return (context) => RunFold(new AverageFold(context), puller.Iterate(context)).Head();
+            }
+        }
+
         public override IFold GetFold(IXPathContext context, params ISequence[] additionalArguments)
         {
             return new AverageFold(context);
         }
 
-        private sealed class AverageFold : IFold
+        private sealed class AverageFold : IUntypedDoubleFold
         {
             private readonly IXPathContext context;
             private AtomicValue data;
@@ -42,6 +65,12 @@ namespace OutSmart.DAXon.Functions
             private readonly ConversionRules rules;
             private readonly StringConverter toDouble;
             private int count;
+            // Unboxed totals for a run of xs:integer or xs:double values (untypedAtomic converts to double), as SumFold
+            // keeps them; any other value, or overflow, puts the total back into data.
+            private long longTotal;
+            private bool onLongPath;
+            private double dblTotal;
+            private bool onDoublePath;
             public AverageFold(IXPathContext context)
             {
                 this.context = context;
@@ -49,9 +78,83 @@ namespace OutSmart.DAXon.Functions
                 this.toDouble = BuiltInAtomicType.DOUBLE.GetStringConverter(rules);
             }
 
+            public void ProcessUntypedDouble(double d)
+            {
+                if (onDoublePath)
+                {
+                    count++;
+                    dblTotal += d;
+                    return;
+                }
+
+                ProcessItem(new DoubleValue(d));
+            }
+
             public void ProcessItem(IItem item)
             {
                 AtomicValue next = (AtomicValue)item;
+                if (onLongPath)
+                {
+                    if (next is Int64Value iv)
+                    {
+                        try
+                        {
+                            longTotal = checked(longTotal + iv.LongValue());
+                            count++;
+                            return;
+                        }
+                        catch (System.OverflowException)
+                        {
+                            // the generic path promotes to a big integer
+                        }
+                    }
+
+                    onLongPath = false;
+                    data = Int64Value.MakeIntegerValue(longTotal);
+                }
+                else if (onDoublePath)
+                {
+                    if (next.IsUntypedAtomic())
+                    {
+                        next = toDouble.Convert(next).AsAtomic();
+                    }
+
+                    if (next is DoubleValue nd)
+                    {
+                        count++;
+                        dblTotal += nd.GetDoubleValue();
+                        return;
+                    }
+
+                    onDoublePath = false;
+                    data = new DoubleValue(dblTotal);
+                }
+                else if (!atStart && data is Int64Value di && next is Int64Value ni)
+                {
+                    try
+                    {
+                        longTotal = checked(di.LongValue() + ni.LongValue());
+                        onLongPath = true;
+                        count++;
+                        return;
+                    }
+                    catch (System.OverflowException)
+                    {
+                        // generic path below
+                    }
+                }
+                else if (!atStart && data is DoubleValue dd)
+                {
+                    AtomicValue nx = next.IsUntypedAtomic() ? toDouble.Convert(next).AsAtomic() : next;
+                    if (nx is DoubleValue ndd)
+                    {
+                        dblTotal = dd.GetDoubleValue() + ndd.GetDoubleValue();
+                        onDoublePath = true;
+                        count++;
+                        return;
+                    }
+                }
+
                 if (next.IsUntypedAtomic())
                 {
                     next = toDouble.Convert(next).AsAtomic();
@@ -110,11 +213,27 @@ namespace OutSmart.DAXon.Functions
 
             public bool IsFinished()
             {
+                if (onDoublePath)
+                {
+                    return double.IsNaN(dblTotal);
+                }
+
                 return data is DoubleValue && data.IsNaN();
             }
 
             public ISequence Result()
             {
+                if (onLongPath)
+                {
+                    onLongPath = false;
+                    data = Int64Value.MakeIntegerValue(longTotal);
+                }
+                else if (onDoublePath)
+                {
+                    onDoublePath = false;
+                    data = new DoubleValue(dblTotal);
+                }
+
                 if (atStart)
                 {
                     return EmptySequence.GetInstance();

@@ -59,40 +59,23 @@ namespace OutSmart.DAXon.Functions
 
                     // Convert $map($key) to map:get($map, $key)
                     // This improves streamability analysis - see accumulator-053
-                    return MakeGetCall(visitor, MapFunctionSet.GetInstance(31), contextInfo, arguments);
+                    return DynamicFunctionCall.MakeGetCall(visitor, MapFunctionSet.GetInstance(31), contextInfo, arguments[0], Subscript(arguments));
                 }
                 else if (target.GetItemType() is ArrayItemType)
                 {
 
                     // Convert $array($key) to array:get($array, $key)
-                    return MakeGetCall(visitor, ArrayFunctionSet.GetInstance(31), contextInfo, arguments);
+                    return DynamicFunctionCall.MakeGetCall(visitor, ArrayFunctionSet.GetInstance(31), contextInfo, arguments[0], Subscript(arguments));
                 }
             }
 
             return null;
         }
 
-        private Expression MakeGetCall(ExpressionVisitor visitor, BuiltInFunctionSet fnSet, ContextItemStaticInfo contextInfo, Expression[] arguments)
+        // The one member of the [...] that apply() is given.
+        private static Expression Subscript(Expression[] arguments)
         {
-            Expression target = arguments[0];
-            Expression key = ((SquareArrayConstructor)arguments[1]).GetOperanda().GetOperand(0).GetChildExpression();
-            Expression getter = fnSet.MakeFunction("get", 2).MakeFunctionCall(target, key);
-            getter.SetRetainedStaticContext(target.GetRetainedStaticContext());
-
-            // Use custom diagnostics for type errors on the argument of the call (bug 4772)
-            TypeChecker tc = visitor.GetConfiguration().GetTypeChecker(visitor.StaticContext.IsInBackwardsCompatibleMode());
-            if (fnSet == MapFunctionSet.GetInstance(31))
-            {
-                Func<RoleDiagnostic> role = () => new RoleDiagnostic(RoleDiagnostic.MISC, "key value supplied when calling a map as a function", 0);
-                ((SystemFunctionCall)getter).SetArg(1, tc.StaticTypeCheck(key, SequenceType.SINGLE_ATOMIC, role, visitor));
-            }
-            else
-            {
-                Func<RoleDiagnostic> role = () => new RoleDiagnostic(RoleDiagnostic.MISC, "subscript supplied when calling an array as a function", 0);
-                ((SystemFunctionCall)getter).SetArg(1, tc.StaticTypeCheck(key, SequenceType.SINGLE_INTEGER, role, visitor));
-            }
-
-            return getter.TypeCheck(visitor, contextInfo);
+            return ((SquareArrayConstructor)arguments[1]).GetOperanda().GetOperand(0).GetChildExpression();
         }
 
         public override ISequence Call(IXPathContext context, ISequence[] arguments)

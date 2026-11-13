@@ -48,26 +48,6 @@ namespace OutSmart.DAXon.Serialization
         }
         public override void Write(char c) { Write((int)c); }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
         protected override void Dispose(bool disposing)
         {
             if (_out != null)
@@ -90,87 +70,71 @@ namespace OutSmart.DAXon.Serialization
             }
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
         public override void Flush()
         {
             _flushBuffer();
             _out.Flush();
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
         public override void Write(char[] cbuf)
         {
             Write(cbuf, 0, cbuf.Length);
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
         public override void Write(char[] cbuf, int off, int len)
+        {
+            WriteChars(new CharArraySource(cbuf), off, len);
+        }
+
+        public void WriteLatin1(byte[] bytes, int off, int len)
+        {
+            WriteChars(new Latin1Source(bytes), off, len);
+        }
+
+        // A source of UTF-16 code units for the one encoding loop: a struct, so the loop is compiled once per
+        // source with the indexer inlined.
+        private interface ICharSource
+        {
+            int this[int index] { get; }
+        }
+
+        private readonly struct CharArraySource : ICharSource
+        {
+            private readonly char[] chars;
+
+            public CharArraySource(char[] chars)
+            {
+                this.chars = chars;
+            }
+
+            public int this[int index] => chars[index];
+        }
+
+        private readonly struct StringSource : ICharSource
+        {
+            private readonly string chars;
+
+            public StringSource(string chars)
+            {
+                this.chars = chars;
+            }
+
+            public int this[int index] => chars[index];
+        }
+
+        private readonly struct Latin1Source : ICharSource
+        {
+            private readonly byte[] bytes;
+
+            public Latin1Source(byte[] bytes)
+            {
+                this.bytes = bytes;
+            }
+
+            public int this[int index] => bytes[index];
+        }
+
+        private void WriteChars<T>(T cbuf, int off, int len) where T : struct, ICharSource
         {
             if (len < 2)
             {
@@ -186,7 +150,7 @@ namespace OutSmart.DAXon.Serialization
             // First: do we have a leftover surrogate to deal with?
             if (_surrogate > 0)
             {
-                char second = cbuf[off++];
+                int second = cbuf[off++];
                 --len;
                 Write(_convertSurrogate(second)); // will have at least one more char
             }
@@ -313,167 +277,11 @@ namespace OutSmart.DAXon.Serialization
             _outPtr = outPtr;
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        // 2-byte
-        public void WriteLatin1(byte[] bytes, int off, int len)
-        {
-            int outPtr = _outPtr;
-            byte[] outBuf = _outBuffer;
-            int outBufLast = _outBufferLast; // has 4 'spare' bytes
-
-            // All right; can just loop it nice and easy now:
-            len += off; // len will now be the end of input buffer
-            while (off < len)
-            {
-                /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-                if (outPtr >= outBufLast)
-                {
-                    _out.Write(outBuf, 0, outPtr);
-                    outPtr = 0;
-                }
-
-                int c = bytes[off++] & 0xff;
-
-                // And then see if we have an Ascii char:
-                if (c < 0x80)
-                {
-
-                    // If so, can do a tight inner loop:
-                    outBuf[outPtr++] = (byte)c;
-
-                    // Let's calc how many ascii chars we can copy at most:
-                    int maxInCount = (len - off);
-                    int maxOutCount = (outBufLast - outPtr);
-                    if (maxInCount > maxOutCount)
-                    {
-                        maxInCount = maxOutCount;
-                    }
-
-                    maxInCount += off;
-                    bool continueOuter = false;
-                    while (true)
-                    {
-                        if (off >= maxInCount)
-                        {
-
-                            // done with max. ascii seq
-                            continueOuter = true;
-                            break;
-                        }
-
-                        c = bytes[off++] & 0xff;
-                        if (c >= 0x80)
-                        {
-                            break;
-                        }
-
-                        outBuf[outPtr++] = (byte)c;
-                    }
-
-                    if (continueOuter)
-                    {
-                        continue;
-                    }
-                }
-
-                outBuf[outPtr++] = (byte)(0xc0 | (c >> 6));
-                outBuf[outPtr++] = (byte)(0x80 | (c & 0x3f));
-            }
-
-            _outPtr = outPtr;
-        }
-
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        // 2-byte
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
         public void WriteAscii(byte[] content)
         {
             WriteAscii(content, 0, content.Length);
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
         public void WriteAscii(byte[] chars, int off, int len)
         {
             int outPtr = _outPtr;
@@ -498,35 +306,6 @@ namespace OutSmart.DAXon.Serialization
             _outPtr = outPtr;
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
         public void WriteRepeatedAscii(byte ch, int repeat)
         {
             int outPtr = _outPtr;
@@ -550,35 +329,6 @@ namespace OutSmart.DAXon.Serialization
             _outPtr = outPtr;
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
         public void WriteCodePoint(int codepoint)
         {
 
@@ -587,35 +337,6 @@ namespace OutSmart.DAXon.Serialization
             Write(codepoint);
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
         public override void Write(int c)
         {
 
@@ -691,39 +412,6 @@ namespace OutSmart.DAXon.Serialization
             }
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        // ascii
-        // 2-byte
-        // 3 bytes
-        // 4 bytes
         public void Write(UnicodeString chars)
         {
             if (chars is StringView || chars is BMPString)
@@ -744,14 +432,19 @@ namespace OutSmart.DAXon.Serialization
             }
             else if (chars.Width == 16)
             {
-                if (chars is Twine16)
-                {
-                    Write(((Twine16)chars).CharArray);
-                }
-                else if (chars is Slice16)
+                if (chars is Slice16)
                 {
                     Slice16 s16 = (Slice16)chars;
                     Write(s16.CharArray, s16.Start, s16.End - s16.Start);
+                }
+                else if (chars is BMPSlice slice)
+                {
+                    Write(slice.Backing, slice.Start, slice.End - slice.Start);
+                }
+                else
+                {
+                    // Any other 16-bit form: its characters, never nothing.
+                    Write(chars.ToString());
                 }
             }
             else
@@ -764,60 +457,18 @@ namespace OutSmart.DAXon.Serialization
             }
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
         private void WriteWidth8OrLower(UnicodeString chars)
         {
-            if (chars is Twine8)
+            if (Slice8.Latin1Span(chars, out byte[] b, out int start, out int end))
             {
                 int width = chars.Width;
                 if (width == 7)
                 {
-                    WriteAscii(((Twine8)chars).ByteArray, 0, chars.Length32());
+                    WriteAscii(b, start, end - start);
                 }
                 else if (width == 8)
                 {
-                    WriteLatin1(((Twine8)chars).ByteArray, 0, chars.Length32());
-                }
-            }
-            else if (chars is Slice8)
-            {
-                Slice8 s8 = (Slice8)chars;
-                int width = chars.Width;
-                if (width == 7)
-                {
-                    WriteAscii(s8.ByteArray, s8.Start, s8.End - s8.Start);
-                }
-                else if (width == 8)
-                {
-                    WriteLatin1(s8.ByteArray, s8.Start, s8.End - s8.Start);
+                    WriteLatin1(b, start, end - start);
                 }
             }
             else if (chars is WhitespaceString)
@@ -836,312 +487,16 @@ namespace OutSmart.DAXon.Serialization
             }
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        // ascii
-        // 2-byte
-        // 3 bytes
-        // 4 bytes
         public override void Write(string str)
         {
             Write(str, 0, str.Length);
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
         public void Write(string str, int off, int len)
         {
-            if (len < 2)
-            {
-                if (len == 1)
-                {
-                    Write(str[off]);
-                }
-
-                return;
-            }
-
-
-            // First: do we have a leftover surrogate to deal with?
-            if (_surrogate > 0)
-            {
-                char second = str[off++];
-                --len;
-                Write(_convertSurrogate(second)); // will have at least one more char (case of 1 char was checked earlier on)
-            }
-
-            int outPtr = _outPtr;
-            byte[] outBuf = _outBuffer;
-            int outBufLast = _outBufferLast; // has 4 'spare' bytes
-
-            // All right; can just loop it nice and easy now:
-            len += off; // len will now be the end of input buffer
-            while (off < len)
-            {
-
-                // First, let's ensure we can output at least 4 bytes
-                // (longest UTF-8 encoded codepoint):
-                if (outPtr >= outBufLast)
-                {
-                    _out.Write(outBuf, 0, outPtr);
-                    outPtr = 0;
-                }
-
-                int c = str[off++];
-
-                // And then see if we have an Ascii char:
-                if (c < 0x80)
-                {
-
-                    // If so, can do a tight inner loop:
-                    outBuf[outPtr++] = (byte)c;
-
-                    // Let's calc how many ascii chars we can copy at most:
-                    int maxInCount = (len - off);
-                    int maxOutCount = (outBufLast - outPtr);
-                    if (maxInCount > maxOutCount)
-                    {
-                        maxInCount = maxOutCount;
-                    }
-
-                    maxInCount += off;
-                    bool continueOuter = false;
-                    while (true)
-                    {
-                        if (off >= maxInCount)
-                        {
-
-                            // done with max. ascii seq
-                            continueOuter = true;
-                            break;
-                        }
-
-                        c = str[off++];
-                        if (c >= 0x80)
-                        {
-                            break;
-                        }
-
-                        outBuf[outPtr++] = (byte)c;
-                    }
-
-                    if (continueOuter)
-                    {
-                        continue;
-                    }
-                }
-
-                int[] result = WriteMultiByte(c, outBuf, outPtr, str, off, len);
-                if (result == null)
-                {
-                    break;
-                }
-                else
-                {
-                    outPtr = result[0];
-                    off = result[1];
-                }
-            }
-
-            _outPtr = outPtr;
+            WriteChars(new StringSource(str), off, len);
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        // ascii
-        // 2-byte
-        // 3 bytes
-        // 4 bytes
-        private int[] WriteMultiByte(int c, byte[] outBuf, int outPtr, string str, int off, int len)
-        {
-
-            // Nope, multi-byte:
-            if (c < 0x800)
-            {
-
-                // 2-byte
-                outBuf[outPtr++] = (byte)(0xc0 | (c >> 6));
-                outBuf[outPtr++] = (byte)(0x80 | (c & 0x3f));
-            }
-            else
-            {
-
-                // 3 or 4 bytes
-                // Surrogates?
-                if (c < SURR1_FIRST || c > SURR2_LAST)
-                {
-                    outBuf[outPtr++] = (byte)(0xe0 | (c >> 12));
-                    outBuf[outPtr++] = (byte)(0x80 | ((c >> 6) & 0x3f));
-                    outBuf[outPtr++] = (byte)(0x80 | (c & 0x3f));
-                    return new int[]
-                    {
-                        outPtr,
-                        off
-                    };
-                }
-
-
-                // Yup, a surrogate:
-                if (c > SURR1_LAST)
-                {
-
-                    // must be from first range
-                    _outPtr = outPtr;
-                    ThrowIllegal(c);
-                }
-
-                _surrogate = c;
-
-                // and if so, followed by another from next range
-                if (off >= len)
-                {
-
-                    // unless we hit the end?
-                    return null;
-                }
-
-                c = _convertSurrogate(str[off++]);
-                if (c > 0x10FFFF)
-                {
-
-                    // illegal, as per RFC 3629
-                    _outPtr = outPtr;
-                    ThrowIllegal(c);
-                }
-
-                outBuf[outPtr++] = (byte)(0xf0 | (c >> 18));
-                outBuf[outPtr++] = (byte)(0x80 | ((c >> 12) & 0x3f));
-                outBuf[outPtr++] = (byte)(0x80 | ((c >> 6) & 0x3f));
-                outBuf[outPtr++] = (byte)(0x80 | (c & 0x3f));
-            }
-
-            return new int[]
-            {
-                outPtr,
-                off
-            };
-        }
-
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        // ascii
-        // 2-byte
-        // 3 bytes
-        // 4 bytes
-        // 2-byte
-        /*
-    ////////////////////////////////////////////////////////////
-    // Internal methods
-    ////////////////////////////////////////////////////////////
-     */
         private void _flushBuffer()
         {
             if (_outPtr > 0 && _outBuffer != null)
@@ -1151,40 +506,6 @@ namespace OutSmart.DAXon.Serialization
             }
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /*
-    ////////////////////////////////////////////////////////////
-    // Internal methods
-    ////////////////////////////////////////////////////////////
-     */
         /// <summary>
         /// Method called to calculate UTF codepoint, from a surrogate pair.
         /// </summary>
@@ -1202,42 +523,8 @@ namespace OutSmart.DAXon.Serialization
             return 0x10000 + ((firstPart - SURR1_FIRST) << 10) + (secondPart - SURR2_FIRST);
         }
 
-        /* Max. expansion for a single Unicode code point is 4 bytes when
-         * recombining UCS-2 surrogate pairs, so:
-         */
-        /*
-    ////////////////////////////////////////////////////////
-    // OutSmart.DAXon.Internal.IO.Writer implementation
-    ////////////////////////////////////////////////////////
-     */
-        /* Due to co-variance between Appendable and
-     * TextWriter, this would not compile with javac 1.5, in 1.4 mode
-     * (source and target set to "1.4". Not a huge deal, but since
-     * the base impl is just fine, no point in overriding it.
-     */
-        /*
-    public TextWriter append(char c) throws IOException {
-    // note: this is a JDK 1.5 method
-        write(c);
-        return this;
-    }
-    */
-        /* If we are left with partial surrogate we have a problem, but
-             * let's not let it prevent closure of the underlying stream
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /* First, let's ensure we can output at least 4 bytes
-             * (longest UTF-8 encoded codepoint):
-             */
-        /*
-    ////////////////////////////////////////////////////////////
-    // Internal methods
-    ////////////////////////////////////////////////////////////
-     */
         /// <summary>
-        /// Method called to calculate UTF codepoint, from a surrogate pair.
+        /// Throws the IOException that names what is wrong with an unencodable code point.
         /// </summary>
         private void ThrowIllegal(int code)
         {

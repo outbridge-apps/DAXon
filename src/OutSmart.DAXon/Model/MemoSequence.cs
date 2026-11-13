@@ -145,6 +145,7 @@ namespace OutSmart.DAXon.Model
 
                 // We have read some items from the input sequence but not enough. Read as many more as are needed.
                 int diff = n - used + 1;
+                XPathException failure = null;
                 try
                 {
                     while (diff-- > 0)
@@ -164,7 +165,12 @@ namespace OutSmart.DAXon.Model
                 catch (UncheckedXPathException e)
                 {
                     state = State.ERROR;
-                    throw e.GetXPathException();
+                    failure = e.GetXPathException();   // thrown below: see SingletonClosure.Iterate
+                }
+
+                if (failure != null)
+                {
+                    throw failure;
                 }
 
 
@@ -178,9 +184,19 @@ namespace OutSmart.DAXon.Model
         private long HeldBytes()
         {
             IItem[][] c = chunks;
+            IItem[] r = reservoir;
             int n = used;
-            return c == null ? 0 : 24 + 8L * n + OutSmart.DAXon.Core.MemoryLedger.MembersBytes(c[0], Chunk) / Chunk * n;
+            if (c == null)
+            {
+                return r == null || n == 0 ? 0 : 24 + 8L * r.Length + OutSmart.DAXon.Core.MemoryLedger.MembersBytes(r, n);
+            }
+
+            return 24 + 8L * n + OutSmart.DAXon.Core.MemoryLedger.MembersBytes(c[0], Chunk) / Chunk * n;
         }
+
+        // Few items can hold much (8100 strings of 32 000 chars, 512 MB): entered when their medium strings pass Big bytes.
+        private long weight;
+        private bool held;
 
         private IItem Get(int i)
         {
@@ -190,6 +206,12 @@ namespace OutSmart.DAXon.Model
 
         private void Append(IItem item)
         {
+            if (!held && OutSmart.DAXon.Core.MemoryLedger.Weighs(item, ref weight))
+            {
+                held = true;
+                OutSmart.DAXon.Core.MemoryLedger.Hold(this, Sizer);
+            }
+
             if (chunks == null)
             {
                 if (used < reservoir.Length)
@@ -209,7 +231,11 @@ namespace OutSmart.DAXon.Model
                 chunks = new IItem[8][];
                 chunks[0] = reservoir;
                 reservoir = null;
-                OutSmart.DAXon.Core.MemoryLedger.Hold(this, Sizer);   // summed as it grows
+                if (!held)
+                {
+                    held = true;
+                    OutSmart.DAXon.Core.MemoryLedger.Hold(this, Sizer);   // summed as it grows
+                }
             }
 
             int ci = used >> 13;
@@ -384,6 +410,7 @@ namespace OutSmart.DAXon.Model
                     else
                     {
                         IItem i = null;
+                        UncheckedXPathException failure = null;
                         try
                         {
                             i = container.inputIterator.Next();
@@ -396,10 +423,15 @@ namespace OutSmart.DAXon.Model
                                 return null;
                             }
                         }
-                        catch (UncheckedXPathException)
+                        catch (UncheckedXPathException e)
                         {
                             container.state = State.ERROR;
-                            throw;
+                            failure = e;   // thrown below: see SingletonClosure.Iterate
+                        }
+
+                        if (failure != null)
+                        {
+                            throw failure;
                         }
 
                         position = container.used;

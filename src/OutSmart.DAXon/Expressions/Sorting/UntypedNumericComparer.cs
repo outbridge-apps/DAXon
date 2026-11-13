@@ -187,6 +187,9 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private ConversionRules rules = ConversionRules.DEFAULT;
 
         public IStringCollator Collator => null;
+        // The result when the untyped value casts to NaN, to which nothing is equal, less or greater (XPath 3.1, 3.7.1).
+        private const int Unordered = 2;
+
         public static bool QuickCompare(StringValue a0, NumericValue a1, int @operator, ConversionRules rules)
         {
             if (a1.IsNaN())
@@ -195,6 +198,11 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
 
             int comp = QuickComparison(a0, a1, rules);
+            if (comp == Unordered)
+            {
+                return @operator == Token.FNE;
+            }
+
             switch (@operator)
             {
                 case Token.FEQ:
@@ -301,28 +309,28 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
             else
             {
-                IConversionResult result;
-                lock (a0)
-                {
-                    result = BuiltInAtomicType.DOUBLE.GetStringConverter(rules).ConvertString(a0.UnicodeStringValue);
-                }
+                // Saxon converts under a lock on the user's value; a value's string is no lazy state here
+                IConversionResult result = BuiltInAtomicType.DOUBLE.GetStringConverter(rules).ConvertString(a0.UnicodeStringValue);
 
                 AtomicValue av = result.AsAtomic();
-                return CompareDoublesTotalOrder(((DoubleValue)av).GetDoubleValue(), d1);
+                return CompareDoubles(((DoubleValue)av).GetDoubleValue(), d1);
             }
         }
 
-        // Total-order double comparison matching java.lang.Double.compare: NaN sorts
-        // above +INF, and -0.0 sorts below +0.0 (unlike double.CompareTo / the &lt;,&gt; operators).
-        private static int CompareDoublesTotalOrder(double a, double b)
+        // By value: -0 equals 0, and NaN is unordered. Saxon uses Double.compare here, a total order, against the spec.
+        private static int CompareDoubles(double a, double b)
         {
             if (a < b)
+            {
                 return -1;
+            }
+
             if (a > b)
+            {
                 return 1;
-            long ab = double.IsNaN(a) ? 0x7ff8000000000000L : BitConverter.DoubleToInt64Bits(a);
-            long bb = double.IsNaN(b) ? 0x7ff8000000000000L : BitConverter.DoubleToInt64Bits(b);
-            return ab == bb ? 0 : (ab < bb ? -1 : 1);
+            }
+
+            return double.IsNaN(a) || double.IsNaN(b) ? Unordered : 0;
         }
 
         public int CompareAtomicValues(AtomicValue a, AtomicValue b)

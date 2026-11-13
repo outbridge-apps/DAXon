@@ -86,6 +86,14 @@ namespace OutSmart.DAXon.Serialization
         {
             if (!ReceiverOption.Contains(properties, ReceiverOption.DISABLE_ESCAPING))
             {
+                // Text outside the CDATA elements goes on as Flush passes it, unbuffered: every text of the output was
+                // copied into the buffer and out again
+                if (buffer.Length() == 0 && (stack.Count == 0 || !IsCDATA(stack.Peek())))
+                {
+                    nextReceiver.Characters(chars, Loc.NONE, ReceiverOption.NONE);
+                    return;
+                }
+
                 buffer.Append(chars.ToString());
             }
             else
@@ -203,7 +211,6 @@ namespace OutSmart.DAXon.Serialization
         /// <param name="data">the data to be output</param>
         private void FlushCDATA(UnicodeString data)
         {
-            data = data.Tidy();
             if (data.IsEmpty())
             {
                 return;
@@ -221,6 +228,7 @@ namespace OutSmart.DAXon.Serialization
             long doneto = 0;
             while (i < len - 2)
             {
+                Core.Controller.CheckActiveTimeoutEvery64K(i);
                 if (data.CodePointAt(i) == ']' && data.CodePointAt(i + 1) == ']' && data.CodePointAt(i + 2) == '>')
                 {
                     nextReceiver.Characters(data.Substring(doneto, i + 2), loc, chprop);

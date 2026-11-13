@@ -606,12 +606,6 @@ namespace OutSmart.DAXon.Xslt
                 }
             }
 
-
-            if (streamability.IsStreaming())
-            {
-                compiledFunction.PrepareForStreaming();
-            }
-
             if (explaining)
             {
                 exp2.Explain(GetConfiguration().Logger);

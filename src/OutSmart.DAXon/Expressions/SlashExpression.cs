@@ -55,9 +55,6 @@ namespace OutSmart.DAXon.Expressions
 
         public override int ImplementationMethod => ITERATE_METHOD;
 
-        //}
-        //
-        //
         public virtual Expression FirstStep
         {
             get
@@ -73,9 +70,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //}
-        //
-        //
         public virtual Expression RemainingSteps
         {
             get
@@ -95,9 +89,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //}
-        //
-        //
         public virtual Expression LastStep
         {
             get
@@ -113,9 +104,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //}
-        //
-        //
         public virtual Expression LeadingSteps
         {
             get
@@ -135,9 +123,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //}
-        //
-        //
         public override string StreamerName => "ForEach";
         public SlashExpression(Expression start, Expression step) : base(start, Token.SLASH, step)
         {
@@ -605,12 +590,6 @@ namespace OutSmart.DAXon.Expressions
             return this;
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet target = Start.AddToPathMap(pathMap, pathMapNodeSet);
-            return GetStep().AddToPathMap(pathMap, target);
-        }
-
         public override Expression Copy(RebindingMap rebindings)
         {
             Expression exp = ExpressionTool.MakePathExpression(Start.Copy(rebindings), GetStep().Copy(rebindings));
@@ -687,7 +666,6 @@ namespace OutSmart.DAXon.Expressions
         private bool TestNaturallySorted(int startProperties, int stepProperties)
         {
 
-            // display(20);
             if ((stepProperties & StaticProperty.ORDERED_NODESET) == 0)
             {
                 return false;
@@ -725,13 +703,12 @@ namespace OutSmart.DAXon.Expressions
             }
 
 
-            // The result is sorted if the start selects "peer nodes" (that @is, a node-set in which
+            // The result is sorted if the start selects "peer nodes" (that is, a node-set in which
             // no node is an ancestor of another) and the step selects within the subtree rooted
             // at the context node
             return ((startProperties & StaticProperty.PEER_NODESET) != 0) && ((stepProperties & StaticProperty.SUBTREE_NODESET) != 0);
         }
 
-        //}
         private bool TestNaturallyReverseSorted()
         {
 
@@ -751,7 +728,6 @@ namespace OutSmart.DAXon.Expressions
             return !Cardinality.AllowsMany(GetStep().GetCardinality()) && (Start is AxisExpression) && !AxisInfo.isForwards[((AxisExpression)Start).Axis];
         }
 
-        //}
         protected override int ComputeCardinality()
         {
             int c1 = Start.GetCardinality();
@@ -759,7 +735,6 @@ namespace OutSmart.DAXon.Expressions
             return Cardinality.Multiply(c1, c2);
         }
 
-        //}
         public override Patterns.Pattern ToPattern(Configuration config)
         {
             Expression head = LeadingSteps;
@@ -827,19 +802,16 @@ namespace OutSmart.DAXon.Expressions
             return new AncestorQualifiedPattern(tailPattern, headPattern, axis);
         }
 
-        //}
         public virtual bool IsContextFree()
         {
             return contextFree;
         }
 
-        //}
         public virtual void SetContextFree(bool free)
         {
             this.contextFree = free;
         }
 
-        //}
         /// <summary>
         /// Is this expression the same as another expression?
         /// </summary>
@@ -854,30 +826,16 @@ namespace OutSmart.DAXon.Expressions
             return Start.IsEqual(p.Start) && GetStep().IsEqual(p.GetStep());
         }
 
-        //}
         protected override int ComputeHashCode()
         {
             return "SlashExpression".GetHashCode() + Start.GetHashCode() + GetStep().GetHashCode();
         }
 
-        //}
         public override ISequenceIterator Iterate(IXPathContext context)
         {
-            return MakeElaborator().ElaborateForPull().Iterate(context); //        // This class delivers the result of the path expression in unsorted order,
-            //        // without removal of duplicates. If sorting and deduplication are needed,
-            //        // this is achieved by wrapping the path expression in a DocumentSorter
-            //
-            //            // See bug 4730: the step might have been changed to something else
-            //            return MappingIterator.map(
-            //                    getStart().iterate(context),
-            //                    item -> ((AxisExpression) step).iterate((NodeInfo)item));
-            //        }
-            //
+            return MakeElaborator().ElaborateForPull().Iterate(context);
         }
 
-        //}
-        //
-        //
         public override void Export(ExpressionPresenter destination)
         {
             destination.StartElement("slash", this);
@@ -895,25 +853,16 @@ namespace OutSmart.DAXon.Expressions
             destination.EndElement();
         }
 
-        //}
-        //
-        //
         public override string ToString()
         {
             return ExpressionTool.Parenthesize(Start) + "/" + ExpressionTool.Parenthesize(GetStep());
         }
 
-        //}
-        //
-        //
         public override string ToShortString()
         {
             return ExpressionTool.ParenthesizeShort(Start) + "/" + ExpressionTool.ParenthesizeShort(GetStep());
         }
 
-        //}
-        //
-        //
         private void GatherSteps(IList<Expression> list)
         {
             if (Start is SlashExpression)
@@ -935,9 +884,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //}
-        //
-        //
         private Expression RebuildSteps(IList<Expression> list)
         {
             if (list.Count == 1)
@@ -950,29 +896,18 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //}
-        //
-        //
         public virtual bool IsAbsolute()
         {
             return FirstStep.GetItemType().PrimitiveType == Types.Type.DOCUMENT;
         }
 
-        //}
-        //
-        //
-        // sic
         public override Elaborator GetElaborator()
         {
             return new SlashExprElaborator();
         }
 
-        //}
-        //
-        //
-        // sic
         /// <summary>
-        /// Elaborator for a slash expression. (This actually corresponds to the "!" @operator, not to "/")
+        /// Elaborator for a slash expression. (This actually corresponds to the "!" operator, not to "/")
         /// </summary>
         internal sealed class SlashExprElaborator : PullElaborator
         {

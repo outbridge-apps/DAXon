@@ -61,11 +61,9 @@ namespace OutSmart.DAXon.Collections
             s.startPoints = new int[startPoints.Length];
             Array.Copy(startPoints, 0, s.startPoints, 0, startPoints.Length);
 
-            //s.startPoints = Arrays.copyOf(startPoints, startPoints.length);
             s.endPoints = new int[endPoints.Length];
             Array.Copy(endPoints, 0, s.endPoints, 0, endPoints.Length);
 
-            //s.endPoints = Arrays.copyOf(endPoints, endPoints.length);
             s.used = used;
             s.count = count;
             return s;

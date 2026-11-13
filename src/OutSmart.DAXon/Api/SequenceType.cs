@@ -28,6 +28,8 @@ namespace OutSmart.DAXon.Api
 
         public static SequenceType MakeSequenceType(ItemType itemType, OccurrenceIndicator occurrenceIndicator)
         {
+            ArgumentCheck.NotNull(itemType, nameof(itemType));
+            ArgumentCheck.Defined(occurrenceIndicator, nameof(occurrenceIndicator));
             return new SequenceType(itemType, occurrenceIndicator);
         }
 
@@ -43,6 +45,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual bool Matches(XdmValue value)
         {
+            ArgumentCheck.NotNull(value, nameof(value));
             return value.Matches(this);
         }
 

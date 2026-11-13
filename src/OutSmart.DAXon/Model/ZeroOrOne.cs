@@ -100,19 +100,11 @@ namespace OutSmart.DAXon.Model
         IItem IGroundedValue.Head() => (IItem)(object)Head();
         IItem ISequence.Head() => (IItem)(object)Head();
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual IGroundedValue Materialize() => this; // upstream GroundedValue default
         public virtual string ToShortString() => OutSmart.DAXon.Transformation.Err.DepictSequence(this); // upstream GroundedValue default
         public virtual IEnumerable<IItem> AsIterable() => item == null ? new IItem[0] : new IItem[] { (IItem)(object)item }; // 0-or-1 items (upstream GroundedValue.asIterable)
-        public virtual bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public virtual bool ContainsNode(NodeInfo sought) => GroundedValueDefaults.ContainsNode(this, sought);
+        public virtual IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         public virtual ISequence MakeRepeatable() => this; // upstream Sequence.makeRepeatable default
     }
 }

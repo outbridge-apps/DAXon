@@ -183,379 +183,7 @@ namespace OutSmart.DAXon.Expressions
             {
                 if (itemType.IsPlainType())
                 {
-                    if (itemType == ErrorType.GetInstance())
-                    {
-
-                        // supplied value is (); we need to convert it to null; this converter does the job.
-                        return StringItemToString.INSTANCE;
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.STRING))
-                    {
-                        if (targetClass == typeof(object) || targetClass == typeof(string) || targetClass == typeof(string))
-                        {
-                            return StringItemToString.INSTANCE;
-                        }
-                        else if (targetClass.IsAssignableFrom(typeof(StringValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else if (targetClass == typeof(char))
-                        {
-                            return StringItemToChar.INSTANCE;
-                        }
-                        else if (targetClass == typeof(UnicodeString))
-                        {
-                            return StringItemToUnicodeString.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (itemType == BuiltInAtomicType.UNTYPED_ATOMIC)
-                    {
-                        if (targetClass == typeof(object) || targetClass == typeof(string) || targetClass == typeof(string))
-                        {
-                            return StringItemToString.INSTANCE;
-                        }
-                        else if (targetClass.IsAssignableFrom(typeof(StringValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            try
-                            {
-                                System.Reflection.ConstructorInfo constructor = targetClass.GetConstructor(new System.Type[] { typeof(string) });
-                                return new AnonymousPJConverter(constructor);
-                            }
-                            catch (MissingMethodException)
-                            {
-                                throw CannotConvert(itemType, targetClass);
-                            }
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.BOOLEAN))
-                    {
-                        if (targetClass == typeof(object) || targetClass == typeof(bool) || targetClass == typeof(bool))
-                        {
-                            return BooleanValueToBoolean.INSTANCE;
-                        }
-                        else if (targetClass.IsAssignableFrom(typeof(BooleanValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.INTEGER))
-                    {
-                        if (targetClass == typeof(object) || targetClass == typeof(BigInteger))
-                        {
-                            return IntegerValueToBigInteger.INSTANCE;
-                        }
-                        else if (targetClass == typeof(long) || targetClass == typeof(long))
-                        {
-                            return IntegerValueToLong.INSTANCE;
-                        }
-                        else if (targetClass == typeof(int) || targetClass == typeof(int))
-                        {
-                            return IntegerValueToInt.INSTANCE;
-                        }
-                        else if (targetClass == typeof(short) || targetClass == typeof(short?))
-                        {
-                            return IntegerValueToShort.INSTANCE;
-                        }
-                        else if (targetClass == typeof(byte) || targetClass == typeof(byte))
-                        {
-                            return IntegerValueToByte.INSTANCE;
-                        }
-                        else if (targetClass == typeof(char))
-                        {
-                            return IntegerValueToChar.INSTANCE;
-                        }
-                        else if (targetClass == typeof(double) || targetClass == typeof(double))
-                        {
-                            return NumericValueToDouble.INSTANCE;
-                        }
-                        else if (targetClass == typeof(float) || targetClass == typeof(float))
-                        {
-                            return NumericValueToFloat.INSTANCE;
-                        }
-                        else if (targetClass == typeof(BigDecimal))
-                        {
-                            return NumericValueToBigDecimal.INSTANCE;
-                        }
-                        else if (targetClass.IsAssignableFrom(typeof(IntegerValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.DECIMAL))
-                    {
-                        if (targetClass == typeof(object) || targetClass == typeof(BigDecimal))
-                        {
-                            return NumericValueToBigDecimal.INSTANCE;
-                        }
-                        else if (targetClass == typeof(double) || targetClass == typeof(double))
-                        {
-                            return NumericValueToDouble.INSTANCE;
-                        }
-                        else if (targetClass == typeof(float) || targetClass == typeof(float))
-                        {
-                            return NumericValueToFloat.INSTANCE;
-                        }
-                        else if (targetClass.IsAssignableFrom(typeof(BigDecimalValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.FLOAT))
-                    {
-                        if (targetClass == typeof(object) || targetClass == typeof(float) || targetClass == typeof(float))
-                        {
-                            return NumericValueToFloat.INSTANCE;
-                        }
-                        else if (targetClass == typeof(double) || targetClass == typeof(double))
-                        {
-                            return NumericValueToDouble.INSTANCE;
-                        }
-                        else if (targetClass.IsAssignableFrom(typeof(FloatValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.DOUBLE))
-                    {
-                        if (targetClass == typeof(object) || targetClass == typeof(double) || targetClass == typeof(double))
-                        {
-                            return NumericValueToDouble.INSTANCE;
-                        }
-                        else if (targetClass.IsAssignableFrom(typeof(DoubleValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            return Atomic.INSTANCE;
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.ANY_URI))
-                    {
-                        if (targetClass == typeof(object) || typeof(URI).IsAssignableFrom(targetClass))
-                        {
-                            return AnyURIValueToURI.INSTANCE;
-                        }
-                        else if (typeof(Uri).IsAssignableFrom(targetClass))
-                        {
-                            return AnyURIValueToSystemUri.INSTANCE;
-                        }
-                        else if (targetClass == typeof(string) || targetClass == typeof(string))
-                        {
-                            return StringItemToString.INSTANCE;
-                        }
-                        else if (targetClass.IsAssignableFrom(typeof(AnyURIValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.QNAME))
-                    {
-                        if (targetClass == typeof(object) || targetClass == typeof(System.Xml.XmlQualifiedName))
-                        {
-                            return QualifiedNameValueToQName.INSTANCE;
-                        }
-                        else if (targetClass.IsAssignableFrom(typeof(QNameValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.NOTATION))
-                    {
-                        if (targetClass == typeof(object) || targetClass == typeof(System.Xml.XmlQualifiedName))
-                        {
-                            return QualifiedNameValueToQName.INSTANCE;
-                        }
-                        else if (targetClass.IsAssignableFrom(typeof(NotationValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.DURATION))
-                    {
-                        if (targetClass.IsAssignableFrom(typeof(DurationValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.DATE_TIME))
-                    {
-                        if (targetClass.IsAssignableFrom(typeof(DateTimeValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else if (targetClass == typeof(DateTime))
-                        {
-                            return CalendarValueToDateTime.INSTANCE;
-                        }
-                        else if (targetClass == typeof(DateTimeOffset))
-                        {
-                            return CalendarValueToDateTimeOffset.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.DATE))
-                    {
-                        if (targetClass.IsAssignableFrom(typeof(DateValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else if (targetClass == typeof(DateTime))
-                        {
-                            return CalendarValueToDateTime.INSTANCE;
-                        }
-                        else if (targetClass == typeof(DateTimeOffset))
-                        {
-                            return CalendarValueToDateTimeOffset.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.TIME))
-                    {
-                        if (targetClass.IsAssignableFrom(typeof(TimeValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else if (targetClass == typeof(DateTime))
-                        {
-                            return CalendarValueToDateTime.INSTANCE;
-                        }
-                        else if (targetClass == typeof(DateTimeOffset))
-                        {
-                            return CalendarValueToDateTimeOffset.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.G_YEAR))
-                    {
-                        if (targetClass.IsAssignableFrom(typeof(GYearValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.G_YEAR_MONTH))
-                    {
-                        if (targetClass.IsAssignableFrom(typeof(GYearMonthValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.G_MONTH))
-                    {
-                        if (targetClass.IsAssignableFrom(typeof(GMonthValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.G_MONTH_DAY))
-                    {
-                        if (targetClass.IsAssignableFrom(typeof(GMonthDayValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.G_DAY))
-                    {
-                        if (targetClass.IsAssignableFrom(typeof(GDayValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.BASE64_BINARY))
-                    {
-                        if (targetClass.IsAssignableFrom(typeof(Base64BinaryValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else if (th.IsSubType(itemType, BuiltInAtomicType.HEX_BINARY))
-                    {
-                        if (targetClass.IsAssignableFrom(typeof(HexBinaryValue)))
-                        {
-                            return Identity.INSTANCE;
-                        }
-                        else
-                        {
-                            throw CannotConvert(itemType, targetClass);
-                        }
-                    }
-                    else
-                    {
-                        return Atomic.INSTANCE;
-                    }
+                    return AllocateForAtomic(th, itemType, targetClass);
                 }
                 else if (itemType is JavaExternalObjectType)
                 {
@@ -590,6 +218,385 @@ namespace OutSmart.DAXon.Expressions
                 return General.INSTANCE;
             }
         }
+
+        // The converter for at most one atomic value of itemType to a targetClass: one case per atomic type.
+        private static PJConverter AllocateForAtomic(TypeHierarchy th, ItemType itemType, System.Type targetClass)
+        {
+            if (itemType == ErrorType.GetInstance())
+            {
+
+                // supplied value is (); we need to convert it to null; this converter does the job.
+                return StringItemToString.INSTANCE;
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.STRING))
+            {
+                if (targetClass == typeof(object) || targetClass == typeof(string) || targetClass == typeof(string))
+                {
+                    return StringItemToString.INSTANCE;
+                }
+                else if (targetClass.IsAssignableFrom(typeof(StringValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else if (targetClass == typeof(char))
+                {
+                    return StringItemToChar.INSTANCE;
+                }
+                else if (targetClass == typeof(UnicodeString))
+                {
+                    return StringItemToUnicodeString.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (itemType == BuiltInAtomicType.UNTYPED_ATOMIC)
+            {
+                if (targetClass == typeof(object) || targetClass == typeof(string) || targetClass == typeof(string))
+                {
+                    return StringItemToString.INSTANCE;
+                }
+                else if (targetClass.IsAssignableFrom(typeof(StringValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    try
+                    {
+                        System.Reflection.ConstructorInfo constructor = targetClass.GetConstructor(new System.Type[] { typeof(string) });
+                        return new AnonymousPJConverter(constructor);
+                    }
+                    catch (MissingMethodException)
+                    {
+                        throw CannotConvert(itemType, targetClass);
+                    }
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.BOOLEAN))
+            {
+                if (targetClass == typeof(object) || targetClass == typeof(bool) || targetClass == typeof(bool))
+                {
+                    return BooleanValueToBoolean.INSTANCE;
+                }
+                else if (targetClass.IsAssignableFrom(typeof(BooleanValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.INTEGER))
+            {
+                if (targetClass == typeof(object) || targetClass == typeof(BigInteger))
+                {
+                    return IntegerValueToBigInteger.INSTANCE;
+                }
+                else if (targetClass == typeof(long) || targetClass == typeof(long))
+                {
+                    return IntegerValueToLong.INSTANCE;
+                }
+                else if (targetClass == typeof(int) || targetClass == typeof(int))
+                {
+                    return IntegerValueToInt.INSTANCE;
+                }
+                else if (targetClass == typeof(short) || targetClass == typeof(short?))
+                {
+                    return IntegerValueToShort.INSTANCE;
+                }
+                else if (targetClass == typeof(byte) || targetClass == typeof(byte))
+                {
+                    return IntegerValueToByte.INSTANCE;
+                }
+                else if (targetClass == typeof(char))
+                {
+                    return IntegerValueToChar.INSTANCE;
+                }
+                else if (targetClass == typeof(double) || targetClass == typeof(double))
+                {
+                    return NumericValueToDouble.INSTANCE;
+                }
+                else if (targetClass == typeof(float) || targetClass == typeof(float))
+                {
+                    return NumericValueToFloat.INSTANCE;
+                }
+                else if (targetClass == typeof(BigDecimal))
+                {
+                    return NumericValueToBigDecimal.INSTANCE;
+                }
+                else if (targetClass.IsAssignableFrom(typeof(IntegerValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.DECIMAL))
+            {
+                if (targetClass == typeof(object) || targetClass == typeof(BigDecimal))
+                {
+                    return NumericValueToBigDecimal.INSTANCE;
+                }
+                else if (targetClass == typeof(double) || targetClass == typeof(double))
+                {
+                    return NumericValueToDouble.INSTANCE;
+                }
+                else if (targetClass == typeof(float) || targetClass == typeof(float))
+                {
+                    return NumericValueToFloat.INSTANCE;
+                }
+                else if (targetClass.IsAssignableFrom(typeof(BigDecimalValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.FLOAT))
+            {
+                if (targetClass == typeof(object) || targetClass == typeof(float) || targetClass == typeof(float))
+                {
+                    return NumericValueToFloat.INSTANCE;
+                }
+                else if (targetClass == typeof(double) || targetClass == typeof(double))
+                {
+                    return NumericValueToDouble.INSTANCE;
+                }
+                else if (targetClass.IsAssignableFrom(typeof(FloatValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.DOUBLE))
+            {
+                if (targetClass == typeof(object) || targetClass == typeof(double) || targetClass == typeof(double))
+                {
+                    return NumericValueToDouble.INSTANCE;
+                }
+                else if (targetClass.IsAssignableFrom(typeof(DoubleValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    return Atomic.INSTANCE;
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.ANY_URI))
+            {
+                if (targetClass == typeof(object) || typeof(URI).IsAssignableFrom(targetClass))
+                {
+                    return AnyURIValueToURI.INSTANCE;
+                }
+                else if (typeof(Uri).IsAssignableFrom(targetClass))
+                {
+                    return AnyURIValueToSystemUri.INSTANCE;
+                }
+                else if (targetClass == typeof(string) || targetClass == typeof(string))
+                {
+                    return StringItemToString.INSTANCE;
+                }
+                else if (targetClass.IsAssignableFrom(typeof(AnyURIValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.QNAME))
+            {
+                if (targetClass == typeof(object) || targetClass == typeof(System.Xml.XmlQualifiedName))
+                {
+                    return QualifiedNameValueToQName.INSTANCE;
+                }
+                else if (targetClass.IsAssignableFrom(typeof(QNameValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.NOTATION))
+            {
+                if (targetClass == typeof(object) || targetClass == typeof(System.Xml.XmlQualifiedName))
+                {
+                    return QualifiedNameValueToQName.INSTANCE;
+                }
+                else if (targetClass.IsAssignableFrom(typeof(NotationValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.DURATION))
+            {
+                if (targetClass.IsAssignableFrom(typeof(DurationValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.DATE_TIME))
+            {
+                if (targetClass.IsAssignableFrom(typeof(DateTimeValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else if (targetClass == typeof(DateTime))
+                {
+                    return CalendarValueToDateTime.INSTANCE;
+                }
+                else if (targetClass == typeof(DateTimeOffset))
+                {
+                    return CalendarValueToDateTimeOffset.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.DATE))
+            {
+                if (targetClass.IsAssignableFrom(typeof(DateValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else if (targetClass == typeof(DateTime))
+                {
+                    return CalendarValueToDateTime.INSTANCE;
+                }
+                else if (targetClass == typeof(DateTimeOffset))
+                {
+                    return CalendarValueToDateTimeOffset.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.TIME))
+            {
+                if (targetClass.IsAssignableFrom(typeof(TimeValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else if (targetClass == typeof(DateTime))
+                {
+                    return CalendarValueToDateTime.INSTANCE;
+                }
+                else if (targetClass == typeof(DateTimeOffset))
+                {
+                    return CalendarValueToDateTimeOffset.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.G_YEAR))
+            {
+                if (targetClass.IsAssignableFrom(typeof(GYearValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.G_YEAR_MONTH))
+            {
+                if (targetClass.IsAssignableFrom(typeof(GYearMonthValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.G_MONTH))
+            {
+                if (targetClass.IsAssignableFrom(typeof(GMonthValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.G_MONTH_DAY))
+            {
+                if (targetClass.IsAssignableFrom(typeof(GMonthDayValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.G_DAY))
+            {
+                if (targetClass.IsAssignableFrom(typeof(GDayValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.BASE64_BINARY))
+            {
+                if (targetClass.IsAssignableFrom(typeof(Base64BinaryValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else if (th.IsSubType(itemType, BuiltInAtomicType.HEX_BINARY))
+            {
+                if (targetClass.IsAssignableFrom(typeof(HexBinaryValue)))
+                {
+                    return Identity.INSTANCE;
+                }
+                else
+                {
+                    throw CannotConvert(itemType, targetClass);
+                }
+            }
+            else
+            {
+                return Atomic.INSTANCE;
+            }
+        }
+
 
         private static XPathException CannotConvert(ItemType source, System.Type target)
         {
@@ -1093,23 +1100,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //    public static class Atomization extends PJConverter {
-        //
-        //        public static final Atomization INSTANCE = new Atomization();
-        //
-        //        public Object convert(ISequence value, Class targetClass, IXPathContext context) throws XPathException {
-        //            List<AtomicValue> val = new List<AtomicValue>();
-        //            ISequenceIterator @base = value.iterate();
-        //                IItem item = atomized.next();
-        //                if (item == null) {
-        //                    break;
-        //                }
-        //            if (val.size() == 1) {
-        //                return val.get(0);
-        //            } else {
-        //                return
-        //
-        //
         internal sealed class Atomic : PJConverter
         {
             public static readonly Atomic INSTANCE = new Atomic();

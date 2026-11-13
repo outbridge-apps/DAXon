@@ -5,6 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -38,10 +39,12 @@ namespace OutSmart.DAXon.Api
         private OutSmart.DAXon.Core.Configuration fileCore;   // read from configurationFile by the first Processor
         private readonly object coreLock = new object();
         private int stackSizeThreshold = StackGuard.MinThreshold;
+        private long? maxStackBytes;
         private bool allowFileRead = true;
         private bool allowFileWrite = true;
         private bool allowNetwork = true;
         private bool allowEnvironmentVariables = true;
+        private bool jsonNumbersAsDecimal;
         private Func<Uri, ResourceKind, bool> readFilter;
         private Func<Uri, bool> writeFilter;
         private Func<string, bool> environmentVariableFilter;
@@ -92,7 +95,9 @@ namespace OutSmart.DAXon.Api
         /// <summary>
         /// An engine core for the Processor to run on, instead of a new one. A core that already serves a Processor keeps
         /// that Processor's options, which the new one then reports and applies: a Processor made over the core of a
-        /// running transformation cannot widen its limits. Every Processor made with these options runs on this core.
+        /// running transformation cannot widen its limits. Options that ask for less than those allow - a shorter limit,
+        /// a closed gate, a filter, a host rule - are refused with an InvalidOperationException rather than ignored.
+        /// Every Processor made with these options runs on this core.
         /// Not with <see cref="ConfigurationFile"/>.
         /// </summary>
         public OutSmart.DAXon.Core.Configuration Configuration
@@ -127,6 +132,70 @@ namespace OutSmart.DAXon.Api
 
                 configurationFile = value;
             }
+        }
+
+        // For options naming a core that already serves a Processor with the options kept: the first option given here
+        // that asks for less than kept allows - a shorter limit, a closed gate, a filter, a host rule - or for other
+        // answers; null when none. Those would be dropped unseen. A wider ask is capped silently, as documented.
+        internal string DroppedBy(ProcessorOptions kept)
+        {
+            if (transformTimeout is TimeSpan t && t > TimeSpan.Zero)
+            {
+                TimeSpan? limit = kept.transformTimeout ?? Processor.DefaultTransformTimeout;
+                if (limit <= TimeSpan.Zero || t < limit)
+                {
+                    return nameof(TransformTimeout);
+                }
+            }
+
+            if (maxMemoryBytes != Processor.DefaultMaxMemoryBytes && maxMemoryBytes is long m && (kept.maxMemoryBytes == null || m < kept.maxMemoryBytes))
+            {
+                return nameof(MaxMemoryBytes);
+            }
+
+            if (stackSizeThreshold > kept.stackSizeThreshold)
+            {
+                return nameof(StackSizeThreshold);
+            }
+
+            if (maxStackBytes is long s && (kept.maxStackBytes == null || s < kept.maxStackBytes))
+            {
+                return nameof(MaxStackBytes);
+            }
+
+            if ((!allowFileRead && kept.allowFileRead) || (!allowFileWrite && kept.allowFileWrite))
+            {
+                return allowFileRead ? nameof(AllowFileWrite) : nameof(AllowFileRead);
+            }
+
+            if ((!allowNetwork && kept.allowNetwork) || (!allowEnvironmentVariables && kept.allowEnvironmentVariables))
+            {
+                return allowNetwork ? nameof(AllowEnvironmentVariables) : nameof(AllowNetwork);
+            }
+
+            if (jsonNumbersAsDecimal && !kept.jsonNumbersAsDecimal)
+            {
+                return nameof(JsonNumbersAsDecimal);
+            }
+
+            if ((readFilter != null && readFilter != kept.readFilter) || (writeFilter != null && writeFilter != kept.writeFilter)
+                || (environmentVariableFilter != null && environmentVariableFilter != kept.environmentVariableFilter))
+            {
+                return "a filter";
+            }
+
+            if ((AllowedHosts.Count > 0 && !SameRules(AllowedHosts, kept.AllowedHosts))
+                || (BlockedHosts.Count > 0 && !SameRules(BlockedHosts, kept.BlockedHosts)))
+            {
+                return "a host rule";
+            }
+
+            return null;
+        }
+
+        private static bool SameRules(HostRuleCollection a, HostRuleCollection b)
+        {
+            return a.Select(r => r.ToString()).SequenceEqual(b.Select(r => r.ToString()));
         }
 
         // Takes the options for a Processor: freezes them and gives the core they name, reading the configuration file
@@ -167,6 +236,29 @@ namespace OutSmart.DAXon.Api
             }
         }
 
+        /// <summary>
+        /// The most of the running thread's stack a call may use, or null (the default) for all of it: a recursion stops
+        /// with SXLM0001 as it would on a thread of this size. A deep recursion slows every other thread of the process,
+        /// since each garbage collection walks its stack (one runaway function on a 4 MB thread cut the runs of six
+        /// others by 84%); a host that runs calls side by side on threads of several megabytes can keep them shallow
+        /// with this. At least 256 KB. On Windows; elsewhere the runtime's own check stands in.
+        /// </summary>
+        public long? MaxStackBytes
+        {
+            get => maxStackBytes;
+            set
+            {
+                ThrowIfFrozen();
+                if (value < 2 * StackGuard.MinThreshold)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), value, "The stack a call may use is at least "
+                        + 2 * StackGuard.MinThreshold + " bytes (256 KB): the last " + StackGuard.MinThreshold + " are kept for an aborted recursion to unwind.");
+                }
+
+                maxStackBytes = value;
+            }
+        }
+
         /// <summary>Read local <c>file:</c> resources. A <c>file:</c> URI with a host (UNC) also needs <see cref="AllowNetwork"/>.</summary>
         public bool AllowFileRead
         {
@@ -193,6 +285,18 @@ namespace OutSmart.DAXon.Api
         {
             get => allowEnvironmentVariables;
             set => Set(ref allowEnvironmentVariables, value);
+        }
+
+        /// <summary>
+        /// Read JSON numbers as they are written instead of as xs:double: a number without a point or an exponent is an
+        /// xs:integer, one with a point an exact xs:decimal, up to 1000 digits; one with an exponent or more digits stays
+        /// xs:double. For JsonBuilder, parse-json() and json-doc(); a number-parser option of parse-json() wins. Off by
+        /// default, as the standard has it. Neither type has a negative zero: -0 reads as 0.
+        /// </summary>
+        public bool JsonNumbersAsDecimal
+        {
+            get => jsonNumbersAsDecimal;
+            set => Set(ref jsonNumbersAsDecimal, value);
         }
 
         /// <summary>When not empty, a network host must match one of these rules.</summary>
@@ -318,9 +422,22 @@ namespace OutSmart.DAXon.Api
                     return write ? "AllowFileWrite is false" : "AllowFileRead is false";
                 }
 
-                string host = uri.Host;
-                if (host.Length == 0 || string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase))
+                Uri machine = uri;
+                if (uri.Host.Length == 0)
                 {
+                    // file:///%5C%5Chost%5Cshare has no host, and Windows opens its path as \\host\share.
+                    string server = UncServer(uri);
+                    if (server == null)
+                    {
+                        return null;
+                    }
+
+                    machine = Uri.TryCreate("file://" + server + "/", UriKind.Absolute, out Uri named) && named.Host.Length > 0 ? named : null;
+                }
+                else if (string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase)
+                    && !OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(uri).StartsWith(@"\\", StringComparison.Ordinal))
+                {
+                    // this machine's drive (RFC 8089); file://localhost/c$/x is the share \\localhost\c$, a network path
                     return null;
                 }
 
@@ -329,7 +446,7 @@ namespace OutSmart.DAXon.Api
                     return "AllowNetwork is false (a file: URI with a host reaches another machine)";
                 }
 
-                return HostReason(uri);
+                return machine == null ? "the file: URI's path names neither a local file nor a host" : HostReason(machine);
             }
 
             if (!allowNetwork)
@@ -338,6 +455,20 @@ namespace OutSmart.DAXon.Api
             }
 
             return HostReason(uri);
+        }
+
+        // The server of the UNC path that a file: URI with no host spells once decoded (two separators first), or null.
+        private static string UncServer(Uri uri)
+        {
+            string path = OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(uri).Replace('/', '\\');
+            if (!path.StartsWith(@"\\", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            string rest = path.TrimStart('\\');
+            int end = rest.IndexOf('\\');
+            return end < 0 ? rest : rest.Substring(0, end);
         }
 
         private string HostReason(Uri uri)

@@ -53,16 +53,12 @@ namespace OutSmart.DAXon.Transformation
             }
         }
 
-        /*&& map.getNumberOfVariables() > 0 */
         public virtual Patterns.Pattern Match => match;
 
-        /*&& map.getNumberOfVariables() > 0 */
         public virtual Expression Use => GetBody();
 
-        /*&& map.getNumberOfVariables() > 0 */
         public virtual string CollationName => collationName;
 
-        /*&& map.getNumberOfVariables() > 0 */
         public virtual IStringCollator Collation => collation;
         public KeyDefinition(SymbolicName symbolicName, Patterns.Pattern match, Expression use, string collationName, IStringCollator collation)
         {
@@ -136,14 +132,12 @@ namespace OutSmart.DAXon.Transformation
             }
         }
 
-        /*&& map.getNumberOfVariables() > 0 */
         public override void AllocateAllBindingSlots(StylesheetPackage pack)
         {
             base.AllocateAllBindingSlots(pack);
             AllocateBindingSlotsRecursive(pack, this, match, DeclaringComponent.ComponentBindings);
         }
 
-        /*&& map.getNumberOfVariables() > 0 */
         public virtual void SetLocation(ILocation loc)
         {
             SetSystemId(loc.GetSystemId());
@@ -151,7 +145,6 @@ namespace OutSmart.DAXon.Transformation
             SetColumnNumber(loc.GetColumnNumber());
         }
 
-        /*&& map.getNumberOfVariables() > 0 */
         public virtual IPullEvaluator ObtainUseEvaluator()
         {
             lock (syncLock)
@@ -165,13 +158,11 @@ namespace OutSmart.DAXon.Transformation
             }
         }
 
-        /*&& map.getNumberOfVariables() > 0 */
         public virtual StructuredQName GetObjectName()
         {
             return symbolicName.ComponentName;
         }
 
-        /*&& map.getNumberOfVariables() > 0 */
         public virtual void Export(ExpressionPresenter @out, bool reusable, Dictionary<Component, int> componentIdMap)
         {
             @out.StartElement("key");
@@ -243,12 +234,6 @@ namespace OutSmart.DAXon.Transformation
             Match.Export(@out);
             GetBody().Export(@out);
             @out.EndElement();
-        }
-
-        /*&& map.getNumberOfVariables() > 0 */
-        public override void Export(ExpressionPresenter presenter)
-        {
-            throw new NotSupportedException();
         }
     }
 }

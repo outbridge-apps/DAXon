@@ -150,10 +150,8 @@ namespace OutSmart.DAXon.Expressions
 
         public virtual IntegerValue[] IntegerBounds => null;
 
-        //
         public virtual int IntrinsicDependencies => 0;
 
-        //
         public int[] SlotsUsed
         {
             get
@@ -193,10 +191,8 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
         public virtual string TracingTag => ExpressionName;
 
-        //
         public virtual string StreamerName => null;
         public Expression()
         {
@@ -204,7 +200,7 @@ namespace OutSmart.DAXon.Expressions
 
         public virtual IEnumerable<Operand> Operands()
         {
-            return new List<Operand>();
+            return Array.Empty<Operand>();   // one for every leaf: a walk of the tree allocated a list per leaf
         }
 
         public IEnumerable<Operand> CheckedOperands()
@@ -250,7 +246,7 @@ namespace OutSmart.DAXon.Expressions
 
         protected virtual IList<Operand> OperandList(params Operand[] a)
         {
-            return a.ToList();
+            return a;   // the call made the array already; nothing changes the list
         }
 
         protected virtual IList<Operand> OperandSparseList(params Operand[] a)
@@ -358,23 +354,54 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        public virtual void SetRetainedStaticContext(RetainedStaticContext rsc)
+        // A worklist, in the recursion's visiting order: a long path in a function argument reaches here before any
+        // guarded walk, and the recursion took the process down at 1400 steps on a 256KB thread.
+        public void SetRetainedStaticContext(RetainedStaticContext rsc)
         {
-            if (rsc != null)
+            if (rsc == null)
             {
-                retainedStaticContext = rsc;
-                foreach (Operand o in Operands())
+                return;
+            }
+
+            Stack<Expression> work = null;
+            List<Expression> children = null;
+            Expression node = this;
+            while (true)
+            {
+                node.retainedStaticContext = rsc;
+                node.RetainedStaticContextSet(rsc);
+                foreach (Operand o in node.Operands())
                 {
-                    if (o != null)
+                    Expression child = o?.GetChildExpression();
+                    if (child != null && child.retainedStaticContext == null)
                     {
-                        Expression child = o.GetChildExpression();
-                        if (child != null && child.retainedStaticContext == null)
-                        {
-                            child.SetRetainedStaticContext(rsc);
-                        }
+                        (children ??= new List<Expression>()).Add(child);
                     }
                 }
+
+                if (children != null && children.Count > 0)
+                {
+                    work ??= new Stack<Expression>();
+                    for (int i = children.Count - 1; i >= 0; i--)
+                    {
+                        work.Push(children[i]);
+                    }
+
+                    children.Clear();
+                }
+
+                if (work == null || work.Count == 0)
+                {
+                    return;
+                }
+
+                node = work.Pop();
             }
+        }
+
+        /// <summary>Per-node part of <see cref="SetRetainedStaticContext"/>, after the node's own context is set.</summary>
+        protected virtual void RetainedStaticContextSet(RetainedStaticContext rsc)
+        {
         }
 
         // Explicit worklist, not recursion: this runs once per tree level on the compile path,
@@ -521,10 +548,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        public virtual void PrepareForStreaming()
-        {
-        }
-
         public virtual Expression Unordered(bool retainAllNodes, bool forStreaming)
         {
             return this;
@@ -586,9 +609,10 @@ namespace OutSmart.DAXon.Expressions
             {
                 return ExpressionTool.EffectiveBooleanValue(Iterate(context));
             }
-            catch (XPathException e)
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithFailingExpression(this).MaybeWithContext(context)))
             {
-                throw e.MaybeWithFailingExpression(this).MaybeWithContext(context);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 
@@ -631,9 +655,10 @@ namespace OutSmart.DAXon.Expressions
             {
                 throw unxe.GetXPathException().MaybeWithLocation(GetLocation()).MaybeWithContext(context);
             }
-            catch (XPathException e)
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation()).MaybeWithContext(context)))
             {
-                throw e.MaybeWithLocation(GetLocation()).MaybeWithContext(context);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 
@@ -713,7 +738,6 @@ namespace OutSmart.DAXon.Expressions
         {
         }
 
-        //
         public virtual void AdoptChildExpression(Expression child)
         {
             if (child == null)
@@ -722,8 +746,6 @@ namespace OutSmart.DAXon.Expressions
             }
 
 
-            //                    o.detachChild();
-            //                }
             child.ParentExpression = this;
             if (child.retainedStaticContext == null)
             {
@@ -742,20 +764,17 @@ namespace OutSmart.DAXon.Expressions
             ResetLocalStaticProperties();
         }
 
-        //
         public virtual void SetLocation(ILocation id)
         {
             location = id;
         }
 
-        //
         public virtual Expression WithLocation(ILocation id)
         {
             SetLocation(id);
             return this;
         }
 
-        //
         public ILocation GetLocation()
         {
             int limit = 0;
@@ -778,7 +797,6 @@ namespace OutSmart.DAXon.Expressions
             return exp.location == null ? Loc.NONE : exp.location;
         }
 
-        //
         public virtual Configuration GetConfiguration()
         {
             try
@@ -791,7 +809,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
         public virtual PackageData GetPackageData()
         {
             try
@@ -804,13 +821,11 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
         public virtual bool IsInstruction()
         {
             return false;
         }
 
-        //
         public void ComputeStaticProperties()
         {
             // Recurses into the operands' properties; after a reset the first query can come at run time.
@@ -818,7 +833,6 @@ namespace OutSmart.DAXon.Expressions
             staticProperties = ComputeDependencies() | ComputeCardinality() | ComputeSpecialProperties();
         }
 
-        //
         public virtual void ResetLocalStaticProperties()
         {
             staticProperties = -1;
@@ -826,21 +840,17 @@ namespace OutSmart.DAXon.Expressions
             cachedIsUpdating = -1;
         }
 
-        //
         public virtual bool IsStaticPropertiesKnown()
         {
             return staticProperties != -1;
         }
 
-        //
         protected abstract int ComputeCardinality();
-        //
         protected virtual int ComputeSpecialProperties()
         {
             return 0;
         }
 
-        //
         public virtual int ComputeDependencies()
         {
             int dependencies = IntrinsicDependencies;
@@ -859,7 +869,6 @@ namespace OutSmart.DAXon.Expressions
             return dependencies;
         }
 
-        //
         public virtual void SetStaticProperty(int prop)
         {
             if (staticProperties == -1)
@@ -870,7 +879,6 @@ namespace OutSmart.DAXon.Expressions
             staticProperties |= prop;
         }
 
-        //
         public virtual void CheckForUpdatingSubexpressions()
         {
             foreach (Operand o in Operands())
@@ -889,7 +897,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
         public virtual bool IsUpdatingExpression()
         {
             if (cachedIsUpdating == -1)
@@ -908,26 +915,21 @@ namespace OutSmart.DAXon.Expressions
             return cachedIsUpdating == 1;
         }
 
-        //
         public virtual bool IsVacuousExpression()
         {
             return false;
         }
 
-        //
         public abstract Expression Copy(RebindingMap rebindings);
-        //
         public virtual void SuppressValidation(int parentValidationMode)
         {
         }
 
-        //
         public virtual int MarkTailFunctionCalls(StructuredQName qName, int arity)
         {
             return UserFunctionCall.NOT_TAIL_CALL;
         }
 
-        //
         public virtual Patterns.Pattern ToPattern(Configuration config)
         {
             Types.ItemType type = GetItemType();
@@ -944,7 +946,6 @@ namespace OutSmart.DAXon.Expressions
             throw new XPathException("Cannot convert the expression {" + this + "} to a pattern");
         }
 
-        //
         private static void GatherSlotsUsed(Expression exp, IntHashSet slots)
         {
             if (exp is LocalVariableReference)
@@ -965,25 +966,21 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
         protected virtual void DynamicError(string message, string code, IXPathContext context)
         {
             throw new XPathException(message, code, GetLocation()).WithXPathContext(context).WithFailingExpression(this);
         }
 
-        //
         protected virtual void TypeError(string message, string errorCode, IXPathContext context)
         {
             throw new XPathException(message, errorCode, GetLocation()).AsTypeError().WithXPathContext(context).WithFailingExpression(this);
         }
 
-        //
         public virtual StructuredQName GetObjectName()
         {
             return null;
         }
 
-        //
         public virtual object GetProperty(string name)
         {
             if (name.Equals("expression"))
@@ -996,63 +993,11 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
         public virtual IEnumerator<string> GetProperties()
         {
             yield return "expression";
         }
 
-        //
-        public virtual PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            bool dependsOnFocus = ExpressionTool.DependsOnFocus(this);
-            PathMap.PathMapNodeSet attachmentPoint;
-            if (pathMapNodeSet == null)
-            {
-                if (dependsOnFocus)
-                {
-                    ContextItemExpression cie = new ContextItemExpression();
-                    ExpressionTool.CopyLocationInfo(this, cie);
-                    pathMapNodeSet = new PathMap.PathMapNodeSet(pathMap.MakeNewRoot(cie));
-                }
-
-                attachmentPoint = pathMapNodeSet;
-            }
-            else
-            {
-                attachmentPoint = dependsOnFocus ? pathMapNodeSet : null;
-            }
-
-            PathMap.PathMapNodeSet result = new PathMap.PathMapNodeSet();
-            foreach (Operand o in Operands())
-            {
-                OperandUsage usage = o.Usage;
-                Expression child = o.GetChildExpression();
-                PathMap.PathMapNodeSet target = child.AddToPathMap(pathMap, attachmentPoint);
-                if (usage == OperandUsage.NAVIGATION)
-                {
-
-                    // indicate that the function navigates to all elements in the document
-                    target = target.CreateArc(AxisInfo.ANCESTOR_OR_SELF, NodeKindTest.ELEMENT);
-                    target = target.CreateArc(AxisInfo.DESCENDANT, NodeKindTest.ELEMENT);
-                }
-
-                result.AddNodeSet(target);
-            }
-
-            if (GetItemType() is IAtomicType)
-            {
-
-                // if expression returns an atomic value then any nodes accessed don't contribute to the result
-                return null;
-            }
-            else
-            {
-                return result;
-            }
-        }
-
-        //
         public virtual bool IsSubtreeExpression()
         {
             if (ExpressionTool.DependsOnFocus(this))
@@ -1080,31 +1025,26 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
         public virtual void SetEvaluationMethod(int method)
         {
             this.evaluationMethod = method;
         }
 
-        //
         public virtual int GetEvaluationMethod()
         {
             return evaluationMethod;
         }
 
-        //
         public override bool Equals(object obj)
         {
             return base.Equals(obj);
         }
 
-        //
         public bool IsEqual(Expression other)
         {
             return this == other || (GetHashCode() == other.GetHashCode() && Equals(other));
         }
 
-        //
         public override int GetHashCode()
         {
             if (cachedHashCode == -1)
@@ -1115,7 +1055,6 @@ namespace OutSmart.DAXon.Expressions
             return cachedHashCode;
         }
 
-        //
         protected virtual bool HasCompatibleStaticContext(Expression other)
         {
             bool d1 = (IntrinsicDependencies & StaticProperty.DEPENDS_ON_STATIC_CONTEXT) != 0;
@@ -1133,25 +1072,21 @@ namespace OutSmart.DAXon.Expressions
             return true;
         }
 
-        //
         protected virtual int ComputeHashCode()
         {
             return base.GetHashCode();
         }
 
-        //
         public virtual bool IsIdentical(IIdentityComparable other)
         {
             return this == other;
         }
 
-        //
         public virtual int IdentityHashCode()
         {
             return RuntimeHelpers.GetHashCode(GetLocation());
         }
 
-        //
         public virtual void SetExtraProperty(string name, object value)
         {
             if (extraProperties == null)
@@ -1174,7 +1109,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
         public virtual object GetExtraProperty(string name)
         {
             if (extraProperties == null)
@@ -1187,13 +1121,11 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
         public virtual Elaborator GetElaborator()
         {
             return new FallbackElaborator();
         }
 
-        //
         public Elaborator MakeElaborator()
         {
             // Every node of an elaboration passes here, and elaboration has no loop of its own to check
@@ -1241,7 +1173,6 @@ namespace OutSmart.DAXon.Expressions
             return elab;
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         // Upstream Traceable.gatherProperties default is a no-op; TraceExpression calls this on EVERY
         // traced child, so a throwing base made compile-with-tracing crash on any expression without
         // an override.

@@ -24,10 +24,11 @@ namespace OutSmart.DAXon.Values
         private static readonly BigInteger MIN_INT = new BigInteger(int.MinValue);
         public static readonly BigInteger MAX_LONG = new BigInteger(long.MaxValue);
         public static readonly BigInteger MIN_LONG = new BigInteger(long.MinValue);
-        public static readonly BigInteger MAX_UNSIGNED_LONG = BigIntegers.FromString("18446744073709551615");
+        // Not parsed: the parse reads the run's deadline, and a type initializer that throws breaks the type for good.
+        public static readonly BigInteger MAX_UNSIGNED_LONG = new BigInteger(ulong.MaxValue);
         private readonly BigInteger value;
 
-        public override UnicodeString PrimitiveStringValue => BMPString.Of(value.ToString(CultureInfo.InvariantCulture));
+        public override UnicodeString PrimitiveStringValue => BMPString.Of(BigIntegers.ToDecimalString(value));   // a long one in pieces, under the time limit
         public BigIntegerValue(BigInteger value) : base(BuiltInAtomicType.INTEGER)
         {
             this.value = value;
@@ -71,7 +72,8 @@ namespace OutSmart.DAXon.Values
 
         public override int GetHashCode()
         {
-            if (value.CompareTo(MIN_INT) >= 0 && value.CompareTo(MAX_INT) <= 0)
+            // Exclusive bounds, as Int64Value, DoubleValue and BigDecimalValue: equal values hash alike.
+            if (value.CompareTo(MIN_INT) > 0 && value.CompareTo(MAX_INT) < 0)
             {
                 return value.IntValue();
             }
@@ -225,40 +227,19 @@ namespace OutSmart.DAXon.Values
                 }
 
                 BigInteger factorB = BigInteger.Pow(10, (int)k);
-                BigInteger towardsZero = value / factorB * factorB;
-                if (towardsZero.Equals(value))
+                BigInteger floor = value / factorB * factorB;
+                if (floor.Equals(value))
                 {
                     return this;
                 }
 
-                BigInteger awayFromZero = negative ? towardsZero - factorB : towardsZero + factorB;
-                BigInteger floor = negative ? awayFromZero : towardsZero;
-                BigInteger ceiling = negative ? towardsZero : awayFromZero;
-                BigInteger midpoint = floor + (ceiling - floor) / new BigInteger(2);
-                bool midway = value.Equals(midpoint);
-                BigInteger nearest = value.CompareTo(midpoint) > 0 ? ceiling : floor;
-                switch (roundingRule)
+                if (negative)
                 {
-                    case Functions.Round.RoundingRule.FLOOR:
-                        return IntegerValue.MakeIntegerValue(floor);
-                    case Functions.Round.RoundingRule.TOWARD_ZERO:
-                        return IntegerValue.MakeIntegerValue(towardsZero);
-                    case Functions.Round.RoundingRule.CEILING:
-                        return IntegerValue.MakeIntegerValue(ceiling);
-                    case Functions.Round.RoundingRule.AWAY_FROM_ZERO:
-                        return IntegerValue.MakeIntegerValue(awayFromZero);
-                    case Functions.Round.RoundingRule.HALF_TO_FLOOR:
-                        return IntegerValue.MakeIntegerValue(midway ? floor : nearest);
-                    case Functions.Round.RoundingRule.HALF_TO_CEILING:
-                    default:
-                        return IntegerValue.MakeIntegerValue(midway ? ceiling : nearest);
-                    case Functions.Round.RoundingRule.HALF_TOWARD_ZERO:
-                        return IntegerValue.MakeIntegerValue(midway ? towardsZero : nearest);
-                    case Functions.Round.RoundingRule.HALF_AWAY_FROM_ZERO:
-                        return IntegerValue.MakeIntegerValue(midway ? awayFromZero : nearest);
-                    case Functions.Round.RoundingRule.HALF_TO_EVEN:
-                        return IntegerValue.MakeIntegerValue(midway ? ((floor / factorB).Mod(new BigInteger(2)).Sign == 0 ? floor : ceiling) : nearest);
+                    floor -= factorB;
                 }
+
+                bool up = Functions.Round.RoundsUp(roundingRule, negative, value.CompareTo(floor + factorB / 2), (floor / factorB).IsEven);
+                return IntegerValue.MakeIntegerValue(up ? floor + factorB : floor);
             }
         }
 
@@ -332,7 +313,7 @@ namespace OutSmart.DAXon.Values
         {
             if (other is BigIntegerValue)
             {
-                return MakeIntegerValue(value * ((BigIntegerValue)other).value);
+                return MakeIntegerValue(Products.Multiply(value, ((BigIntegerValue)other).value));   // megadigit operands: see Products
             }
             else
             {

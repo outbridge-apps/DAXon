@@ -42,7 +42,7 @@ namespace OutSmart.DAXon.Functions
             ISequenceIterator @in = arguments[0].Iterate();
             if (!presorted)
             {
-                @in = new DocumentOrderIterator(@in, GlobalOrderComparer.GetInstance());
+                @in = DocumentOrderIterator.Of(@in, GlobalOrderComparer.GetInstance());
             }
 
             ISequenceIterator @out = new OutermostIterator(@in);

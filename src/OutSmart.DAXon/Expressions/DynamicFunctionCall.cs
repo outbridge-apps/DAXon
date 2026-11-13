@@ -112,23 +112,22 @@ namespace OutSmart.DAXon.Expressions
 
                     // Convert $map($key) to map:get($map, $key)
                     // This improves streamability analysis - see accumulator-053
-                    return MakeGetCall(visitor, MapFunctionSet.GetInstance(31), contextInfo);
+                    return MakeGetCall(visitor, MapFunctionSet.GetInstance(31), contextInfo, targetFunction.GetChildExpression(), suppliedArguments.GetOperandExpression(0));
                 }
                 else if (target.GetItemType() is ArrayItemType)
                 {
 
                     // Convert $array($key) to array:get($array, $key)
-                    return MakeGetCall(visitor, ArrayFunctionSet.GetInstance(31), contextInfo);
+                    return MakeGetCall(visitor, ArrayFunctionSet.GetInstance(31), contextInfo, targetFunction.GetChildExpression(), suppliedArguments.GetOperandExpression(0));
                 }
             }
 
             return this;
         }
 
-        private Expression MakeGetCall(ExpressionVisitor visitor, BuiltInFunctionSet fnSet, ContextItemStaticInfo contextInfo)
+        // $map($key) or $array($index) as map:get / array:get, here and for fn:apply.
+        internal static Expression MakeGetCall(ExpressionVisitor visitor, BuiltInFunctionSet fnSet, ContextItemStaticInfo contextInfo, Expression target, Expression key)
         {
-            Expression target = targetFunction.GetChildExpression();
-            Expression key = suppliedArguments.GetOperandExpression(0);
             Expression getter = fnSet.MakeFunction("get", 2).MakeFunctionCall(target, key);
             getter.SetRetainedStaticContext(target.GetRetainedStaticContext());
 

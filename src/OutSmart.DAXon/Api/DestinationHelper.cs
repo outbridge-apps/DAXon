@@ -12,16 +12,19 @@ using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Api
 {
     /// <summary>
-    /// A helper class for implementing the {@link IDestination} interface
+    /// A helper class for implementing the <see cref="IDestination"/> interface
     /// </summary>
     public class DestinationHelper
     {
         private readonly IDestination helpee;
         private readonly IList<IAction> listeners = new List<IAction>();
+        private bool notified;   // the listeners of this run have been told
+        private IList<IAction> ofRun;
 
         public virtual IList<IAction> Listeners => listeners;
         public DestinationHelper(IDestination helpee)
         {
+            ArgumentCheck.NotNull(helpee, nameof(helpee));
             this.helpee = helpee;
         }
 
@@ -30,13 +33,66 @@ namespace OutSmart.DAXon.Api
             listeners.Add(listener);
         }
 
-        public virtual void CloseAndNotify()
+        /// <summary>
+        /// The listeners as the receiver of a run takes them: told when it closes, and once a run however many of the
+        /// closes and CloseAndNotify calls reach them (an XQueryEvaluator as a destination told the final one's three
+        /// times). A run starts when its receiver is made.
+        /// </summary>
+        internal IList<IAction> ListenersOfRun()
         {
-            helpee.Close();
+            notified = false;
+            return ofRun ??= new List<IAction> { Notify };
+        }
+
+        private void Notify()
+        {
+            if (notified)
+            {
+                return;
+            }
+
+            notified = true;
             foreach (IAction action in listeners)
             {
                 action.Act();
             }
+        }
+
+        public virtual void CloseAndNotify()
+        {
+            helpee.Close();
+            Notify();
+            notified = false;   // the run ends here: the destination may be given another
+        }
+
+        // A run that delivers to a destination: closed and its listeners notified when the run succeeds, released without
+        // notice when it fails. A null destination is a run that delivers its result otherwise.
+        internal static T RunTo<T>(IDestination destination, Func<T> body)
+        {
+            bool done = false;
+            try
+            {
+                T result = body();
+                destination?.CloseAndNotify();
+                done = true;
+                return result;
+            }
+            finally
+            {
+                if (!done)
+                {
+                    ReleaseUnclosed(destination);
+                }
+            }
+        }
+
+        internal static void RunTo(IDestination destination, Action body)
+        {
+            RunTo<object>(destination, () =>
+            {
+                body();
+                return null;
+            });
         }
 
         /// <summary>
@@ -54,14 +110,25 @@ namespace OutSmart.DAXon.Api
                 return;
             }
 
-            try
+            // Dispose, not Close, down the chain: closing a transformer used as a destination ran it on the partial tree
+            // of the failed run, and its own destination was never released.
+            for (IDestination d = destination; d != null; d = (d as IChainedDestination)?.Next)
             {
-                destination.Close();
-            }
-            catch (Exception)
-            {
-                // nothing useful to do while unwinding; the original error is the one that matters
+                try
+                {
+                    d.Dispose();
+                }
+                catch (Exception)
+                {
+                    // nothing useful to do while unwinding; the original error is the one that matters
+                }
             }
         }
+    }
+
+    // A destination that feeds another: a transformer or query run on what it receives.
+    internal interface IChainedDestination
+    {
+        IDestination Next { get; }
     }
 }

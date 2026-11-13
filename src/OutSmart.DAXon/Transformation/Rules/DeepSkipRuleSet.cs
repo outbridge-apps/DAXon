@@ -29,15 +29,7 @@ namespace OutSmart.DAXon.Transformation.Rules
         {
             if (item is NodeInfo && ((NodeInfo)item).GetNodeKind() == Types.Type.DOCUMENT)
             {
-                XPathContextMajor c2 = context.NewContext();
-                c2.Origin = this;
-                c2.TrackFocus(((NodeInfo)item).IterateAxis(AxisInfo.CHILD));
-                c2.SetCurrentComponent(c2.GetCurrentMode());
-                ITailCall tc = c2.GetCurrentMode().GetActor().ApplyTemplates(parameters, tunnelParams, null, output, c2, locationId);
-                while (tc != null)
-                {
-                    tc = tc.ProcessLeavingTail();
-                }
+                BuiltInRuleSets.ApplyTo(this, ((NodeInfo)item).IterateAxis(AxisInfo.CHILD), parameters, tunnelParams, output, context, locationId);
             } // otherwise, do nothing
         }
 

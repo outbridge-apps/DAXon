@@ -4,10 +4,11 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+using System.Collections.Generic;
 using OutSmart.DAXon.Events;
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Values;
-using System.Collections.Generic;
 
 namespace OutSmart.DAXon.Expressions.Flwor
 {
@@ -21,6 +22,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
         private readonly WindowClause windowClause;
         private readonly TuplePush destination;
         internal List<WindowClause.Window> currentWindows = new List<WindowClause.Window>();
+        private long visits;  // windows looked at, for WindowClause.Visited
 
         public WindowClausePush(Outputter outputter, TuplePush destination, WindowClause windowClause) : base(outputter)
         {
@@ -30,7 +32,10 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void ProcessTuple(IXPathContext context)
         {
+            StackGuard.Probe();
             currentWindows = new List<WindowClause.Window>();
+            long added = 0;   // members added to open windows, for WindowClause.Added
+            visits = 0;
             bool autoClose = windowClause.IsTumblingWindow() && windowClause.EndCondition == null;
             IItem previous = null;
             IItem current = null;
@@ -53,6 +58,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                 position++;
                 if (position > 0)
                 {
+                    WindowClause.Visited(currentWindows, ref visits);
                     if ((windowClause.IsSlidingWindow() || currentWindows.Count == 0 || autoClose) &&
                             windowClause.MatchesStart(previous, current, next, position, context))
                     {
@@ -60,21 +66,12 @@ namespace OutSmart.DAXon.Expressions.Flwor
                         {
                             // automatically end the previous window
                             WindowClause.Window w0 = currentWindows[0];
-                            w0.endItem = previous;
-                            w0.endPreviousItem = previousPrevious;
-                            w0.endNextItem = current;
-                            w0.endPosition = position - 1;
+                            w0.End(previous, position - 1, previousPrevious, current);
                             Despatch(w0, context);
                             currentWindows.Clear();
                         }
 
-                        WindowClause.Window window = new WindowClause.Window();
-                        window.startPosition = position;
-                        window.startItem = current;
-                        window.startPreviousItem = previous;
-                        window.startNextItem = next;
-                        window.contents = new List<IItem>();
-                        currentWindows.Add(window);
+                        currentWindows.Add(new WindowClause.Window(current, position, previous, next));
                     }
 
                     foreach (WindowClause.Window active in currentWindows)
@@ -82,6 +79,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                         if (!active.IsFinished())
                         {
                             active.contents.Add(current);
+                            WindowClause.Added(currentWindows, ref added);
                         }
                     }
 
@@ -92,10 +90,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                         {
                             if (!w.IsFinished() && windowClause.MatchesEnd(w, previous, current, next, position, context))
                             {
-                                w.endItem = current;
-                                w.endPreviousItem = previous;
-                                w.endNextItem = next;
-                                w.endPosition = position;
+                                w.End(current, position, previous, next);
                                 Despatch(w, context);
                                 if (w.IsDespatched())
                                 {
@@ -136,10 +131,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                 }
                 else if (windowClause.IsIncludeUnclosedWindows())
                 {
-                    w.endItem = current;
-                    w.endPreviousItem = previous;
-                    w.endNextItem = null;
-                    w.endPosition = position;
+                    w.End(current, position, previous, null);
                     Despatch(w, context);
                 }
             }
@@ -149,89 +141,17 @@ namespace OutSmart.DAXon.Expressions.Flwor
         {
             windowClause.CheckWindowContents(w);
 
-            // In ordered mode, we must despatch windows in order of start position not in order of end
-            // position. So we don't despatch it yet if there are unfinished windows with an earlier start.
-            while (true)
+            for (WindowClause.Window earliest; (earliest = WindowClause.EarliestFinished(currentWindows, ref visits)) != null;)
             {
-                int earliestStart = int.MaxValue;
-                WindowClause.Window earliestWindow = null;
-                foreach (WindowClause.Window u in currentWindows)
-                {
-                    if (u.startPosition < earliestStart && !u.IsDespatched())
-                    {
-                        earliestStart = u.startPosition;
-                        earliestWindow = u;
-                    }
-                }
-
-                if (earliestWindow == null || !earliestWindow.IsFinished())
-                {
-                    // if the earliest window is unfinished, we can't do anything yet
-                    return;
-                }
-                else
-                {
-                    WindowClause clause = windowClause;
-                    LocalVariableBinding binding;
-                    binding = clause.GetVariableBinding(WindowClause.WINDOW_VAR);
-                    context.SetLocalVariable(binding.LocalSlotNumber, SequenceExtent.MakeSequenceExtent(earliestWindow.contents));
-
-                    binding = clause.GetVariableBinding(WindowClause.START_ITEM);
-                    if (binding != null)
-                    {
-                        context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(earliestWindow.startItem));
-                    }
-
-                    binding = clause.GetVariableBinding(WindowClause.START_ITEM_POSITION);
-                    if (binding != null)
-                    {
-                        context.SetLocalVariable(binding.LocalSlotNumber, new Int64Value(earliestWindow.startPosition));
-                    }
-
-                    binding = clause.GetVariableBinding(WindowClause.START_NEXT_ITEM);
-                    if (binding != null)
-                    {
-                        context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(earliestWindow.startNextItem));
-                    }
-
-                    binding = clause.GetVariableBinding(WindowClause.START_PREVIOUS_ITEM);
-                    if (binding != null)
-                    {
-                        context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(earliestWindow.startPreviousItem));
-                    }
-
-                    binding = clause.GetVariableBinding(WindowClause.END_ITEM);
-                    if (binding != null)
-                    {
-                        context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(earliestWindow.endItem));
-                    }
-
-                    binding = clause.GetVariableBinding(WindowClause.END_ITEM_POSITION);
-                    if (binding != null)
-                    {
-                        context.SetLocalVariable(binding.LocalSlotNumber, new Int64Value(earliestWindow.endPosition));
-                    }
-
-                    binding = clause.GetVariableBinding(WindowClause.END_NEXT_ITEM);
-                    if (binding != null)
-                    {
-                        context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(earliestWindow.endNextItem));
-                    }
-
-                    binding = clause.GetVariableBinding(WindowClause.END_PREVIOUS_ITEM);
-                    if (binding != null)
-                    {
-                        context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(earliestWindow.endPreviousItem));
-                    }
-
-                    destination.ProcessTuple(context);
-                    earliestWindow.despatched = true;
-                }
-            } // and loop round to see if there's another finished window that we can despatch
+                windowClause.BindWindow(earliest, context);
+                destination.ProcessTuple(context);
+                earliest.despatched = true;
+            }
         }
 
         public override void Dispose()
         {
+            StackGuard.Probe();
             currentWindows = null;
             destination.Dispose();
         }

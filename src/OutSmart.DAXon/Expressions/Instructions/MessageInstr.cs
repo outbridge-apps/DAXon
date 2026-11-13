@@ -145,7 +145,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     base.Attribute(attName, typeCode, value, location, properties);
                 }
-                catch (XPathException)
+                catch (XPathException e) when (!e.IsRunLimit())   // a time or memory limit ends the run, here as anywhere
                 {
                     Characters(StringView.Of(value), location, properties); //processingInstruction("attribute", StringView.of("name=\"" + attName.getDisplayName() + "\" value=\"" + value + "\""), location, ReceiverOption.NONE);
                 }
@@ -157,7 +157,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     base.Namespace(prefix, namespaceUri, properties);
                 }
-                catch (XPathException)
+                catch (XPathException e) when (!e.IsRunLimit())
                 {
                     Characters(namespaceUri.ToUnicodeString(), Loc.NONE, properties); //processingInstruction("namespace", StringView.of("prefix=\"" + prefix + "\" uri=\"" + namespaceUri + "\""), Loc.NONE, ReceiverOption.NONE);
                 }
@@ -235,7 +235,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     {
                         code = errorCodeEval.Eval(context);
                     }
-                    catch (XPathException err)
+                    catch (XPathException err) when (!err.IsRunLimit())
                     {
 
                         // use the error code of the failure in place of the intended error code
@@ -274,7 +274,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             throw e.GetXPathException();
                         }
                     }
-                    catch (XPathException e)
+                    catch (XPathException e) when (!e.IsRunLimit())   // a limit inside a message became its text, and the run went on
                     {
                         rec.Append(new StringValue("Error " + e.ShowErrorCode() + " while evaluating xsl:message at line " + expr.GetLocation().GetLineNumber() + " of " + expr.GetLocation().GetSystemId() + ": " + e.Message));
                     }
@@ -288,8 +288,9 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     {
                         controller.MessageHandler.Invoke(message);
                     }
-                    catch (Exception)
+                    catch (Exception e) when (!(e is OutOfMemoryException))
                     {
+                        // Saxon bug 6464: the handler's exception is ignored; Java's catch never took an Error such as OOM.
                     }
 
                     if (abort)

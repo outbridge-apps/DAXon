@@ -344,7 +344,33 @@ namespace OutSmart.DAXon.Values
         public string ToString(object config) => string.Empty;
         public bool IsStreaming() => false;
         // Value.SequenceType methods used by RecordTest etc.
-        public string ExplainMismatch(object value, object th) => null;
+        public string ExplainMismatch(OutSmart.DAXon.Model.IGroundedValue value, OutSmart.DAXon.Types.TypeHierarchy th)
+        {
+            int count = 0;
+            OutSmart.DAXon.Model.ISequenceIterator iter = value.Iterate();
+            for (OutSmart.DAXon.Model.IItem item; (item = iter.Next()) != null;)
+            {
+                count++;
+                if (!PrimaryType.Matches(item, th))
+                {
+                    string more = OutSmart.DAXon.Types.ItemTypeExtensions.ExplainMismatch(PrimaryType, item, th);
+                    if (more == null)
+                    {
+                        return count == 1 ? null : "The " + OutSmart.DAXon.Expressions.Parsing.RoleDiagnostic.Ordinal(count) + " item is not an instance of the required type";
+                    }
+
+                    return count == 1 ? more : "The " + OutSmart.DAXon.Expressions.Parsing.RoleDiagnostic.Ordinal(count) + " item is not an instance of the required type. " + more;
+                }
+            }
+
+            if (count == 0 && !Cardinality.AllowsZero(GetCardinality()))
+            {
+                return "The type does not allow an empty sequence";
+            }
+
+            return count > 1 && !Cardinality.AllowsMany(GetCardinality()) ? "The type does not allow a sequence of more than one item" : null;
+        }
+
         public bool IsSameType(SequenceType other) => this == other;
         // Upstream isSameType(SequenceType, TypeHierarchy). Was `this == other` (reference equality) —
         // xsl:override compatibility checks (XSLFunction/XSLTemplate CheckCompatibility) compare

@@ -91,16 +91,21 @@ namespace OutSmart.DAXon.Expressions.Instructions
             string message = IInvalidity(comment);
             if (message != null)
             {
-                long hh;
-                while ((hh = comment.IndexOf(TWO_HYPHENS, 0)) >= 0)
+                // One pass: a space after every hyphen that a hyphen or the end follows. Saxon searched from the start
+                // and rebuilt the comment per pair, quadratic in a run of hyphens.
+                string s = comment.ToString();
+                var sb = new System.Text.StringBuilder(s.Length + 16);
+                for (int i = 0; i < s.Length; i++)
                 {
-                    comment = comment.Substring(0, hh + 1).Concat(StringConstants.SINGLE_SPACE).Concat(comment.Substring(hh + 1));
+                    OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(i);
+                    sb.Append(s[i]);
+                    if (s[i] == '-' && (i + 1 == s.Length || s[i + 1] == '-'))
+                    {
+                        sb.Append(' ');
+                    }
                 }
 
-                if (comment.CodePointAt(comment.Length() - 1) == '-')
-                {
-                    comment = comment.Concat(StringConstants.SINGLE_SPACE);
-                }
+                comment = StringTool.FromCharSequence(sb.ToString());
             }
 
             return comment;

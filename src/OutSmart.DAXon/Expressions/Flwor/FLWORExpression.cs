@@ -232,16 +232,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return ReturnClause.IsUpdatingExpression();
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            foreach (Clause c in clauses)
-            {
-                c.AddToPathMap(pathMap, pathMapNodeSet);
-            }
-
-            return ReturnClause.AddToPathMap(pathMap, pathMapNodeSet);
-        }
-
         public virtual void InjectCode(ICodeInjector injector)
         {
             if (injector != null)
@@ -649,8 +639,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                     forExpr.SetVariableQName(forClause.RangeVariable.GetVariableQName());
                     forExpr.SetRequiredType(forClause.RangeVariable.GetRequiredType());
                     ExpressionTool.RebindVariableReferences(action, forClause.RangeVariable, forExpr);
-                    action = forExpr; //                if (injector != null) {
-                    //                }
+                    action = forExpr;
                 }
                 else
                 {
@@ -670,8 +659,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
 
                     ExpressionTool.RebindVariableReferences(action, letClause.RangeVariable, letExpr);
-                    action = letExpr; //                if (injector != null) {
-                    //                }
+                    action = letExpr;
                 }
             }
 

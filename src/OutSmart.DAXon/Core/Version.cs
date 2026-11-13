@@ -9,8 +9,7 @@ using System;
 
 namespace OutSmart.DAXon.Core
 {
-    // Version stub -- the original Version.cs is excluded but ~120 callers depend on
-    // Version.platform field and other constants.
+    // The platform, edition and version constants.
     internal static class Version
     {
         public static IPlatform platform = new DotNetPlatform();

@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Regex
         {
             get
             {
-                int len = 0;
+                long len = 0;
                 foreach (Operation o in operations)
                 {
                     int i = o.MatchLength;
@@ -37,7 +37,7 @@ namespace OutSmart.DAXon.Regex
                     len += i;
                 }
 
-                return len;
+                return Fixed(len);
             }
         }
 
@@ -45,27 +45,34 @@ namespace OutSmart.DAXon.Regex
         {
             get
             {
-                int len = 0;
+                long len = 0;
                 foreach (Operation o in operations)
                 {
                     len += o.MinimumMatchLength;
                 }
 
-                return len;
+                return Least(len);
             }
         }
+
+        private int loopingDepth = -1;   // memoized: REProgram computes it at compile, matching only reads it
 
         public override int MaxLoopingDepth
         {
             get
             {
-                int max = 0;
-                foreach (Operation o in operations)
+                if (loopingDepth < 0)
                 {
-                    max = Math.Max(max, o.MaxLoopingDepth);
+                    int max = 0;
+                    foreach (Operation o in operations)
+                    {
+                        max = Math.Max(max, o.MaxLoopingDepth);
+                    }
+
+                    loopingDepth = max;
                 }
 
-                return max;
+                return loopingDepth;
             }
         }
         public OpSequence(IList<Operation> operations)

@@ -61,7 +61,6 @@ namespace OutSmart.DAXon.Trees.Tiny
             } //}
         }
 
-        //}
         public NodeInfo Next()
         {
             if (needToAdvance)
@@ -92,7 +91,6 @@ namespace OutSmart.DAXon.Trees.Tiny
             return nextNode;
         }
 
-        //}
         public IAtomicSequence NextAtomizedValue()
         {
             if (needToAdvance)
@@ -121,7 +119,6 @@ namespace OutSmart.DAXon.Trees.Tiny
             return tree.GetTypedValueOfElement(nextNodeNr);
         }
 
-        //}
         public bool SupportsHasNext()
         {
             return true;

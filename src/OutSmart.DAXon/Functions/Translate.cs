@@ -106,24 +106,12 @@ namespace OutSmart.DAXon.Functions
         internal static StringValue TryTranslateBytes(StringValue @in, int[] table)
         {
             UnicodeString us = @in.Content;
-            byte[] b;
-            int off, len;
-            if (us is Slice8 s8)
-            {
-                b = s8.ByteArray;
-                off = s8.Start;
-                len = s8.End - s8.Start;
-            }
-            else if (us is Twine8 t8)
-            {
-                b = t8.ByteArray;
-                off = 0;
-                len = b.Length;
-            }
-            else
+            if (!Slice8.Latin1Span(us, out byte[] b, out int off, out int end))
             {
                 return null;
             }
+
+            int len = end - off;
 
             byte[] outBytes = new byte[len];
             int w = 0;

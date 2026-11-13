@@ -7,6 +7,8 @@
 using System.Collections.Generic;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Sorting;
+using OutSmart.DAXon.Internal;
+
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     internal sealed class OrderByClausePush : TuplePush
@@ -35,6 +37,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void ProcessTuple(IXPathContext context)
         {
+            StackGuard.Probe();
             Tuple tuple = (Tuple)tupleExpr.EvaluateItem(context);
             SortKeyDefinitionList sortKeyDefinitions = orderByClause.SortKeyDefinitions;
             ObjectToBeSorted itbs = new ObjectToBeSorted(sortKeyDefinitions.Size());
@@ -45,14 +48,19 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
             itbs.originalPosition = ++position;
             tupleArray.Add(itbs);
-            if (tupleArray.Count == Core.MemoryLedger.BigCount)
+            if (!held && (tupleArray.Count == Core.MemoryLedger.BigCount || Core.MemoryLedger.Weighs(itbs.value, ref weight)))
             {
+                held = true;
                 Core.MemoryLedger.Hold(tupleArray, OrderByClausePull.TupleListSizer);   // summed as it grows
             }
         }
 
+        private long weight;   // of medium strings in the tuples (MemoryLedger.Weighs)
+        private bool held;
+
         public override void Dispose()
         {
+            StackGuard.Probe();
             OrderByClausePull.SortTupleArray(tupleArray, comparers);
             foreach (ObjectToBeSorted itbs in tupleArray)
             {

@@ -5,6 +5,7 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using OutSmart.DAXon.Model;
 
@@ -18,11 +19,12 @@ namespace OutSmart.DAXon.Types
         // XPST0017 "Unknown constructor function". Make it a real registry mirroring the excluded
         // BuiltInType.GetSchemaType: Register stores; GetSchemaType forces BuiltInAtomicType static init
         // (whose static field initializers run MakeAtomicType -> Register) on a miss, then re-reads.
-        private static readonly Dictionary<int, object> _lookup = new Dictionary<int, object>();
+        // Concurrent: xs:numeric and the list types register on the first lookup that misses them, while other threads read.
+        private static readonly ConcurrentDictionary<int, object> _lookup = new ConcurrentDictionary<int, object>();
         // TIER-2 2026-06-17: parallel by-local-name registry, faithful mirror of upstream BuiltInType.lookupByLocalName.
         // Populated by Register alongside _lookup so fn:type-available / Configuration.GetSchemaType(QName) can resolve
         // xs:* built-in schema types by local part (was a hollow NIE stub -> type-available threw at runtime).
-        private static readonly Dictionary<string, object> _lookupByLocalName = new Dictionary<string, object>();
+        private static readonly ConcurrentDictionary<string, object> _lookupByLocalName = new ConcurrentDictionary<string, object>();
         public static object GetSchemaType(int fingerprint)
         {
             // Non-atomic built-ins never call Register (no fingerprint in _lookup), so resolve them directly —

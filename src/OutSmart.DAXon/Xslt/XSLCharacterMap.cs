@@ -144,61 +144,124 @@ namespace OutSmart.DAXon.Xslt
                 }
 
 
-                // check for circularity
-                foreach (object characterMapElement in characterMapElements)
-                {
-                    ((XSLCharacterMap)characterMapElement).CheckCircularity(this);
-                }
+                CheckCircularity();
             }
 
             validated = true;
         }
 
-        /* error path: see character-map-027 */
-        private void CheckCircularity(XSLCharacterMap origin)
-        {
-            if (this == origin)
-            {
-                CompileError("The definition of the character map is circular", "XTSE1600");
-                characterMapElements = null; // for error recovery
-            }
-            else
-            {
-                if (!validated)
-                {
+        // Whether this map reaches itself through the maps it uses: one walk with a visited set. A recursion per path
+        // overflowed the stack on a chain of 3000 maps and took exponential time on maps that share the ones they use.
+        // Walked whole with no cycle found: no later walk need enter it (it cannot reach the map walking, or it would
+        // reach itself). Each map walked every map it reached, so a chain of 10 000 took 24 s (XSLAttributeSet's twin).
+        private bool acyclic;
 
-                    // if this attribute set isn't validated yet, we don't check it.
-                    // The circularity will be detected when the last attribute set in the cycle
-                    // gets validated
+        private void CheckCircularity()
+        {
+            var seen = new HashSet<XSLCharacterMap>();
+            bool whole = true;
+            var todo = new Stack<XSLCharacterMap>(characterMapElements);
+            while (todo.Count > 0)
+            {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+                XSLCharacterMap m = todo.Pop();
+                if (m == this)
+                {
+                    CompileError("The definition of the character map is circular", "XTSE1600");
+                    characterMapElements = null; // for error recovery
                     return;
                 }
 
-                if (characterMapElements != null)
+                // A map not validated yet is not walked: the last map of a cycle to be validated finds the cycle. What
+                // it uses is not known yet, so the walk is not whole.
+                if (!m.validated)
                 {
-                    foreach (object characterMapElement in characterMapElements)
+                    whole = false;
+                    continue;
+                }
+
+                if (m.acyclic || m.characterMapElements == null || !seen.Add(m))
+                {
+                    continue;
+                }
+
+                foreach (XSLCharacterMap used in m.characterMapElements)
+                {
+                    todo.Push(used);
+                }
+            }
+
+            acyclic = whole;
+        }
+
+        // The characters of this map and of the maps it uses, a later mapping winning: the used maps in order, then this
+        // map's own. Walked backwards keeping the first value met, which gives what expanding every path gives, and
+        // a map met again then adds nothing: one visit per map, no recursion.
+        // Every map is assembled, so each is assembled once, from the assembled maps it uses: a map walking all it reached
+        // walked the rest of a chain for every map of it (10000 maps: 24 s). In post order and without recursion; the
+        // first entry of a codepoint wins, its own (the last of them) before those of the maps used, the last used first.
+        private IntHashMap<string> assembled;
+
+        public IntHashMap<string> Assemble()
+        {
+            var todo = new Stack<XSLCharacterMap>();
+            var expanded = new HashSet<XSLCharacterMap>();
+            todo.Push(this);
+            while (todo.Count > 0)
+            {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+                XSLCharacterMap m = todo.Peek();
+                if (m.assembled == null && expanded.Add(m) && m.characterMapElements != null)
+                {
+                    foreach (XSLCharacterMap used in m.characterMapElements)
                     {
-                        ((XSLCharacterMap)characterMapElement).CheckCircularity(origin);
+                        if (used.assembled == null && !expanded.Contains(used))
+                        {
+                            todo.Push(used);
+                        }
+                    }
+
+                    continue;
+                }
+
+                todo.Pop();
+                m.assembled ??= m.Merged();
+            }
+
+            return assembled;
+        }
+
+        private IntHashMap<string> Merged()
+        {
+            var map = new IntHashMap<string>();
+            var own = new List<NodeInfo>(Children());
+            for (int i = own.Count - 1; i >= 0; i--)
+            {
+                // Any other child has been reported (XTSE0010) and is left out.
+                if (own[i] is XSLOutputCharacter oc && map.Get(oc.CodePoint) == null)
+                {
+                    map.Put(oc.CodePoint, oc.ReplacementString);
+                }
+            }
+
+            for (int u = (characterMapElements?.Count ?? 0) - 1; u >= 0; u--)
+            {
+                IntHashMap<string> used = characterMapElements[u].assembled;   // null only inside a cycle, an error already
+                if (used == null)
+                {
+                    continue;
+                }
+
+                for (IIntIterator keys = used.KeyIterator(); keys.MoveNext();)
+                {
+                    if (map.Get(keys.Current) == null)
+                    {
+                        map.Put(keys.Current, used.Get(keys.Current));
                     }
                 }
             }
-        }
 
-        /* error path: see character-map-027 */
-        public void Assemble(IntHashMap<string> map)
-        {
-            if (characterMapElements != null)
-            {
-                foreach (XSLCharacterMap charmap in characterMapElements)
-                {
-                    charmap.Assemble(map);
-                }
-            }
-
-            foreach (NodeInfo child in Children())
-            {
-                XSLOutputCharacter oc = (XSLOutputCharacter)child;
-                map.Put(oc.CodePoint, oc.ReplacementString);
-            }
+            return map;
         }
 
         /* error path: see character-map-027 */

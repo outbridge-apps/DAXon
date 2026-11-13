@@ -92,6 +92,15 @@ namespace OutSmart.DAXon.Values
             }
         }
 
+        // The same value backed by a .NET string, which is what a locale collation compares: a sort key copied once rather
+        // than on each comparison. A subclass, or content backed by a string already, comes back as it is.
+        internal AtomicValue StringBacked()
+        {
+            return content is BMPString || content is StringView || GetType() != typeof(StringValue)
+                ? this
+                : new StringValue(StringTool.FromCharSequence(content.ToString()), typeLabel);
+        }
+
         public static StringValue Bmp(string content)
         {
 

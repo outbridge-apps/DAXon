@@ -222,17 +222,10 @@ namespace OutSmart.DAXon.Trees
         public IGroundedValue Materialize() => this;
         public bool EffectiveBooleanValue() => true; // a single node is always true
         public IEnumerable<IItem> AsIterable() => new IItem[] { this };
-        public bool ContainsNode(NodeInfo sought) => sought != null && IsSameNodeInfo(sought);
+        public bool ContainsNode(NodeInfo sought) => GroundedValueDefaults.ContainsNode(this, sought);
         public ISequence MakeRepeatable() => this;
-        public IGroundedValue Subsequence(int start, int length) => (start <= 0 && (long)start + length > 0) ? (IGroundedValue)this : OutSmart.DAXon.Values.EmptySequence.GetInstance(); // singleton item (upstream GroundedValue default)
-        public IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public IGroundedValue Subsequence(int start, int length) => GroundedValueDefaults.Subsequence(this, start, length);
+        public IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
 
         // net472 explicit interface bridges (no covariant interface returns) — mirror TinyNodeImpl
         IItem IItem.Head() => this;

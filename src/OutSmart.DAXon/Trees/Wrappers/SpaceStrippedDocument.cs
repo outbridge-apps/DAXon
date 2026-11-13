@@ -117,6 +117,42 @@ namespace OutSmart.DAXon.Trees.Wrappers
 
         public bool ContainsPreserveSpace() => preservesSpace;
 
+        // The xml:space in force at each element asked about, kept: a walk to the root for every whitespace text node made
+        // stripping a 30 000-deep document take 36 s. Runs over one document share it, hence a concurrent map.
+        private System.Collections.Concurrent.ConcurrentDictionary<NodeInfo, bool> spacePreserved;
+
+        internal bool IsSpacePreserved(NodeInfo element)
+        {
+            var known = System.Threading.LazyInitializer.EnsureInitialized(ref spacePreserved);
+            List<NodeInfo> climbed = null;
+            bool preserved = false;
+            for (NodeInfo p = element; p != null && p.GetNodeKind() == Types.Type.ELEMENT; p = p.GetParent())
+            {
+                if (known.TryGetValue(p, out preserved))
+                {
+                    break;
+                }
+
+                (climbed ??= new List<NodeInfo>()).Add(p);
+                string val = p.GetAttributeValue(NamespaceUri.XML, "space");
+                if (val == "preserve" || val == "default")
+                {
+                    preserved = val == "preserve";
+                    break;
+                }
+            }
+
+            if (climbed != null)
+            {
+                foreach (NodeInfo n in climbed)
+                {
+                    known[n] = preserved;
+                }
+            }
+
+            return preserved;
+        }
+
         public bool ContainsAssertions() => _containsAssertions;
 
         // Memo of the strip/preserve rule verdict by parent-element fingerprint: the rule lookup

@@ -39,17 +39,15 @@ namespace OutSmart.DAXon.Xslt
 
             if (@namespace == "")
             {
-                CompileError("The zero-length string is not a valid namespace URI. " + "For a schema with no @namespace, omit the namespace attribute");
+                CompileError("The zero-length string is not a valid namespace URI. " + "For a schema with no namespace, omit the namespace attribute");
             }
         }
 
-        //
         public override void Validate(ComponentDeclaration decl)
         {
             CheckTopLevel("XTSE0010", false);
         }
 
-        //
         public override void Index(ComponentDeclaration decl, PrincipalStylesheetModule top)
         {
         }

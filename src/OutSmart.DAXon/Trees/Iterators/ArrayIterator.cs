@@ -45,7 +45,6 @@ namespace OutSmart.DAXon.Trees.Iterators
         public abstract IItem Next();
         public virtual void Dispose() { }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public abstract IGroundedValue Materialize();
 
         internal class Of<T> : ArrayIterator where T : class, IItem

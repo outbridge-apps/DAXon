@@ -95,22 +95,24 @@ namespace OutSmart.DAXon.Resources
                         }
                     }
 
+                    // The parser reports a malformed file as XmlException or wrapped (UncheckedXPathException), which on-error=ignore|warning
+                    // let through; a limit of the run is never ignored.
+                    XPathException failure = null;
                     try
                     {
                         doc = config.BuildDocumentTree(source, options).GetRootNode();
                     }
-                    catch (XPathException e)
+                    catch (XPathException e) when (!e.IsRunLimit())
                     {
-                        if (details.onError == URIQueryParameters.ON_ERROR_FAIL)
-                        {
-                            throw e.WithMessage("collection(): failed to parse XML file " + resourceURI + ": " + e.Message);
-                        }
-                        else if (details.onError == URIQueryParameters.ON_ERROR_WARNING)
-                        {
-                            context.GetController().Warning("collection(): failed to parse XML file " + resourceURI + ": " + e.Message, e.ShowErrorCode(), null);
-                        }
-
-                        doc = null;
+                        failure = e;
+                    }
+                    catch (UncheckedXPathException e) when (!e.GetXPathException().IsRunLimit())
+                    {
+                        failure = e.GetXPathException();
+                    }
+                    catch (System.Xml.XmlException e)
+                    {
+                        failure = new XPathException("Error reported by XML parser: " + e.Message, DAXonErrorCode.SXXP0003);
                     }
                     finally
                     {
@@ -125,6 +127,20 @@ namespace OutSmart.DAXon.Resources
                                 // ignore the failure
                             }
                         }
+                    }
+
+                    if (failure != null)
+                    {
+                        if (details.onError == URIQueryParameters.ON_ERROR_FAIL)
+                        {
+                            throw failure.WithMessage("collection(): failed to parse XML file " + resourceURI + ": " + failure.Message);
+                        }
+                        else if (details.onError == URIQueryParameters.ON_ERROR_WARNING)
+                        {
+                            context.GetController().Warning("collection(): failed to parse XML file " + resourceURI + ": " + failure.Message, failure.ShowErrorCode(), null);
+                        }
+
+                        doc = null;
                     }
                 }
 

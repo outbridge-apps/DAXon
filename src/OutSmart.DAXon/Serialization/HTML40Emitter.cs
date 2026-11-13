@@ -16,23 +16,9 @@ namespace OutSmart.DAXon.Serialization
     /// </summary>
     internal sealed class HTML40Emitter : HTMLEmitter
     {
-        static HTML40Emitter()
-        {
-            SetEmptyTag("area");
-            SetEmptyTag("base");
-            SetEmptyTag("basefont");
-            SetEmptyTag("br");
-            SetEmptyTag("col");
-            SetEmptyTag("embed");
-            SetEmptyTag("frame");
-            SetEmptyTag("hr");
-            SetEmptyTag("img");
-            SetEmptyTag("input");
-            SetEmptyTag("isindex");
-            SetEmptyTag("link");
-            SetEmptyTag("meta");
-            SetEmptyTag("param");
-        }
+        private static readonly HTMLTagHashSet emptyTags = TagSet("area", "base", "basefont", "br", "col", "embed", "frame", "hr", "img", "input", "isindex", "link", "meta", "param");
+
+        protected override bool IsEmptyTag(string tag) => emptyTags.Contains(tag);
 
         public HTML40Emitter()
         {

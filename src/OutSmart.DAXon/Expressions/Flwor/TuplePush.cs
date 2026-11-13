@@ -20,6 +20,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return outputter;
         }
 
+        // A clause pushes to the one after it, recursing once per clause; overrides probe the stack, as in TuplePull.
         public abstract void ProcessTuple(IXPathContext context);
         public virtual void Dispose()
         {

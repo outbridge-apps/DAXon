@@ -181,7 +181,7 @@ namespace OutSmart.DAXon.Xslt
             CompileErrorInAttribute(message, "XTDE0850", "name");
 
             // prevent a duplicate error message...
-            attributeName = new StringLiteral("saxon-error-attribute"); //        }
+            attributeName = new StringLiteral("saxon-error-attribute");
         }
 
         public override void Validate(ComponentDeclaration decl)
@@ -190,7 +190,7 @@ namespace OutSmart.DAXon.Xslt
             {
                 if (schemaType.IsNamespaceSensitive())
                 {
-                    CompileErrorInAttribute("Validation at attribute level must not specify a " + "@namespace-sensitive type (xs:QName or xs:NOTATION)", "XTTE1545", "type");
+                    CompileErrorInAttribute("Validation at attribute level must not specify a " + "namespace-sensitive type (xs:QName or xs:NOTATION)", "XTTE1545", "type");
                 }
             }
 
@@ -199,7 +199,6 @@ namespace OutSmart.DAXon.Xslt
             select = TypeCheck("select", select);
             separator = TypeCheck("separator", separator);
 
-            //onEmpty = typeCheck("on-empty", onEmpty);
             base.Validate(decl);
         }
 

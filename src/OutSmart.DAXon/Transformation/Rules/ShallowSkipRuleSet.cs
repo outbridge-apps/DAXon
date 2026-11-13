@@ -16,12 +16,9 @@ namespace OutSmart.DAXon.Transformation.Rules
     {
         private static readonly ShallowSkipRuleSet THE_INSTANCE = new ShallowSkipRuleSet();
 
-        // fall through!
-        // no action
-        // no action (e.g. for atomic values and function items
         public string Name => "shallow-skip";
 
-        protected ShallowSkipRuleSet()
+        private ShallowSkipRuleSet()
         {
         }
         public static ShallowSkipRuleSet GetInstance()
@@ -38,30 +35,14 @@ namespace OutSmart.DAXon.Transformation.Rules
                 {
                     case Types.Type.ELEMENT:
                         {
-                            XPathContextMajor c2 = context.NewContext();
-                            c2.Origin = this;
-                            c2.TrackFocus(node.IterateAxis(AxisInfo.ATTRIBUTE));
-                            c2.SetCurrentComponent(c2.GetCurrentMode()); // Bug 3508
-                            ITailCall tc = c2.GetCurrentMode().GetActor().ApplyTemplates(parameters, tunnelParams, null, output, c2, locationId);
-                            while (tc != null)
-                            {
-                                tc = tc.ProcessLeavingTail();
-                            }
+                            BuiltInRuleSets.ApplyTo(this, node.IterateAxis(AxisInfo.ATTRIBUTE), parameters, tunnelParams, output, context, locationId);
 
                             goto case Types.Type.DOCUMENT;
                         }
 
                     case Types.Type.DOCUMENT:
                         {
-                            XPathContextMajor c2 = context.NewContext();
-                            c2.Origin = this;
-                            c2.TrackFocus(node.IterateAxis(AxisInfo.CHILD));
-                            c2.SetCurrentComponent(c2.GetCurrentMode()); // Bug 3508
-                            ITailCall tc = c2.GetCurrentMode().GetActor().ApplyTemplates(parameters, tunnelParams, null, output, c2, locationId);
-                            while (tc != null)
-                            {
-                                tc = tc.ProcessLeavingTail();
-                            }
+                            BuiltInRuleSets.ApplyTo(this, node.IterateAxis(AxisInfo.CHILD), parameters, tunnelParams, output, context, locationId);
 
                             return;
                         }
@@ -78,15 +59,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             {
                 ISequence seq = ArrayFunctionSet.ArrayToSequence.ToSequence((ArrayItem)item);
                 ISequenceIterator members = seq.Iterate();
-                XPathContextMajor c2 = context.NewContext();
-                c2.Origin = this;
-                c2.TrackFocus(members);
-                c2.SetCurrentComponent(c2.GetCurrentMode()); // Bug 3508
-                ITailCall tc = c2.GetCurrentMode().GetActor().ApplyTemplates(parameters, tunnelParams, null, output, c2, locationId);
-                while (tc != null)
-                {
-                    tc = tc.ProcessLeavingTail();
-                }
+                BuiltInRuleSets.ApplyTo(this, members, parameters, tunnelParams, output, context, locationId);
             }
             else
             {

@@ -20,12 +20,22 @@ namespace OutSmart.DAXon.Expressions.Numbering
         private static readonly ConcurrentDictionary<string, DateTimeFormatInfo> GregorianByCulture = new ConcurrentDictionary<string, DateTimeFormatInfo>();
 
         private readonly DateTimeFormatInfo names;
+        private readonly TextInfo text;
 
-        public Numberer_bcl(DateTimeFormatInfo names, string language)
+        public Numberer_bcl(DateTimeFormatInfo names, TextInfo text, string language)
         {
             this.names = names;
+            this.text = text;
             SetLanguage(language);
         }
+
+        // The modifiers N, n and Nn by the language's own case rules. Turkish 'aralık' is ARALIK and 'ekim' EKİM, where the
+        // invariant rules keep the ı and lose the dot; a name a culture writes in lower case takes its capital for Nn.
+        internal string Upper(string name) => text.ToUpper(name);
+
+        internal string Lower(string name) => text.ToLower(name);
+
+        internal string Title(string name) => text.ToTitleCase(text.ToLower(name));
 
         // Set once an English word, ordinal suffix, half-day or era name stands in for the language: format-date then
         // names the language it used, as F&O asks of a fallback ("[Language: en]", as Saxon writes it).

@@ -179,9 +179,10 @@ namespace OutSmart.DAXon.Functions
             {
                 result = function.Call(context, argValues).Iterate();
             }
-            catch (XPathException e)
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation())))
             {
-                throw e.MaybeWithLocation(GetLocation());
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
 
             if (!definition.TrustResultType())
@@ -233,9 +234,10 @@ namespace OutSmart.DAXon.Functions
             {
                 result = function.Call(context, argValues).Head();
             }
-            catch (XPathException e)
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation())))
             {
-                throw e.MaybeWithLocation(GetLocation());
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
 
             if (!definition.TrustResultType())
@@ -268,9 +270,10 @@ namespace OutSmart.DAXon.Functions
             {
                 return function.EffectiveBooleanValue(context, argValues);
             }
-            catch (XPathException e)
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation())))
             {
-                throw e.MaybeWithLocation(GetLocation());
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 

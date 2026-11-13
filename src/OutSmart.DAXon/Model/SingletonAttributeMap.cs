@@ -122,7 +122,6 @@ namespace OutSmart.DAXon.Model
             public void Dispose() { }
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public string GetValue(NamespaceUri uri, string local)
         {
             AttributeInfo att = Get(uri, local);

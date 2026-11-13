@@ -18,5 +18,5 @@ using System.Runtime.CompilerServices;
 // No [assembly: CLSCompliant(true)], and that is a decision, not an oversight: with it the
 // compiler reports 116 violations (104 CS3005 case-colliding identifiers, 8 CS3008 leading
 // underscores, 4 CS3026 volatile fields). Every CS3005 involves a PROTECTED member, which no
-// case-insensitive binder ever sees; probe 31 covers the public pairs, which are the ones that
-// broke PowerShell. Closed as not fixing - reasoning in docs/known-gaps.md §surface.
+// case-insensitive binder ever sees; a robustness test covers the public pairs, which are the ones that
+// broke PowerShell. Closed as not fixing.

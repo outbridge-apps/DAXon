@@ -15,11 +15,6 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Api
 {
-    //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(Action<OutSmart.DAXon.Api.IXmlProcessingError> reporter) {"
-    //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
-    //                + "    }"
-    //})
     public class XPathSelector : IEnumerable<XdmItem>
     {
         private readonly XPathExpression exp;
@@ -30,6 +25,8 @@ namespace OutSmart.DAXon.Api
         public virtual XPathDynamicContext UnderlyingXPathContext => dynamicContext;
         public XPathSelector(XPathExpression exp, Dictionary<StructuredQName, XPathVariable> declaredVariables)
         {
+            ArgumentCheck.NotNull(exp, nameof(exp));
+            ArgumentCheck.NotNull(declaredVariables, nameof(declaredVariables));
             this.exp = exp;
             this.declaredVariables = declaredVariables;
             Core.Controller.DeadlineToken limitsBefore = Core.Controller.ActiveLimits;   // making a selector is no call
@@ -45,11 +42,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetContextItem(XdmItem item)
         {
-            if (item == null)
-            {
-                throw new NullReferenceException("contextItem");
-            }
-
+            ArgumentCheck.NotNull(item, nameof(item));
             if (!exp.InternalExpression.GetPackageData().IsSchemaAware())
             {
                 IItem it = item.UnderlyingValue.Head();
@@ -63,13 +56,9 @@ namespace OutSmart.DAXon.Api
             {
                 dynamicContext.ContextItem = item.UnderlyingValue;
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -80,10 +69,8 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetVariable(QName name, XdmValue value)
         {
-            if (name == null)
-                throw new NullReferenceException("name");
-            if (value == null)
-                throw new NullReferenceException("value");
+            ArgumentCheck.NotNull(name, nameof(name));
+            ArgumentCheck.NotNull(value, nameof(value));
             StructuredQName qn = name.GetStructuredQName();
             XPathVariable var = declaredVariables.GetOrDefault(qn);
             if (var == null)
@@ -95,17 +82,9 @@ namespace OutSmart.DAXon.Api
             {
                 dynamicContext.SetVariable(var, (ISequence)(value.UnderlyingValue));
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            catch (UncheckedXPathException e)
-            {
-                throw new DAXonApiException(e);
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -145,21 +124,9 @@ namespace OutSmart.DAXon.Api
                 limits = exp.ArmEvaluation(dynamicContext);
                 value = SequenceTool.ToGroundedValue(exp.Iterate(dynamicContext));
             }
-            catch (UncheckedXPathException uxe)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(uxe);
-            }
-            catch (XPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                // The stack-guard abort is deliberately not an XPathException (see
-                // RecursionDepthError), so every API method that reports engine errors carries this
-                // clause too. Converting HERE and nowhere deeper is the whole point: on its way up
-                // the abort must not meet a handler that runs.
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
             finally
             {
@@ -185,17 +152,9 @@ namespace OutSmart.DAXon.Api
 
                 return (XdmItem)XdmValue.Wrap(i);
             }
-            catch (UncheckedXPathException uxe)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(uxe);   // an iterator's error, a limit among them, as Evaluate() reports it
-            }
-            catch (XPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
             finally
             {
@@ -225,22 +184,12 @@ namespace OutSmart.DAXon.Api
                     }
                 });
                 exp.ArmEvaluation(dynamicContext);
-                return new XdmSequenceIterator<XdmItem>(exp.Iterate(dynamicContext), scope);
+                return new XdmSequenceIterator<XdmItem>(exp.IterateInOwnFrame(dynamicContext), scope);
             }
-            catch (UncheckedXPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
                 scope.CloseAll();
-                throw new DAXonApiUncheckedException(e.GetXPathException());
-            }
-            catch (XPathException e)
-            {
-                scope.CloseAll();
-                throw new DAXonApiUncheckedException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                scope.CloseAll();
-                throw new DAXonApiUncheckedException(e.ToXPathException());
+                throw ApiErrors.WrapUnchecked(e);
             }
             finally
             {
@@ -259,17 +208,9 @@ namespace OutSmart.DAXon.Api
                 limits = exp.ArmEvaluation(dynamicContext);
                 return exp.EffectiveBooleanValue(dynamicContext);
             }
-            catch (UncheckedXPathException uxe)
+            catch (Exception uxe) when (ApiErrors.IsEngineError(uxe))
             {
-                throw new DAXonApiException(uxe);
-            }
-            catch (XPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(uxe);
             }
             finally
             {

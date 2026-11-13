@@ -25,11 +25,13 @@ namespace OutSmart.DAXon.Api
 
         public override bool Matches(XdmItem item)
         {
+            ArgumentCheck.NotNull(item, nameof(item));
             return underlyingType != null && underlyingType.Matches(item.UnderlyingValue, Hierarchy());
         }
 
         public override bool Subsumes(ItemType other)
         {
+            ArgumentCheck.NotNull(other, nameof(other));
             return underlyingType != null && Hierarchy().IsSubType(other.UnderlyingItemType, underlyingType);
         }
 

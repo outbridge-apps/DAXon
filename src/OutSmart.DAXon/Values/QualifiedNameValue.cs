@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.Values
     {
         protected readonly StructuredQName qName;
 
-        public override UnicodeString PrimitiveStringValue => StringView.Of(qName.DisplayName).Tidy();
+        public override UnicodeString PrimitiveStringValue => StringView.Of(qName.DisplayName);
 
         public string ClarkName => qName.ClarkName;
 

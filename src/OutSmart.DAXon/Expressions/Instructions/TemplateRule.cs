@@ -223,14 +223,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        public virtual void PrepareInitializer(Compilation compilation, ComponentDeclaration decl)
-        {
-        }
-
-        public virtual void Initialize()
-        {
-        }
-
         public virtual void Apply(Outputter output, XPathContextMajor context)
         {
             ITailCall tc = ApplyLeavingTail(output, context);
@@ -263,6 +255,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 context.SetCurrentIterator(null);
             }
 
+            XPathException unwrapped;
             try
             {
                 EnsureBodyEvaluatorExists();
@@ -276,13 +269,13 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
             catch (UncheckedXPathException e)
             {
-                throw e.GetXPathException().MaybeWithLocation(this).MaybeWithContext(context);
+                // Thrown below, once this frame is unwound: a throw from here re-enters dispatch per level.
+                unwrapped = e.GetXPathException().MaybeWithLocation(this).MaybeWithContext(context);
             }
-            catch (XPathException e) when (!(e is XPathException.StackOverflow))
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(this).MaybeWithContext(context)))
             {
-                // StackOverflow flies through decorating rethrows untouched — see the
-                // DocumentInstr elaborator note (deep-unwind stack discipline, round AQ).
-                throw e.MaybeWithLocation(this).MaybeWithContext(context);
+                // Decorated in the filter, never handled: one template rule per recursion level (XPathException.PassOn).
+                throw;
             }
             catch (Exception e2) when (!(e2 is XPathException) && !(e2 is RecursionDepthError) && !(e2 is OutOfMemoryException) && !OutSmart.DAXon.Lib.HostDefects.IsHostDefect(e2))
             {
@@ -293,6 +286,8 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 string message = "Internal error evaluating template rule " + (GetLineNumber() > 0 ? " at line " + GetLineNumber() : "") + (GetSystemId() != null ? " in module " + GetSystemId() : "");
                 throw new InvalidOperationException(message, e2);
             }
+
+            throw unwrapped;
         }
 
         private void EnsureBodyEvaluatorExists()

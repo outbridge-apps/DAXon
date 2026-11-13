@@ -161,8 +161,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public override void Export(ExpressionPresenter @out)
         {
             Child.Export(@out); // Following code was written for diagnostics, to show the tree with the trace instructions
-            //        @out.startElement("traceExp");
-            //        @out.endElement();
         }
 
         public override string ToShortString()
@@ -222,22 +220,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 };
             }
 
-            //        public ISequenceEvaluator eagerly() {
-            //            TraceExpression expr = (TraceExpression) getExpression();
-            //            return context -> {
-            //                assert controller != null;
-            //
-            //                    listener.enter(expr, expr.properties, context);
-            //                    IGroundedValue result = (IGroundedValue)baseEval.evaluate(context);
-            //                    listener.leave(expr);
-            //                    return result;
-            //                } else {
-            //                    return (IGroundedValue) baseEval.evaluate(context);
-            //                }
-            //            };
-            //
-            //        public ISequenceEvaluator lazily(boolean repeatable) {
-            //            return eagerly();
             public override IPullEvaluator ElaborateForPull()
             {
                 TraceExpression expr = (TraceExpression)GetExpression();

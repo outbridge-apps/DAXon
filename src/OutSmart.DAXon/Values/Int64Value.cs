@@ -158,7 +158,8 @@ namespace OutSmart.DAXon.Values
             }
             else
             {
-                ValidationFailure err = new ValidationFailure("Value " + value + " cannot be converted to integer subtype " + type.Description);
+                // Invariant: the concatenation takes the thread's culture, and $err:description read 'Value −1' (U+2212) on sv-SE.
+                ValidationFailure err = new ValidationFailure("Value " + value.ToString(System.Globalization.CultureInfo.InvariantCulture) + " cannot be converted to integer subtype " + type.Description);
                 err.SetErrorCode("FORG0001");
                 return err;
             }
@@ -307,7 +308,8 @@ namespace OutSmart.DAXon.Values
         {
             if (value == long.MinValue)
             {
-                return BigIntegerValue.MakeIntegerValue(new BigInteger(value)).Negate();
+                // 2^63 does not fit a long; MakeIntegerValue would hand back this value and recurse.
+                return new BigIntegerValue(-new BigInteger(value));
             }
             else
             {
@@ -327,46 +329,7 @@ namespace OutSmart.DAXon.Values
 
         public override NumericValue Round(int scale)
         {
-            if (scale >= 0 || value == 0)
-            {
-                return this;
-            }
-            else
-            {
-                if (scale < -15)
-                {
-                    return new BigIntegerValue(value).Round(scale);
-                }
-
-                long absolute = Math.Abs(value);
-                long factor = 1;
-                for (long i = 1; i <= -scale; i++)
-                {
-                    factor *= 10;
-                }
-
-                long modulus = absolute % factor;
-                long rval = absolute - modulus;
-                long d = modulus * 2;
-                if (value > 0)
-                {
-                    if (d >= factor)
-                    {
-                        rval += factor;
-                    }
-                }
-                else
-                {
-                    if (d > factor)
-                    {
-                        rval += factor;
-                    }
-
-                    rval = -rval;
-                }
-
-                return new Int64Value(rval);
-            }
+            return Round(scale, Functions.Round.RoundingRule.HALF_TO_CEILING);
         }
 
         public override NumericValue Round(int scale, Round.RoundingRule roundingRule)
@@ -375,57 +338,33 @@ namespace OutSmart.DAXon.Values
             {
                 return this;
             }
-            else
+
+            // Past half the long range the result may not fit: exact there.
+            if (scale < -15 || value > long.MaxValue / 2 || value < long.MinValue / 2)
             {
-                if (scale < -15)
-                {
-                    return new BigIntegerValue(value).Round(scale, roundingRule);
-                }
-
-                bool negative = value < 0;
-
-                // factor is 1 for scale=0, 10 for scale=-1, 100 for scale=-2, etc
-                long factor = 1;
-                for (long i = 1; i <= -scale; i++)
-                {
-                    factor *= 10;
-                }
-
-                long towardsZero = (value / factor) * factor;
-                if (towardsZero == value)
-                {
-                    return this;
-                }
-
-                long awayFromZero = negative ? towardsZero - factor : towardsZero + factor;
-                long floor = negative ? awayFromZero : towardsZero;
-                long ceiling = negative ? towardsZero : awayFromZero;
-                long midpoint = floor + (ceiling - floor) / 2;
-                bool midway = value == midpoint;
-                long nearest = value > midpoint ? ceiling : floor;
-                switch (roundingRule)
-                {
-                    case Functions.Round.RoundingRule.FLOOR:
-                        return Int64Value.MakeIntegerValue(floor);
-                    case Functions.Round.RoundingRule.TOWARD_ZERO:
-                        return Int64Value.MakeIntegerValue(towardsZero);
-                    case Functions.Round.RoundingRule.CEILING:
-                        return Int64Value.MakeIntegerValue(ceiling);
-                    case Functions.Round.RoundingRule.AWAY_FROM_ZERO:
-                        return Int64Value.MakeIntegerValue(awayFromZero);
-                    case Functions.Round.RoundingRule.HALF_TO_FLOOR:
-                        return Int64Value.MakeIntegerValue(midway ? floor : nearest);
-                    case Functions.Round.RoundingRule.HALF_TO_CEILING:
-                    default:
-                        return Int64Value.MakeIntegerValue(midway ? ceiling : nearest);
-                    case Functions.Round.RoundingRule.HALF_TOWARD_ZERO:
-                        return Int64Value.MakeIntegerValue(midway ? towardsZero : nearest);
-                    case Functions.Round.RoundingRule.HALF_AWAY_FROM_ZERO:
-                        return Int64Value.MakeIntegerValue(midway ? awayFromZero : nearest);
-                    case Functions.Round.RoundingRule.HALF_TO_EVEN:
-                        return Int64Value.MakeIntegerValue(midway ? (floor / factor % 2 == 0 ? floor : ceiling) : nearest);
-                }
+                return new BigIntegerValue(value).Round(scale, roundingRule);
             }
+
+            // factor is 10 for scale=-1, 100 for scale=-2, etc
+            long factor = 1;
+            for (int i = scale; i < 0; i++)
+            {
+                factor *= 10;
+            }
+
+            long floor = value / factor * factor;
+            if (floor == value)
+            {
+                return this;
+            }
+
+            if (value < 0)
+            {
+                floor -= factor;
+            }
+
+            bool up = Functions.Round.RoundsUp(roundingRule, value < 0, value.CompareTo(floor + factor / 2), floor / factor % 2 == 0);
+            return MakeIntegerValue(up ? floor + factor : floor);
         }
 
         public override int Signum()
@@ -557,8 +496,9 @@ namespace OutSmart.DAXon.Values
 
 
                 // the result of dividing two integers is a decimal; but if
-                // one divides exactly by the other, we implement it as an integer
-                if (value % quotient == 0)
+                // one divides exactly by the other, we implement it as an integer. Not with a
+                // negative operand: as in Java, whose IsLong sends those to the decimal path above.
+                if (value % quotient == 0 && value >= 0 && quotient > 0)
                 {
                     return MakeIntegerValue(value / quotient);
                 }

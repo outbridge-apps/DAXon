@@ -68,49 +68,12 @@ namespace OutSmart.DAXon.Values.Arrays
             }
 
             IAtomicComparer atomicComparer = AtomicSortComparer.MakeSortComparer(collation, StandardNames.XS_ANY_ATOMIC_TYPE, context);
-            int comparisons = 0;
-            try
+            DeadlineSort.Sort(inputList, (a, b) =>
             {
-                inputList.Sort((a, b) =>
-                {
-                    if ((++comparisons & 1023) == 0)
-                    {
-                        Core.Controller.CheckActiveTimeoutNow();   // as in fn:sort: nothing else stops a List.Sort
-                    }
-
-                    int result = CompareSortKeys(a.sortKey, b.sortKey, atomicComparer);
-                    if (result == 0)
-                    {
-
-                        // TODO: unnecessary, we are now using a stable sort routine
-                        return a.originalPosition - b.originalPosition;
-                    }
-                    else
-                    {
-                        return result;
-                    }
-                }); //GenericSorter.quickSort(0, array.arrayLength(), sortable);
-            }
-            catch (InvalidOperationException e) when (e.InnerException != null)
-            {
-                // List<T>.Sort wraps any comparer exception in InvalidOperationException, so the plain
-                // catch below never saw it. A real XPathException (e.g. from key evaluation) must propagate
-                // as-is; a type-comparison failure (InvalidCastException, upstream ClassCastException) is the
-                // XPTY0004 "non-comparable types" type error.
-                if (e.InnerException is XPathException xe)
-                {
-                    throw xe;
-                }
-                if (e.InnerException is InvalidCastException)
-                {
-                    throw new XPathException("Non-comparable types found while sorting: " + e.InnerException.Message).WithErrorCode("XPTY0004").AsTypeError();
-                }
-                throw;
-            }
-            catch (InvalidCastException e)
-            {
-                throw new XPathException("Non-comparable types found while sorting: " + e.Message).WithErrorCode("XPTY0004").AsTypeError();
-            }
+                // Equal keys keep the input order: List.Sort is not stable, this tie-break makes it so.
+                int result = CompareSortKeys(a.sortKey, b.sortKey, atomicComparer);
+                return result == 0 ? a.originalPosition - b.originalPosition : result;
+            });
 
             IList<IGroundedValue> outputList = new List<IGroundedValue>(array.ArrayLength());
             foreach (MemberToBeSorted member in inputList)

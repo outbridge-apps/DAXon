@@ -422,7 +422,7 @@ namespace OutSmart.DAXon.Types
         {
             if (path != null)
             {
-                return path; //        } else if (node != null) {
+                return path;
             }
             else
             {

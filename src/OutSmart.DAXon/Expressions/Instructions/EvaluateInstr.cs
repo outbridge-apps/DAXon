@@ -203,11 +203,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return requiredType.GetCardinality();
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            throw new NotSupportedException("Cannot do document projection when xsl:evaluate is used");
-        }
-
         public override IEnumerable<Operand> Operands()
         {
             IList<Operand> sub = new List<Operand>(8);
@@ -384,31 +379,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     string exprText = exprTextEval.Eval(context);
                     string baseUri = baseUriEval == null ? instr.StaticBaseURIString : Whitespace.Trim(baseUriEval.Eval(context));
                     IItem focus = contextItemEval.Eval(context);
-                    NodeInfo namespaceContextBase = null;
-                    if (namespaceContextEval != null)
-                    {
-                        namespaceContextBase = (NodeInfo)namespaceContextEval.Eval(context);
-                    }
-
+                    NodeInfo namespaceContextBase = namespaceContextEval == null ? null : (NodeInfo)namespaceContextEval.Eval(context);
                     string schemaAwareAttr = Whitespace.Trim(schemaAwareEval.Eval(context));
-                    bool isSchemaAware;
-                    if (schemaAwareAttr == "yes" || schemaAwareAttr == "true" || schemaAwareAttr == "1")
-                    {
-                        isSchemaAware = true;
-                    }
-                    else if (schemaAwareAttr == "no" || schemaAwareAttr == "false" || schemaAwareAttr == "0")
-                    {
-                        isSchemaAware = false;
-                    }
-                    else
-                    {
-                        throw new XPathException("The schema-aware attribute of xsl:evaluate must be yes|no|true|false|0|1").WithErrorCode("XTDE0030").WithLocation(instr.GetLocation()).WithXPathContext(context);
-                    }
+                    bool isSchemaAware = SchemaAware(schemaAwareAttr, instr, context);
 
-                    Expression expr = null;
-                    SlotManager slotMap = null;
-
-                    // Create a cache key so the compiled expression can be reused
+                    // A compiled expression is reused for the same text, base URI, schema awareness and namespace context
                     StringBuilder fsb = new StringBuilder(exprText.Length + (baseUri == null ? 4 : baseUri.Length) + 40);
                     fsb.Append(baseUri);
                     fsb.Append("##");
@@ -422,248 +397,264 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     }
 
                     string cacheKey = fsb.ToString();
-                    ICollection<XPathVariable> declaredVars = null;
-                    Controller controller = context.GetController();
-                    LFUCache<String, Object[]> cache;
-
-                    lock (controller.syncLock)
+                    object[] compiled = Cached(cacheKey, instr, context, out LFUCache<string, object[]> cache);
+                    MapItem dynamicParams = dynamicParamsEval == null ? null : (MapItem)dynamicParamsEval.Eval(context);
+                    if (compiled == null)
                     {
-                        cache = (LFUCache<String, Object[]>)controller.GetUserData(instr.GetLocation(), "xsl:evaluate");
-                        if (cache == null)
-                        {
-                            cache = new LFUCache<string, object[]>(100);
-                            controller.SetUserData(instr.GetLocation(), "xsl:evaluate", cache);
-                        }
-                        else
-                        {
-                            object[] o = cache[cacheKey];
-                            if (o != null)
-                            {
-                                expr = (Expression)o[0];
-                                slotMap = (SlotManager)o[1];
-                                declaredVars = (ICollection<XPathVariable>)o[2];
-                            }
-                        }
+                        MapItem options = optionsEval == null ? new HashTrieMap() : (MapItem)optionsEval.Eval(context);
+                        IndependentContext env = MakeStaticContext(exprText, baseUri, namespaceContextBase, isSchemaAware, options, dynamicParams, instr, context);
+                        compiled = Compile(exprText, env, instr, config);
+                        cache.Put(cacheKey, compiled);
                     }
 
-                    MapItem dynamicParams = null;
-                    if (dynamicParamsEval != null)
+                    return Run((Expression)compiled[0], (SlotManager)compiled[1], (ICollection<XPathVariable>)compiled[2], focus, dynamicParams, exprText, instr, context);
+                };
+            }
+
+            private static bool SchemaAware(string schemaAwareAttr, EvaluateInstr instr, IXPathContext context)
+            {
+                if (schemaAwareAttr == "yes" || schemaAwareAttr == "true" || schemaAwareAttr == "1")
+                {
+                    return true;
+                }
+                else if (schemaAwareAttr == "no" || schemaAwareAttr == "false" || schemaAwareAttr == "0")
+                {
+                    return false;
+                }
+                else
+                {
+                    throw new XPathException("The schema-aware attribute of xsl:evaluate must be yes|no|true|false|0|1").WithErrorCode("XTDE0030").WithLocation(instr.GetLocation()).WithXPathContext(context);
+                }
+            }
+
+            // The expression, slot map and declared variables compiled before under cacheKey, or null; cache is this
+            // instruction's in this run, made if need be.
+            private static object[] Cached(string cacheKey, EvaluateInstr instr, IXPathContext context, out LFUCache<string, object[]> cache)
+            {
+                Controller controller = context.GetController();
+                lock (controller.syncLock)
+                {
+                    cache = (LFUCache<String, Object[]>)controller.GetUserData(instr.GetLocation(), "xsl:evaluate");
+                    if (cache == null)
                     {
-                        dynamicParams = (MapItem)dynamicParamsEval.Eval(context);
+                        cache = new LFUCache<string, object[]>(100);
+                        controller.SetUserData(instr.GetLocation(), "xsl:evaluate", cache);
+                        return null;
                     }
 
-                    if (expr == null)
+                    return cache[cacheKey];
+                }
+            }
+
+            // The static context of the expression: the instruction's, with the functions an XPath expression may call,
+            // and a variable for each parameter supplied.
+            private static IndependentContext MakeStaticContext(string exprText, string baseUri, NodeInfo namespaceContextBase, bool isSchemaAware, MapItem options, MapItem dynamicParams, EvaluateInstr instr, IXPathContext context)
+            {
+                Configuration config = context.GetConfiguration();
+                int version = instr.GetRetainedStaticContext().GetPackageData().HostLanguageVersion;
+                IndependentContext env = new IndependentContext(config);
+                env.SetWarningHandler((str, loc) =>
+                {
+                    string message = "In dynamic expression {" + exprText + "}: " + str;
+                    context.GetController().Warning(message, null, loc);
+                });
+                env.SetBaseURI(baseUri);
+                env.SetExecutable(context.GetController().GetExecutable());
+                env.SetXPathLanguageLevel(version == 40 ? 40 : config.GetConfigurationProperty(Feature<int>.XPATH_VERSION_FOR_XSLT));
+                env.SetDefaultCollationName(instr.GetRetainedStaticContext().DefaultCollationName);
+                if (instr.NamespaceContextExpr != null)
+                {
+                    env.SetNamespaces(namespaceContextBase);
+                }
+                else
+                {
+                    env.SetNamespaceResolver(instr.GetRetainedStaticContext());
+                    env.SetDefaultElementNamespace(instr.GetRetainedStaticContext().DefaultElementNamespace);
+                }
+
+
+                // Copy the function library list, except for XSLT-defined system functions and private user-written functions
+                FunctionLibraryList libraryList0 = ((StylesheetPackage)instr.GetRetainedStaticContext().GetPackageData()).GetFunctionLibrary();
+                FunctionLibraryList libraryList1 = new FunctionLibraryList();
+                foreach (IFunctionLibrary lib in libraryList0.LibraryList)
+                {
+                    if (lib is BuiltInFunctionSet && ((BuiltInFunctionSet)lib).GetNamespace().Equals(NamespaceUri.FN))
                     {
 
-                        // Expression needs to be compiled. First create the static context...
-                        int version = instr.GetRetainedStaticContext().GetPackageData().HostLanguageVersion;
-
-                        //                    if (version == 30) {
-                        //                        version = 31;
-                        //                    }
-                        MapItem options = (optionsEval == null ? new HashTrieMap() : (MapItem)optionsEval.Eval(context));
-                        IndependentContext env = new IndependentContext(config);
-                        env.SetWarningHandler((str, loc) =>
-                        {
-                            string message = "In dynamic expression {" + exprText + "}: " + str;
-                            context.GetController().Warning(message, null, loc);
-                        });
-                        env.SetBaseURI(baseUri);
-                        env.SetExecutable(context.GetController().GetExecutable());
-                        env.SetXPathLanguageLevel(version == 40 ? 40 : config.GetConfigurationProperty(Feature<int>.XPATH_VERSION_FOR_XSLT));
-                        env.SetDefaultCollationName(instr.GetRetainedStaticContext().DefaultCollationName);
-                        if (namespaceContextEval != null)
-                        {
-                            env.SetNamespaces(namespaceContextBase);
-                        }
-                        else
-                        {
-                            env.SetNamespaceResolver(instr.GetRetainedStaticContext());
-                            env.SetDefaultElementNamespace(instr.GetRetainedStaticContext().DefaultElementNamespace);
-                        }
-
-
-                        // Copy the function library list, except for XSLT-defined system functions and private user-written functions
-                        FunctionLibraryList libraryList0 = ((StylesheetPackage)instr.GetRetainedStaticContext().GetPackageData()).GetFunctionLibrary();
-                        FunctionLibraryList libraryList1 = new FunctionLibraryList();
-                        foreach (IFunctionLibrary lib in libraryList0.LibraryList)
-                        {
-                            if (lib is BuiltInFunctionSet && ((BuiltInFunctionSet)lib).GetNamespace().Equals(NamespaceUri.FN))
-                            {
-
-                                // Exclude XSLT-defined functions
-                                libraryList1.AddFunctionLibrary(config.GetXPathFunctionSet(version == 40 ? 40 : 31)); // see bug 6221
-                            }
-                            else if (lib is StylesheetFunctionLibrary || lib is ExecutableFunctionLibrary)
-                            {
-                                libraryList1.AddFunctionLibrary(new PublicStylesheetFunctionLibrary(lib));
-                            }
-                            else
-                            {
-                                libraryList1.AddFunctionLibrary(lib);
-                            }
-                        }
-
-                        env.SetFunctionLibrary(libraryList1);
-                        env.SetDecimalFormatManager(instr.GetRetainedStaticContext().GetDecimalFormatManager());
-
-                        if (isSchemaAware)
-                        {
-                            IGroundedValue allowAny = options[StringValue.Bmp("allow-any-namespace")];
-                            if (allowAny != null && allowAny.EffectiveBooleanValue())
-                            {
-                                env.SetImportedSchemaNamespaces(config.ImportedNamespaces);
-                            }
-                            else
-                            {
-                                env.SetImportedSchemaNamespaces(instr.importedSchemaNamespaces);
-                            }
-                        }
-
-                        IGroundedValue defaultCollation = options[StringValue.Bmp("default-collation")];
-                        if (defaultCollation != null)
-                        {
-                            env.SetDefaultCollationName(defaultCollation.Head().GetStringValue());
-                        }
-
-                        Dictionary<StructuredQName, int> locals = new Dictionary<StructuredQName, int>();
-                        if (dynamicParams != null)
-                        {
-                            SequenceTool.Supply(dynamicParams.Keys(), (paramName) =>
-                            {
-                                if (!(paramName is QNameValue))
-                                {
-                                    IAtomicType primitiveItemType = ((AtomicValue)paramName).PrimitiveType;
-                                    XPathException err = new XPathException("Parameter names supplied to xsl:evaluate must have type xs:QName, not " + primitiveItemType.DisplayName, "XTTE3165");
-                                    err.SetIsTypeError(true);
-                                    throw err;
-                                }
-
-                                XPathVariable var = env.DeclareVariable((QNameValue)paramName);
-                                locals[((QNameValue)paramName).GetStructuredQName()] = var.LocalSlotNumber;
-                            });
-                        }
-
-                        if (instr.ActualParams != null)
-                        {
-                            foreach (WithParam actualParam in instr.ActualParams)
-                            {
-                                StructuredQName name = actualParam.VariableQName;
-                                if (!locals.ContainsKey(name))
-                                {
-                                    XPathVariable var = env.DeclareVariable(name);
-                                    locals[name] = var.LocalSlotNumber;
-                                }
-                            }
-                        }
-
-
-                        // Now compile the expression
-                        try
-                        {
-                            expr = ExpressionTool.Make(exprText, env, 0, Token.EOF, null);
-                        }
-                        catch (XPathException e)
-                        {
-                            throw new XPathException("Static error in XPath expression supplied to xsl:evaluate: " + e.Message + ". Expression: {" + exprText + "}").WithErrorCode("XTDE3160").WithLocation(instr.GetLocation());
-                        }
-
-
-                        // Type check, and allocate slots for variables
-                        expr.SetRetainedStaticContext(env.MakeRetainedStaticContext());
-                        Func<RoleDiagnostic> role = () => new RoleDiagnostic(RoleDiagnostic.EVALUATE_RESULT, exprText, 0);
-                        ExpressionVisitor visitor = ExpressionVisitor.Make(env);
-                        TypeChecker tc = config.GetTypeChecker(false);
-                        expr = tc.StaticTypeCheck(expr, instr.requiredType, role, visitor);
-                        expr = ExpressionTool.ResolveCallsToCurrentFunction(expr);
-                        ContextItemStaticInfo cit;
-                        if (instr.ContextItemExpr != null)
-                        {
-                            cit = config.MakeContextItemStaticInfo(instr.ContextItemExpr.GetItemType(), Cardinality.AllowsZero(instr.ContextItemExpr.GetCardinality()));
-                        }
-                        else
-                        {
-                            cit = ContextItemStaticInfo.ABSENT;
-                        }
-
-                        expr = expr.TypeCheck(visitor, cit).Optimize(visitor, cit);
-                        slotMap = env.GetStackFrameMap();
-                        ExpressionTool.AllocateSlots(expr, slotMap.NumberOfVariables, slotMap);
-
-                        // Save the compiled expression in the cache for next time
-                        if (cacheKey != null)
-                        {
-                            declaredVars = env.DeclaredVariables;
-                            cache.Put(cacheKey, new object[] { expr, slotMap, declaredVars }); //System.Console.Error.println("Cache miss, size = " + cache.size());
-                        }
+                        // Exclude XSLT-defined functions
+                        libraryList1.AddFunctionLibrary(config.GetXPathFunctionSet(version == 40 ? 40 : 31)); // see bug 6221
                     }
-
-                    XPathContextMajor c2 = context.NewContext();
-                    if (focus == null)
+                    else if (lib is StylesheetFunctionLibrary || lib is ExecutableFunctionLibrary)
                     {
-                        c2.SetCurrentIterator(null);
+                        libraryList1.AddFunctionLibrary(new PublicStylesheetFunctionLibrary(lib));
                     }
                     else
                     {
-                        ManualIterator mono = new ManualIterator(focus);
-                        c2.SetCurrentIterator(mono);
+                        libraryList1.AddFunctionLibrary(lib);
                     }
+                }
 
-                    c2.OpenStackFrame(slotMap);
-                    if (instr.ActualParams != null)
+                env.SetFunctionLibrary(libraryList1);
+                env.SetDecimalFormatManager(instr.GetRetainedStaticContext().GetDecimalFormatManager());
+
+                if (isSchemaAware)
+                {
+                    IGroundedValue allowAny = options[StringValue.Bmp("allow-any-namespace")];
+                    if (allowAny != null && allowAny.EffectiveBooleanValue())
                     {
-                        for (int i = 0; i < instr.ActualParams.Length; i++)
+                        env.SetImportedSchemaNamespaces(config.ImportedNamespaces);
+                    }
+                    else
+                    {
+                        env.SetImportedSchemaNamespaces(instr.importedSchemaNamespaces);
+                    }
+                }
+
+                IGroundedValue defaultCollation = options[StringValue.Bmp("default-collation")];
+                if (defaultCollation != null)
+                {
+                    env.SetDefaultCollationName(defaultCollation.Head().GetStringValue());
+                }
+
+                Dictionary<StructuredQName, int> locals = new Dictionary<StructuredQName, int>();
+                if (dynamicParams != null)
+                {
+                    SequenceTool.Supply(dynamicParams.Keys(), (paramName) =>
+                    {
+                        if (!(paramName is QNameValue))
                         {
-                            StructuredQName variableQName = instr.ActualParams[i].VariableQName;
-                            if (dynamicParams != null && dynamicParams[new QNameValue(variableQName, BuiltInAtomicType.QNAME)] != null)
-                            {
+                            IAtomicType primitiveItemType = ((AtomicValue)paramName).PrimitiveType;
+                            XPathException err = new XPathException("Parameter names supplied to xsl:evaluate must have type xs:QName, not " + primitiveItemType.DisplayName, "XTTE3165");
+                            err.SetIsTypeError(true);
+                            throw err;
+                        }
 
-                                // Don't evaluate xsl:with-param if there is a dynamic parameter of the same name
-                                continue;
-                            }
+                        XPathVariable var = env.DeclareVariable((QNameValue)paramName);
+                        locals[((QNameValue)paramName).GetStructuredQName()] = var.LocalSlotNumber;
+                    });
+                }
 
-                            int slot = slotMap.VariableMap.IndexOf(variableQName);
-                            c2.SetLocalVariable(slot, instr.ActualParams[i].GetSelectValue(context));
+                if (instr.ActualParams != null)
+                {
+                    foreach (WithParam actualParam in instr.ActualParams)
+                    {
+                        StructuredQName name = actualParam.VariableQName;
+                        if (!locals.ContainsKey(name))
+                        {
+                            XPathVariable var = env.DeclareVariable(name);
+                            locals[name] = var.LocalSlotNumber;
                         }
                     }
+                }
 
-                    if (dynamicParams != null)
+                return env;
+            }
+
+            // The expression compiled, type-checked and given its slots: { expression, slot map, declared variables }.
+            private static object[] Compile(string exprText, IndependentContext env, EvaluateInstr instr, Configuration config)
+            {
+                Expression expr;
+                try
+                {
+                    expr = ExpressionTool.Make(exprText, env, 0, Token.EOF, null);
+                }
+                catch (XPathException e) when (!e.IsRunLimit())   // a deadline met in the parse is no static error to catch
+                {
+                    throw new XPathException("Static error in XPath expression supplied to xsl:evaluate: " + e.Message + ". Expression: {" + exprText + "}").WithErrorCode("XTDE3160").WithLocation(instr.GetLocation());
+                }
+
+
+                // Type check, and allocate slots for variables
+                expr.SetRetainedStaticContext(env.MakeRetainedStaticContext());
+                Func<RoleDiagnostic> role = () => new RoleDiagnostic(RoleDiagnostic.EVALUATE_RESULT, exprText, 0);
+                ExpressionVisitor visitor = ExpressionVisitor.Make(env);
+                TypeChecker tc = config.GetTypeChecker(false);
+                expr = tc.StaticTypeCheck(expr, instr.requiredType, role, visitor);
+                expr = ExpressionTool.ResolveCallsToCurrentFunction(expr);
+                ContextItemStaticInfo cit;
+                if (instr.ContextItemExpr != null)
+                {
+                    cit = config.MakeContextItemStaticInfo(instr.ContextItemExpr.GetItemType(), Cardinality.AllowsZero(instr.ContextItemExpr.GetCardinality()));
+                }
+                else
+                {
+                    cit = ContextItemStaticInfo.ABSENT;
+                }
+
+                expr = expr.TypeCheck(visitor, cit).Optimize(visitor, cit);
+                SlotManager slotMap = env.GetStackFrameMap();
+                ExpressionTool.AllocateSlots(expr, slotMap.NumberOfVariables, slotMap);
+                return new object[] { expr, slotMap, env.DeclaredVariables };
+            }
+
+            // The compiled expression run at focus, with the parameters supplied.
+            private static ISequenceIterator Run(Expression expr, SlotManager slotMap, ICollection<XPathVariable> declaredVars, IItem focus, MapItem dynamicParams, string exprText, EvaluateInstr instr, IXPathContext context)
+            {
+                XPathContextMajor c2 = context.NewContext();
+                if (focus == null)
+                {
+                    c2.SetCurrentIterator(null);
+                }
+                else
+                {
+                    ManualIterator mono = new ManualIterator(focus);
+                    c2.SetCurrentIterator(mono);
+                }
+
+                c2.OpenStackFrame(slotMap);
+                if (instr.ActualParams != null)
+                {
+                    for (int i = 0; i < instr.ActualParams.Length; i++)
                     {
-                        IAtomicIterator iter = dynamicParams.Keys();
-                        QNameValue paramName;
-                        while ((paramName = (QNameValue)iter.Next()) != null)
+                        StructuredQName variableQName = instr.ActualParams[i].VariableQName;
+                        if (dynamicParams != null && dynamicParams[new QNameValue(variableQName, BuiltInAtomicType.QNAME)] != null)
                         {
-                            int slot = slotMap.VariableMap.IndexOf(paramName.GetStructuredQName());
-                            if (slot >= 0)
-                            {
 
-                                // can be false if the with-params changes from one call to the next
-                                c2.SetLocalVariable(slot, dynamicParams[paramName]);
-                            }
+                            // Don't evaluate xsl:with-param if there is a dynamic parameter of the same name
+                            continue;
+                        }
+
+                        int slot = slotMap.VariableMap.IndexOf(variableQName);
+                        c2.SetLocalVariable(slot, instr.ActualParams[i].GetSelectValue(context));
+                    }
+                }
+
+                if (dynamicParams != null)
+                {
+                    IAtomicIterator iter = dynamicParams.Keys();
+                    QNameValue paramName;
+                    while ((paramName = (QNameValue)iter.Next()) != null)
+                    {
+                        int slot = slotMap.VariableMap.IndexOf(paramName.GetStructuredQName());
+                        if (slot >= 0)
+                        {
+
+                            // can be false if the with-params changes from one call to the next
+                            c2.SetLocalVariable(slot, dynamicParams[paramName]);
                         }
                     }
+                }
 
 
-                    // Check that all required variables are present
-                    foreach (XPathVariable var in declaredVars)
+                // Check that all required variables are present
+                foreach (XPathVariable var in declaredVars)
+                {
+                    StructuredQName name = var.GetVariableQName();
+                    Func<Expression, bool> nameMatch = (e) => e is LocalVariableReference && ((LocalVariableReference)e).VariableName.Equals(name) && ((LocalVariableReference)e).GetBinding() is XPathVariable;
+                    if (dynamicParams != null && dynamicParams[new QNameValue(name, BuiltInAtomicType.QNAME)] == null && !instr.IsActualParam(name) && ExpressionTool.Contains(expr, false, nameMatch))
                     {
-                        StructuredQName name = var.GetVariableQName();
-                        Func<Expression, bool> nameMatch = (e) => e is LocalVariableReference && ((LocalVariableReference)e).VariableName.Equals(name) && ((LocalVariableReference)e).GetBinding() is XPathVariable;
-                        if (dynamicParams != null && dynamicParams[new QNameValue(name, BuiltInAtomicType.QNAME)] == null && !instr.IsActualParam(name) && ExpressionTool.Contains(expr, false, nameMatch))
-                        {
-                            throw new XPathException("No value has been supplied for variable " + name.DisplayName, "XPST0008");
-                        }
+                        throw new XPathException("No value has been supplied for variable " + name.DisplayName, "XPST0008");
                     }
+                }
 
-                    try
-                    {
-                        return expr.Iterate(c2);
-                    }
-                    catch (XPathException err)
-                    {
-                        throw err.WithMessage("Dynamic error in expression {" + exprText + "} called using xsl:evaluate").WithLocation(instr.GetLocation());
-                    }
-                };
+                try
+                {
+                    return expr.Iterate(c2);
+                }
+                catch (XPathException err)
+                {
+                    throw err.WithMessage("Dynamic error in expression {" + exprText + "} called using xsl:evaluate").WithLocation(instr.GetLocation());
+                }
             }
         }
     }

@@ -31,6 +31,8 @@ namespace OutSmart.DAXon.Expressions
         private readonly bool allowEmpty;
         private readonly Func<RoleDiagnostic> roleSupplier;
 
+        internal bool AllowsEmpty => allowEmpty;
+
         public override int ImplementationMethod => EVALUATE_METHOD;
 
         /// <summary>
@@ -169,22 +171,6 @@ namespace OutSmart.DAXon.Expressions
             Expression e2 = new SingletonAtomizer(BaseExpression.Copy(rebindings), roleSupplier, allowEmpty);
             ExpressionTool.CopyLocationInfo(this, e2);
             return e2;
-        }
-
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet result = BaseExpression.AddToPathMap(pathMap, pathMapNodeSet);
-            if (result != null)
-            {
-                TypeHierarchy th = GetConfiguration().GetTypeHierarchy();
-                ItemType operandItemType = BaseExpression.GetItemType();
-                if (th.Relationship(NodeKindTest.ELEMENT, operandItemType) != Affinity.DISJOINT || th.Relationship(NodeKindTest.DOCUMENT, operandItemType) != Affinity.DISJOINT)
-                {
-                    result.SetAtomized();
-                }
-            }
-
-            return null;
         }
 
         /// <summary>

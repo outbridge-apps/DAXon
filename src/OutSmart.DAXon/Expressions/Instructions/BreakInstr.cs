@@ -24,7 +24,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override IEnumerable<Operand> Operands()
         {
-            return new List<Operand>();
+            return System.Array.Empty<Operand>();
         }
 
         public override Expression Copy(RebindingMap rebindings)

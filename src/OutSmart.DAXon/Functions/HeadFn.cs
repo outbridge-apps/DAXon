@@ -15,9 +15,12 @@ namespace OutSmart.DAXon.Functions
     /// <summary>Implements fn:head — the first item of a sequence (or the empty sequence).</summary>
     internal sealed class HeadFn : SystemFunction
     {
-        // NB: no makeFunctionCall override — the upstream one rewrites to FirstItemExpression, which is
-        // only a hollow stub in this port (MakeFirstItemExpression returns its operand unchanged, so
-        // head(1 to 5) would yield the whole sequence). The runtime Call path below is correct.
+        // As upstream: the first item and no more is evaluated, so head((1, 1 idiv 0)) is 1, as (1, 1 idiv 0)[1] is.
+        public override Expression MakeFunctionCall(Expression[] arguments)
+        {
+            return FirstItemExpression.MakeFirstItemExpression(arguments[0]);
+        }
+
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
             IItem head = arguments[0].Head();

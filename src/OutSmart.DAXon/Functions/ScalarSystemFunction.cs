@@ -58,9 +58,10 @@ namespace OutSmart.DAXon.Functions
                         IItem val = argEval.Eval(context);
                         return val == null ? fn.ResultWhenEmpty().Head() : fn.Evaluate(val, context);
                     }
-                    catch (XPathException e)
+                    catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(fnc.GetLocation()).MaybeWithContext(context)))
                     {
-                        throw e.MaybeWithLocation(fnc.GetLocation()).MaybeWithContext(context);
+                        // Decorated in the filter, never handled (XPathException.PassOn).
+                        throw;
                     }
                 };
             }

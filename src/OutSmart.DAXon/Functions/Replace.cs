@@ -17,15 +17,12 @@ namespace OutSmart.DAXon.Functions
 {
     internal sealed class Replace : RegexFunction
     {
-        private int version = 20;
-
         private bool replacementChecked;
         public static Replace Make20()
         {
-            Replace rep = new Replace();
-            rep.version = 20;
-            return rep;
+            return new Replace();
         }
+
         protected override bool AllowRegexMatchingEmptyString()
         {
             return false;
@@ -39,7 +36,7 @@ namespace OutSmart.DAXon.Functions
                 if (arguments[3] is StringLiteral)
                 {
                     string flags = ((StringLiteral)arguments[3]).Stringify();
-                    if (flags.Contains("q") || flags.Contains(";"))
+                    if (flags.Contains("q"))
                     {
                         doEarlyReplacementCheck = false;
                     }
@@ -70,55 +67,13 @@ namespace OutSmart.DAXon.Functions
             UnicodeString input = arg0 == null ? EmptyUnicodeString.GetInstance() : arg0.UnicodeStringValue;
             IRegularExpression re = GetRegularExpression(arguments, 1, 3);
             IItem replacementArg = arguments[2].Head();
-            UnicodeString replacement = replacementArg == null ? null : replacementArg.UnicodeStringValue;
-            if (replacement == null && version == 20)
+            if (replacementArg == null)
             {
                 throw new XPathException("Third argument of fn:replace() must not be empty").WithErrorCode("XPTY0004").AsTypeError();
             }
 
-            Func<UnicodeString, UnicodeString[], UnicodeString> action = null;
-            if (arguments.Length == 5)
-            {
-                IFunctionItem actionFn = (IFunctionItem)arguments[4].Head();
-                if (actionFn != null)
-                {
-                    action = (@in, groups) =>
-                    {
-                        try
-                        {
-
-                            // cast to UnicodeString[] is needed for the transpiler
-                            IList<IItem> groupItems = new List<IItem>(((UnicodeString[])groups).Length);
-                            foreach (UnicodeString group in groups)
-                            {
-                                groupItems.Add(new StringValue(group, BuiltInAtomicType.UNTYPED_ATOMIC));
-                            }
-
-                            ISequence result = actionFn.Call(context, new ISequence[] { new StringValue(@in, BuiltInAtomicType.UNTYPED_ATOMIC), SequenceExtent.MakeSequenceExtent(groupItems) });
-                            IItem resultItem = result.Head();
-                            if (resultItem == null)
-                            {
-                                return EmptyUnicodeString.GetInstance();
-                            }
-                            else
-                            {
-                                return resultItem.UnicodeStringValue;
-                            }
-                        }
-                        catch (XPathException e)
-                        {
-                            throw new InvalidOperationException(e.Message, e);
-                        }
-                    };
-                } //            IRegularExpression re = getRegularExpression(arguments, 1, 3);
-            }
-
-            if (replacement != null && action != null)
-            {
-                throw new XPathException("Cannot supply both a replacement string and a replacement action", "FORX0005");
-            }
-
-            if (replacement != null && !replacementChecked && !re.Flags.Contains("q") && !re.IsPlatformNative())
+            UnicodeString replacement = replacementArg.UnicodeStringValue;
+            if (!replacementChecked && !re.Flags.Contains("q") && !re.IsPlatformNative())
             {
 
                 // if it is a string literal, the check was done at compile time
@@ -129,18 +84,7 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            if (replacement != null)
-            {
-                return new StringValue(re.Replace(input, replacement));
-            }
-            else if (action != null)
-            {
-                return new StringValue(re.ReplaceWith(input, action));
-            }
-            else
-            {
-                return new StringValue(re.Replace(input, EmptyUnicodeString.GetInstance()));
-            }
+            return new StringValue(re.Replace(input, replacement));
         }
 
         public static string CheckReplacement(UnicodeString rep)

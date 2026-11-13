@@ -17,6 +17,7 @@ namespace OutSmart.DAXon.Api
         public virtual XdmNode Content => _content;
         public Message(XdmNode content, QName errorCode, bool terminate, ILocation location)
         {
+            ArgumentCheck.NotNull(content, nameof(content));
             this._content = content;
             this._errorCode = errorCode;
             this._terminate = terminate;

@@ -37,8 +37,6 @@ namespace OutSmart.DAXon.Transformation
             if (ds == null)
             {
                 return null; // following two lines had been added to the code since 9.4, but they break XSLT test error089
-                //            ds = new DecimalSymbols();
-                //            formatTable.put(qName, ds);
             }
 
             return ds;

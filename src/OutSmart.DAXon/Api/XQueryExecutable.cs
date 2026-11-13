@@ -10,6 +10,7 @@ using OutSmart.DAXon.XQuery;
 using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Internal;
+using System;
 namespace OutSmart.DAXon.Api
 {
     public class XQueryExecutable
@@ -38,6 +39,8 @@ namespace OutSmart.DAXon.Api
         public virtual XQueryExpression UnderlyingCompiledQuery => exp;
         public XQueryExecutable(Processor processor, XQueryExpression exp)
         {
+            ArgumentCheck.NotNull(processor, nameof(processor));
+            ArgumentCheck.NotNull(exp, nameof(exp));
             this.processor = processor;
             this.exp = exp;
         }
@@ -54,19 +57,16 @@ namespace OutSmart.DAXon.Api
 
         public virtual void Explain(IDestination destination)
         {
+            ArgumentCheck.NotNull(destination, nameof(destination));
             Configuration config = processor.UnderlyingConfiguration;
             try
             {
                 PipelineConfiguration pipe = config.MakePipelineConfiguration();
                 exp.Explain(new ExpressionPresenter(config, destination.GetReceiver(pipe, config.ObtainDefaultSerializationProperties())));
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
     }

@@ -49,6 +49,13 @@ namespace OutSmart.DAXon.XQuery
 
                 if (queryVersion.Equals("4.0"))
                 {
+                    // Saxon-PE's: refused here with a code, as XQueryCompiler.SetLanguageVersion refuses it, rather than
+                    // by the raw ArgumentException of the function library the 4.0 parse asks for later.
+                    if (!env.GetConfiguration().IsLicensedFeature(Configuration.LicenseFeature.PROFESSIONAL_EDITION))
+                    {
+                        Grumble("XQuery 4.0 requires a license key for Saxon-PE or Saxon-EE", DAXonErrorCode.SXED0001);
+                    }
+
                     languageVersion = 40;
                     allowXPath40Syntax = true;
                     t.languageLevel = 40;
@@ -130,7 +137,6 @@ namespace OutSmart.DAXon.XQuery
         private void ParseProlog()
         {
 
-            //boolean allowSetters = true;
             bool allowModuleDecl = true;
             bool allowDeclarations = true;
             while (true)
@@ -165,7 +171,6 @@ namespace OutSmart.DAXon.XQuery
                             }
 
 
-                            //allowSetters = false;
                             ParseNamespaceDeclaration();
                             break;
                         case Token.DECLARE_ANNOTATED:
@@ -248,7 +253,6 @@ namespace OutSmart.DAXon.XQuery
                                     }
 
 
-                                    //allowSetters = false;
                                     ParseDefaultElementNamespace(false);
                                     break;
                                 case "function":
@@ -258,7 +262,6 @@ namespace OutSmart.DAXon.XQuery
                                     }
 
 
-                                    //allowSetters = false;
                                     ParseDefaultFunctionNamespace();
                                     break;
                                 case "collation":
@@ -314,7 +317,7 @@ namespace OutSmart.DAXon.XQuery
                         case Token.DECLARE_BASEURI:
                             if (!allowDeclarations)
                             {
-                                Grumble("'declare @base-uri' must appear earlier in the query prolog");
+                                Grumble("'declare base-uri' must appear earlier in the query prolog");
                             }
 
                             ParseBaseURIDeclaration();
@@ -329,7 +332,6 @@ namespace OutSmart.DAXon.XQuery
                             break;
                         case Token.IMPORT_SCHEMA:
 
-                            //allowSetters = false;
                             if (!allowDeclarations)
                             {
                                 Grumble("Import schema must appear earlier in the prolog");
@@ -339,7 +341,6 @@ namespace OutSmart.DAXon.XQuery
                             break;
                         case Token.IMPORT_MODULE:
 
-                            //allowSetters = false;
                             if (!allowDeclarations)
                             {
                                 Grumble("Import module must appear earlier in the prolog");
@@ -349,7 +350,6 @@ namespace OutSmart.DAXon.XQuery
                             break;
                         case Token.DECLARE_VARIABLE:
 
-                            //allowSetters = false;
                             if (allowDeclarations)
                             {
                                 SealNamespaces(namespacesToBeSealed, env.GetConfiguration());
@@ -361,7 +361,6 @@ namespace OutSmart.DAXon.XQuery
                             break;
                         case Token.DECLARE_CONTEXT:
 
-                            //allowSetters = false;
                             if (allowDeclarations)
                             {
                                 SealNamespaces(namespacesToBeSealed, env.GetConfiguration());
@@ -519,7 +518,6 @@ namespace OutSmart.DAXon.XQuery
                 qName = MakeStructuredQName(t.currentTokenValue, NamespaceUri.XQUERY);
                 uri = qName.GetNamespaceUri();
 
-                //            }
                 Annotation annotation = new Annotation(qName);
                 if (uri.Equals(NamespaceUri.XQUERY))
                 {
@@ -532,8 +530,7 @@ namespace OutSmart.DAXon.XQuery
                 }
                 else if (IsReservedInQuery(uri))
                 {
-                    Grumble("The annotation " + t.currentTokenValue + " is in a reserved namespace", "XQST0045"); //            } else if (uri.isEmpty()) {
-                    //                grumble("The annotation " + t.currentTokenValue + " is in no namespace", "XQST0045");
+                    Grumble("The annotation " + t.currentTokenValue + " is in a reserved namespace", "XQST0045");
                 }
                 else
                 {
@@ -668,24 +665,7 @@ namespace OutSmart.DAXon.XQuery
             preambleProcessed = true;
             if (foundDefaultCollation)
             {
-                string collationName = env.GetDefaultCollationName();
-                URI collationURI;
-                try
-                {
-                    collationURI = new URI(collationName);
-                    if (!collationURI.IsAbsolute())
-                    {
-                        URI @base = new URI(env.StaticBaseURI);
-                        collationURI = @base.Resolve(collationURI);
-                        collationName = collationURI.ToString();
-                    }
-                }
-                catch (URISyntaxException)
-                {
-                    Grumble("Default collation name '" + collationName + "' is not a valid URI", "XQST0046");
-                    collationName = NamespaceConstant.CODEPOINT_COLLATION_URI;
-                }
-
+                string collationName = ResolveCollationName(env.GetDefaultCollationName(), "Default collation name");
                 if (env.GetConfiguration().GetCollation(collationName) == null)
                 {
                     Grumble("Default collation name '" + collationName + "' is not a recognized collation", "XQST0038");
@@ -874,9 +854,7 @@ namespace OutSmart.DAXon.XQuery
             int val;
             if (t.currentTokenValue == "preserve")
             {
-                val = Validation.PRESERVE; //            if (!env.getExecutable().isSchemaAware()) {
-                //                grumble("construction mode preserve is allowed only with a schema-aware query");
-                //            }
+                val = Validation.PRESERVE;
             }
             else if (t.currentTokenValue == "strip")
             {
@@ -1305,9 +1283,33 @@ namespace OutSmart.DAXon.XQuery
                     break;
                 }
 
+                // A chain of modules each importing the next compiles one inside the other: 400 killed a 256 KB thread.
                 try
                 {
-                    string queryText = QueryReader.ReadSourceQuery(env.GetConfiguration(), ss, charChecker);
+                    Internal.StackGuard.Probe();
+                }
+                catch (Internal.RecursionDepthError e) when (!e.Described)
+                {
+                    throw e.Describe("Module imports are nested too deeply for this thread's stack", DAXonErrorCode.SXLM0001, MakeLocation());
+                }
+
+                try
+                {
+                    string queryText = null;
+                    try
+                    {
+                        queryText = QueryReader.ReadSourceQuery(env.GetConfiguration(), ss, charChecker);
+                    }
+                    finally
+                    {
+                        if (queryText == null)
+                        {
+                            // A failed read (empty, a bad character or encoding, the time limit) closes it too: an open
+                            // module file stays locked until a finalizer runs. A finally, not a catch: imports nest deep.
+                            CloseQuietly(ss);
+                        }
+                    }
+
                     try
                     {
                         if (ss.Stream != null)
@@ -1340,11 +1342,24 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
+        private static void CloseQuietly(ResolvedResource source)
+        {
+            try
+            {
+                source.Stream?.Dispose();
+                source.TextReader?.Dispose();
+            }
+            catch (IOException)
+            {
+                // The read's own failure is the one to report.
+            }
+        }
+
         private void ParseBaseURIDeclaration()
         {
             if (foundBaseURIDeclaration)
             {
-                Grumble("Base URI IDeclaration may only appear once", "XQST0032");
+                Grumble("Base URI Declaration may only appear once", "XQST0032");
             }
 
             foundBaseURIDeclaration = true;
@@ -1554,7 +1569,7 @@ namespace OutSmart.DAXon.XQuery
             if (prefix == "xml")
             {
 
-                // disallowed here even if bound to the correct @namespace - erratum XQ.E19
+                // disallowed here even if bound to the correct namespace - erratum XQ.E19
                 Grumble("Namespace prefix 'xml' cannot be declared", "XQST0070");
             }
 
@@ -2093,7 +2108,6 @@ namespace OutSmart.DAXon.XQuery
             NextToken();
             Expect(Token.STRING_LITERAL);
 
-            //String value = URILiteral(t.currentTokenValue).trim();
             string value = Unescape(t.currentTokenValue).ToString();
             if (uri.Equals(NamespaceUri.OUTPUT))
             {

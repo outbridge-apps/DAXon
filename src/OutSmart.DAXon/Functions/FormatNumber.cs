@@ -375,10 +375,6 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        /* 4.7.4 Rule 3 */
-        /* 4.7.4 Rule 8 */
-        /* 4.7.4 Rule 9 */
-        /* 4.7.4 Rule 10 */
         private static int[] Insert(int[] array, int used, int value, int position)
         {
             if (used + 1 > array.Length)
@@ -391,10 +387,6 @@ namespace OutSmart.DAXon.Functions
             return array;
         }
 
-        /* 4.7.4 Rule 3 */
-        /* 4.7.4 Rule 8 */
-        /* 4.7.4 Rule 9 */
-        /* 4.7.4 Rule 10 */
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
             int numArgs = arguments.Length;
@@ -452,10 +444,6 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        /* 4.7.4 Rule 3 */
-        /* 4.7.4 Rule 8 */
-        /* 4.7.4 Rule 9 */
-        /* 4.7.4 Rule 10 */
         protected DecimalSymbols GetNamedDecimalFormat(DecimalFormatManager dfm, string lexicalName)
         {
             DecimalSymbols dfs;
@@ -478,19 +466,11 @@ namespace OutSmart.DAXon.Functions
             return dfs;
         }
 
-        /* 4.7.4 Rule 3 */
-        /* 4.7.4 Rule 8 */
-        /* 4.7.4 Rule 9 */
-        /* 4.7.4 Rule 10 */
         private static bool IsInDigitFamily(int ch, int zeroDigit)
         {
             return ch >= zeroDigit && ch < zeroDigit + 10;
         }
 
-        /* 4.7.4 Rule 3 */
-        /* 4.7.4 Rule 8 */
-        /* 4.7.4 Rule 9 */
-        /* 4.7.4 Rule 10 */
         public static string FormatExponential(DoubleValue value)
         {
             try
@@ -506,10 +486,6 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        /* 4.7.4 Rule 3 */
-        /* 4.7.4 Rule 8 */
-        /* 4.7.4 Rule 9 */
-        /* 4.7.4 Rule 10 */
         public FormatNumber Copy()
         {
             FormatNumber copy = (FormatNumber)SystemFunction.MakeFunction(GetFunctionName().GetLocalPart(), GetRetainedStaticContext(), GetArity());
@@ -720,7 +696,7 @@ namespace OutSmart.DAXon.Functions
                                     wholePartPositions = new List<int>(3);
                                 }
 
-                                if (wholePartPositions.Contains(maxWholePartSize))
+                                if (wholePartPositions.Count > 0 && wholePartPositions[wholePartPositions.Count - 1] == maxWholePartSize)   // added in order: the last one only (a Contains each was quadratic)
                                 {
                                     Grumble("Sub-picture cannot contain adjacent grouping separators");
                                 }
@@ -741,7 +717,7 @@ namespace OutSmart.DAXon.Functions
                                     fractionalPartPositions = new List<int>(3);
                                 }
 
-                                if (fractionalPartPositions.Contains(maxFractionPartSize))
+                                if (fractionalPartPositions.Count > 0 && fractionalPartPositions[fractionalPartPositions.Count - 1] == maxFractionPartSize)
                                 {
                                     Grumble("Sub-picture cannot contain adjacent grouping separators");
                                 }
@@ -984,16 +960,10 @@ namespace OutSmart.DAXon.Functions
                     && dfs.GetDecimalSeparator() < 0x10000
                     && (wholePartGroupingPositions == null || (regular && dfs.GetGroupingSeparator() < 0x10000)))
                 {
-                    int fpoint = -1;
-                    for (int i = 0; i < sb.Length; i++)
-                    {
-                        if (sb[i] == '.')
-                        {
-                            fpoint = i;
-                            break;
-                        }
-                    }
-
+                    // A long one read as a string: the indexer of a StringBuilder of many chunks walks them, quadratic over
+                    // a picture's millions of digits. A short one has one chunk, and its copy would be the only allocation.
+                    string digits = sb.Length > 4096 ? sb.ToString() : null;
+                    int fpoint = digits != null ? digits.IndexOf('.') : IndexOfPoint(sb);
                     if (fpoint < 0 || maxFractionPartSize != 0 || fpoint == sb.Length - 1)
                     {
                         int end = fpoint >= 0 && maxFractionPartSize == 0 ? sb.Length - 1 : sb.Length;
@@ -1004,6 +974,7 @@ namespace OutSmart.DAXon.Functions
                         int gsize = wholePartGroupingPositions == null ? 0 : wholePartGroupingPositions[0];
                         for (int i = 0; i < end; i++)
                         {
+                            Core.Controller.CheckActiveTimeoutEvery64K(i);
                             if (i == fpoint)
                             {
                                 fast.Append((char)dfs.GetDecimalSeparator());
@@ -1015,7 +986,7 @@ namespace OutSmart.DAXon.Functions
                                     fast.Append((char)dfs.GetGroupingSeparator());
                                 }
 
-                                fast.Append(sb[i]);
+                                fast.Append(digits != null ? digits[i] : sb[i]);
                             }
                         }
 
@@ -1134,23 +1105,71 @@ namespace OutSmart.DAXon.Functions
                 return res.ToString();
             }
 
+            private static int IndexOfPoint(StringBuilder sb)
+            {
+                for (int i = 0; i < sb.Length; i++)
+                {
+                    if (sb[i] == '.')
+                    {
+                        return i;
+                    }
+                }
+
+                return -1;
+            }
+
+            // The value at the picture's places: rounded when it has more, else as it is with the zeros it lacks counted, to
+            // be written as text. SetScale to a million places is one BigInteger step, quadratic (3M ran 80 s past 3 s).
+            private static BigDecimal Rescale(BigDecimal dval, int places, out int zeros)
+            {
+                zeros = 0;
+                if (dval.Sign == 0)
+                {
+                    return dval;   // written "0" at any scale
+                }
+
+                if (dval.Scale() >= places)
+                {
+                    return dval.SetScale(places, RoundingMode.HALF_EVEN);
+                }
+
+                BigDecimal whole = dval.Scale() < 0 ? dval.SetScale(0, RoundingMode.HALF_EVEN) : dval;
+                zeros = places - whole.Scale();
+                return whole;
+            }
+
             private void FormatDecimal(BigDecimal dval, StringBuilder fsb)
             {
 
                 //NOTE: C# has its own version of this code in an overriding subclass
                 int exponent = 0;
+                int zeros = 0;
                 if (minExponentSize == 0)
                 {
-                    dval = dval.SetScale(maxFractionPartSize, RoundingMode.HALF_EVEN);
+                    dval = Rescale(dval, maxFractionPartSize, out zeros);
                 }
                 else if (dval.Sign != 0)
                 {
                     exponent = dval.Precision() - dval.Scale() - scalingFactor;
                     dval = dval.MovePointLeft(exponent);
-                    dval = dval.SetScale(maxFractionPartSize, RoundingMode.HALF_EVEN);
+                    dval = Rescale(dval, maxFractionPartSize, out zeros);
                 }
 
                 BigDecimalValue.DecimalToString(dval, fsb);
+                if (zeros > 0)
+                {
+                    if (dval.Scale() == 0)
+                    {
+                        fsb.Append('.');
+                    }
+
+                    for (int i = 0; i < zeros; i++)
+                    {
+                        Core.Controller.CheckActiveTimeoutEvery64K(i);
+                        fsb.Append('0');
+                    }
+                }
+
                 int point = -1;
                 for (int i = 0; i < fsb.Length; i++)
                 {

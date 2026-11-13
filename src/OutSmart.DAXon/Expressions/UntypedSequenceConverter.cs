@@ -109,14 +109,15 @@ namespace OutSmart.DAXon.Expressions
 
         public override ItemType GetItemType()
         {
-            if (BaseExpression.GetItemType() == BuiltInAtomicType.UNTYPED_ATOMIC)
+            ItemType operandType = BaseExpression.GetItemType();   // once: twice per level was 2^n in nested converters
+            if (operandType == BuiltInAtomicType.UNTYPED_ATOMIC)
             {
                 return RequiredItemType;
             }
             else
             {
                 TypeHierarchy th = GetConfiguration().GetTypeHierarchy();
-                return Types.Type.GetCommonSuperType(RequiredItemType, BaseExpression.GetItemType(), th);
+                return Types.Type.GetCommonSuperType(RequiredItemType, operandType, th);
             }
         }
 
@@ -262,8 +263,9 @@ namespace OutSmart.DAXon.Expressions
                     {
                         if (expr.RoleSupplier != null)
                         {
+                            // As the pull path: an untyped value whose cast fails is FORG0001, not the role's type error.
                             string errorCode = expr.RoleSupplier().ErrorCode;
-                            throw new XPathException(((ValidationFailure)result).GetMessage(), errorCode);
+                            throw new XPathException(((ValidationFailure)result).GetMessage(), errorCode == "XPTY0004" ? "FORG0001" : errorCode);
                         }
                         else
                         {

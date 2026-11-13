@@ -130,7 +130,6 @@ namespace OutSmart.DAXon.XQuery
             return functions.GetOrDefault(functionName) != null;
         }
 
-        //}
         public virtual Expression Bind(SymbolicName.F functionName, Expression[] arguments, Dictionary<StructuredQName, int> keywords, IStaticContext env, IList<string> reasons)
         {
             XQueryFunction fd = GetDeclaration(functionName.ComponentName, arguments.Length);
@@ -180,7 +179,6 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        //}
         public virtual XQueryFunction GetDeclaration(StructuredQName functionName, int staticArgs)
         {
             IList<XQueryFunction> homonyms = functionsByName.GetOrDefault(functionName);
@@ -283,7 +281,6 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        //}
         public virtual XQueryFunction GetDeclarationByKey(SymbolicName functionKey)
         {
             return functions.GetOrDefault(functionKey);
@@ -360,7 +357,6 @@ namespace OutSmart.DAXon.XQuery
                 return symbolicName.GetArity();
             }
 
-            //}
             public ISequence Call(IXPathContext context, ISequence[] arguments)
             {
                 if (function == null)
@@ -377,7 +373,6 @@ namespace OutSmart.DAXon.XQuery
                 return function.Call(context.NewCleanContext(), args);
             }
 
-            //}
             public void SetFunction(UserFunction function)
             {
                 this.function = function;

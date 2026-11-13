@@ -345,14 +345,14 @@ namespace OutSmart.DAXon.Text
                 char[] newCharArray = new char[left.Length32() + right.Length32()];
                 left.Copy16bit(newCharArray, 0);
                 right.Copy16bit(newCharArray, left.Length32());
-                return new Twine16(newCharArray);
+                return new BMPString(new string(newCharArray));
             }
             else
             {
                 byte[] newByteArray = new byte[(left.Length32() + right.Length32()) * 3];
                 left.Copy24bit(newByteArray, 0);
                 right.Copy24bit(newByteArray, left.Length32() * 3);
-                return new Twine24(newByteArray);
+                return new Slice24(newByteArray);
             }
         }
 

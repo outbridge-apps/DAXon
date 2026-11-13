@@ -17,4 +17,24 @@ namespace OutSmart.DAXon.Transformation.Rules
         string Name { get; }
         BuiltInRules[] GetActionForParentNodes(int nodeKind);
     }
+
+    internal static class BuiltInRuleSets
+    {
+        /// <summary>
+        /// What a built-in rule does with the items it passes on: applies the current mode to them from a new context
+        /// whose origin is the rule set, and runs the tail calls left.
+        /// </summary>
+        internal static void ApplyTo(IBuiltInRuleSet rules, ISequenceIterator items, ParameterSet parameters, ParameterSet tunnelParams, Outputter output, IXPathContext context, ILocation locationId)
+        {
+            XPathContextMajor c2 = context.NewContext();
+            c2.Origin = rules;
+            c2.TrackFocus(items);
+            c2.SetCurrentComponent(c2.GetCurrentMode()); // Bug 3508
+            ITailCall tc = c2.GetCurrentMode().GetActor().ApplyTemplates(parameters, tunnelParams, null, output, c2, locationId);
+            while (tc != null)
+            {
+                tc = tc.ProcessLeavingTail();
+            }
+        }
+    }
 }

@@ -26,12 +26,5 @@ namespace OutSmart.DAXon.Api
         PROCESSING_INSTRUCTION,
         // NAMESPACE(Types.NAMESPACE)
         NAMESPACE
-
-        // --------------------
-        // private final int number;
-        // XdmNodeKind(int number) {
-        //     this.number = number;
-        // }
-        // protected int getNumber() {
     }
 }

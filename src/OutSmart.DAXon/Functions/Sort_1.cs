@@ -40,6 +40,8 @@ namespace OutSmart.DAXon.Functions
         {
             List<ItemToBeSorted> inputList = new List<ItemToBeSorted>();
             int i = 0;
+            long weight = 0;   // of medium strings, which few can make heavy (MemoryLedger.Weighs)
+            bool held = false;
             ISequenceIterator iterator = input.Iterate();
             IItem item;
             while ((item = iterator.Next()) != null)
@@ -49,8 +51,9 @@ namespace OutSmart.DAXon.Functions
                 member.originalPosition = i++;
                 member.sortKey = item.Atomize();
                 inputList.Add(member);
-                if (inputList.Count == Core.MemoryLedger.BigCount)
+                if (!held && (inputList.Count == Core.MemoryLedger.BigCount || Core.MemoryLedger.Weighs(item, ref weight)))
                 {
+                    held = true;
                     Core.MemoryLedger.Hold(inputList, SortListSizer);   // summed as it grows
                 }
             }
@@ -83,27 +86,14 @@ namespace OutSmart.DAXon.Functions
 
             if (allDoubles)
             {
-                int flatComparisons = 0;
-                try
+                DeadlineSort.Sort(inputList, (a, b) =>
                 {
-                    inputList.Sort((a, b) =>
-                    {
-                        if ((++flatComparisons & 1023) == 0)
-                        {
-                            Core.Controller.CheckActiveTimeoutNow();
-                        }
-
-                        double x = a.dkey, y = b.dkey;
-                        int result = double.IsNaN(x)
-                            ? (double.IsNaN(y) ? 0 : -1)
-                            : double.IsNaN(y) ? +1 : x == y ? 0 : x < y ? -1 : +1;
-                        return result == 0 ? a.originalPosition - b.originalPosition : result;
-                    });
-                }
-                catch (InvalidOperationException e) when (e.InnerException is XPathException limit && limit.IsRunLimit())
-                {
-                    throw limit;
-                }
+                    double x = a.dkey, y = b.dkey;
+                    int result = double.IsNaN(x)
+                        ? (double.IsNaN(y) ? 0 : -1)
+                        : double.IsNaN(y) ? +1 : x == y ? 0 : x < y ? -1 : +1;
+                    return result == 0 ? a.originalPosition - b.originalPosition : result;
+                });
 
                 List<IItem> flatOutput = new List<IItem>(inputList.Count);
                 foreach (ItemToBeSorted member in inputList)
@@ -114,50 +104,24 @@ namespace OutSmart.DAXon.Functions
                 return new SequenceExtent.Of<IItem>(flatOutput);
             }
 
-            int comparisons = 0;
-            try
+            // A collation that compares .NET strings (a language's, case-order): each key a string once, as SortedIterator
+            if (collation is SimpleCollation || collation is CaseFirstCollator)
             {
-                inputList.Sort((a, b) =>
+                foreach (ItemToBeSorted m in inputList)
                 {
-                    // Nothing else stops a List.Sort: a million string keys make some twenty million comparisons.
-                    if ((++comparisons & 1023) == 0)
+                    if (m.sortKey is StringValue sv)
                     {
-                        Core.Controller.CheckActiveTimeoutNow();
+                        m.sortKey = sv.StringBacked();
                     }
-
-                    int result = ArraySort.CompareSortKeys(a.sortKey, b.sortKey, atomicComparer);
-                    if (result == 0)
-                    {
-
-                        // TODO: unnecessary, we are now using a stable sort routine
-                        return a.originalPosition - b.originalPosition;
-                    }
-                    else
-                    {
-                        return result;
-                    }
-                }); //GenericSorter.quickSort(0, inputList.size(), sortable);
-            }
-            catch (InvalidOperationException e) when (e.InnerException != null)
-            {
-                // List<T>.Sort wraps any comparer exception in InvalidOperationException, so the plain
-                // catch below never saw it. A real XPathException (e.g. from key evaluation) must propagate
-                // as-is; a type-comparison failure (InvalidCastException, upstream ClassCastException) is the
-                // XPTY0004 "non-comparable types" type error.
-                if (e.InnerException is XPathException xe)
-                {
-                    throw xe;
                 }
-                if (e.InnerException is InvalidCastException)
-                {
-                    throw new XPathException("Non-comparable types found while sorting: " + e.InnerException.Message, "XPTY0004").AsTypeError();
-                }
-                throw;
             }
-            catch (InvalidCastException e)
+
+            DeadlineSort.Sort(inputList, (a, b) =>
             {
-                throw new XPathException("Non-comparable types found while sorting: " + e.Message, "XPTY0004").AsTypeError();
-            }
+                // Equal keys keep the input order: List.Sort is not stable, this tie-break makes it so.
+                int result = ArraySort.CompareSortKeys(a.sortKey, b.sortKey, atomicComparer);
+                return result == 0 ? a.originalPosition - b.originalPosition : result;
+            });
 
             List<IItem> outputList = new List<IItem>(inputList.Count);
             foreach (ItemToBeSorted member in inputList)

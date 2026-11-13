@@ -11,9 +11,9 @@ using OutSmart.DAXon.Transformation;
 namespace OutSmart.DAXon.Expressions.Sorting
 {
     /// <summary>
-    /// A List.Sort cannot be stopped from outside, and over a million nodes it runs for seconds: past a few thousand
-    /// nodes one comparison in 1024 looks at the run's deadline. The sort wraps what a comparison throws in an
-    /// InvalidOperationException, so the time or memory limit's own error is taken out again.
+    /// A List.Sort cannot be stopped from outside, and over a million items it runs for seconds: one comparison in 1024
+    /// looks at the run's deadline (for nodes, past a few thousand). The sort wraps what a comparison throws in an
+    /// InvalidOperationException, which ComparerFailure takes out again.
     /// </summary>
     internal static class DeadlineSort
     {
@@ -22,20 +22,79 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
         internal static void Sort(List<NodeInfo> nodes, IComparer<NodeInfo> comparer)
         {
+            if (InOrder(nodes, comparer))
+            {
+                return;
+            }
+
             if (nodes.Count < Watched)
             {
                 nodes.Sort(comparer);
                 return;
             }
 
+            XPathException failure;
             try
             {
                 nodes.Sort(new Watching(comparer));
+                return;
             }
-            catch (InvalidOperationException e) when (e.InnerException is XPathException x && x.IsRunLimit())
+            catch (InvalidOperationException e)
             {
-                throw x;
+                failure = ComparerFailure.Reported(e);
             }
+
+            throw failure;
+        }
+
+        /// <summary>
+        /// List.Sort by compare, which looks at the run's deadline every 1024 comparisons: nothing else stops it, and a
+        /// million string keys make twenty million. What compare throws is reported as ComparerFailure says. List.Sort
+        /// is not stable: compare breaks ties itself, by original position.
+        /// </summary>
+        internal static void Sort<T>(List<T> list, Comparison<T> compare, bool xslSort = false)
+        {
+            int comparisons = 0;
+            XPathException failure;
+            try
+            {
+                list.Sort((a, b) =>
+                {
+                    if ((++comparisons & 1023) == 0)
+                    {
+                        Core.Controller.CheckActiveTimeoutNow();
+                    }
+
+                    return compare(a, b);
+                });
+                return;
+            }
+            catch (InvalidOperationException e)
+            {
+                failure = ComparerFailure.Reported(e, xslSort);
+            }
+            catch (InvalidCastException e)
+            {
+                failure = ComparerFailure.Reported(e, xslSort);
+            }
+
+            throw failure;
+        }
+
+        // Nodes already in document order - a group, a variable, a step from ordered parents - are the common input, and
+        // List.Sort spends n log n comparisons on them where Java's TimSort spends n: one pass finds out.
+        private static bool InOrder(List<NodeInfo> nodes, IComparer<NodeInfo> comparer)
+        {
+            for (int i = 1; i < nodes.Count; i++)
+            {
+                Core.Controller.CheckActiveTimeoutEvery64K(i);
+                if (comparer.Compare(nodes[i - 1], nodes[i]) > 0)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         // Not generic: a comparer shared over reference types pays a dictionary lookup on every call.

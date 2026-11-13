@@ -22,7 +22,6 @@ namespace OutSmart.DAXon.Expressions
 
         public XPathContextMajor MajorContext => null;
 
-        // no-op
         public int TemporaryOutputState
         {
             get => 0; set
@@ -30,7 +29,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        // no-op
         public string CurrentOutputUri
         {
             get => null; set
@@ -178,7 +176,6 @@ namespace OutSmart.DAXon.Expressions
         {
         }
 
-        // no-op
         /// <summary>
         /// Set a new sequence iterator.
         /// </summary>
@@ -187,7 +184,6 @@ namespace OutSmart.DAXon.Expressions
             NotAllowed();
         }
 
-        // no-op
         /// <summary>
         /// Set a new sequence iterator.
         /// </summary>
@@ -197,55 +193,46 @@ namespace OutSmart.DAXon.Expressions
             return null;
         }
 
-        // no-op
         public void SetLocalVariable(int slotNumber, ISequence value)
         {
             NotAllowed();
         }
 
-        // no-op
         public int UseLocalParameter(StructuredQName parameterId, int slotNumber, bool isTunnel)
         {
             return ParameterSet.NOT_SUPPLIED;
         }
 
-        // no-op
         public DateTimeValue GetCurrentDateTime()
         {
             throw new NoDynamicContextException("current-dateTime");
         }
 
-        // no-op
         public int GetImplicitTimezone()
         {
             return CalendarValue.MISSING_TIMEZONE;
         }
 
-        // no-op
         public XPathException GetCurrentException()
         {
             return null;
         }
 
-        // no-op
         public void WaitForChildThreads()
         {
             GetCaller().WaitForChildThreads();
         }
 
-        // no-op
         private void NotAllowed()
         {
             throw new NotSupportedException((new NoDynamicContextException("Internal error: early evaluation of subexpression with no context")).ToString());
         }
 
-        // no-op
         public XPathContextMajor.ThreadManager GetThreadManager()
         {
             return null;
         }
 
-        // no-op
         public Component GetTargetComponent(int bindingSlot)
         {
             return null;

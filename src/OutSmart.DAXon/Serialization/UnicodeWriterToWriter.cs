@@ -40,19 +40,7 @@ namespace OutSmart.DAXon.Serialization
         {
             // Latin1 byte reps: widen straight into the reused buffer - the ToString() below
             // allocated a string (plus its 8->16 copy) per text-node write.
-            byte[] b8 = null;
-            int off8 = 0;
-            if (chars is Slice8 sl8)
-            {
-                b8 = sl8.ByteArray;
-                off8 = sl8.Start;
-            }
-            else if (chars is Twine8 tw8)
-            {
-                b8 = tw8.ByteArray;
-            }
-
-            if (b8 != null)
+            if (Slice8.Latin1Span(chars, out byte[] b8, out int off8, out _))
             {
                 int len8 = chars.Length32();
                 char[] buf8 = Chars(len8);

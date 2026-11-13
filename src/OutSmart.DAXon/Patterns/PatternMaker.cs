@@ -9,9 +9,6 @@ using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Expressions;
 
-// PatternMaker, MultipleNodeKindTest, AtomicSortComparer, LocalOrderComparer,
-// BooleanFn, FunctionAvailable, BuiltInType, ParamKeywords, UnparsedEntity,
-// DummyNamespaceResolver, LoopLifter Ã¢â‚¬â€ frequently-referenced helper classes.
 namespace OutSmart.DAXon.Patterns
 {
     internal static class PatternMaker

@@ -7,6 +7,7 @@
 // Ported from upstream net/sf/saxon/functions/hof/CurriedFunction.java (replaces the hollow stub).
 // A partially-applied function: also used to represent an inline function closure over captured variables.
 
+using System.Collections.Generic;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Model;
@@ -29,46 +30,61 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             {
                 if (functionType == null)
                 {
-                    IFunctionItemType baseItemType = targetFunction.FunctionItemType;
-                    SequenceType resultType = SequenceType.ANY_SEQUENCE;
-                    if (baseItemType is SpecificFunctionType)
+                    // Each link's type is made from its target's: computed from the bottom up, as a recursion through
+                    // the links killed a 256 KB thread on a chain of 3000 partial applications.
+                    var chain = new List<CurriedFunction>();
+                    for (CurriedFunction c = this; c != null && c.functionType == null; c = c.targetFunction as CurriedFunction)
                     {
-                        resultType = baseItemType.ResultType;
+                        chain.Add(c);
                     }
 
-                    int placeholders = 0;
-                    foreach (ISequence boundArgument in boundValues)
+                    for (int k = chain.Count - 1; k >= 0; k--)
                     {
-                        if (boundArgument == null)
-                        {
-                            placeholders++;
-                        }
+                        chain[k].functionType = chain[k].TypeOver(chain[k].targetFunction.FunctionItemType);
                     }
-
-                    SequenceType[] argTypes = new SequenceType[placeholders];
-                    if (baseItemType is SpecificFunctionType)
-                    {
-                        for (int i = 0, j = 0; i < boundValues.Length; i++)
-                        {
-                            if (boundValues[i] == null)
-                            {
-                                argTypes[j++] = baseItemType.ArgumentTypes[i];
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < argTypes.Length; i++)
-                        {
-                            argTypes[i] = SequenceType.ANY_SEQUENCE;
-                        }
-                    }
-
-                    functionType = new SpecificFunctionType(argTypes, resultType);
                 }
 
                 return functionType;
             }
+        }
+
+        private SpecificFunctionType TypeOver(IFunctionItemType baseItemType)
+        {
+            SequenceType resultType = SequenceType.ANY_SEQUENCE;
+            if (baseItemType is SpecificFunctionType)
+            {
+                resultType = baseItemType.ResultType;
+            }
+
+            int placeholders = 0;
+            foreach (ISequence boundArgument in boundValues)
+            {
+                if (boundArgument == null)
+                {
+                    placeholders++;
+                }
+            }
+
+            SequenceType[] argTypes = new SequenceType[placeholders];
+            if (baseItemType is SpecificFunctionType)
+            {
+                for (int i = 0, j = 0; i < boundValues.Length; i++)
+                {
+                    if (boundValues[i] == null)
+                    {
+                        argTypes[j++] = baseItemType.ArgumentTypes[i];
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < argTypes.Length; i++)
+                {
+                    argTypes[i] = SequenceType.ANY_SEQUENCE;
+                }
+            }
+
+            return new SpecificFunctionType(argTypes, resultType);
         }
 
         public override string Description => "partially-applied function " + targetFunction.Description;
@@ -110,6 +126,9 @@ namespace OutSmart.DAXon.Functions.HigherOrder
 
         public override ISequence Call(IXPathContext context, ISequence[] args)
         {
+            // A partial application of a partial application calls the next one from here: 3000 of them killed a
+            // 256 KB thread.
+            Internal.StackGuard.Probe();
             ISequence[] newArgs = new ISequence[boundValues.Length];
             for (int i = 0, j = 0; i < newArgs.Length; i++)
             {

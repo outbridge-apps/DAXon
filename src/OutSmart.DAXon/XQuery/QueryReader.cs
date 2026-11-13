@@ -43,10 +43,10 @@ namespace OutSmart.DAXon.XQuery
             {
                 try
                 {
-                    Uri u = new Uri(ss.SystemId);
+                    Uri u = OutSmart.DAXon.Internal.Net.BidiUri.Make(ss.SystemId);
                     if (u.IsFile)
                     {
-                        stream = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(u.LocalPath);
+                        stream = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(OutSmart.DAXon.Internal.Net.BidiUri.Out(OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(u)));
                     }
                 }
                 catch (Exception e)
@@ -69,7 +69,15 @@ namespace OutSmart.DAXon.XQuery
             byte[] bytes;
             using (var ms = new MemoryStream())
             {
-                source.CopyTo(ms);
+                // In chunks, the clock read between: a compile reads its query under the compile deadline.
+                byte[] chunk = new byte[81920];
+                int n;
+                while ((n = source.Read(chunk, 0, chunk.Length)) > 0)
+                {
+                    ms.Write(chunk, 0, n);
+                    OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+                }
+
                 bytes = ms.ToArray();
             }
 
@@ -107,12 +115,19 @@ namespace OutSmart.DAXon.XQuery
 
         private static Encoding TryGetEncoding(string encoding)
         {
-            try { return Encoding.GetEncoding(encoding); }
-            catch (ArgumentException)
+            Encoding found;
+            try { found = OutSmart.DAXon.Internal.PlatformEncodings.GetForReading(encoding); }
+            catch (Exception e) when (e is ArgumentException || e is NotSupportedException)   // .NET 8: UTF-7 is NotSupported
             {
                 throw new XPathException("Unknown encoding " + encoding, "XQST0087");
             }
+
+            // A byte past 7 bits in an ASCII module is U+FFFD, as Java's decoder gives it; .NET's gives '?'.
+            return found.CodePage == OutSmart.DAXon.Internal.PlatformEncodings.AsciiPage ? AsciiReplacing : found;
         }
+
+        private static readonly Encoding AsciiReplacing = Encoding.GetEncoding(OutSmart.DAXon.Internal.PlatformEncodings.AsciiPage,
+            EncoderFallback.ReplacementFallback, new DecoderReplacementFallback(((char)0xFFFD).ToString()));
 
         // Read the query text from a Reader, validating XML characters (XPST0003 on a bad character).
         private static string ReadQueryFromReader(TextReader reader, IIntPredicateProxy charChecker)

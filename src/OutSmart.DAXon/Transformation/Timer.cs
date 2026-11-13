@@ -12,18 +12,11 @@ using System.Text;
 namespace OutSmart.DAXon.Transformation
 {
     /// <summary>
-    /// Utility class for collecting and reporting timing information, used only under diagnostic control
+    /// Formats elapsed times for the timing diagnostics (FeatureKeys.TIMING)
     /// </summary>
-    public class Timer
+    public static class Timer
     {
         private static readonly DayTimeDurationValue milliSecond = new DayTimeDurationValue(1, 0, 0, 0, 0, 1000);
-        private readonly long start;
-        private long prev;
-        public Timer()
-        {
-            start = (DateTime.Now.Ticks * 100L);
-            prev = start;
-        }
 
         public static string ShowExecutionTimeNano(long nanosecs)
         {
@@ -67,26 +60,6 @@ namespace OutSmart.DAXon.Transformation
                     return nanosecs / 1000000 + "ms";
                 }
             }
-        }
-
-        public static string ShowMemoryUsed()
-        {
-            long value = GC.GetTotalMemory(false);
-            return "Memory used: " + (value / 1000000) + "Mb";
-        }
-
-        public virtual void Report(string label)
-        {
-            long time = (DateTime.Now.Ticks * 100L);
-            Console.Error.WriteLine(label + " " + (time - prev) / 1000000 + "ms");
-            prev = time;
-        }
-
-        public virtual void ReportCumulative(string label)
-        {
-            long time = (DateTime.Now.Ticks * 100L);
-            Console.Error.WriteLine(label + " " + (time - start) / 1000000 + "ms");
-            prev = time;
         }
     }
 }

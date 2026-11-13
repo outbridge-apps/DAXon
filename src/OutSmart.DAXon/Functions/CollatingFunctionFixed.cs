@@ -66,6 +66,10 @@ namespace OutSmart.DAXon.Functions
                 {
                     stringCollator = ((SimpleCollation)stringCollator).SubstringMatcher;
                 }
+                else if (stringCollator is CaseFirstCollator caseFirst && caseFirst.SubstringCollation != null)
+                {
+                    stringCollator = caseFirst.SubstringCollation.SubstringMatcher;
+                }
 
                 if (!(stringCollator is ISubstringMatcher))
                 {

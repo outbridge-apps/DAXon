@@ -54,7 +54,6 @@ namespace OutSmart.DAXon.Functions
 
         public static StringValue Escape(UnicodeString s, string allowedPunctuation)
         {
-            s = s.Tidy();
             UnicodeBuilder sb = new UnicodeBuilder(s.Length32() + 20);
             IIntIterator iter = s.CodePoints();
             while (iter.MoveNext())
@@ -135,7 +134,7 @@ namespace OutSmart.DAXon.Functions
                         i += 3;
                         for (int q = 1; q < expectedOctets; q++)
                         {
-                            if (i + 2 > uri.Length || uri[i] != '%')
+                            if (i + 2 >= uri.Length || uri[i] != '%')
                             {
                                 throw new XPathException("Incomplete %-encoded UTF-8 octet sequence in URI " + Err.Wrap(uri), "FOUT1170");
                             }

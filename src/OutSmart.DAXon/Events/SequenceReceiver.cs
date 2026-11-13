@@ -79,6 +79,8 @@ namespace OutSmart.DAXon.Events
         {
             // Each nested array is a level of recursion: deep JSON in a result must stop with SXLM0001.
             StackGuard.Probe();
+            // A level may hold the one below twice (60 levels, 2^60 members): the clock decides.
+            Core.Controller.CheckActiveTimeout();
             try
             {
                 foreach (ISequence member in array.Members())
@@ -185,7 +187,6 @@ namespace OutSmart.DAXon.Events
         {
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public abstract bool UsesTypeAnnotations();
     }
 }

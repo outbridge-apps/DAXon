@@ -22,7 +22,6 @@ namespace OutSmart.DAXon.Events
         private State state;
         private readonly bool fullChecking;
 
-        // for C#
         static RegularSequenceChecker()
         {
             Edge(State.INITIAL, Transition.OPEN, State.OPEN);
@@ -53,7 +52,6 @@ namespace OutSmart.DAXon.Events
             edges[@event] = to;
         }
 
-        // for C#
         private void TransitionFn(Transition @event)
         {
             Dictionary<Transition, State> map = machine.GetOrDefault(state);
@@ -100,7 +98,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        // for C#
         /// <summary>
         /// End of sequence
         /// </summary>
@@ -118,7 +115,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        // for C#
         /// <summary>
         /// Output a comment
         /// </summary>
@@ -136,7 +132,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        // for C#
         /// <summary>
         /// Notify the end of a document node
         /// </summary>
@@ -159,7 +154,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        // for C#
         /// <summary>
         /// End of element
         /// </summary>
@@ -187,7 +181,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        // for C#
         /// <summary>
         /// Start of event stream
         /// </summary>
@@ -205,7 +198,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        // for C#
         public override void ProcessingInstruction(string target, UnicodeString data, ILocation locationId, int properties)
         {
             TransitionFn(Transition.PI);
@@ -220,7 +212,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        // for C#
         public override void StartDocument(int properties)
         {
             TransitionFn(Transition.START_DOCUMENT);
@@ -236,7 +227,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        // for C#
         public override void StartElement(INodeName elemName, ISchemaType type, IAttributeMap attributes, NamespaceMap namespaces, ILocation location, int properties)
         {
             TransitionFn(Transition.START_ELEMENT);

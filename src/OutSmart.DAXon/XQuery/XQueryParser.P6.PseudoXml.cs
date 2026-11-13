@@ -97,11 +97,67 @@ namespace OutSmart.DAXon.XQuery
             return exp;
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
+        // A namespace declaration's value, its doubled braces made single (bug 5083: a single brace is an error).
+        private string UnescapedNamespaceValue(string rval, char delim)
+        {
+            StringBuilder sb = new StringBuilder(rval.Length);
+            bool prevDelim = false;
+            bool prevOpenCurly = false;
+            bool prevCloseCurly = false;
+            for (int i = 0; i < rval.Length; i++)
+            {
+                char n = rval[i];
+                if (n == delim)
+                {
+                    prevDelim = !prevDelim;
+                    if (prevDelim)
+                    {
+                        continue;
+                    }
+                }
+
+                if (n == '{')
+                {
+                    prevOpenCurly = !prevOpenCurly;
+                    if (prevOpenCurly)
+                    {
+                        continue;
+                    }
+                }
+                else if (prevOpenCurly)
+                {
+                    Grumble("Namespace must not contain an unescaped opening brace", "XQST0022");
+                }
+
+                if (n == '}')
+                {
+                    prevCloseCurly = !prevCloseCurly;
+                    if (prevCloseCurly)
+                    {
+                        continue;
+                    }
+                }
+                else if (prevCloseCurly)
+                {
+                    Grumble("Namespace must not contain an unescaped closing brace", "XPST0003");
+                }
+
+                sb.Append(n);
+            }
+
+            if (prevOpenCurly)
+            {
+                Grumble("Namespace must not contain an unescaped opening brace", "XQST0022");
+            }
+
+            if (prevCloseCurly)
+            {
+                Grumble("Namespace must not contain an unescaped closing brace", "XPST0003");
+            }
+
+            return sb.ToString();
+        }
+
         private Expression ParseDirectElementConstructor(bool isNested)
         {
             // Nested direct constructors (`<a><a>...`) are their own recursive descent: they read
@@ -146,7 +202,7 @@ namespace OutSmart.DAXon.XQuery
             }
 
 
-            //Used LinkedHashMap because it is friendly to retain the order of attributes.
+            // The attributes in the order written: a Dictionary keeps insertion order while nothing is removed from it.
             Dictionary<string, AttributeDetails> attributes = new Dictionary<string, AttributeDetails>(10);
             while (true)
             {
@@ -156,9 +212,9 @@ namespace OutSmart.DAXon.XQuery
                 // their scope applies to all preceding attribute names and values.
                 // But finding the delimiting quote of an attribute value requires the
                 // XPath expressions to be parsed, because they may contain nested quotes.
-                // So we parse in "scanOnly" mode, which ignores any undeclared @namespace
+                // So we parse in "scanOnly" mode, which ignores any undeclared namespace
                 // prefixes, use the result of this parse to determine the length of the
-                // attribute value, save the value, and reparse it when all the @namespace
+                // attribute value, save the value, and reparse it when all the namespace
                 // declarations have been dealt with.
                 c = SkipSpaces(c);
                 if (c == '/' || c == '>')
@@ -222,7 +278,7 @@ namespace OutSmart.DAXon.XQuery
                     {
                         avt = MakeAttributeContent(t.input, t.inputOffset, delim, true);
                     }
-                    catch (XPathException err)
+                    catch (XPathException err) when (!err.IsRunLimit())   // a limit keeps its code: it was XPST0003 here
                     {
                         if (!err.HasBeenReported())
                         {
@@ -244,10 +300,10 @@ namespace OutSmart.DAXon.XQuery
 
 
                 // save the value with its surrounding quotes
-                string val = t.input.Substring(t.inputOffset - 1, end - t.inputOffset + 2) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+                string val = t.input.Substring(t.inputOffset - 1, end - t.inputOffset + 2);
 
                 // and without
-                string rval = t.input.Substring(t.inputOffset, end - t.inputOffset) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+                string rval = t.input.Substring(t.inputOffset, end - t.inputOffset);
 
                 // account for any newlines found in the value
                 // (note, subexpressions between curlies will have been parsed using a different tokenizer)
@@ -265,62 +321,7 @@ namespace OutSmart.DAXon.XQuery
 
                     // Processing follows the resolution of bug 5083: doubled curly braces represent single
                     // curly braces, single curly braces are not allowed.
-                    StringBuilder sb = new StringBuilder(rval.Length);
-                    bool prevDelim = false;
-                    bool prevOpenCurly = false;
-                    bool prevCloseCurly = false;
-                    for (int i = 0; i < rval.Length; i++)
-                    {
-                        char n = rval[i];
-                        if (n == delim)
-                        {
-                            prevDelim = !prevDelim;
-                            if (prevDelim)
-                            {
-                                continue;
-                            }
-                        }
-
-                        if (n == '{')
-                        {
-                            prevOpenCurly = !prevOpenCurly;
-                            if (prevOpenCurly)
-                            {
-                                continue;
-                            }
-                        }
-                        else if (prevOpenCurly)
-                        {
-                            Grumble("Namespace must not contain an unescaped opening brace", "XQST0022");
-                        }
-
-                        if (n == '}')
-                        {
-                            prevCloseCurly = !prevCloseCurly;
-                            if (prevCloseCurly)
-                            {
-                                continue;
-                            }
-                        }
-                        else if (prevCloseCurly)
-                        {
-                            Grumble("Namespace must not contain an unescaped closing brace", "XPST0003");
-                        }
-
-                        sb.Append(n);
-                    }
-
-                    if (prevOpenCurly)
-                    {
-                        Grumble("Namespace must not contain an unescaped opening brace", "XQST0022");
-                    }
-
-                    if (prevCloseCurly)
-                    {
-                        Grumble("Namespace must not contain an unescaped closing brace", "XPST0003");
-                    }
-
-                    rval = sb.ToString();
+                    rval = UnescapedNamespaceValue(rval, delim);
                     NamespaceUri uri = NamespaceUri.Of(UriLiteral(rval));
                     if (!StandardURIChecker.GetInstance().IsValidURI(uri.ToString()))
                     {
@@ -378,8 +379,6 @@ namespace OutSmart.DAXon.XQuery
                 }
 
 
-                //                grumble("Value of xml:id must be a valid NCName", "XQST0082");
-                //            }
                 AttributeDetails a = new AttributeDetails();
                 a.value = val;
                 a.startOffset = attOffset;
@@ -527,7 +526,7 @@ namespace OutSmart.DAXon.XQuery
 
             elInst.SetContentExpression(block);
 
-            // reset the @in-scope namespaces to what they were before
+            // reset the in-scope namespaces to what they were before
             for (int n = 0; n < namespaceCount; n++)
             {
                 ((QueryModule)env).UndeclareNamespace();
@@ -536,11 +535,6 @@ namespace OutSmart.DAXon.XQuery
             return MakeTracer(elInst, qName);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private Expression MakeAttributeContent(string avt, int start, char terminator, bool scanOnly)
         {
             ILocation loc = MakeLocation();
@@ -558,10 +552,12 @@ namespace OutSmart.DAXon.XQuery
                     throw e;
                 }
 
-                i0 = avt.IndexOf('{', last);
-                i1 = avt.IndexOf("{{", last, StringComparison.Ordinal);
-                i8 = avt.IndexOf('}', last);
-                i9 = avt.IndexOf("}}", last, StringComparison.Ordinal);
+                // Only what comes before the terminator decides: searched to the end of the query, each literal attribute
+                // cost the query's length (10 000 elements x 2 attributes compiled 20 s under a 2 s limit).
+                i0 = avt.IndexOf('{', last, i2 - last);
+                i1 = avt.IndexOf("{{", last, i2 - last, StringComparison.Ordinal);
+                i8 = avt.IndexOf('}', last, i2 - last);
+                i9 = avt.IndexOf("}}", last, i2 - last, StringComparison.Ordinal);
                 if ((i0 < 0 || i2 < i0) && (i8 < 0 || i2 < i8))
                 {
 
@@ -665,11 +661,6 @@ namespace OutSmart.DAXon.XQuery
             return fn; //return visitor.simplify(fn);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private void AddStringComponent(IList<Expression> components, string avt, int start, int end)
         {
 
@@ -691,7 +682,7 @@ namespace OutSmart.DAXon.XQuery
                                 }
                                 else
                                 {
-                                    string entity = avt.Substring(i + 1, semic - i - 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+                                    string entity = avt.Substring(i + 1, semic - i - 1);
                                     sb.Append(new Unescaper(env.GetConfiguration().ValidCharacterChecker).AnalyzeEntityReference(entity));
                                     i = semic;
                                 }
@@ -724,11 +715,6 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private int MakeNamespaceContent(string avt, int start, char terminator)
         {
             int i2, len, last;
@@ -762,11 +748,6 @@ namespace OutSmart.DAXon.XQuery
             return last;
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private void ReadElementContent(string startTag, IList<Expression> components)
         {
             bool afterEnclosedExpr = false;
@@ -863,6 +844,11 @@ namespace OutSmart.DAXon.XQuery
                     if (exp is StringLiteral)
                     {
                         string endTag = ((StringLiteral)exp).GetString().ToString();
+                        if (endTag.Length == 0)
+                        {
+                            Grumble("End tag </> has no name");
+                        }
+
                         if (Whitespace.IsWhite(endTag[0]))
                         {
                             Grumble("End tag contains whitespace before the name");
@@ -928,11 +914,6 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private Expression ParsePIConstructor()
         {
             StringBuilder pi = new StringBuilder(64);
@@ -995,11 +976,6 @@ namespace OutSmart.DAXon.XQuery
             return instruction;
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private void ReadCDATASection(StringBuilder cdata)
         {
             char c;
@@ -1032,11 +1008,6 @@ namespace OutSmart.DAXon.XQuery
             cdata.Length = cdata.Length - 3;
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private Expression ParseCommentConstructor()
         {
             char c = t.NextChar();
@@ -1068,11 +1039,6 @@ namespace OutSmart.DAXon.XQuery
             return instruction;
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         public static Expression Stringify(Expression exp, bool noNodeIfEmpty, IStaticContext env)
         {
 
@@ -1108,11 +1074,6 @@ namespace OutSmart.DAXon.XQuery
             return exp;
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         protected override
         Literal MakeStringLiteral(string token, bool doUnescaping)
         {
@@ -1138,17 +1099,11 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        /*clause.getRangeVariable()*/
         protected override string Unescape(string token)
         {
             return new Unescaper(env.GetConfiguration().ValidCharacterChecker).Unescape(token);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private string ReadEntityReference()
         {
             StringBuilder sb = new StringBuilder(64);
@@ -1172,11 +1127,6 @@ namespace OutSmart.DAXon.XQuery
             return new Unescaper(env.GetConfiguration().ValidCharacterChecker).AnalyzeEntityReference(entity);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         protected override Expression ParseStringConstructor()
         {
 
@@ -1277,48 +1227,28 @@ namespace OutSmart.DAXon.XQuery
             return result;
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         public virtual string UriLiteral(string @in)
         {
             return Whitespace.Collapse(Unescape(@in)).ToString();
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         protected virtual void LookAhead()
         {
             try
             {
                 t.LookAhead();
             }
-            catch (XPathException err)
+            catch (XPathException err) when (!err.IsRunLimit())
             {
                 Grumble(err.Message);
             }
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         protected override bool AtStartOfRelativePath()
         {
             return t.currentToken == Token.TAG || base.AtStartOfRelativePath(); // "<" after "/" is recognized in XQuery but not in XPath.
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         protected override void TestPermittedAxis(int axis, string errorCode)
         {
             base.TestPermittedAxis(axis, errorCode);
@@ -1328,11 +1258,6 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private char SkipSpaces(char c)
         {
             while (c == ' ' || c == '\n' || c == '\r' || c == '\t')
@@ -1343,11 +1268,6 @@ namespace OutSmart.DAXon.XQuery
             return c;
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private void ExpectChar(char actual, char expected)
         {
             if (actual != expected)
@@ -1356,17 +1276,11 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         protected override string GetLanguage()
         {
             return "XQuery";
         }
 
-        /*clause.getRangeVariable()*/
         private sealed class SortSpec
         {
             public Expression sortKey;
@@ -1375,7 +1289,6 @@ namespace OutSmart.DAXon.XQuery
             public string collation;
         }
 
-        /*clause.getRangeVariable()*/
         public class Unescaper
         {
             private readonly IIntPredicateProxy characterChecker;
@@ -1399,7 +1312,7 @@ namespace OutSmart.DAXon.XQuery
                         }
                         else
                         {
-                            string entity = token.Substring(i + 1, semic - i - 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+                            string entity = token.Substring(i + 1, semic - i - 1);
                             sb.Append(AnalyzeEntityReference(entity));
                             i = semic;
                         }
@@ -1442,7 +1355,6 @@ namespace OutSmart.DAXon.XQuery
                 else
                 {
 
-                    //entity = entity.toLowerCase();
                     return ParseCharacterReference(entity);
                 }
             }
@@ -1516,22 +1428,12 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private sealed class AttributeDetails
         {
             public string value;
             public int startOffset;
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private sealed class Import
         {
             public NamespaceUri namespaceURI;

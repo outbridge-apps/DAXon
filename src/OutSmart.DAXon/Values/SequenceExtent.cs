@@ -22,10 +22,11 @@ namespace OutSmart.DAXon.Values
         public static Of<IItem> From(ISequenceIterator iter)
         {
             List<IItem> list = new List<IItem>(!SequenceTool.SupportsGetLength(iter) ? 20 : ((ILastPositionFinder)iter).GetLength());
+            long weight = 0;   // of its medium strings: few members can hold much (MemoryLedger.Weighs)
             for (IItem item; (item = iter.Next()) != null;)
             {
                 list.Add(item);
-                if (list.Count == MemoryLedger.BigCount)
+                if (list.Count == MemoryLedger.BigCount || MemoryLedger.Weighs(item, ref weight))
                 {
                     MemoryLedger.HoldOnce(list, -1, MemoryLedger.ItemListSizer);   // summed as it grows
                 }
@@ -70,7 +71,6 @@ namespace OutSmart.DAXon.Values
         public abstract int GetLength();
         public abstract string GetStringValue();
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual bool EffectiveBooleanValue() => ExpressionTool.EffectiveBooleanValue(Iterate()); // upstream GroundedValue default method
         public virtual IGroundedValue Reduce() => this; // upstream GroundedValue default method
         public virtual IGroundedValue Materialize() => this; // upstream GroundedValue default method
@@ -86,15 +86,8 @@ namespace OutSmart.DAXon.Values
 
             return list;
         }
-        public virtual bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public virtual bool ContainsNode(NodeInfo sought) => GroundedValueDefaults.ContainsNode(this, sought);
+        public virtual IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         // A SequenceExtent is an in-memory grounded value - already repeatable (upstream default).
         public virtual ISequence MakeRepeatable() => this;
         internal sealed class Of<T> : SequenceExtent, IEnumerable<T> where T : IItem
@@ -128,13 +121,33 @@ namespace OutSmart.DAXon.Values
             public Of(IList<T> list)
             {
                 this.items = list;
-                if (list.Count >= MemoryLedger.BigCount)
+                if (list.Count >= MemoryLedger.BigCount || Heavy(list))
                 {
                     MemoryLedger.HoldOnce(list, -1, ListSizer);
                 }
             }
 
             private static readonly Func<object, long> ListSizer = o => MemoryLedger.ListBytes((IList<T>)o);
+
+            // Whether the medium strings among a few members (fewer than BigCount) pass MemoryLedger.Big bytes.
+            private static bool Heavy(IList<T> list)
+            {
+                if (MemoryLedger.Active == null)
+                {
+                    return false;
+                }
+
+                long weight = 0;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (MemoryLedger.Weighs(list[i], ref weight))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
 
             // Java stores Arrays.asList(items) — a view; a T[] already implements IList<T>
             public Of(T[] items) : this((IList<T>)items)

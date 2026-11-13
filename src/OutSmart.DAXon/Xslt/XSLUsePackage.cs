@@ -118,7 +118,6 @@ namespace OutSmart.DAXon.Xslt
 
                     // For error recovery, create an empty package
                     usedPackage = GetConfiguration().MakeStylesheetPackage();
-                    usedPackage.SetJustInTimeCompilation(info.IsJustInTimeCompilation());
                 }
 
                 GlobalContextRequirement gcr = usedPackage.ContextItemRequirements;

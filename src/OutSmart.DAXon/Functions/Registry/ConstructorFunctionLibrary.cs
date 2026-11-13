@@ -225,6 +225,5 @@ namespace OutSmart.DAXon.Functions.Registry
             return this;
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
     }
 }

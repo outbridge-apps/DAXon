@@ -312,9 +312,13 @@ namespace OutSmart.DAXon.Expressions
             IConversionResult result = conv.Convert(item);
             if (result is ValidationFailure && roleSupplier != null)
             {
-
-                // TODO: use more of the information in the roleDiagnostic to form the error message
-                ((ValidationFailure)result).SetErrorCode(roleSupplier().ErrorCode);
+                // As GetConvertingIterator: the role's XPTY0004 does not replace the cast's own code (FORG0001 for an
+                // untyped value that is no double, as math:sqrt(<a>t</a>); Java's too).
+                string errorCode = roleSupplier().ErrorCode;
+                if (errorCode != "XPTY0004")
+                {
+                    ((ValidationFailure)result).SetErrorCode(errorCode);
+                }
             }
 
             return result.AsAtomic();

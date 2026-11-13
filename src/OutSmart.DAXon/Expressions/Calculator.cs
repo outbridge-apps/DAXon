@@ -63,7 +63,6 @@ namespace OutSmart.DAXon.Expressions
             new FloatIdivFloat()
         };
         public static readonly Calculator[] FLOAT_DECIMAL = FLOAT_FLOAT;
-        //public final static Calculator[] FLOAT_PDECIMAL = FLOAT_FLOAT;
         public static readonly Calculator[] FLOAT_INTEGER = FLOAT_FLOAT;
         /// <summary>
         /// Calculators used when the first operand is a decimal
@@ -540,7 +539,10 @@ namespace OutSmart.DAXon.Expressions
                     throw new XPathException("Second operand of idiv is NaN", "FOAR0002", c);
                 }
 
-                return IntegerValue.FromDouble(A / B).AsAtomic();
+                // ($a div $b) cast as xs:integer, exactly, as the cast and float idiv do: Saxon's shortest decimal made
+                // 1e23 idiv 1 differ from xs:integer(1e23). An infinite quotient stays FOCA0002.
+                double q = A / B;
+                return double.IsInfinity(q) ? IntegerValue.FromDouble(q).AsAtomic() : Converter.DoubleToIntegerValue(q);
             }
 
             public override IAtomicType GetResultType(IAtomicType typeA, IAtomicType typeB)
@@ -673,7 +675,7 @@ namespace OutSmart.DAXon.Expressions
         }
 
         /// <summary>
-        /// Arithmetic: decimal + decimal (including types that promote to decimal, that @is, integer)
+        /// Arithmetic: decimal + decimal (including types that promote to decimal, that is, integer)
         /// </summary>
         internal sealed class DecimalPlusDecimal : Calculator
         {
@@ -696,7 +698,7 @@ namespace OutSmart.DAXon.Expressions
         }
 
         /// <summary>
-        /// Arithmetic: decimal - decimal (including types that promote to decimal, that @is, integer)
+        /// Arithmetic: decimal - decimal (including types that promote to decimal, that is, integer)
         /// </summary>
         internal sealed class DecimalMinusDecimal : Calculator
         {
@@ -719,7 +721,7 @@ namespace OutSmart.DAXon.Expressions
         }
 
         /// <summary>
-        /// Arithmetic: decimal * decimal (including types that promote to decimal, that @is, integer)
+        /// Arithmetic: decimal * decimal (including types that promote to decimal, that is, integer)
         /// </summary>
         internal sealed class DecimalTimesDecimal : Calculator
         {
@@ -742,7 +744,7 @@ namespace OutSmart.DAXon.Expressions
         }
 
         /// <summary>
-        /// Arithmetic: decimal div decimal (including types that promote to decimal, that @is, integer)
+        /// Arithmetic: decimal div decimal (including types that promote to decimal, that is, integer)
         /// </summary>
         internal sealed class DecimalDivDecimal : Calculator
         {
@@ -758,7 +760,7 @@ namespace OutSmart.DAXon.Expressions
         }
 
         /// <summary>
-        /// Arithmetic: decimal mod decimal (including types that promote to decimal, that @is, integer)
+        /// Arithmetic: decimal mod decimal (including types that promote to decimal, that is, integer)
         /// </summary>
         internal sealed class DecimalModDecimal : Calculator
         {
@@ -786,7 +788,7 @@ namespace OutSmart.DAXon.Expressions
         }
 
         /// <summary>
-        /// Arithmetic: decimal idiv decimal (including types that promote to decimal, that @is, integer)
+        /// Arithmetic: decimal idiv decimal (including types that promote to decimal, that is, integer)
         /// </summary>
         internal sealed class DecimalIdivDecimal : Calculator
         {

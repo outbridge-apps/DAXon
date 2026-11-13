@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.Trees.Iterators
                         }
                     }
 
-                    @base = new DocumentOrderIterator(new ListIterator.Of<IItem>(nodes), GlobalOrderComparer.GetInstance());
+                    @base = DocumentOrderIterator.Of(new ListIterator.Of<IItem>(nodes), GlobalOrderComparer.GetInstance());
                     state = 1; // first item is a node
                     return @base.Next();
                 }

@@ -65,10 +65,6 @@ namespace OutSmart.DAXon.Lib
 
                 nodeMessage += ' ';
             }
-            else if (loc is DOMLocator)
-            {
-                nodeMessage = "at " + ((DOMLocator)loc).OriginatingNode.GetNodeName() + ' ';
-            }
             else if (loc is NodeInfo)
             {
                 node = (NodeInfo)loc;

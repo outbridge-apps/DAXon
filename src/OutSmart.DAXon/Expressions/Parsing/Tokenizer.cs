@@ -11,6 +11,7 @@ using OutSmart.DAXon.Internal.Collections;
 using System;
 using System.Globalization;
 using System.Collections.Generic;
+using System.Text;
 namespace OutSmart.DAXon.Expressions.Parsing
 {
     public sealed class Tokenizer
@@ -32,7 +33,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /// </summary>
         public const int SEQUENCE_TYPE_STATE = 2;
         /// <summary>
-        /// State in which the next thing to be read is an @operator
+        /// State in which the next thing to be read is an operator
         /// </summary>
         public const int OPERATOR_STATE = 3;
         private int state = DEFAULT_STATE;
@@ -564,32 +565,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                         {
                             inputOffset++;
                             int pragmaStart = inputOffset;
-                            int nestingDepth = 1;
-                            while (nestingDepth > 0 && inputOffset < (inputLength - 1))
-                            {
-                                if (input[inputOffset] == '\n')
-                                {
-                                    IncrementLineNumber();
-                                }
-                                else if (input[inputOffset] == '#' && input[inputOffset + 1] == ')')
-                                {
-                                    nestingDepth--;
-                                    inputOffset++;
-                                }
-                                else if (input[inputOffset] == '(' && input[inputOffset + 1] == '#')
-                                {
-                                    nestingDepth++;
-                                    inputOffset++;
-                                }
-
-                                inputOffset++;
-                            }
-
-                            if (nestingDepth > 0)
-                            {
-                                throw new XPathException("Unclosed XQuery pragma");
-                            }
-
+                            SkipNested('#', "Unclosed XQuery pragma");
                             nextToken = Token.PRAGMA;
                             nextTokenValue = input.Substring(pragmaStart, inputOffset - 2 - pragmaStart);
                             return;
@@ -601,31 +577,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                             // XPath comment syntax is (: .... :)
                             // Comments may be nested, and may now be empty
                             inputOffset++;
-                            int nestingDepth = 1;
-                            while (nestingDepth > 0 && inputOffset < (inputLength - 1))
-                            {
-                                if (input[inputOffset] == '\n')
-                                {
-                                    IncrementLineNumber();
-                                }
-                                else if (input[inputOffset] == ':' && input[inputOffset + 1] == ')')
-                                {
-                                    nestingDepth--;
-                                    inputOffset++;
-                                }
-                                else if (input[inputOffset] == '(' && input[inputOffset + 1] == ':')
-                                {
-                                    nestingDepth++;
-                                    inputOffset++;
-                                }
-
-                                inputOffset++;
-                            }
-
-                            if (nestingDepth > 0)
-                            {
-                                throw new XPathException("Unclosed XPath comment");
-                            }
+                            SkipNested(':', "Unclosed XPath comment");
 
                             // Restart the scan instead of recursing: the tail LookAhead() cost one
                             // stack frame per adjacent comment, so a long run of `(: :)` overflowed
@@ -826,38 +778,12 @@ namespace OutSmart.DAXon.Expressions.Parsing
                         {
                             if (input[inputOffset] == 'x')
                             {
-                                inputOffset++;
-                                while (inputOffset < inputLength && "0123456789abcdefABCDEF_".IndexOf(input[inputOffset]) >= 0)
-                                {
-                                    inputOffset++;
-                                }
-
-                                string body = input.Substring(nextTokenStartOffset + 2, inputOffset - nextTokenStartOffset - 2);
-                                if (body.StartsWith("_", StringComparison.Ordinal) || body.EndsWith("_", StringComparison.Ordinal))
-                                {
-                                    throw new XPathException("Underscore not allowed at start or end of hex literal");
-                                }
-
-                                nextTokenValue = body.Replace("_", "");
-                                nextToken = Token.HEX_INTEGER;
+                                ScanRadixInteger("0123456789abcdefABCDEF_", Token.HEX_INTEGER, "hex");
                                 return;
                             }
                             else if (input[inputOffset] == 'b')
                             {
-                                inputOffset++;
-                                while (inputOffset < inputLength && "01_".IndexOf(input[inputOffset]) >= 0)
-                                {
-                                    inputOffset++;
-                                }
-
-                                string body = input.Substring(nextTokenStartOffset + 2, inputOffset - nextTokenStartOffset - 2);
-                                if (body.StartsWith("_", StringComparison.Ordinal) || body.EndsWith("_", StringComparison.Ordinal))
-                                {
-                                    throw new XPathException("Underscore not allowed at start or end of binary literal");
-                                }
-
-                                nextTokenValue = body.Replace("_", "");
-                                nextToken = Token.BINARY_INTEGER;
+                                ScanRadixInteger("01_", Token.BINARY_INTEGER, "binary");
                                 return;
                             }
                         }
@@ -872,219 +798,15 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     case '7':
                     case '8':
                     case '9':
-
-                        // The logic here can return some tokens that are not legitimate numbers,
-                        // for example "23e" or "1.0e+". However, this will only happen if the XPath
-                        // expression as a whole is syntactically incorrect.
-                        // These errors will be caught by the numeric constructor.
-                        bool allowE = true;
-                        bool allowSign = false;
-                        bool allowDot = true;
-                        bool keepGoing = true;
-                        bool allowUnderscore = languageLevel >= 40;
-                        while (true)
-                        {
-                            switch (c)
-                            {
-                                case '0':
-                                case '1':
-                                case '2':
-                                case '3':
-                                case '4':
-                                case '5':
-                                case '6':
-                                case '7':
-                                case '8':
-                                case '9':
-                                    allowSign = false;
-                                    break;
-                                case '.':
-                                    if (allowDot)
-                                    {
-                                        allowDot = false;
-                                        allowSign = false;
-                                    }
-                                    else
-                                    {
-                                        inputOffset--;
-                                        keepGoing = false; //break numloop;
-                                    }
-
-                                    break;
-                                case '_':
-                                    if (allowUnderscore)
-                                    {
-
-                                        if (inputOffset >= inputLength || "0123456789_".IndexOf(input[inputOffset]) < 0)
-                                        {
-                                            throw new XPathException("Underscore must be followed by a digit (or another underscore)");
-                                        }
-
-                                        if (inputOffset < 2 || "0123456789_".IndexOf(input[inputOffset - 2]) < 0)
-                                        {
-                                            throw new XPathException("Underscore must be preceded by a digit (or another underscore)");
-                                        }
-
-                                        break;
-                                    }
-                                    else
-                                    {
-                                        throw new XPathException("Underscore is not allowed in numeric literal unless 4.0 is enabled");
-                                    }
-
-                                case 'E':
-                                case 'e':
-                                    if (allowE)
-                                    {
-                                        allowSign = true;
-                                        allowE = false;
-                                    }
-                                    else
-                                    {
-                                        inputOffset--;
-                                        keepGoing = false; //break numloop;
-                                    }
-
-                                    break;
-                                case '+':
-                                case '-':
-                                    if (allowSign)
-                                    {
-                                        allowSign = false;
-                                    }
-                                    else
-                                    {
-                                        inputOffset--;
-                                        keepGoing = false; //break numloop;
-                                    }
-
-                                    break;
-                                default:
-                                    if (('a' <= c && c <= 'z') || c > 127)
-                                    {
-
-                                        // this prevents the famous "10div 3"
-                                        throw new XPathException("Separator needed after numeric literal");
-                                    }
-
-                                    inputOffset--;
-                                    keepGoing = false;
-                                    break;
-                            }
-
-                            if (!keepGoing || inputOffset >= inputLength)
-                            {
-                                break;
-                            }
-
-                            c = input[inputOffset++];
-                        }
-
-                        nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset).Replace("_", "");
-                        nextToken = Token.NUMBER;
+                        ScanNumber(c);
                         return;
                     case '"':
                     case '\'':
-                        nextTokenValue = "";
-                        while (true)
-                        {
-                            inputOffset = input.IndexOf(c, inputOffset);
-                            if (inputOffset < 0)
-                            {
-                                inputOffset = nextTokenStartOffset + 1;
-                                throw new XPathException("Unmatched quote in expression");
-                            }
-
-                            nextTokenValue += input.Substring(nextTokenStartOffset + 1, (inputOffset++) - nextTokenStartOffset - 1);
-                            if (inputOffset < inputLength)
-                            {
-                                char n = input[inputOffset];
-                                if (n == c)
-                                {
-
-                                    // Doubled delimiters
-                                    nextTokenValue += c;
-                                    nextTokenStartOffset = inputOffset;
-                                    inputOffset++;
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-                            else
-                            {
-                                break;
-                            }
-                        }
-
-
-                        // maintain line number if there are newlines in the string
-                        if (nextTokenValue.IndexOf('\n') >= 0)
-                        {
-                            for (int i = 0; i < nextTokenValue.Length; i++)
-                            {
-                                if (nextTokenValue[i] == '\n')
-                                {
-                                    IncrementLineNumber(nextTokenStartOffset + i + 1);
-                                }
-                            }
-                        }
-
-
-                        //nextTokenValue = nextTokenValue.intern();
-                        nextToken = Token.STRING_LITERAL;
+                        ScanStringLiteral(c);
                         return;
                     case '`':
-                        if (inputOffset < inputLength - 1 && input[inputOffset] == '`' && input[inputOffset + 1] == '[')
-                        {
-                            if (!isXQuery)
-                            {
-                                throw new XPathException("String constructors (starting '``[') are allowed only in XQuery, not XPath");
-                            }
-
-                            inputOffset += 2;
-                            int j = inputOffset;
-                            int newlines = 0;
-                            while (true)
-                            {
-                                if (j >= inputLength)
-                                {
-                                    throw new XPathException("Unclosed string template in expression");
-                                }
-
-                                if (input[j] == '\n')
-                                {
-                                    newlines++;
-                                }
-                                else if (input[j] == '`' && j + 1 < inputLength && input[j + 1] == '{')
-                                {
-                                    nextToken = Token.STRING_CONSTRUCTOR_INITIAL;
-                                    nextTokenValue = input.Substring(inputOffset, j - inputOffset);
-                                    inputOffset = j + 2;
-                                    IncrementLineNumber(newlines);
-                                    return;
-                                }
-                                else if (input[j] == ']' && j + 2 < inputLength && input[j + 1] == '`' && input[j + 2] == '`')
-                                {
-                                    nextToken = Token.STRING_LITERAL_BACKTICKED;
-
-                                    // Can't return STRING_LITERAL because it's not accepted everywhere that a string literal @is, and
-                                    // because it doesn't get unescaped (bug 5647)
-                                    nextTokenValue = input.Substring(inputOffset, j - inputOffset);
-                                    inputOffset = j + 3;
-                                    IncrementLineNumber(newlines);
-                                    return;
-                                }
-
-                                j++;
-                            }
-                        }
-                        else
-                        {
-                            nextToken = Token.BACKTICK;
-                            return;
-                        }
+                        ScanBacktick();
+                        return;
 
                     case '\n':
                         IncrementLineNumber();
@@ -1098,48 +820,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     case 'Q':
                         if (inputOffset < inputLength && input[inputOffset] == '{')
                         {
-
-                            // EQName, revised syntax as per bug 15399
-                            int close = input.IndexOf('}', inputOffset++);
-                            if (close < inputOffset)
-                            {
-                                throw new XPathException("Missing closing brace in EQName");
-                            }
-
-                            string uri = input.Substring(inputOffset, close - inputOffset);
-                            uri = Whitespace.CollapseWhitespace(uri); // Bug 29708
-                            if (uri.Contains("{"))
-                            {
-                                throw new XPathException("EQName must not contain opening brace");
-                            }
-
-                            inputOffset = close + 1;
-                            int start = inputOffset;
-                            bool isStar = false;
-                            while (inputOffset < inputLength)
-                            {
-                                char c2 = input[inputOffset];
-                                if (c2 > 0x80 || char.IsLetterOrDigit(c2) || c2 == '_' || c2 == '.' || c2 == '-')
-                                {
-                                    inputOffset++;
-                                }
-                                else if (c2 == '*' && (start == inputOffset))
-                                {
-                                    inputOffset++;
-                                    isStar = true;
-                                    break;
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-
-                            string localName = input.Substring(start, inputOffset - start);
-                            nextTokenValue = "Q{" + uri + "}" + localName;
-
-                            // Reuse Token.NAME because EQName is allowed anywhere that QName is allowed
-                            nextToken = isStar ? Token.PREFIX : Token.NAME;
+                            ScanEQName();
                             return;
                         }
 
@@ -1152,97 +833,421 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
                         goto case '_';
                     case '_':
-                        bool foundColon = false;
-                        bool breakLoop = false;
-                        for (; inputOffset < inputLength; inputOffset++)
-                        {
-                            c = input[inputOffset];
-                            switch (c)
-                            {
-                                case ':':
-                                    if (!foundColon)
-                                    {
-                                        if (precedingToken == Token.QMARK || precedingToken == Token.SUFFIX)
-                                        {
-
-                                            // only NCName allowed after "? in a lookup expression, or after *:
-                                            nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset);
-                                            nextToken = Token.NAME;
-                                            return;
-                                        }
-
-                                        if (inputOffset + 1 < inputLength)
-                                        {
-                                            char nc = input[inputOffset + 1];
-                                            if (nc == ':')
-                                            {
-                                                nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset);
-                                                nextToken = Token.AXIS;
-                                                inputOffset += 2;
-                                                return;
-                                            }
-                                            else if (nc == '*')
-                                            {
-                                                nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset);
-                                                nextToken = Token.PREFIX;
-                                                inputOffset += 2;
-                                                return;
-                                            }
-                                            else if (!(nc == '_' || nc > 127 || char.IsLetter(nc)))
-                                            {
-
-                                                // for example: "let $x:=2", "x:y:z", "x:2"
-                                                // end the token before the colon
-                                                nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset);
-                                                nextToken = Token.NAME;
-                                                return;
-                                            }
-                                        }
-
-                                        foundColon = true;
-                                    }
-                                    else
-                                    {
-                                        breakLoop = true;
-                                    }
-
-                                    break;
-                                case '.':
-                                case '-':
-
-                                    // If the name up to the "-" or "." is a valid @operator, and if the preceding token
-                                    // is such that an operator is valid here and an NCName isn't, then quit here (bug 2715)
-                                    if (precedingToken > Token.LAST_OPERATOR && !(precedingToken == Token.QMARK || precedingToken == Token.SUFFIX) && GetBinaryOp(input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset)) != Token.UNKNOWN && !(precedingToken == Token.NAME && GetBinaryOp(precedingTokenValue) != Token.UNKNOWN))
-                                    {
-                                        nextToken = GetBinaryOp(input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset));
-                                        return;
-                                    }
-
-                                    goto case '_';
-                                case '_':
-                                    break;
-                                default:
-                                    if (c < 0x80 && !char.IsLetterOrDigit(c))
-                                    {
-                                        breakLoop = true;
-                                    }
-
-                                    break;
-                            }
-
-                            if (breakLoop)
-                            {
-                                break;
-                            }
-                        }
-
-                        nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset);
-
-                        //nextTokenValue = nextTokenValue.intern();
-                        nextToken = Token.NAME;
+                        ScanName();
                         return;
                 }
             }
+        }
+
+        // Skips a (# #) or (: :) construct that may nest, its opening read; newlines are counted.
+        private void SkipNested(char mark, string unclosed)
+        {
+            int nestingDepth = 1;
+            while (nestingDepth > 0 && inputOffset < (inputLength - 1))
+            {
+                if (input[inputOffset] == '\n')
+                {
+                    IncrementLineNumber();
+                }
+                else if (input[inputOffset] == mark && input[inputOffset + 1] == ')')
+                {
+                    nestingDepth--;
+                    inputOffset++;
+                }
+                else if (input[inputOffset] == '(' && input[inputOffset + 1] == mark)
+                {
+                    nestingDepth++;
+                    inputOffset++;
+                }
+
+                inputOffset++;
+            }
+
+            if (nestingDepth > 0)
+            {
+                throw new XPathException(unclosed);
+            }
+        }
+
+        // A 4.0 hex (0x) or binary (0b) integer literal, at its x or b.
+        private void ScanRadixInteger(string digits, int token, string kind)
+        {
+            inputOffset++;
+            while (inputOffset < inputLength && digits.IndexOf(input[inputOffset]) >= 0)
+            {
+                inputOffset++;
+            }
+
+            string body = input.Substring(nextTokenStartOffset + 2, inputOffset - nextTokenStartOffset - 2);
+            if (body.StartsWith("_", StringComparison.Ordinal) || body.EndsWith("_", StringComparison.Ordinal))
+            {
+                throw new XPathException("Underscore not allowed at start or end of " + kind + " literal");
+            }
+
+            nextTokenValue = body.Replace("_", "");
+            nextToken = token;
+        }
+
+        // A numeric literal from its first character c.
+        private void ScanNumber(char c)
+        {
+            // The logic here can return some tokens that are not legitimate numbers,
+            // for example "23e" or "1.0e+". However, this will only happen if the XPath
+            // expression as a whole is syntactically incorrect.
+            // These errors will be caught by the numeric constructor.
+            bool allowE = true;
+            bool allowSign = false;
+            bool allowDot = true;
+            bool keepGoing = true;
+            bool allowUnderscore = languageLevel >= 40;
+            while (true)
+            {
+                switch (c)
+                {
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                        allowSign = false;
+                        break;
+                    case '.':
+                        if (allowDot)
+                        {
+                            allowDot = false;
+                            allowSign = false;
+                        }
+                        else
+                        {
+                            inputOffset--;
+                            keepGoing = false; //break numloop;
+                        }
+
+                        break;
+                    case '_':
+                        if (allowUnderscore)
+                        {
+
+                            if (inputOffset >= inputLength || "0123456789_".IndexOf(input[inputOffset]) < 0)
+                            {
+                                throw new XPathException("Underscore must be followed by a digit (or another underscore)");
+                            }
+
+                            if (inputOffset < 2 || "0123456789_".IndexOf(input[inputOffset - 2]) < 0)
+                            {
+                                throw new XPathException("Underscore must be preceded by a digit (or another underscore)");
+                            }
+
+                            break;
+                        }
+                        else
+                        {
+                            throw new XPathException("Underscore is not allowed in numeric literal unless 4.0 is enabled");
+                        }
+
+                    case 'E':
+                    case 'e':
+                        if (allowE)
+                        {
+                            allowSign = true;
+                            allowE = false;
+                        }
+                        else
+                        {
+                            inputOffset--;
+                            keepGoing = false; //break numloop;
+                        }
+
+                        break;
+                    case '+':
+                    case '-':
+                        if (allowSign)
+                        {
+                            allowSign = false;
+                        }
+                        else
+                        {
+                            inputOffset--;
+                            keepGoing = false; //break numloop;
+                        }
+
+                        break;
+                    default:
+                        if (('a' <= c && c <= 'z') || c > 127)
+                        {
+
+                            // this prevents the famous "10div 3"
+                            throw new XPathException("Separator needed after numeric literal");
+                        }
+
+                        inputOffset--;
+                        keepGoing = false;
+                        break;
+                }
+
+                if (!keepGoing || inputOffset >= inputLength)
+                {
+                    break;
+                }
+
+                c = input[inputOffset++];
+            }
+
+            nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset).Replace("_", "");
+            nextToken = Token.NUMBER;
+        }
+
+        // A string literal delimited by c, its opening read.
+        private void ScanStringLiteral(char c)
+        {
+            // Pieces between doubled delimiters go to a builder: joined with += they cost the square of the literal's length.
+            StringBuilder value = null;
+            string last = null;
+            bool more = true;
+            while (more)
+            {
+                inputOffset = input.IndexOf(c, inputOffset);
+                if (inputOffset < 0)
+                {
+                    inputOffset = nextTokenStartOffset + 1;
+                    throw new XPathException("Unmatched quote in expression");
+                }
+
+                int from = nextTokenStartOffset + 1;
+                int length = (inputOffset++) - from;
+                more = inputOffset < inputLength && input[inputOffset] == c;
+                if (more)
+                {
+                    // Doubled delimiters
+                    value = value ?? new StringBuilder();
+                    value.Append(input, from, length).Append(c);
+                    nextTokenStartOffset = inputOffset;
+                    inputOffset++;
+                }
+                else if (value != null)
+                {
+                    value.Append(input, from, length);
+                }
+                else
+                {
+                    last = input.Substring(from, length);
+                }
+            }
+
+            nextTokenValue = value == null ? last : value.ToString();
+
+
+            // maintain line number if there are newlines in the string
+            if (nextTokenValue.IndexOf('\n') >= 0)
+            {
+                for (int i = 0; i < nextTokenValue.Length; i++)
+                {
+                    if (nextTokenValue[i] == '\n')
+                    {
+                        IncrementLineNumber(nextTokenStartOffset + i + 1);
+                    }
+                }
+            }
+
+
+            nextToken = Token.STRING_LITERAL;
+        }
+
+        // A backtick: a string constructor ``[...]`` (XQuery) or the token itself.
+        private void ScanBacktick()
+        {
+            if (inputOffset < inputLength - 1 && input[inputOffset] == '`' && input[inputOffset + 1] == '[')
+            {
+                if (!isXQuery)
+                {
+                    throw new XPathException("String constructors (starting '``[') are allowed only in XQuery, not XPath");
+                }
+
+                inputOffset += 2;
+                int j = inputOffset;
+                int newlines = 0;
+                while (true)
+                {
+                    if (j >= inputLength)
+                    {
+                        throw new XPathException("Unclosed string template in expression");
+                    }
+
+                    if (input[j] == '\n')
+                    {
+                        newlines++;
+                    }
+                    else if (input[j] == '`' && j + 1 < inputLength && input[j + 1] == '{')
+                    {
+                        nextToken = Token.STRING_CONSTRUCTOR_INITIAL;
+                        nextTokenValue = input.Substring(inputOffset, j - inputOffset);
+                        inputOffset = j + 2;
+                        IncrementLineNumber(newlines);
+                        return;
+                    }
+                    else if (input[j] == ']' && j + 2 < inputLength && input[j + 1] == '`' && input[j + 2] == '`')
+                    {
+                        nextToken = Token.STRING_LITERAL_BACKTICKED;
+
+                        // Can't return STRING_LITERAL because it's not accepted everywhere that a string literal is, and
+                        // because it doesn't get unescaped (bug 5647)
+                        nextTokenValue = input.Substring(inputOffset, j - inputOffset);
+                        inputOffset = j + 3;
+                        IncrementLineNumber(newlines);
+                        return;
+                    }
+
+                    j++;
+                }
+            }
+            else
+            {
+                nextToken = Token.BACKTICK;
+            }
+        }
+
+        // An EQName Q{uri}local, at its opening brace.
+        private void ScanEQName()
+        {
+            // EQName, revised syntax as per bug 15399
+            int close = input.IndexOf('}', inputOffset++);
+            if (close < inputOffset)
+            {
+                throw new XPathException("Missing closing brace in EQName");
+            }
+
+            string uri = input.Substring(inputOffset, close - inputOffset);
+            uri = Whitespace.CollapseWhitespace(uri); // Bug 29708
+            if (uri.Contains("{"))
+            {
+                throw new XPathException("EQName must not contain opening brace");
+            }
+
+            inputOffset = close + 1;
+            int start = inputOffset;
+            bool isStar = false;
+            while (inputOffset < inputLength)
+            {
+                char c2 = input[inputOffset];
+                if (c2 > 0x80 || char.IsLetterOrDigit(c2) || c2 == '_' || c2 == '.' || c2 == '-')
+                {
+                    inputOffset++;
+                }
+                else if (c2 == '*' && (start == inputOffset))
+                {
+                    inputOffset++;
+                    isStar = true;
+                    break;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            string localName = input.Substring(start, inputOffset - start);
+            nextTokenValue = "Q{" + uri + "}" + localName;
+
+            // Reuse Token.NAME because EQName is allowed anywhere that QName is allowed
+            nextToken = isStar ? Token.PREFIX : Token.NAME;
+        }
+
+        // A name, or the axis, prefix or operator it turns out to be.
+        private void ScanName()
+        {
+            char c;
+            bool foundColon = false;
+            bool breakLoop = false;
+            for (; inputOffset < inputLength; inputOffset++)
+            {
+                c = input[inputOffset];
+                switch (c)
+                {
+                    case ':':
+                        if (!foundColon)
+                        {
+                            if (precedingToken == Token.QMARK || precedingToken == Token.SUFFIX)
+                            {
+
+                                // only NCName allowed after "? in a lookup expression, or after *:
+                                nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset);
+                                nextToken = Token.NAME;
+                                return;
+                            }
+
+                            if (inputOffset + 1 < inputLength)
+                            {
+                                char nc = input[inputOffset + 1];
+                                if (nc == ':')
+                                {
+                                    nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset);
+                                    nextToken = Token.AXIS;
+                                    inputOffset += 2;
+                                    return;
+                                }
+                                else if (nc == '*')
+                                {
+                                    nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset);
+                                    nextToken = Token.PREFIX;
+                                    inputOffset += 2;
+                                    return;
+                                }
+                                else if (!(nc == '_' || nc > 127 || char.IsLetter(nc)))
+                                {
+
+                                    // for example: "let $x:=2", "x:y:z", "x:2"
+                                    // end the token before the colon
+                                    nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset);
+                                    nextToken = Token.NAME;
+                                    return;
+                                }
+                            }
+
+                            foundColon = true;
+                        }
+                        else
+                        {
+                            breakLoop = true;
+                        }
+
+                        break;
+                    case '.':
+                    case '-':
+
+                        // If the name up to the "-" or "." is a valid operator, and if the preceding token
+                        // is such that an operator is valid here and an NCName isn't, then quit here (bug 2715)
+                        if (precedingToken > Token.LAST_OPERATOR && !(precedingToken == Token.QMARK || precedingToken == Token.SUFFIX) && GetBinaryOp(input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset)) != Token.UNKNOWN && !(precedingToken == Token.NAME && GetBinaryOp(precedingTokenValue) != Token.UNKNOWN))
+                        {
+                            nextToken = GetBinaryOp(input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset));
+                            return;
+                        }
+
+                        goto case '_';
+                    case '_':
+                        break;
+                    default:
+                        if (c < 0x80 && !char.IsLetterOrDigit(c))
+                        {
+                            breakLoop = true;
+                        }
+
+                        break;
+                }
+
+                if (breakLoop)
+                {
+                    break;
+                }
+            }
+
+            nextTokenValue = input.Substring(nextTokenStartOffset, inputOffset - nextTokenStartOffset);
+
+            nextToken = Token.NAME;
         }
 
         public int GetBinaryOp(string s)
@@ -1386,7 +1391,6 @@ namespace OutSmart.DAXon.Expressions.Parsing
             {
                 char c = input[inputOffset++];
 
-                //c = normalizeLineEnding(c);
                 if (c == '\n')
                 {
                     IncrementLineNumber();
@@ -1452,7 +1456,8 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 lineNumber--;
                 if (newlineOffsets != null)
                 {
-                    newlineOffsets.Remove(newlineOffsets.Count - 1);
+                    // RemoveAt: Java's remove(int) takes an index, IList.Remove a value (it dropped a wrong entry or none)
+                    newlineOffsets.RemoveAt(newlineOffsets.Count - 1);
                 }
             }
         }

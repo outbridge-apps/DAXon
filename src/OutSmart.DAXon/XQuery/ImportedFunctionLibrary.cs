@@ -102,6 +102,5 @@ namespace OutSmart.DAXon.XQuery
             return namespaces.Contains(functionName.ComponentName.GetNamespaceUri()) && baseLibrary.IsAvailable(functionName, languageLevel);
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
     }
 }

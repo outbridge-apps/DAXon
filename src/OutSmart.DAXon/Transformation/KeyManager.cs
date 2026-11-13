@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using OutSmart.DAXon.Expressions;
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Transformation
 {
@@ -40,10 +41,15 @@ namespace OutSmart.DAXon.Transformation
         // still be collected independently, exactly as upstream.
         private ConditionalWeakTable<ITreeInfo, WeakReference<IntHashMap<KeyIndex>>> docIndexes;
 
+        // The firm reference to the index list of a tree outside the run's document pool, for as long as the tree lives.
+        // Kept here, under this manager's lock: in the tree's own user data, a second executable keyed on the same tree
+        // wrote it under its own lock and replaced the first one's, whose index was rebuilt after a GC.
+        private ConditionalWeakTable<ITreeInfo, IntHashMap<KeyIndex>> pinnedIndexes;
+
         public virtual ICollection<KeyDefinitionSet> AllKeyDefinitionSets => keyDefinitions.Values;
 
         public virtual int NumberOfKeyDefinitions => keyDefinitions.Count;
-        // one entry for each document that @is in memory;
+        // one entry for each document that is in memory;
         // the entry contains a HashMap mapping the fingerprint of the key name plus the primitive item type
         // to the HashMap that is the actual index of key/value pairs.
         public KeyManager(Configuration config, PackageData pack)
@@ -175,7 +181,7 @@ namespace OutSmart.DAXon.Transformation
             if (keySet.IsBackwardsCompatible())
             {
 
-                // if backwards compatibility @is in force, treat all values as strings
+                // if backwards compatibility is in force, treat all values as strings
                 ConversionRules rules = context.GetConfiguration().GetConversionRules();
                 soughtValue = ((AtomicValue)Converter.Convert(soughtValue, BuiltInAtomicType.STRING, rules)).AsAtomic();
             }
@@ -203,23 +209,14 @@ namespace OutSmart.DAXon.Transformation
             return index.GetComposite(soughtValue);
         }
 
+        // The index is built outside the lock (see bug 3984): holding a lock while running user code (the xsl:key/@use
+        // expression) can deadlock. An index under construction in this thread means the key is circular; one under
+        // construction in another thread is built here too, and the first to complete is used by all threads.
         public virtual KeyIndex ObtainIndex(KeyDefinitionSet keySet, ITreeInfo doc, IXPathContext context)
         {
-            if (keySet.IsReusable())
-            {
-                return ObtainSharedIndex(keySet, doc, context);
-            }
-            else
-            {
-                return ObtainLocalIndex(keySet, doc, context);
-            }
-        }
-
-        private KeyIndex ObtainSharedIndex(KeyDefinitionSet keySet, ITreeInfo doc, IXPathContext context)
-        {
-            KeyIndex index;
+            bool shared = keySet.IsReusable();
             int keySetNumber = keySet.KeySetNumber;
-            index = GetSharedIndex(doc, keySetNumber);
+            KeyIndex index = shared ? GetSharedIndex(doc, keySetNumber) : GetLocalIndex(doc, keySetNumber, context);
             if (index != null)
             {
                 KeyIndex.Status status = index.GetStatus();
@@ -229,129 +226,92 @@ namespace OutSmart.DAXon.Transformation
                     {
                         throw new XPathException("Key definition " + keySet.KeyName.DisplayName + " is circular").WithXPathContext(context).WithErrorCode("XTDE0640");
                     }
-                    else
-                    {
-
-                        // if the index is under construction in another thread, then we plough on regardless.
-                        // Both threads will construct the index, but only one will be saved
-                        index = null;
-                    }
                 }
                 else if (status == FAILED)
                 {
                     throw new XPathException("Construction of index for key " + keySet.KeyName.DisplayName + " was unsuccessful");
                 }
+                else
+                {
+                    return index;
+                }
             }
 
-
-            // If the index does not yet exist, then create it.
-            if (index == null)
+            // A use= that calls key() builds the next index from inside this one: 200 chained keys overflowed a 256KB thread.
+            try
             {
+                StackGuard.Probe();
+            }
+            catch (RecursionDepthError e) when (!e.Described)
+            {
+                throw e.Describe("Too many nested key() calls while building indexes (xsl:key/@use) for the thread's stack.",
+                    DAXonErrorCode.SXLM0001, keySet.KeyDefinitions[0]);
+            }
 
-                // Mark the index as being under construction, in case the definition is circular
-                index = new KeyIndex(keySet.IsRangeKey());
-                lock (syncLock)
+            // Mark the index as being under construction, in case the definition is circular
+            index = new KeyIndex(keySet.IsRangeKey());
+            lock (syncLock)
+            {
+                index.SetStatus(UNDER_CONSTRUCTION);
+                KeyIndex existing = PutIndex(doc, keySetNumber, index, context, shared);
+                if (existing != index)
                 {
-                    index.SetStatus(UNDER_CONSTRUCTION);
-                    KeyIndex index2 = PutSharedIndex(doc, keySetNumber, index, context);
-                    if (index2.GetStatus() == BUILT)
-                    {
-
-                        // last chance to bail @out - another thread got there first
-                        return index2;
-                    }
-                    else
-                    {
-                        index = index2;
-                    }
-                }
-
-
-                // Now we build the index (which isn't synchronized because it doesn't write to any shared data)
-                BuildIndex(index, keySet, doc, context);
-
-                // On completion we synchronize again, and decide whether to use this index, or one that was
-                // completed earlier by a different thread.
-                lock (syncLock)
-                {
-                    index.SetStatus(BUILT);
-                    index = PutSharedIndex(doc, keySetNumber, index, context);
+                    // last chance to bail out - another thread got there first
+                    return existing;
                 }
             }
 
-            return index;
+            // finally, not catch-and-rethrow: on .NET Framework each rethrow re-enters dispatch on the deep stack, so a
+            // stack-guard abort through a chain of keys overflowed while unwinding.
+            bool built = false;
+            try
+            {
+                BuildIndex(index, keySet, doc, context);
+                built = true;
+            }
+            finally
+            {
+                if (!built)
+                {
+                    ForgetIndex(doc, keySetNumber, index, context, shared);
+                }
+            }
+
+            lock (syncLock)
+            {
+                index.SetStatus(BUILT);
+                return PutIndex(doc, keySetNumber, index, context, shared);
+            }
         }
 
-        private KeyIndex ObtainLocalIndex(KeyDefinitionSet keySet, ITreeInfo doc, IXPathContext context)
+        private KeyIndex PutIndex(ITreeInfo doc, int keySetNumber, KeyIndex index, IXPathContext context, bool shared)
         {
-            KeyIndex index;
-            int keySetNumber = keySet.KeySetNumber;
+            return shared ? PutSharedIndex(doc, keySetNumber, index, context) : PutLocalIndex(doc, keySetNumber, index, context);
+        }
 
-            // We don't synchronize the index construction (see bug 3984) because holding synchronization
-            // locks while executing user code (the xsl:key/@use expression) can easily lead to deadlock.
-            // Instead, we check if a completely constructed index exists; if it does, we use it. If an
-            // index exists that is currently under construction, then if it's under construction in this
-            // thread, we report a circularity. If it's being constructed by a different thread, then
-            // we continue constructing the index, and at the end, the index that completes construction
-            // first is used by all threads (which involves synchronizing for a very short time).
-            index = GetLocalIndex(doc, keySetNumber, context);
-            if (index != null)
+        // A build that failed - an error in use=, the time or memory limit - leaves no index behind: one left under
+        // construction made the next key() on the document from this thread report XTDE0640, run after run.
+        private void ForgetIndex(ITreeInfo doc, int keySetNumber, KeyIndex index, IXPathContext context, bool shared)
+        {
+            lock (syncLock)
             {
-                KeyIndex.Status status = index.GetStatus();
-                if (status == UNDER_CONSTRUCTION)
+                if (shared)
                 {
-                    if (index.IsCreatedInThisThread())
+                    if (docIndexes != null && docIndexes.TryGetValue(doc, out WeakReference<IntHashMap<KeyIndex>> indexRef)
+                        && indexRef.TryGetTarget(out IntHashMap<KeyIndex> indexList) && indexList[keySetNumber] == index)
                     {
-                        throw new XPathException("Key definition " + keySet.KeyName.DisplayName + " is circular").WithXPathContext(context).WithErrorCode("XTDE0640");
-                    }
-                    else
-                    {
-
-                        index = null;
+                        indexList.Remove(keySetNumber);
                     }
                 }
-                else if (status == FAILED)
+                else
                 {
-                    throw new XPathException("Construction of index for key " + keySet.KeyName.DisplayName + " was unsuccessful");
+                    Dictionary<long, KeyIndex> local = context.GetController().LocalIndexes[keySetNumber];
+                    if (local != null && local.TryGetValue(doc.GetDocumentNumber(), out KeyIndex current) && current == index)
+                    {
+                        local.Remove(doc.GetDocumentNumber());
+                    }
                 }
             }
-
-
-            // If the index does not yet exist, then create it.
-            if (index == null)
-            {
-
-                // Mark the index as being under construction, in case the definition is circular
-                // putLocalIndex(doc, keySetNumber, underConstruction, context);
-                index = new KeyIndex(keySet.IsRangeKey());
-                lock (syncLock)
-                {
-                    index.SetStatus(UNDER_CONSTRUCTION);
-                    KeyIndex index2 = PutLocalIndex(doc, keySetNumber, index, context);
-                    if (index2.GetStatus() == BUILT)
-                    {
-
-                        // last chance to bail @out - another thread got there first
-                        return index2;
-                    }
-                    else
-                    {
-                        index = index2;
-                    }
-                }
-
-
-                // Now we build the index (which isn't synchronized because it doesn't write to any shared data)
-                BuildIndex(index, keySet, doc, context);
-
-                lock (syncLock)
-                {
-                    index.SetStatus(BUILT);
-                    index = PutLocalIndex(doc, keySetNumber, index, context);
-                }
-            }
-
-            return index;
         }
 
         private KeyIndex PutSharedIndex(ITreeInfo doc, int keyFingerprint, KeyIndex index, IXPathContext context)
@@ -381,7 +341,9 @@ namespace OutSmart.DAXon.Transformation
                     }
                     else
                     {
-                        doc.SetUserData("saxon:key-index-list", indexList);
+                        pinnedIndexes = pinnedIndexes ?? new ConditionalWeakTable<ITreeInfo, IntHashMap<KeyIndex>>();
+                        pinnedIndexes.Remove(doc);
+                        pinnedIndexes.Add(doc, indexList);
                     }
 
 

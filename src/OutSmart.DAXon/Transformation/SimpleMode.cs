@@ -112,9 +112,6 @@ namespace OutSmart.DAXon.Transformation
                         bool streamable = value == "yes";
                         SetStreamable(streamable);
 
-                        //                    if (streamable) {
-                        //                        Mode omniMode = manager.obtainMode(Mode.OMNI_MODE, true);
-                        //                    }
                         break;
                     case "typed":
                         mustBeTyped = value == "yes" || value == "strict" || value == "lax";
@@ -288,9 +285,6 @@ namespace OutSmart.DAXon.Transformation
             // This logic is designed to ensure that when a UnionPattern contains multiple branches
             // with the same priority, next-match doesn't select the same template twice (next-match-024)
 
-            //        int sequence;
-            //        if (mostRecentRule == null) {
-            //            sequence = 0;
             int minImportPrecedence = module.MinImportPrecedence;
             Rule newRule = MakeRule(pattern, action, precedence, minImportPrecedence, priority, position, part);
             if (pattern is NodeTestPattern)
@@ -440,45 +434,41 @@ namespace OutSmart.DAXon.Transformation
 
         public override Rule GetRule(IItem item, IXPathContext context)
         {
+            return FindRule(item, context, null);
+        }
 
-            // If there are match patterns in the stylesheet that use local variables, we need to allocate
-            // a new stack frame for evaluating the match patterns. We base this on the match pattern with
-            // the highest number of range variables, so we can reuse the same stack frame for all rules
-            // that we test against. If no patterns use range variables, we don't bother allocating a new
-            // stack frame.
-            // Note, this method isn't functionally necessary; we could call the 3-argument version
-            // with a filter that always returns true. But this is the common path for apply-templates,
-            // and we want to squeeze every drop of performance from it.
+        public override Rule GetRule(IItem item, IXPathContext context, Func<Rule, bool> filter)
+        {
+            return FindRule(item, context, filter);
+        }
+
+        // The best rule for the item; filter (null for none) limits the rules considered, as xsl:next-match and
+        // xsl:apply-imports do. One search for both, where there were two copies of it.
+        private Rule FindRule(IItem item, IXPathContext context, Func<Rule, bool> filter)
+        {
+            // Match patterns that use local variables get a new stack frame, sized for the pattern with the most range
+            // variables so that one frame serves every rule tested; with none, no frame is made.
             if (stackFrameSlotsNeeded > 0)
             {
                 context = MakeNewContext(context);
             }
-
 
             // search the specific list for this node type / node name
             Rule bestRule = null;
             if (item is NodeInfo)
             {
                 NodeInfo node = (NodeInfo)item;
-                bestRule = FindBestRuleForNodeInfo(node, context);
+                bestRule = FindBestRuleForNodeInfo(node, context, filter);
             }
             else if (item is AtomicValue)
             {
-                if (atomicValueRuleChain != null)
-                {
-                    bestRule = SearchRuleChain(item, context, bestRule, atomicValueRuleChain);
-                }
-
-                bestRule = SearchRuleChain(item, context, bestRule, genericRuleChain);
+                bestRule = SearchRuleChain(item, context, bestRule, atomicValueRuleChain, filter);
+                bestRule = SearchRuleChain(item, context, bestRule, genericRuleChain, filter);
             }
             else if (item is IFunctionItem)
             {
-                if (functionItemRuleChain != null)
-                {
-                    bestRule = SearchRuleChain(item, context, bestRule, functionItemRuleChain);
-                }
-
-                bestRule = SearchRuleChain(item, context, bestRule, genericRuleChain);
+                bestRule = SearchRuleChain(item, context, bestRule, functionItemRuleChain, filter);
+                bestRule = SearchRuleChain(item, context, bestRule, genericRuleChain, filter);
             }
 
             return bestRule;
@@ -557,7 +547,9 @@ namespace OutSmart.DAXon.Transformation
             {
                 if (elementMemoState == 0)
                 {
-                    if (ChainAllUnconditional(unnamedElementRuleChain) && ChainAllUnconditional(genericRuleChain))
+                    // A mode that warns of an ambiguous match warns at every match: a memo skipped the search, so the
+                    // second element of a name got no warning (Java warns each time).
+                    if (RecoveryPolicy != RecoveryPolicy.RECOVER_WITH_WARNINGS && ChainAllUnconditional(unnamedElementRuleChain) && ChainAllUnconditional(genericRuleChain))
                     {
                         elementRuleMemo = new Internal.Caching.ClockCache<int, Rule>(ElementRuleMemoCapacity);
                         memoFront = new MemoSlot[MemoFrontSize];
@@ -599,7 +591,7 @@ namespace OutSmart.DAXon.Transformation
             return true;
         }
 
-        private Rule FindBestRuleForNodeInfo(NodeInfo node, IXPathContext context)
+        private Rule FindBestRuleForNodeInfo(NodeInfo node, IXPathContext context, Func<Rule, bool> filter)
         {
             RuleChain unnamedNodeChain;
             Rule bestRule = null;
@@ -615,7 +607,7 @@ namespace OutSmart.DAXon.Transformation
             }
 
             int memoFp = -1;
-            if (nodeKind == Types.Type.ELEMENT && node.HasFingerprint() && ElementMemoEnabled())
+            if (filter == null && nodeKind == Types.Type.ELEMENT && node.HasFingerprint() && ElementMemoEnabled())
             {
                 memoFp = node.Fingerprint;
                 MemoSlot[] front = memoFront;
@@ -667,7 +659,7 @@ namespace OutSmart.DAXon.Transformation
 
                         if (namedNodeChain != null)
                         {
-                            bestRule = SearchRuleChain(node, context, null, namedNodeChain);
+                            bestRule = SearchRuleChain(node, context, null, namedNodeChain, filter);
                         }
 
                         break;
@@ -688,14 +680,14 @@ namespace OutSmart.DAXon.Transformation
 
                         if (namedNodeChain != null)
                         {
-                            bestRule = SearchRuleChain(node, context, null, namedNodeChain);
+                            bestRule = SearchRuleChain(node, context, null, namedNodeChain, filter);
                         }
 
                         break;
                     }
 
                 case Types.Type.TEXT:
-                    if (textMemoState == 1)
+                    if (filter == null && textMemoState == 1)
                     {
                         return textRuleMemoValue;
                     }
@@ -719,14 +711,14 @@ namespace OutSmart.DAXon.Transformation
             // search the list for unnamed nodes of a particular kind
             if (unnamedNodeChain != null)
             {
-                bestRule = SearchRuleChain(node, context, bestRule, unnamedNodeChain);
+                bestRule = SearchRuleChain(node, context, bestRule, unnamedNodeChain, filter);
             }
 
 
             // Search the list for rules for nodes of unknown node kind
             if (genericRuleChain != null)
             {
-                bestRule = SearchRuleChain(node, context, bestRule, genericRuleChain);
+                bestRule = SearchRuleChain(node, context, bestRule, genericRuleChain, filter);
             }
 
             if (memoFp >= 0)
@@ -739,9 +731,9 @@ namespace OutSmart.DAXon.Transformation
                 memoFront[memoFp & (MemoFrontSize - 1)] = new MemoSlot(memoFp, memoValue);
             }
 
-            if (nodeKind == Types.Type.TEXT && textMemoState == 0)
+            if (filter == null && nodeKind == Types.Type.TEXT && textMemoState == 0)
             {
-                if (ChainAllUnconditional(textRuleChain) && ChainAllUnconditional(genericRuleChain))
+                if (RecoveryPolicy != RecoveryPolicy.RECOVER_WITH_WARNINGS && ChainAllUnconditional(textRuleChain) && ChainAllUnconditional(genericRuleChain))
                 {
                     textRuleMemoValue = bestRule;
                     textMemoState = 1;
@@ -792,7 +784,8 @@ namespace OutSmart.DAXon.Transformation
             }
         }
 
-        protected virtual Rule SearchRuleChain(IItem item, IXPathContext context, Rule bestRule, RuleChain chain)
+        // bestRule, or a better rule of the chain that matches the item and passes the filter (null for none).
+        private Rule SearchRuleChain(IItem item, IXPathContext context, Rule bestRule, RuleChain chain, Func<Rule, bool> filter)
         {
             // An empty (or null) chain contributes nothing: bail before the major-context walk and the
             // rule-search state fetch. On apply-templates most nodes have no rules on their unnamed and
@@ -804,80 +797,62 @@ namespace OutSmart.DAXon.Transformation
                 return bestRule;
             }
 
-            context = context.MajorContext;
+            XPathContextMajor major = context.MajorContext;
 
             // Get the rule search state object - this could be reusable within a rule chain.
-            RuleSearchState ruleSearchState = MakeRuleSearchState(chain, context);
-            while (head != null)
+            RuleSearchState ruleSearchState = MakeRuleSearchState(chain, major);
+            for (; head != null; head = head.Next)
             {
+                if (filter != null && !filter(head))
+                {
+                    continue;
+                }
+
                 if (bestRule != null)
                 {
                     int rank = head.CompareRank(bestRule);
                     if (rank < 0)
                     {
-
                         // if we already have a match, and the precedence or priority of this
                         // rule is lower, quit the search
                         break;
                     }
                     else if (rank == 0)
                     {
-
                         // this rule has the same precedence and priority as the matching rule already found
-                        if (RuleMatches(head, item, (XPathContextMajor)context, ruleSearchState))
+                        if (RuleMatches(head, item, major, ruleSearchState))
                         {
                             if (head.Sequence != bestRule.Sequence)
                             {
-                                ReportAmbiguity(item, bestRule, head, context);
+                                ReportAmbiguity(item, bestRule, head, major);
                             }
 
-
-                            // choose whichever one comes last (assuming the error wasn't fatal)
+                            // choose whichever one comes last (assuming the error wasn't fatal); of two branches of
+                            // one union pattern, the later branch - except under a filter, which takes the later in
+                            // the chains, as Saxon does (a union template can then run once fewer under next-match)
                             int seqComp = bestRule.Sequence.CompareTo(head.Sequence);
-                            if (seqComp > 0)
+                            if (seqComp < 0 || (seqComp == 0 && (filter != null || bestRule.PartNumber <= head.PartNumber)))
                             {
-                                return bestRule;
-                            }
-                            else if (seqComp < 0)
-                            {
-                                return head;
-                            }
-                            else
-                            {
-
-                                // we're dealing with two rules formed by partitioning a union pattern
-                                bestRule = bestRule.PartNumber > head.PartNumber ? bestRule : head;
+                                bestRule = head;
                             }
 
                             break;
                         }
-                        else
-                        {
-                        }
                     }
-                    else
+                    else if (RuleMatches(head, item, major, ruleSearchState))
                     {
-
                         // this rule has higher rank than the matching rule already found
-                        if (RuleMatches(head, item, (XPathContextMajor)context, ruleSearchState))
-                        {
-                            bestRule = head;
-                        }
+                        bestRule = head;
                     }
                 }
-                else if (RuleMatches(head, item, (XPathContextMajor)context, ruleSearchState))
+                else if (RuleMatches(head, item, major, ruleSearchState))
                 {
                     bestRule = head;
                     if (RecoveryPolicy == RecoveryPolicy.RECOVER_SILENTLY)
                     {
-
                         break; // choose the first match; rules within a chain are in order of rank
                     }
                 }
-
-
-                //ruleSearchState.count();// Keep tab of the number of checks
-                head = head.Next;
             }
 
             return bestRule;
@@ -886,197 +861,6 @@ namespace OutSmart.DAXon.Transformation
         protected virtual bool RuleMatches(Rule r, IItem item, XPathContextMajor context, RuleSearchState pre)
         {
             return r.IsAlwaysMatches() || r.Matches(item, context);
-        }
-
-        public override Rule GetRule(IItem item, IXPathContext context, Func<Rule, bool> filter)
-        {
-
-            // If there are match patterns in the stylesheet that use local variables, we need to allocate
-            // a new stack frame for evaluating the match patterns. We base this on the match pattern with
-            // the highest number of range variables, so we can reuse the same stack frame for all rules
-            // that we test against. If no patterns use range variables, we don't bother allocating a new
-            // stack frame.
-            if (stackFrameSlotsNeeded > 0)
-            {
-                context = MakeNewContext(context);
-            }
-
-
-            // Get the rule search state object
-            RuleSearchState ruleSearchState;
-
-            // search the specific list for this node type / node name
-            Rule bestRule = null;
-            RuleChain unnamedNodeChain;
-
-            // Search the list for unnamed nodes of a particular kind
-            if (item is NodeInfo)
-            {
-                NodeInfo node = (NodeInfo)item;
-                switch (node.GetNodeKind())
-                {
-                    case Types.Type.DOCUMENT:
-                        unnamedNodeChain = documentRuleChain;
-                        break;
-                    case Types.Type.ELEMENT:
-                        {
-                            unnamedNodeChain = unnamedElementRuleChain;
-                            RuleChain namedNodeChain;
-                            if (node.HasFingerprint())
-                            {
-                                namedNodeChain = namedElementRuleChains[node.Fingerprint];
-                            }
-                            else
-                            {
-                                namedNodeChain = GetNamedRuleChain(context, Types.Type.ELEMENT, node.GetNamespaceUri(), node.GetLocalPart());
-                            }
-
-                            if (namedNodeChain != null)
-                            {
-                                ruleSearchState = MakeRuleSearchState(namedNodeChain, context);
-                                bestRule = SearchRuleChain(item, context, null, namedNodeChain, ruleSearchState, filter);
-                            }
-
-                            break;
-                        }
-
-                    case Types.Type.ATTRIBUTE:
-                        {
-                            unnamedNodeChain = unnamedAttributeRuleChain;
-                            RuleChain namedNodeChain;
-                            if (node.HasFingerprint())
-                            {
-                                namedNodeChain = namedAttributeRuleChains[node.Fingerprint];
-                            }
-                            else
-                            {
-                                namedNodeChain = GetNamedRuleChain(context, Types.Type.ATTRIBUTE, node.GetNamespaceUri(), node.GetLocalPart());
-                            }
-
-                            if (namedNodeChain != null)
-                            {
-                                ruleSearchState = MakeRuleSearchState(namedNodeChain, context);
-                                bestRule = SearchRuleChain(item, context, null, namedNodeChain, ruleSearchState, filter);
-                            }
-
-                            break;
-                        }
-
-                    case Types.Type.TEXT:
-                        unnamedNodeChain = textRuleChain;
-                        break;
-                    case Types.Type.COMMENT:
-                        unnamedNodeChain = commentRuleChain;
-                        break;
-                    case Types.Type.PROCESSING_INSTRUCTION:
-                        unnamedNodeChain = processingInstructionRuleChain;
-                        break;
-                    case Types.Type.NAMESPACE:
-                        unnamedNodeChain = namespaceRuleChain;
-                        break;
-                    default:
-                        throw new InvalidOperationException("Unknown node kind");
-                }
-
-                ruleSearchState = MakeRuleSearchState(unnamedNodeChain, context);
-                bestRule = SearchRuleChain(item, context, bestRule, unnamedNodeChain, ruleSearchState, filter);
-
-                // Search the list for rules for nodes of unknown node kind
-                ruleSearchState = MakeRuleSearchState(genericRuleChain, context);
-                return SearchRuleChain(item, context, bestRule, genericRuleChain, ruleSearchState, filter);
-            }
-            else if (item is AtomicValue)
-            {
-                if (atomicValueRuleChain != null)
-                {
-                    ruleSearchState = MakeRuleSearchState(atomicValueRuleChain, context);
-                    bestRule = SearchRuleChain(item, context, bestRule, atomicValueRuleChain, ruleSearchState, filter);
-                }
-
-                ruleSearchState = MakeRuleSearchState(genericRuleChain, context);
-                bestRule = SearchRuleChain(item, context, bestRule, genericRuleChain, ruleSearchState, filter);
-                return bestRule;
-            }
-            else if (item is IFunctionItem)
-            {
-                if (functionItemRuleChain != null)
-                {
-                    ruleSearchState = MakeRuleSearchState(functionItemRuleChain, context);
-                    bestRule = SearchRuleChain(item, context, bestRule, functionItemRuleChain, ruleSearchState, filter);
-                }
-
-                ruleSearchState = MakeRuleSearchState(genericRuleChain, context);
-                bestRule = SearchRuleChain(item, context, bestRule, genericRuleChain, ruleSearchState, filter);
-                return bestRule;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        protected virtual Rule SearchRuleChain(IItem item, IXPathContext context, Rule bestRule, RuleChain chain, RuleSearchState ruleSearchState, Func<Rule, bool> filter)
-        {
-            Rule head = chain == null ? null : chain.Head();
-            while (!(context is XPathContextMajor))
-            {
-                context = context.GetCaller();
-            }
-
-            while (head != null)
-            {
-                if (filter == null || filter(head))
-                {
-                    if (bestRule != null)
-                    {
-                        int rank = head.CompareRank(bestRule);
-                        if (rank < 0)
-                        {
-
-                            // if we already have a match, and the precedence or priority of this
-                            // rule is lower, quit the search
-                            break;
-                        }
-                        else if (rank == 0)
-                        {
-
-                            // this rule has the same precedence and priority as the matching rule already found
-                            if (RuleMatches(head, item, (XPathContextMajor)context, ruleSearchState))
-                            {
-                                ReportAmbiguity(item, bestRule, head, context);
-
-                                // choose whichever one comes last (assuming the error wasn't fatal)
-                                bestRule = bestRule.Sequence > head.Sequence ? bestRule : head;
-                                break;
-                            }
-                            else
-                            {
-                            }
-                        }
-                        else
-                        {
-
-                            // this rule has higher rank than the matching rule already found
-                            if (RuleMatches(head, item, (XPathContextMajor)context, ruleSearchState))
-                            {
-                                bestRule = head;
-                            }
-                        }
-                    }
-                    else if (RuleMatches(head, item, (XPathContextMajor)context, ruleSearchState))
-                    {
-                        bestRule = head;
-                        if (RecoveryPolicy == RecoveryPolicy.RECOVER_SILENTLY)
-                        {
-                            break; // choose the first match; rules within a chain are in order of rank
-                        }
-                    }
-                }
-
-                head = head.Next;
-            }
-
-            return bestRule;
         }
 
         protected virtual void ReportAmbiguity(IItem item, Rule r1, Rule r2, IXPathContext c)
@@ -1135,7 +919,7 @@ namespace OutSmart.DAXon.Transformation
         {
 
             // Complex patterns can be laid out with lots of whitespace, which looks messy in the error message
-            return Whitespace.CollapseWhitespace(StringView.Of(p.ToShortString()).Tidy()).ToString();
+            return Whitespace.CollapseWhitespace(StringView.Of(p.ToShortString())).ToString();
         }
 
         public virtual void PrepareStreamability()
@@ -1183,14 +967,6 @@ namespace OutSmart.DAXon.Transformation
             }
         }
 
-        public virtual void ComputeStreamability()
-        {
-        }
-
-        public virtual void InvertStreamableTemplates()
-        {
-        }
-
         public override void ExplainTemplateRules(ExpressionPresenter @out)
         {
             IRuleAction action = (r) => r.Export(@out, IsDeclaredStreamable());
@@ -1201,14 +977,6 @@ namespace OutSmart.DAXon.Transformation
             catch (XPathException)
             {
             }
-        }
-
-        public override void ExportTemplateRules(ExpressionPresenter @out)
-        {
-
-            // TODO: if two rules share the same template, avoid duplicate output. This can happen with union patterns, and also
-            // when a template is present in more than one mode.
-            ProcessRules((r) => r.Export(@out, IsDeclaredStreamable()));
         }
 
         public override void ProcessRules(IRuleAction action)
@@ -1326,7 +1094,6 @@ namespace OutSmart.DAXon.Transformation
             highestRank = start + sorter.NumberOfRules;
         }
 
-        //
         public virtual void AllocateAllPatternSlots()
         {
             IList<int> count = new List<int>(1); // used to allow inner class to have side-effects
@@ -1349,13 +1116,11 @@ namespace OutSmart.DAXon.Transformation
             stackFrameSlotsNeeded = count[0];
         }
 
-        //
         public override int GetStackFrameSlotsNeeded()
         {
             return stackFrameSlotsNeeded;
         }
 
-        //
         public virtual void SetStackFrameSlotsNeeded(int slots)
         {
             this.stackFrameSlotsNeeded = slots;
@@ -1427,7 +1192,6 @@ namespace OutSmart.DAXon.Transformation
             }
         }
 
-        //
         public interface IRuleGroupAction
         {
             void SetLabel(string s);

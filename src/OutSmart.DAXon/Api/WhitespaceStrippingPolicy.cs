@@ -51,11 +51,13 @@ namespace OutSmart.DAXon.Api
 
         public WhitespaceStrippingPolicy(StylesheetPackage pack)
         {
+            ArgumentCheck.NotNull(pack, nameof(pack));
             policy = Whitespace.XSLT;
             stripperRules = pack.StripperRules;
         }
         public static WhitespaceStrippingPolicy MakeCustomPolicy(Func<QName, bool> elementTest)
         {
+            ArgumentCheck.NotNull(elementTest, nameof(elementTest));
             ISpaceStrippingRule rule = new AnonymousISpaceStrippingRule(elementTest);
             WhitespaceStrippingPolicy wsp = new WhitespaceStrippingPolicy(Whitespace.XSLT);
             wsp.stripperRules = rule;

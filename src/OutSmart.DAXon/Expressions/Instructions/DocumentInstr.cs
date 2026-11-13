@@ -326,7 +326,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         {
                             Controller controller = context.GetController();
                             PipelineConfiguration pipe = controller.MakePipelineConfiguration();
-                            pipe.XPathContext = context;
                             Builder builder;
                             builder = controller.MakeBuilder();
                             builder.SetUseEventLocation(false);
@@ -349,14 +348,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             @out.Close();
                             return builder.CurrentRoot;
                         }
-                        catch (XPathException e) when (!(e is XPathException.StackOverflow))
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                         {
-                            // StackOverflow (SXLM0001) must fly through per-level decorating
-                            // rethrows untouched: each catch-funclet rethrow on a 1000+-frame
-                            // stack costs net stack, and the whole point of the stack guard is
-                            // to survive with a fixed margin. The filter declines without
-                            // running a funclet, so the deep unwind stays flat (round AQ).
-                            throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                            // Decorated in the filter, never handled: a document node nests per level of a recursion,
+                            // and a rethrow from here cost a dispatch per level (XPathException.PassOn).
+                            throw;
                         }
                     };
                 }

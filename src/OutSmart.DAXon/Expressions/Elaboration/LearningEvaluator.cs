@@ -19,7 +19,6 @@ namespace OutSmart.DAXon.Expressions.Elaboration
         public LearningEvaluator(Expression expr, ISequenceEvaluator lazy)
         {
 
-            //        monitoring = expr.toShortString().contains("$return-val");
             this.expression = expr;
             this.evaluator = lazy;
             this.completed = 0;

@@ -161,6 +161,5 @@ namespace OutSmart.DAXon.Xslt
             return this;
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
     }
 }

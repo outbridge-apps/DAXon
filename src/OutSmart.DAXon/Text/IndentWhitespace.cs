@@ -19,6 +19,9 @@ namespace OutSmart.DAXon.Text
             this.spaces = spaces;
         }
 
+        // Indentation stops growing at this depth: the output of a deep tree was quadratic in its depth.
+        internal const int MaxLevels = 256;
+
         public static IndentWhitespace Of(int newlines, int spaces)
         {
 

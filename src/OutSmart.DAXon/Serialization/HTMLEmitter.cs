@@ -22,8 +22,6 @@ namespace OutSmart.DAXon.Serialization
     internal abstract class HTMLEmitter : XMLEmitter
     {
 
-        static readonly HTMLTagHashSet emptyTags = new HTMLTagHashSet(31);
-
         private static readonly HTMLTagHashSet booleanAttributes = new HTMLTagHashSet(43);
         private static readonly HTMLTagHashSet booleanCombinations = new HTMLTagHashSet(57);
         private int inScript;
@@ -89,14 +87,18 @@ namespace OutSmart.DAXon.Serialization
             SetBooleanAttribute("video", "loop"); // HTML5
             SetBooleanAttribute("video", "muted"); // HTML5
         }
-        protected static void SetEmptyTag(string tag)
-        {
-            emptyTags.Add(tag);
-        }
+        // One set per HTML version: a shared static set gave HTML 4 the HTML 5 void elements once HTML 5 had loaded.
+        protected abstract bool IsEmptyTag(string tag);
 
-        protected static bool IsEmptyTag(string tag)
+        protected static HTMLTagHashSet TagSet(params string[] tags)
         {
-            return emptyTags.Contains(tag);
+            HTMLTagHashSet set = new HTMLTagHashSet(31);
+            foreach (string tag in tags)
+            {
+                set.Add(tag);
+            }
+
+            return set;
         }
 
         private static void SetBooleanAttribute(string element, string attribute)
@@ -193,7 +195,7 @@ namespace OutSmart.DAXon.Serialization
 
                 base.WriteAttribute(elCode, attname, value, properties);
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
@@ -201,7 +203,7 @@ namespace OutSmart.DAXon.Serialization
 
         protected override void WriteEscape(UnicodeString chars, bool inAttribute)
         {
-            int segstart = 0;
+            long segstart = 0;
             bool[] specialChars = inAttribute ? attSpecials : specialInText;
             if (chars is WhitespaceString)
             {
@@ -210,17 +212,18 @@ namespace OutSmart.DAXon.Serialization
             }
 
             bool disabled = false;
-            chars = chars.Tidy();
-            int[] codePoints = StringTool.Expand(chars);
-            while (segstart < codePoints.Length)
+            // Read in place: an int[] copy of a text node cost four bytes a character outside the memory ledger.
+            long length = chars.Length();
+            while (segstart < length)
             {
-                int i = segstart;
+                Core.Controller.CheckActiveTimeout();
+                long i = segstart;
 
                 // find a maximal sequence of "ordinary" characters
                 if (escapeNonAscii)
                 {
                     int c;
-                    while (i < codePoints.Length && (c = codePoints[i]) < 127 && !specialChars[c])
+                    while (i < length && (c = chars.CodePointAt(i)) < 127 && !specialChars[c])
                     {
                         i++;
                     }
@@ -228,7 +231,7 @@ namespace OutSmart.DAXon.Serialization
                 else
                 {
                     int c;
-                    while (i < codePoints.Length && ((c = codePoints[i]) < 127 ? !specialChars[c] : (characterSet.InCharset(c) && c > 160)))
+                    while (i < length && ((c = chars.CodePointAt(i)) < 127 ? !specialChars[c] : (characterSet.InCharset(c) && c > 160)))
                     {
                         i++;
                     }
@@ -236,7 +239,7 @@ namespace OutSmart.DAXon.Serialization
 
 
                 // if this was the whole string, output the string and quit
-                if (i == codePoints.Length)
+                if (i == length)
                 {
                     writer.Write(chars.Substring(segstart));
                     return;
@@ -249,7 +252,7 @@ namespace OutSmart.DAXon.Serialization
                     writer.Write(chars.Substring(segstart, i));
                 }
 
-                int ch = codePoints[i];
+                int ch = chars.CodePointAt(i);
                 if (ch == 0)
                 {
 
@@ -272,6 +275,19 @@ namespace OutSmart.DAXon.Serialization
                 {
                     WriteCodePoint(ch);
                 }
+                else if (ch < 160 && (ch >= 127 || (ch < 32 && ch != '\n' && ch != '\t' && ch != '\r')))
+                {
+                    if (RejectControlCharacters())
+                    {
+
+                        // below html-version 5 these control characters, U+007F and C0 among them, are SERE0014; from 5 a reference
+                        throw new XPathException("Illegal HTML character: decimal " + ch, "SERE0014");
+                    }
+                    else
+                    {
+                        characterReferenceGenerator.OutputCharacterReference(ch, writer);
+                    }
+                }
                 else if (ch <= 127)
                 {
 
@@ -288,7 +304,7 @@ namespace OutSmart.DAXon.Serialization
                         }
                         else if (ch == '&')
                         {
-                            if (i + 1 < codePoints.Length && codePoints[i + 1] == '{')
+                            if (i + 1 < length && chars.CodePointAt(i + 1) == '{')
                             {
                                 writer.WriteCodePoint('&'); // not escaped if followed by '{'
                             }
@@ -336,19 +352,6 @@ namespace OutSmart.DAXon.Serialization
                         {
                             writer.WriteAscii(StringConstants.ESCAPE_CR);
                         }
-                    }
-                }
-                else if (ch < 160)
-                {
-                    if (RejectControlCharacters())
-                    {
-
-                        // these control characters are illegal in HTML
-                        throw new XPathException("Illegal HTML character: decimal " + ch, "SERE0014");
-                    }
-                    else
-                    {
-                        characterReferenceGenerator.OutputCharacterReference(ch, writer);
                     }
                 }
                 else if (ch == 160)
@@ -455,7 +458,7 @@ namespace OutSmart.DAXon.Serialization
                 OpenDocument();
             }
 
-            UnicodeString t = Literal(data.Tidy());
+            UnicodeString t = Literal(data);
             if (t.IndexOf('>') >= 0)
             {
                 throw new XPathException("A processing instruction in HTML must not contain a > character", "SERE0015");
@@ -474,7 +477,7 @@ namespace OutSmart.DAXon.Serialization
                 writer.Write(t);
                 writer.WriteCodePoint('>');
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }

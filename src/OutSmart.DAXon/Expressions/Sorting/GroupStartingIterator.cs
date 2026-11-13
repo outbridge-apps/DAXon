@@ -5,7 +5,6 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Expressions.Elaboration;
-using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
@@ -14,40 +13,20 @@ namespace OutSmart.DAXon.Expressions.Sorting
 {
     internal sealed class GroupStartingIterator : GroupMatchingIterator, ILookaheadIterator, IGroupIterator
     {
-        public GroupStartingIterator(IPullEvaluator select, Patterns.Pattern startPattern, IXPathContext context)
+        public GroupStartingIterator(IPullEvaluator select, Patterns.Pattern startPattern, IXPathContext context) : base(select, startPattern, context)
         {
-            this.select = select;
-            this.pattern = startPattern;
-            baseContext = context;
-            runningContext = context.NewMinorContext();
-            this.population = runningContext.TrackFocus(select.Iterate(context));
-
-            // the first item in the population always starts a new group
-            nextItem = population.Next();
         }
 
-        public override bool SupportsGetLength()
+        protected override GroupMatchingIterator Restart()
         {
-            return true;
-        }
-
-        public override int GetLength()
-        {
-            try
-            {
-                GroupStartingIterator another = new GroupStartingIterator(select, pattern, baseContext);
-                return Count.SteppingCount(another);
-            }
-            catch (XPathException e)
-            {
-                throw new UncheckedXPathException(e);
-            }
+            return new GroupStartingIterator(select, pattern, baseContext);
         }
 
         protected override void Advance()
         {
             currentMembers = new List<IItem>(10);
             currentMembers.Add(current);
+            Core.MemoryLedger.Collected(currentMembers);
             while (true)
             {
                 IItem nextCandidate = population.Next();
@@ -64,6 +43,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 else
                 {
                     currentMembers.Add(nextCandidate);
+                    Core.MemoryLedger.Collected(currentMembers);
                 }
             }
 

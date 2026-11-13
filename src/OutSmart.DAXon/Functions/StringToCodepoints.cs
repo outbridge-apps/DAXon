@@ -62,9 +62,10 @@ namespace OutSmart.DAXon.Functions
                         StringValue val = (StringValue)arg0(context);
                         return val == null ? (ISequenceIterator)Trees.Iterators.EmptyIterator.GetInstance() : val.IterateCharacters();
                     }
-                    catch (XPathException e)
+                    catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                     {
-                        throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                        // Decorated in the filter, never handled (XPathException.PassOn).
+                        throw;
                     }
                 };
             }

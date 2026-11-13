@@ -442,25 +442,23 @@ namespace OutSmart.DAXon.Trees.Tiny
             }
 
 
-            //                int[] r2 = new int[rootIndexUsed * 2];
-            //                System.arraycopy(rootIndex, 0, r2, 0, rootIndexUsed);
-            //                rootIndex = r2;
-            //            }
-            //            rootIndex[rootIndexUsed++] = numberOfNodes;
-            //        }
             return numberOfNodes++;
         }
 
-        public void AppendChars(UnicodeString chars)
+        // Also called by TinyBuilder's fused parse path, which appends to the text buffer itself and so never reached
+        // the ledger: a document of one long text node was built outside it.
+        internal void TextAppended()
         {
-            textBuffer.AppendUnicodeString(chars); //        chars.supplyContent(textBuffer, 0, chars.length());
             if (!inLedger && textBuffer.Length() >= MemoryLedger.BigChars)
             {
                 Grown();
             }
+        }
 
-            //        ensureTextCapacity(1);
-            //        textChunks[textChunksUsed++] = chars;
+        public void AppendChars(UnicodeString chars)
+        {
+            textBuffer.AppendUnicodeString(chars);
+            TextAppended();
         }
 
         public void Condense(Statistics statistics)
@@ -525,12 +523,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                 MemoryLedger.Active?.Sample(this, EstimatedBytes());
             }
 
-            statistics.UpdateStatistics(numberOfNodes, numberOfAttributes, numberOfNamespaces, textBuffer, inputLength); //        System.Console.Error.println("STATS: " + averageNodes + ", " + averageAttributes + ", "
-            //                + averageNamespaces + ", " + averageCharacters);
-            //        if (charBufferLength * 3 < charBuffer.length ||
-            //                charBuffer.length - charBufferLength > 10000) {
-            //            charBuffer = c2;
-            //        }
+            statistics.UpdateStatistics(numberOfNodes, numberOfAttributes, numberOfNamespaces, textBuffer, inputLength);
         }
 
         public void SetElementAnnotation(int nodeNr, ISchemaType type)
@@ -618,7 +611,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                 }
                 else if (annotation == StandardNames.XS_STRING)
                 {
-                    return new StringValue(TinyParentNodeImpl.GetStringValue(this, nodeNr).Tidy());
+                    return new StringValue(TinyParentNodeImpl.GetStringValue(this, nodeNr));
                 }
                 else if (annotation == StandardNames.XS_ANY_URI)
                 {
@@ -626,7 +619,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                 }
                 else if (annotation == StandardNames.XS_ID)
                 {
-                    return new StringValue(TinyParentNodeImpl.GetStringValue(this, nodeNr).Tidy(), BuiltInAtomicType.ID);
+                    return new StringValue(TinyParentNodeImpl.GetStringValue(this, nodeNr), BuiltInAtomicType.ID);
                 }
                 else
                 {
@@ -854,7 +847,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                     // is an IDREF: see Saxon bug 2331
                     try
                     {
-                        IAtomicSequence @as = type.GetTypedValue(StringView.Of(attValue).Tidy(), null, GetConfiguration().GetConversionRules());
+                        IAtomicSequence @as = type.GetTypedValue(StringView.Of(attValue), null, GetConfiguration().GetConversionRules());
                         foreach (AtomicValue v in @as)
                         {
                             if (v.GetItemType().IsIdRefType())
@@ -892,9 +885,7 @@ namespace OutSmart.DAXon.Trees.Tiny
                 // this is the first typed attribute;
                 // create an array for the types, and set all previous attributes to untyped
                 attType = new ISimpleType[attParent.Length];
-                ArrayTools.Fill(attType, 0, numberOfAttributes, BuiltInAtomicType.UNTYPED_ATOMIC); //            for (int i=0; i<numberOfAttributes; i++) {
-                //                attTypeCode[i] = StandardNames.XDT_UNTYPED_ATOMIC;
-                //            }
+                ArrayTools.Fill(attType, 0, numberOfAttributes, BuiltInAtomicType.UNTYPED_ATOMIC);
             }
         }
 
@@ -910,7 +901,7 @@ namespace OutSmart.DAXon.Trees.Tiny
 
         public void IndexIDElement(NodeInfo root, int nodeNr)
         {
-            string id = Whitespace.Trim(TinyParentNodeImpl.GetStringValue(this, nodeNr).Tidy()).ToString();
+            string id = Whitespace.Trim(TinyParentNodeImpl.GetStringValue(this, nodeNr)).ToString();
             if (root.GetNodeKind() == Types.Type.DOCUMENT && NameChecker.IsValidNCName(id))
             {
                 NodeInfo e = GetNode(nodeNr);

@@ -59,6 +59,21 @@ namespace OutSmart.DAXon.Expressions.Parsing
         {
             // Every nested sub-expression (function arguments, predicates, parenthesized/array/map
             // constructors) funnels through here, so one depth guard covers both XPath and XQuery.
+            EnterNested();
+            try
+            {
+                return ParseExprSingleImpl();
+            }
+            finally
+            {
+                expressionDepth--;
+            }
+        }
+
+        // One level deeper, or XPST0003: the caller leaves it with ExitNested() in a finally. Also where a parse
+        // recurses without ParseExprSingle (a run of unary signs, a pattern in parentheses).
+        private protected void EnterNested()
+        {
             if (++expressionDepth > MAX_EXPRESSION_NESTING)
             {
                 expressionDepth--;
@@ -85,15 +100,11 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 // still Grumbles - that one is a static limit, not an exhausted stack.
                 throw e.Describe("Expression is too deeply nested (insufficient stack on this thread)", "XPST0003", null);
             }
+        }
 
-            try
-            {
-                return ParseExprSingleImpl();
-            }
-            finally
-            {
-                expressionDepth--;
-            }
+        private protected void ExitNested()
+        {
+            expressionDepth--;
         }
 
         private Expression ParseExprSingleImpl()
@@ -576,9 +587,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 }
 
 
-                //                throw new XPathException("Cannot cast to xs:anySimpleType", "XPST0080");
-                //            } else {
-                throw new XPathException("Cannot cast to " + type.GetType(), "XPST0051"); //            }
+                throw new XPathException("Cannot cast to " + type.GetType(), "XPST0051");
             }
             else
             {
@@ -918,8 +927,6 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 if (t.currentToken == Token.IF)
                 {
 
-                    //                nextToken();
-                    //                expect(Token.LPAR);
                     NextToken();
                     condition = ParseExpression();
                     Expect(Token.RPAR);

@@ -112,12 +112,12 @@ namespace OutSmart.DAXon.Types
             public static readonly StringToString INSTANCE = new StringToString();
             public override IConversionResult Convert(AtomicValue input)
             {
-                return new StringValue(input.UnicodeStringValue.Tidy());
+                return new StringValue(input.UnicodeStringValue);
             }
 
             public override IConversionResult ConvertString(UnicodeString input)
             {
-                return new StringValue(input.Tidy());
+                return new StringValue(input);
             }
 
             public override ValidationFailure Validate(UnicodeString input)
@@ -166,7 +166,7 @@ namespace OutSmart.DAXon.Types
             public static readonly StringToNormalizedString INSTANCE = new StringToNormalizedString();
             public override IConversionResult ConvertString(UnicodeString input)
             {
-                return new StringValue(Whitespace.NormalizeWhitespace(input).Tidy(), BuiltInAtomicType.NORMALIZED_STRING);
+                return new StringValue(Whitespace.NormalizeWhitespace(input), BuiltInAtomicType.NORMALIZED_STRING);
             }
 
             public override ValidationFailure Validate(UnicodeString input)
@@ -188,7 +188,7 @@ namespace OutSmart.DAXon.Types
             public static readonly StringToToken INSTANCE = new StringToToken();
             public override IConversionResult ConvertString(UnicodeString input)
             {
-                return new StringValue(Whitespace.CollapseWhitespace(input).Tidy(), BuiltInAtomicType.TOKEN);
+                return new StringValue(Whitespace.CollapseWhitespace(input), BuiltInAtomicType.TOKEN);
             }
 
             public override ValidationFailure Validate(UnicodeString input)

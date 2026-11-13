@@ -420,7 +420,7 @@ namespace OutSmart.DAXon.Trees.Tiny
 
             if (!chars.IsEmpty())
             {
-                nodeNr = MakeTextNode(chars.Tidy());
+                nodeNr = MakeTextNode(chars);
                 if (lineNumbering)
                 {
                     tree.SetLineNumber(nodeNr, locationId.GetLineNumber(), locationId.GetColumnNumber());
@@ -511,6 +511,8 @@ namespace OutSmart.DAXon.Trees.Tiny
                 cpLen = len - surrogates / 2;
                 buffer.AppendCharSpan(chars, len, max, surrogates);
             }
+
+            tt.TextAppended();
             int n = tt.numberOfNodes - 1;
             if (tt.nodeKind[n] == Types.Type.TEXT && tt.depth[n] == currentDepth)
             {
@@ -545,9 +547,6 @@ namespace OutSmart.DAXon.Trees.Tiny
         protected virtual int MakeTextNode(UnicodeString chars)
         {
 
-            //            chars.verifyCharacters();
-            //            //System.Console.Error.println("make text node length " + chars.length());
-            //        }
             TinyTree tt = tree;
             LargeTextBuffer buffer = tt.textBuffer;
             int bufferStart = buffer.Length();
@@ -568,7 +567,6 @@ namespace OutSmart.DAXon.Trees.Tiny
 
                 nodeNr = tt.AddNode(Types.Type.TEXT, currentDepth, bufferStart, len, -1);
 
-                //nodeNr = tt.addNode(OutSmart.DAXon.Types.Type.TEXT, currentDepth, tt.textChunksUsed, -1, -1);
                 int prev = prevAtDepth[currentDepth];
                 if (prev > 0)
                 {
@@ -633,7 +631,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             textualElementEligibilityState = Eligibility.INELIGIBLE;
             int s = (int)commentBuilder.Length();
             commentBuilder.Accept(chars);
-            nodeNr = tt.AddNode(Types.Type.COMMENT, currentDepth, s, chars.Tidy().Length32(), -1);
+            nodeNr = tt.AddNode(Types.Type.COMMENT, currentDepth, s, chars.Length32(), -1);
             int prev = prevAtDepth[currentDepth];
             if (prev > 0)
             {

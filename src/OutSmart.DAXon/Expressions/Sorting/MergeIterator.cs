@@ -12,92 +12,139 @@ using System.Collections.Generic;
 
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    // Faithful port of net.sf.saxon.expr.sort.MergeIterator (Saxon 12.9). Was a hollow stub that didn't
-    // even implement ISequenceIterator — every multi-source xsl:merge cast it and crashed (InvalidCast).
-    // The sorted merge of two merge inputs, retaining all duplicates; no grouping of adjacent items.
+    // The sorted merge of the merge inputs, retaining all duplicates; no grouping of adjacent items. Saxon chains one
+    // two-way MergeIterator per input, which recursed through every input for every item: k inputs cost O(n·k) time
+    // and k frames of stack (20 000 for-each-item anchors: 49 s, and an overflow on a small thread). One binary heap
+    // over the inputs' next items instead, ties to the earlier input: the order that chain gives.
     internal sealed class MergeIterator : ISequenceIterator, ILookaheadIterator
     {
-        private readonly ISequenceIterator e1;
-        private readonly ISequenceIterator e2;
-        private ObjectValue<ItemWithMergeKeys> nextItem1;
-        private ObjectValue<ItemWithMergeKeys> nextItem2;
+        private readonly ISequenceIterator[] inputs;
+        private readonly ObjectValue<ItemWithMergeKeys>[] heads;   // the next item of each input
+        private readonly int[] heap;   // numbers of the inputs that have one, least (head, number) first
+        private int size;
         private readonly IComparer<ObjectValue<ItemWithMergeKeys>> comparer;
 
-        public bool HasNext => nextItem1 != null || nextItem2 != null;
+        public bool HasNext => size > 0;
 
         /// <summary>
-        /// Create the iterator. The two input iterators must return nodes in merge key order.
+        /// Create the iterator. Each input must return its items in merge key order.
         /// </summary>
-        public MergeIterator(ISequenceIterator p1, ISequenceIterator p2, IComparer<ObjectValue<ItemWithMergeKeys>> comparer)
+        public MergeIterator(IList<ISequenceIterator> inputs, IComparer<ObjectValue<ItemWithMergeKeys>> comparer)
         {
-            this.e1 = p1;
-            this.e2 = p2;
+            this.inputs = new ISequenceIterator[inputs.Count];
+            inputs.CopyTo(this.inputs, 0);
             this.comparer = comparer;
-            nextItem1 = (ObjectValue<ItemWithMergeKeys>)e1.Next();
-            nextItem2 = (ObjectValue<ItemWithMergeKeys>)e2.Next();
+            heads = new ObjectValue<ItemWithMergeKeys>[inputs.Count];
+            heap = new int[inputs.Count];
+            for (int i = 0; i < this.inputs.Length; i++)
+            {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+                heads[i] = (ObjectValue<ItemWithMergeKeys>)this.inputs[i].Next();
+                if (heads[i] != null)
+                {
+                    heap[size] = i;
+                    SiftUp(size++);
+                }
+            }
         }
 
         public bool SupportsHasNext() => true;
 
         public IItem Next()
         {
-            // main merge loop: take an item from whichever set has the lower value; ties go to the first.
-            if (nextItem1 != null && nextItem2 != null)
+            if (size == 0)
             {
-                int c;
-                try
-                {
-                    c = comparer.Compare(nextItem1, nextItem2);
-                }
-                catch (System.InvalidCastException)
-                {
-                    ItemWithMergeKeys i1 = nextItem1.GetObject();
-                    ItemWithMergeKeys i2 = nextItem2.GetObject();
-                    AtomicValue a1 = i1.sortKeyValues[0];
-                    AtomicValue a2 = i2.sortKeyValues[0];
-                    XPathException err = new XPathException("Merge key values are of non-comparable types ("
-                        + OutSmart.DAXon.Types.Type.DisplayTypeName(a1)
-                        + " and " + OutSmart.DAXon.Types.Type.DisplayTypeName(a2) + ")", "XTTE2230");
-                    err.SetIsTypeError(true);
-                    throw new UncheckedXPathException(err);
-                }
-
-                if (c <= 0)
-                {
-                    ObjectValue<ItemWithMergeKeys> current = nextItem1;
-                    nextItem1 = (ObjectValue<ItemWithMergeKeys>)e1.Next();
-                    return current;
-                }
-                else
-                {
-                    ObjectValue<ItemWithMergeKeys> current = nextItem2;
-                    nextItem2 = (ObjectValue<ItemWithMergeKeys>)e2.Next();
-                    return current;
-                }
+                return null;
             }
 
-            // collect the remaining items from whichever set has a residue
-            if (nextItem1 != null)
+            int top = heap[0];
+            ObjectValue<ItemWithMergeKeys> current = heads[top];
+            heads[top] = (ObjectValue<ItemWithMergeKeys>)inputs[top].Next();
+            if (heads[top] == null)
             {
-                ObjectValue<ItemWithMergeKeys> current = nextItem1;
-                nextItem1 = (ObjectValue<ItemWithMergeKeys>)e1.Next();
-                return current;
+                heap[0] = heap[--size];
             }
 
-            if (nextItem2 != null)
+            SiftDown(0);
+            return current;
+        }
+
+        private void SiftUp(int k)
+        {
+            while (k > 0)
             {
-                ObjectValue<ItemWithMergeKeys> current = nextItem2;
-                nextItem2 = (ObjectValue<ItemWithMergeKeys>)e2.Next();
-                return current;
+                int parent = (k - 1) / 2;
+                if (!Before(heap[k], heap[parent]))
+                {
+                    return;
+                }
+
+                Swap(k, parent);
+                k = parent;
+            }
+        }
+
+        private void SiftDown(int k)
+        {
+            while (true)
+            {
+                int least = k;
+                int left = 2 * k + 1;
+                if (left < size && Before(heap[left], heap[least]))
+                {
+                    least = left;
+                }
+
+                if (left + 1 < size && Before(heap[left + 1], heap[least]))
+                {
+                    least = left + 1;
+                }
+
+                if (least == k)
+                {
+                    return;
+                }
+
+                Swap(k, least);
+                k = least;
+            }
+        }
+
+        private void Swap(int a, int b)
+        {
+            int t = heap[a];
+            heap[a] = heap[b];
+            heap[b] = t;
+        }
+
+        // Whether input a's next item comes before input b's.
+        private bool Before(int a, int b)
+        {
+            int c;
+            try
+            {
+                c = comparer.Compare(heads[a], heads[b]);
+            }
+            catch (System.InvalidCastException)
+            {
+                AtomicValue a1 = heads[a].GetObject().sortKeyValues[0];
+                AtomicValue a2 = heads[b].GetObject().sortKeyValues[0];
+                XPathException err = new XPathException("Merge key values are of non-comparable types ("
+                    + OutSmart.DAXon.Types.Type.DisplayTypeName(a1)
+                    + " and " + OutSmart.DAXon.Types.Type.DisplayTypeName(a2) + ")", "XTTE2230");
+                err.SetIsTypeError(true);
+                throw new UncheckedXPathException(err);
             }
 
-            return null;
+            return c < 0 || (c == 0 && a < b);
         }
 
         public void Dispose()
         {
-            e1.Dispose();
-            e2.Dispose();
+            foreach (ISequenceIterator input in inputs)
+            {
+                input.Dispose();
+            }
         }
     }
 }

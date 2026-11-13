@@ -23,11 +23,6 @@ using OutSmart.DAXon.Internal.Collections;
 using System.IO;
 namespace OutSmart.DAXon.XQuery
 {
-    //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
-    //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
-    //                + "    }"
-    //})
     public class StaticQueryContext
     {
         private readonly object syncLock = new object();
@@ -333,12 +328,17 @@ namespace OutSmart.DAXon.XQuery
 
         public virtual XQueryExpression CompileQuery(string query)
         {
+            return Compile(() => query);
+        }
+
+        // Compile under the Processor's deadline: constant folding of hostile query text is otherwise unbounded work before
+        // any run-time deadline exists (see ArmThreadDeadline). A reader or stream is read under it too.
+        private XQueryExpression Compile(Func<string> read)
+        {
             using RunResources run = RunResources.Enter();
-            // Compile under the Processor's deadline: constant folding of hostile query text is
-            // otherwise unbounded work before any run-time deadline exists (see ArmThreadDeadline).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Compilation");
-            try
+            using (Controller.ArmScope(config, "Compilation"))
             {
+                string query = read();
                 QueryModule mainModule = new QueryModule(this);
                 XQueryParser qp = (XQueryParser)config.NewExpressionParser("XQ", updating, mainModule);
                 if (codeInjector != null)
@@ -353,32 +353,32 @@ namespace OutSmart.DAXon.XQuery
                 qp.SetStreaming(IsStreaming());
                 return qp.MakeXQueryExpression(query, mainModule, config);
             }
-            finally
-            {
-                Controller.RestoreThreadDeadline(prevDeadline);
-            }
         }
 
         public virtual XQueryExpression CompileQuery(TextReader source)
         {
             lock (syncLock)
             {
-                char[] buffer = new char[4096];
-                StringBuilder sb = new StringBuilder(4096);
-                while (true)
+                return Compile(() =>
                 {
-                    int n = source.Read(buffer, 0, buffer.Length);
-                    if (n > 0)
+                    char[] buffer = new char[4096];
+                    StringBuilder sb = new StringBuilder(4096);
+                    while (true)
                     {
-                        sb.Append(buffer, 0, n);
+                        int n = source.Read(buffer, 0, buffer.Length);
+                        if (n > 0)
+                        {
+                            sb.Append(buffer, 0, n);
+                            Controller.CheckActiveTimeout();
+                        }
+                        else
+                        {
+                            break;
+                        }
                     }
-                    else
-                    {
-                        break;
-                    }
-                }
 
-                return CompileQuery(sb.ToString());
+                    return sb.ToString();
+                });
             }
         }
 
@@ -388,8 +388,7 @@ namespace OutSmart.DAXon.XQuery
             {
                 try
                 {
-                    string query = QueryReader.ReadInputStream(source, encoding, config.ValidCharacterChecker);
-                    return CompileQuery(query);
+                    return Compile(() => QueryReader.ReadInputStream(source, encoding, config.ValidCharacterChecker));
                 }
                 catch (UncheckedXPathException e)
                 {
@@ -410,7 +409,7 @@ namespace OutSmart.DAXon.XQuery
 
         public virtual void CompileLibrary(System.IO.Stream source, string encoding)
         {
-            throw new NotSupportedException("Separate compilation of query libraries requires Saxon-EE");
+            throw new XPathException("Separate compilation of query libraries requires Saxon-EE");
         }
 
         public virtual QueryLibrary GetCompiledLibrary(NamespaceUri @namespace)

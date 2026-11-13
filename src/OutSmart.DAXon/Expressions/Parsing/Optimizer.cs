@@ -141,14 +141,11 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public virtual IGroundedValue MakeIndexedValue(ISequenceIterator iter)
         {
-            throw new NotSupportedException("Indexing requires Saxon-EE");
+            // No index without Saxon-EE: the value itself serves, searched in order.
+            return SequenceTool.ToGroundedValue(iter);
         }
 
         public virtual void OptimizeNodeSetPattern(NodeSetPattern pattern)
-        {
-        }
-
-        public virtual void PrepareForStreaming(Expression exp)
         {
         }
 

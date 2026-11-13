@@ -152,7 +152,7 @@ namespace OutSmart.DAXon.Events
                 }
 
                 o.SetNodeKind(Types.Type.TEXT);
-                o.SetStringValue(s.Tidy());
+                o.SetStringValue(s);
                 Write(o);
             }
             else
@@ -177,7 +177,7 @@ namespace OutSmart.DAXon.Events
                 }
 
                 o.SetNodeKind(Types.Type.COMMENT);
-                o.SetStringValue(comment.Tidy());
+                o.SetStringValue(comment);
                 Write(o);
             }
             else
@@ -200,7 +200,7 @@ namespace OutSmart.DAXon.Events
 
                 o.SetNodeName(new NoNamespaceName(target));
                 o.SetNodeKind(Types.Type.PROCESSING_INSTRUCTION);
-                o.SetStringValue(data.Tidy());
+                o.SetStringValue(data);
                 Write(o);
             }
             else

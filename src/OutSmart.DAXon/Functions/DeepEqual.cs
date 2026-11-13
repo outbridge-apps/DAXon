@@ -27,12 +27,8 @@ namespace OutSmart.DAXon.Functions
 {
     public class DeepEqual : CollatingFunctionFixed
     {
-        public static OptionsParameter OPTION_DETAILS;
+        public static readonly OptionsParameter OPTION_DETAILS;
 
-        /*
-     * Determine whether two nodes are deep-equal
-     * @return null if they are deep equal, or an explanation of the reason if not
-     */
         public override string StreamerName => "DeepEqual";
         static DeepEqual()
         {
@@ -43,7 +39,7 @@ namespace OutSmart.DAXon.Functions
             o.AddAllowedOption("false-on-error", SequenceType.SINGLE_BOOLEAN, BooleanValue.FALSE);
             o.AddAllowedOption("id-property", SequenceType.SINGLE_BOOLEAN, BooleanValue.FALSE);
             o.AddAllowedOption("idrefs-property", SequenceType.SINGLE_BOOLEAN, BooleanValue.FALSE);
-            o.AddAllowedOption("@in-scope-namespaces", SequenceType.SINGLE_BOOLEAN, BooleanValue.FALSE);
+            o.AddAllowedOption("in-scope-namespaces", SequenceType.SINGLE_BOOLEAN, BooleanValue.FALSE);
             o.AddAllowedOption("namespace-prefixes", SequenceType.SINGLE_BOOLEAN, BooleanValue.FALSE);
             o.AddAllowedOption("nilled-property", SequenceType.SINGLE_BOOLEAN, BooleanValue.FALSE);
             o.AddAllowedOption("normalize-space", SequenceType.SINGLE_BOOLEAN, BooleanValue.FALSE);
@@ -148,13 +144,11 @@ namespace OutSmart.DAXon.Functions
 
                 int pos1 = 0;
                 int pos2 = 0;
-                int itemSteps = 0;
                 while (true)
                 {
-                    if ((++itemSteps & 1023) == 0)
-                    {
-                        Core.Controller.CheckActiveTimeout();
-                    }
+                    // Every step: nested arrays and maps compare a few items per call, and a level may hold the one below
+                    // twice (60 levels, 2^60 calls). The check keeps its own stride.
+                    Core.Controller.CheckActiveTimeout();
 
                     IItem item1 = op1.Next();
                     IItem item2 = op2.Next();
@@ -320,10 +314,6 @@ namespace OutSmart.DAXon.Functions
         }
 
         // treat as equal, no action
-        /*
-     * Determine whether two nodes are deep-equal
-     * @return null if they are deep equal, or an explanation of the reason if not
-     */
         public static string DeepEqualFn(NodeInfo n1, NodeInfo n2, IXPathContext context, DeepEqualOptions options)
         {
             // Descends child-by-child, so the recursion depth is the INPUT TREE's depth: unlike a
@@ -517,7 +507,7 @@ namespace OutSmart.DAXon.Functions
                                     {
                                         if (!v1.Substring(0, i).Equals(v2.Substring(0, i)))
                                         {
-                                            message += " different at char " + (i - 1) + "(\"" + v1.Substring(i - 1, Math.Min(v1.Length, i + 10) - i + 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/ + "\", \"" + v2.Substring(i - 1, Math.Min(v2.Length, i + 10) - i + 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/ + "\")";
+                                            message += " different at char " + (i - 1) + "(\"" + v1.Substring(i - 1, Math.Min(v1.Length, i + 10) - i + 1) + "\", \"" + v2.Substring(i - 1, Math.Min(v2.Length, i + 10) - i + 1) + "\")";
                                             break;
                                         }
                                     }
@@ -563,7 +553,7 @@ namespace OutSmart.DAXon.Functions
 
             if (options.inScopeNamespacesSignificant && !n1.AllNamespaces.Equals(n2.AllNamespaces))
             {
-                string reason = "@in-scope namespaces differ: " + n1.AllNamespaces + " versus " + n2.AllNamespaces;
+                string reason = "in-scope namespaces differ: " + n1.AllNamespaces + " versus " + n2.AllNamespaces;
                 Explain(reporter, reason, options, n1, n2);
                 return reason;
             }
@@ -579,10 +569,30 @@ namespace OutSmart.DAXon.Functions
 
             NodeInfo att1;
             a1 = n1.IterateAxis(AxisInfo.ATTRIBUTE);
+            Dictionary<(NamespaceUri, string), NodeInfo> secondByName = null;   // past 16: a search per attribute was quadratic
+            int compared = 0;
             while ((att1 = a1.Next()) != null)
             {
-                IAxisIterator a2iter = n2.IterateAxis(AxisInfo.ATTRIBUTE, new SameNameTest(att1));
-                NodeInfo att2 = a2iter.Next();
+                NodeInfo att2;
+                if (++compared == 17)
+                {
+                    secondByName = new Dictionary<(NamespaceUri, string), NodeInfo>();
+                    IAxisIterator all = n2.IterateAxis(AxisInfo.ATTRIBUTE);
+                    for (NodeInfo att; (att = all.Next()) != null;)
+                    {
+                        secondByName[(att.GetNamespaceUri(), att.GetLocalPart())] = att;
+                    }
+                }
+
+                if (secondByName != null)
+                {
+                    secondByName.TryGetValue((att1.GetNamespaceUri(), att1.GetLocalPart()), out att2);
+                }
+                else
+                {
+                    att2 = n2.IterateAxis(AxisInfo.ATTRIBUTE, new SameNameTest(att1)).Next();
+                }
+
                 if (att2 == null)
                 {
                     string reason = "one element has an attribute " + NameOfNode.MakeName(att1).GetStructuredQName().EQName + ", the other does not";
@@ -605,7 +615,7 @@ namespace OutSmart.DAXon.Functions
                 NamespaceMap nm2 = n2.AllNamespaces;
                 if (!nm1.Equals(nm2))
                 {
-                    string reason = "elements have different @in-scope namespaces: " + nm1 + " versus " + nm2;
+                    string reason = "elements have different in-scope namespaces: " + nm1 + " versus " + nm2;
                     Explain(reporter, reason, options, n1, n2);
                     return reason;
                 }
@@ -695,10 +705,6 @@ namespace OutSmart.DAXon.Functions
             return null;
         }
 
-        /*
-     * Determine whether two nodes are deep-equal
-     * @return null if they are deep equal, or an explanation of the reason if not
-     */
         private static string HasSameChildrenUnordered(NodeInfo e0, NodeInfo e1, DeepEqualOptions options, IXPathContext context)
         {
             IList<NodeInfo> children0 = new List<NodeInfo>();
@@ -765,10 +771,6 @@ namespace OutSmart.DAXon.Functions
             return null;
         }
 
-        /*
-     * Determine whether two nodes are deep-equal
-     * @return null if they are deep equal, or an explanation of the reason if not
-     */
         private static int ComputeHashCode(NodeInfo node)
         {
 
@@ -776,10 +778,6 @@ namespace OutSmart.DAXon.Functions
             return node.GetNodeKind() << 24 ^ node.Fingerprint ^ (node.Attributes().Size() << 10);
         }
 
-        /*
-     * Determine whether two nodes are deep-equal
-     * @return null if they are deep equal, or an explanation of the reason if not
-     */
         private static bool CompareStrings(string s1, string s2, DeepEqualOptions options)
         {
             if (options.normalizeSpace)
@@ -804,10 +802,6 @@ namespace OutSmart.DAXon.Functions
             return options.stringCollator.ComparesEqual(StringView.Of(s1), StringView.Of(s2));
         }
 
-        /*
-     * Determine whether two nodes are deep-equal
-     * @return null if they are deep equal, or an explanation of the reason if not
-     */
         private static bool IsIgnorable(NodeInfo node, DeepEqualOptions options)
         {
             int kind = node.GetNodeKind();
@@ -827,10 +821,6 @@ namespace OutSmart.DAXon.Functions
             return false;
         }
 
-        /*
-     * Determine whether two nodes are deep-equal
-     * @return null if they are deep equal, or an explanation of the reason if not
-     */
         private static void Explain(IErrorReporter reporter, string message, DeepEqualOptions options, NodeInfo n1, NodeInfo n2)
         {
             if (options.debug)
@@ -839,10 +829,6 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        /*
-     * Determine whether two nodes are deep-equal
-     * @return null if they are deep equal, or an explanation of the reason if not
-     */
         internal static string ShowKind(IItem item)
         {
             if (item is NodeInfo && ((NodeInfo)item).GetNodeKind() == Types.Type.TEXT && Whitespace.IsAllWhite(item.UnicodeStringValue))
@@ -855,10 +841,6 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        /*
-     * Determine whether two nodes are deep-equal
-     * @return null if they are deep equal, or an explanation of the reason if not
-     */
         internal static ISequenceIterator MergeAdjacentTextNodes(ISequenceIterator @in)
         {
             IList<IItem> items = new List<IItem>(20);
@@ -904,10 +886,6 @@ namespace OutSmart.DAXon.Functions
             return new ListIterator.Of<IItem>(items);
         }
 
-        /*
-     * Determine whether two nodes are deep-equal
-     * @return null if they are deep equal, or an explanation of the reason if not
-     */
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
             IItem arg3 = arguments.Length >= 3 ? arguments[2].Head() : null;
@@ -923,7 +901,6 @@ namespace OutSmart.DAXon.Functions
             }
 
 
-            //GenericAtomicComparer comparer = new GenericAtomicComparer(getStringCollator(), context);
             DeepEqualOptions eqOptions = new DeepEqualOptions(options, collationName, context);
             bool b;
             try
@@ -950,7 +927,7 @@ namespace OutSmart.DAXon.Functions
                 "false-on-error",
                 "id-property",
                 "idrefs-property",
-                "@in-scope-namespaces",
+                "in-scope-namespaces",
                 "namespace-prefixes",
                 "nilled-property",
                 "normalize-space",
@@ -1067,7 +1044,7 @@ namespace OutSmart.DAXon.Functions
                         case "idrefs-property":
                             idrefSignificant = booleanValue;
                             return;
-                        case "@in-scope-namespaces":
+                        case "in-scope-namespaces":
                             inScopeNamespacesSignificant = booleanValue;
                             return;
                         case "namespace-prefixes":
@@ -1107,10 +1084,6 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        /*
-     * Determine whether two nodes are deep-equal
-     * @return null if they are deep equal, or an explanation of the reason if not
-     */
         private sealed class NormalizingComparer : IAtomicComparer
         {
             private IAtomicComparer baseComparer;

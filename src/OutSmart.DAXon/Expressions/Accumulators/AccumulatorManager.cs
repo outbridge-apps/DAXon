@@ -71,11 +71,6 @@ namespace OutSmart.DAXon.Expressions.Accumulators
                     map[acc] = vad;
                     return vad;
                 }
-                else if (doc is TinyTree && ((TinyTree)doc).CopiedFrom != null)
-                {
-                    IIAccumulatorData original = GetAccumulatorData(((TinyTree)doc).CopiedFrom.GetTreeInfo(), acc, context);
-                    return new PathMappedAccumulatorData(((TinyTree)doc).CopiedFrom);
-                }
                 else
                 {
                     AccumulatorData d = new AccumulatorData(acc);

@@ -24,9 +24,6 @@ namespace OutSmart.DAXon.Expressions
 
         public override int ImplementationMethod => BaseExpression.ImplementationMethod;
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         public override string ExpressionName => "tailCallLoop";
         public TailCallLoop(UserFunction function, Expression body) : base(body)
         {
@@ -51,9 +48,6 @@ namespace OutSmart.DAXon.Expressions
         return e2;*/
         }
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         /// <summary>
         /// Iterate over the sequence of values
         /// </summary>
@@ -62,17 +56,11 @@ namespace OutSmart.DAXon.Expressions
             return MakeElaborator().ElaborateForPull().Iterate(context);
         }
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         public override IItem EvaluateItem(IXPathContext context)
         {
             return MakeElaborator().ElaborateForItem().Eval(context);
         }
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         private UserFunction EstablishTargetFunction(ITailCallInfo tail, XPathContextMajor cm)
         {
             if (tail is TailCallFunction)
@@ -91,17 +79,11 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         public override void Process(Outputter output, IXPathContext context)
         {
             MakeElaborator().ElaborateForPush().ProcessLeavingTail(output, context);
         }
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         private ISequence TailCallDifferentFunction(UserFunction userFunction, XPathContextMajor cm)
         {
             cm.ResetStackFrameMap(userFunction.GetStackFrameMap(), userFunction.GetArity());
@@ -109,55 +91,38 @@ namespace OutSmart.DAXon.Expressions
             {
                 return userFunction.BodyEvaluator.Evaluate(cm);
             }
-            catch (XPathException err)
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(GetLocation()).MaybeWithContext(cm)))
             {
-                throw err.MaybeWithLocation(GetLocation()).MaybeWithContext(cm);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         public override ItemType GetItemType()
         {
             return BaseExpression.GetItemType();
         }
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         public override Elaborator GetElaborator()
         {
             return new TailCallLoopElaborator();
         }
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         public interface ITailCallInfo
         {
         }
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         internal sealed class TailCallComponent : ITailCallInfo
         {
             public Component component;
             public UserFunction function;
         }
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         internal sealed class TailCallFunction : ITailCallInfo
         {
             public UserFunction function;
         }
 
-        /*TailCallLoop e2 = new TailCallLoop(containingFunction);
-        e2.setBaseExpression(getBaseExpression().copy());
-        return e2;*/
         private sealed class TailCallLoopElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()

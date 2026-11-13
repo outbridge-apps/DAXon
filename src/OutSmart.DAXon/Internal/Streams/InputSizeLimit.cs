@@ -45,14 +45,19 @@ namespace OutSmart.DAXon.Internal.Streams
 
         public static System.IO.TextReader Apply(System.IO.TextReader reader, long max, string uri, string errorCode)
         {
-            return reader == null || max == long.MaxValue ? reader : new CappedTextReader(reader, max, uri, errorCode);
+            if (reader == null || max == long.MaxValue)
+            {
+                return reader == null || !OutSmart.DAXon.Core.Controller.HasActiveDeadline ? reader : new MeteredTextReader(reader);
+            }
+
+            return new CappedTextReader(reader, max, uri, errorCode);
         }
 
         public static System.IO.Stream Apply(System.IO.Stream stream, long max, string uri, string errorCode)
         {
             if (stream == null || max == long.MaxValue)
             {
-                return stream;
+                return stream == null || !OutSmart.DAXon.Core.Controller.HasActiveDeadline ? stream : new MeteredStream(stream);
             }
 
             long length = -1;
@@ -99,17 +104,18 @@ namespace OutSmart.DAXon.Internal.Streams
             return Metered(stream);
         }
 
-        // A stream of known length under the cap is wrapped only when the call has a memory limit, which each read checks.
+        // A stream of known length under the cap is wrapped only when the call has a memory limit or a deadline, which each
+        // read checks: a host stream that trickles bytes was otherwise checked only at the parse events, 7 s past 1 s.
         private static System.IO.Stream Metered(System.IO.Stream stream)
         {
-            return OutSmart.DAXon.Core.Controller.HasActiveMemoryLimit ? new MeteredStream(stream) : stream;
+            return OutSmart.DAXon.Core.Controller.HasActiveMemoryLimit || OutSmart.DAXon.Core.Controller.HasActiveDeadline ? new MeteredStream(stream) : stream;
         }
 
         // A resource the host passes with its own stream or reader: capped as either would be when passed
         // directly. A copy carries the wrapper; the host's object is left as it was.
         public static OutSmart.DAXon.Lib.ResolvedResource Apply(OutSmart.DAXon.Lib.ResolvedResource source, long max, string errorCode)
         {
-            if (source == null || max == long.MaxValue || (source.Stream == null && source.TextReader == null))
+            if (source == null || (max == long.MaxValue && !OutSmart.DAXon.Core.Controller.HasActiveDeadline) || (source.Stream == null && source.TextReader == null))
             {
                 return source;
             }
@@ -165,7 +171,7 @@ namespace OutSmart.DAXon.Internal.Streams
                     throw Oversized(-1, max, uri, errorCode);
                 }
 
-                OutSmart.DAXon.Core.Controller.CheckActiveMemory();
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();   // the memory limit and the clock, once a buffer
                 return n;
             }
 
@@ -214,7 +220,7 @@ namespace OutSmart.DAXon.Internal.Streams
             public override int Read(byte[] buffer, int offset, int length)
             {
                 int n = inner.Read(buffer, offset, length);
-                OutSmart.DAXon.Core.Controller.CheckActiveMemory();
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();   // the memory limit and the clock, once a buffer
                 return n;
             }
 
@@ -228,6 +234,37 @@ namespace OutSmart.DAXon.Internal.Streams
             public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
             public override void SetLength(long value) => throw new NotSupportedException();
             public override void Write(byte[] buffer, int offset, int length) => throw new NotSupportedException();
+
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing)
+                {
+                    inner.Dispose();
+                }
+
+                base.Dispose(disposing);
+            }
+        }
+
+        // A reader of a call with a deadline and no cap: the clock is read once a buffer, as MeteredStream does.
+        private sealed class MeteredTextReader : System.IO.TextReader
+        {
+            private readonly System.IO.TextReader inner;
+
+            internal MeteredTextReader(System.IO.TextReader inner)
+            {
+                this.inner = inner;
+            }
+
+            public override int Peek() => inner.Peek();
+            public override int Read() => inner.Read();
+
+            public override int Read(char[] buffer, int index, int count)
+            {
+                int n = inner.Read(buffer, index, count);
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();
+                return n;
+            }
 
             protected override void Dispose(bool disposing)
             {
@@ -279,7 +316,7 @@ namespace OutSmart.DAXon.Internal.Streams
             public override int Read(char[] buffer, int index, int count)
             {
                 int n = inner.Read(buffer, index, count);
-                OutSmart.DAXon.Core.Controller.CheckActiveMemory();
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();   // the memory limit and the clock, once a buffer
                 int i = index;
                 int end = index + n;
                 while (i < end)

@@ -16,11 +16,6 @@ using System.Collections.Generic;
 using OutSmart.DAXon.Lib;
 namespace OutSmart.DAXon.Transformation
 {
-    //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(Action<OutSmart.DAXon.Api.IXmlProcessingError> reporter) {"
-    //      + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
-    //      + "    }"
-    //})
     public class CompilerInfo
     {
         private Configuration config;
@@ -163,23 +158,6 @@ namespace OutSmart.DAXon.Transformation
         public virtual Configuration GetConfiguration()
         {
             return config;
-        }
-
-        public virtual void SetJustInTimeCompilation(bool jit)
-        {
-            if (jit)
-            {
-                optimizerOptions = optimizerOptions.Union(new OptimizerOptions(OptimizerOptions.JIT));
-            }
-            else
-            {
-                optimizerOptions = optimizerOptions.Except(new OptimizerOptions(OptimizerOptions.JIT));
-            }
-        }
-
-        public virtual bool IsJustInTimeCompilation()
-        {
-            return optimizerOptions.IsSet(OptimizerOptions.JIT);
         }
 
         public virtual void SetParameter(StructuredQName name, IGroundedValue seq)

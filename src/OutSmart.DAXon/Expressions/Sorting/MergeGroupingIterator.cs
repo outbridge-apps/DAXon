@@ -52,6 +52,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             IItem currentItem = currenti.GetObject().baseItem;
             string source = currenti.GetObject().sourceName;
             currentMembers.Add(currentItem);
+            Core.MemoryLedger.Collected(currentMembers);
             if (source != null)
             {
                 List<IItem> list = new List<IItem>();
@@ -76,6 +77,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                         currentItem = nextCandidate.GetObject().baseItem;
                         source = nextCandidate.GetObject().sourceName;
                         currentMembers.Add(currentItem);
+                        Core.MemoryLedger.Collected(currentMembers);
                         if (source != null)
                         {
                             List<IItem> list;

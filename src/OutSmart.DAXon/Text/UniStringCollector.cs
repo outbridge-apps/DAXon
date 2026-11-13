@@ -47,16 +47,9 @@ namespace OutSmart.DAXon.Text
                 return this;
             }
 
-            if (chars is Slice8 s8)
+            if (Slice8.Latin1Span(chars, out byte[] b, out int start, out int end))
             {
-                AppendBytes(s8.ByteArray, s8.Start, s8.End);
-                return this;
-            }
-
-            if (chars is Twine8 t8)
-            {
-                byte[] b = t8.ByteArray;
-                AppendBytes(b, 0, b.Length);
+                AppendBytes(b, start, end);
                 return this;
             }
 

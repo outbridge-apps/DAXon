@@ -30,6 +30,7 @@ namespace OutSmart.DAXon.Api
 
         internal XdmSequenceIterator(ISequenceIterator @base, RunResources scope)
         {
+            ArgumentCheck.NotNull(@base, nameof(@base));
             this.scope = scope;
             RunResources saved = scope?.Activate();
             try
@@ -39,23 +40,13 @@ namespace OutSmart.DAXon.Api
                 {
                     // the call that makes the lazy result has armed its limits; its steps run under them
                     limits = Core.Controller.ActiveLimits;
-                    limits?.PauseMemory();
+                    limits?.Pause();
                 }
             }
-            catch (UncheckedXPathException uxe)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
                 scope?.CloseAll();
-                throw new DAXonApiUncheckedException(uxe.GetXPathException());
-            }
-            catch (XPathException xe)
-            {
-                scope?.CloseAll();
-                throw new DAXonApiUncheckedException(xe);
-            }
-            catch (RecursionDepthError xe)
-            {
-                scope?.CloseAll();
-                throw new DAXonApiUncheckedException(xe.ToXPathException());
+                throw ApiErrors.WrapUnchecked(e);
             }
             finally
             {
@@ -100,7 +91,7 @@ namespace OutSmart.DAXon.Api
 
                 return more;
             }
-            catch (Exception e) when (IsEngineError(e))
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
                 throw Failed(e);
             }
@@ -112,6 +103,11 @@ namespace OutSmart.DAXon.Api
 
         public virtual T Next()
         {
+            if (closed)
+            {
+                throw new ObjectDisposedException("XdmSequenceIterator");
+            }
+
             RunResources saved = scope?.Activate();
             Core.Controller.DeadlineToken previous = limits == null ? null : Core.Controller.BeginLazyStep(limits);
             try
@@ -119,14 +115,15 @@ namespace OutSmart.DAXon.Api
                 IItem it = @base.Next();
                 if (it == null)
                 {
-                    throw new InvalidOperationException();
+                    scope?.CloseAll();
+                    throw new InvalidOperationException("The sequence has no more items");
                 }
                 else
                 {
                     return (T)(object)XdmItem.WrapItem(it);
                 }
             }
-            catch (Exception e) when (IsEngineError(e))
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
                 throw Failed(e);
             }
@@ -173,7 +170,7 @@ namespace OutSmart.DAXon.Api
                 current = (T)(object)XdmItem.WrapItem(it);
                 return true;
             }
-            catch (Exception e) when (IsEngineError(e))
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
                 throw Failed(e);
             }
@@ -183,21 +180,17 @@ namespace OutSmart.DAXon.Api
             }
         }
 
+        // A lazy evaluation runs once: Reset did nothing, and the enumeration went on.
         void System.Collections.IEnumerator.Reset()
         {
+            throw new NotSupportedException("A sequence iterator cannot be reset");
         }
 
         // A time or memory limit of the call raises a checked XPathException in a step: it reached the host raw.
-        private static bool IsEngineError(Exception e)
-        {
-            return e is UncheckedXPathException || e is XPathException || e is RecursionDepthError;
-        }
-
         private DAXonApiUncheckedException Failed(Exception e)
         {
             scope?.CloseAll();
-            return new DAXonApiUncheckedException(e is UncheckedXPathException u ? u.GetXPathException()
-                : e is RecursionDepthError r ? r.ToXPathException() : (XPathException)e);
+            return ApiErrors.WrapUnchecked(e);
         }
 
         private void EndStep(Core.Controller.DeadlineToken previous, RunResources saved)

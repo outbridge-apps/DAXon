@@ -47,20 +47,7 @@ namespace OutSmart.DAXon.XQuery
 
                             // these are currently no-ops in Saxon
                             NextToken();
-                            Expression content;
-                            if (t.currentToken == Token.RCURLY && allowXPath31Syntax)
-                            {
-                                content = Literal.MakeEmptySequence();
-                            }
-                            else
-                            {
-                                content = ParseExpression();
-                            }
-
-                            Expect(Token.RCURLY);
-                            LookAhead(); // must be done manually after an RCURLY
-                            NextToken();
-                            return content;
+                            return ParseEnclosedBody();
                         case "document":
                             return ParseDocumentConstructor(offset);
                         case "element":
@@ -96,25 +83,20 @@ namespace OutSmart.DAXon.XQuery
             return new ErrorExpression();
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        private Expression ParseDocumentConstructor(int offset)
+        // What follows the "{" of an enclosed expression: the expression, or () for "{}" in 3.1; the "}" is read and passed.
+        private Expression ParseEnclosedBody()
         {
-            NextToken();
-            Expression content;
-            if (t.currentToken == Token.RCURLY && allowXPath31Syntax)
-            {
-                content = Literal.MakeEmptySequence();
-            }
-            else
-            {
-                content = ParseExpression();
-            }
-
+            Expression content = t.currentToken == Token.RCURLY && allowXPath31Syntax ? Literal.MakeEmptySequence() : ParseExpression();
             Expect(Token.RCURLY);
             LookAhead(); // must be done manually after an RCURLY
             NextToken();
+            return content;
+        }
+
+        private Expression ParseDocumentConstructor(int offset)
+        {
+            NextToken();
+            Expression content = ParseEnclosedBody();
             DocumentInstr doc = new DocumentInstr(false, null);
             if (!((QueryModule)env).IsPreserveNamespaces())
             {
@@ -127,9 +109,6 @@ namespace OutSmart.DAXon.XQuery
             return doc;
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
         private Expression ParseComputedElementConstructor(int offset)
         {
             NextToken();
@@ -248,9 +227,6 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
         private Expression ParseNamedElementConstructor(int offset)
         {
             INodeName nodeName = MakeNodeName(t.currentTokenValue, true);
@@ -280,9 +256,6 @@ namespace OutSmart.DAXon.XQuery
             return MakeTracer(el2, nodeName.GetStructuredQName());
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
         private Expression ParseComputedAttributeConstructor(int offset)
         {
             NextToken();
@@ -365,9 +338,6 @@ namespace OutSmart.DAXon.XQuery
             return MakeTracer(att, null);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
         private Expression ParseNamedAttributeConstructor(int offset)
         {
             string warningMessage = null;
@@ -409,58 +379,25 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
         private Expression ParseTextNodeConstructor(int offset)
         {
             NextToken();
-            Expression value;
-            if (t.currentToken == Token.RCURLY && allowXPath31Syntax)
-            {
-                value = Literal.MakeEmptySequence();
-            }
-            else
-            {
-                value = ParseExpression();
-            }
-
-            Expect(Token.RCURLY);
-            LookAhead(); // after an RCURLY
-            NextToken();
+            Expression value = ParseEnclosedBody();
             Expression select = Stringify(value, true, env);
             ValueOf vof = new ValueOf(select, false, true);
             SetLocation(vof, offset);
             return MakeTracer(vof, null);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
         private Expression ParseCommentConstructor(int offset)
         {
             NextToken();
-            Expression value;
-            if (t.currentToken == Token.RCURLY && allowXPath31Syntax)
-            {
-                value = Literal.MakeEmptySequence();
-            }
-            else
-            {
-                value = ParseExpression();
-            }
-
-            Expect(Token.RCURLY);
-            LookAhead(); // after an RCURLY
-            NextToken();
+            Expression value = ParseEnclosedBody();
             Comment com = new Comment();
             MakeSimpleContent(value, com, offset);
             return MakeTracer(com, null);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
         private Expression ParseProcessingInstructionConstructor(int offset)
         {
             NextToken();
@@ -485,9 +422,6 @@ namespace OutSmart.DAXon.XQuery
             return MakeTracer(pi, null);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
         private Expression ParseNamedProcessingInstructionConstructor(int offset)
         {
             string target = t.currentTokenValue;
@@ -526,9 +460,6 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
         protected override Expression ParseTryCatchExpression()
         {
             if (!allowXPath30Syntax)
@@ -538,21 +469,8 @@ namespace OutSmart.DAXon.XQuery
 
             int offset = t.currentTokenStartOffset;
             NextToken();
-            Expression tryExpr;
-            if (t.currentToken == Token.RCURLY && allowXPath31Syntax)
-            {
-                tryExpr = Literal.MakeEmptySequence();
-            }
-            else
-            {
-                tryExpr = ParseExpression();
-            }
-
-            TryCatch tryCatch = new TryCatch(tryExpr);
+            TryCatch tryCatch = new TryCatch(ParseEnclosedBody());
             SetLocation(tryCatch, offset);
-            Expect(Token.RCURLY);
-            LookAhead(); // must be done manually after an RCURLY
-            NextToken();
             bool foundOneCatch = false;
             IList<IQNameTest> tests = new List<IQNameTest>();
             while (IsKeyword("catch"))
@@ -627,20 +545,7 @@ namespace OutSmart.DAXon.XQuery
                 }
 
                 catchDepth++;
-                Expression catchExpr;
-                if (t.currentToken == Token.RCURLY && allowXPath31Syntax)
-                {
-                    catchExpr = Literal.MakeEmptySequence();
-                }
-                else
-                {
-                    catchExpr = ParseExpression();
-                }
-
-                tryCatch.AddCatchExpression(test, catchExpr);
-                Expect(Token.RCURLY);
-                LookAhead(); // must be done manually after an RCURLY
-                NextToken();
+                tryCatch.AddCatchExpression(test, ParseEnclosedBody());
                 catchDepth--;
             }
 
@@ -652,11 +557,6 @@ namespace OutSmart.DAXon.XQuery
             return tryCatch;
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private Expression ParseNamespaceConstructor(int offset)
         {
             if (!allowXPath30Syntax)
@@ -687,11 +587,6 @@ namespace OutSmart.DAXon.XQuery
             return MakeTracer(instr, null);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         private Expression ParseNamedNamespaceConstructor(int offset)
         {
             if (!allowXPath30Syntax)
@@ -721,11 +616,6 @@ namespace OutSmart.DAXon.XQuery
             return MakeTracer(instr, null);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
-        // OK
-        // OK
         protected virtual void MakeSimpleContent(Expression content, SimpleNodeConstructor inst, int offset)
         {
             if (content == null)

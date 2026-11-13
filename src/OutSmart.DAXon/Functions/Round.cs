@@ -201,5 +201,41 @@ namespace OutSmart.DAXon.Functions
             HALF_AWAY_FROM_ZERO,
             HALF_TO_EVEN
         }
+
+        // Whether a value strictly between two multiples of the precision rounds to the upper one: vsMidpoint is its
+        // comparison with their midpoint, floorEven whether the lower one is an even multiple.
+        internal static bool RoundsUp(RoundingRule rule, bool negative, int vsMidpoint, bool floorEven)
+        {
+            switch (rule)
+            {
+                case RoundingRule.FLOOR:
+                    return false;
+                case RoundingRule.CEILING:
+                    return true;
+                case RoundingRule.TOWARD_ZERO:
+                    return negative;
+                case RoundingRule.AWAY_FROM_ZERO:
+                    return !negative;
+            }
+
+            if (vsMidpoint != 0)
+            {
+                return vsMidpoint > 0;
+            }
+
+            switch (rule)
+            {
+                case RoundingRule.HALF_TO_FLOOR:
+                    return false;
+                case RoundingRule.HALF_TOWARD_ZERO:
+                    return negative;
+                case RoundingRule.HALF_AWAY_FROM_ZERO:
+                    return !negative;
+                case RoundingRule.HALF_TO_EVEN:
+                    return !floorEven;
+                default:
+                    return true;
+            }
+        }
     }
 }

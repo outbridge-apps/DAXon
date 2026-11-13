@@ -253,11 +253,6 @@ namespace OutSmart.DAXon.Expressions
             return MakeElaborator().ElaborateForPull().Iterate(context);
         }
 
-        //
-        //
-        //
-        //
-        //    }
         private static ISequenceIterator OptionalGroundedValueIterator(IGroundedValue value)
         {
             if (value == null)
@@ -270,21 +265,11 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public static void MustBeArrayOrMap(Expression exp, IItem baseItem)
         {
             throw new XPathException("The items on the LHS of the '?' operator must be maps or arrays; but value (" + baseItem.ToShortString() + ") was supplied", "XPTY0004").AsTypeError().WithLocation(exp.GetLocation()).WithFailingExpression(exp);
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override void Export(ExpressionPresenter destination)
         {
             destination.StartElement("lookup", this);
@@ -293,11 +278,6 @@ namespace OutSmart.DAXon.Expressions
             destination.EndElement();
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override string ToString()
         {
             string rhs;
@@ -325,21 +305,11 @@ namespace OutSmart.DAXon.Expressions
             return ExpressionTool.Parenthesize(GetLhsExpression()) + "?" + rhs;
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override Elaborator GetElaborator()
         {
             return new LookupElaborator();
         }
 
-        //
-        //
-        //
-        //
-        //    }
         internal sealed class LookupElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()

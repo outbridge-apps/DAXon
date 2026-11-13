@@ -21,13 +21,11 @@ namespace OutSmart.DAXon.Values
     public sealed class BigDecimalValue : DecimalValue
     {
         public const int DIVIDE_PRECISION = 18;
-        public static readonly BigDecimal BIG_DECIMAL_ONE_MILLION = BigDecimal.ValueOf(1000000);
         public static readonly BigDecimal BIG_DECIMAL_ONE_BILLION = BigDecimal.ValueOf(1000000000);
         public static readonly BigDecimalValue ZERO = new BigDecimalValue(BigDecimal.ValueOf(0));
         public static readonly BigDecimalValue ONE = new BigDecimalValue(BigDecimal.ValueOf(1));
-        public static readonly BigDecimalValue TWO = new BigDecimalValue(BigDecimal.ValueOf(2));
-        public static readonly BigDecimalValue THREE = new BigDecimalValue(BigDecimal.ValueOf(3));
         public static readonly BigDecimal MAX_INT = BigDecimal.ValueOf(int.MaxValue);
+        private static readonly BigDecimal MIN_INT = BigDecimal.ValueOf(int.MinValue);
 
         private static readonly OutSmart.DAXon.Internal.Regex.Pattern decimalPattern = OutSmart.DAXon.Internal.Regex.Pattern.Compile("(\\-|\\+)?((\\.[0-9]+)|([0-9]+(\\.[0-9]*)?))");
         private readonly BigDecimal value;
@@ -35,12 +33,11 @@ namespace OutSmart.DAXon.Values
 
         public override BuiltInAtomicType PrimitiveType => BuiltInAtomicType.DECIMAL;
 
-        //    }
         public override UnicodeString CanonicalLexicalRepresentation
         {
             get
             {
-                UnicodeString s = this.UnicodeStringValue.Tidy();
+                UnicodeString s = this.UnicodeStringValue;
                 if (s.IndexOf('.') < 0)
                 {
                     s = s.Concat(StringConstants.POINT_ZERO);
@@ -50,7 +47,6 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override UnicodeString PrimitiveStringValue => BMPString.Of(DecimalToString(value, new StringBuilder(16)).ToString());
         public BigDecimalValue(BigDecimal value) : base(BuiltInAtomicType.DECIMAL)
         {
@@ -427,22 +423,12 @@ namespace OutSmart.DAXon.Values
 
         public override int GetHashCode()
         {
+            // The integer and double rule: the truncated value inside int, else the double's hash. LongValue() keeps the
+            // low 64 bits, so 2^64 hashed as 0 and distinct-values kept it beside the integer 2^64.
             BigDecimal round = value.SetScale(0, RoundingMode.DOWN);
-            long longVal;
-            try
+            if (round.CompareTo(MIN_INT) > 0 && round.CompareTo(MAX_INT) < 0)
             {
-                longVal = round.LongValue();
-            }
-            catch (Exception)
-            {
-
-                // This path is for C#, where converting BigDecimal to long gives an OverflowException if out of range
-                longVal = long.MaxValue;
-            }
-
-            if (longVal > int.MinValue && longVal < int.MaxValue)
-            {
-                return (int)longVal;
+                return round.IntValue();
             }
             else
             {
@@ -455,7 +441,6 @@ namespace OutSmart.DAXon.Values
             return value.Sign != 0;
         }
 
-        //    }
         public static StringBuilder DecimalToString(BigDecimal value, StringBuilder fsb)
         {
 
@@ -536,7 +521,7 @@ namespace OutSmart.DAXon.Values
             }
             else if (scale < 0)
             {
-                string s = value.Abs().UnscaledValue().ToString(CultureInfo.InvariantCulture);
+                string s = BigIntegers.ToDecimalString(value.Abs().UnscaledValue());
                 if (s.Equals("0"))
                 {
                     fsb.Append('0');
@@ -544,7 +529,6 @@ namespace OutSmart.DAXon.Values
                 }
 
 
-                //StringBuilder sb = new StringBuilder(s.length() + (-scale) + 2);
                 if (value.Sign < 0)
                 {
                     fsb.Append('-');
@@ -560,7 +544,7 @@ namespace OutSmart.DAXon.Values
             }
             else
             {
-                string s = value.Abs().UnscaledValue().ToString(CultureInfo.InvariantCulture);
+                string s = BigIntegers.ToDecimalString(value.Abs().UnscaledValue());
                 if (s.Equals("0"))
                 {
                     fsb.Append('0');
@@ -569,7 +553,6 @@ namespace OutSmart.DAXon.Values
 
                 int len = s.Length;
 
-                //StringBuilder sb = new StringBuilder(len+1);
                 if (value.Sign < 0)
                 {
                     fsb.Append('-');
@@ -596,7 +579,6 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         /// <summary>
         /// Negate the value
         /// </summary>
@@ -605,7 +587,6 @@ namespace OutSmart.DAXon.Values
             return new BigDecimalValue(-value);
         }
 
-        //    }
         /// <summary>
         /// Implement the XPath floor() function
         /// </summary>
@@ -614,7 +595,6 @@ namespace OutSmart.DAXon.Values
             return new BigDecimalValue(value.SetScale(0, RoundingMode.FLOOR));
         }
 
-        //    }
         /// <summary>
         /// Implement the XPath ceiling() function
         /// </summary>
@@ -623,7 +603,6 @@ namespace OutSmart.DAXon.Values
             return new BigDecimalValue(value.SetScale(0, RoundingMode.CEILING));
         }
 
-        //    }
         /// <summary>
         /// Implement the XPath round() function
         /// </summary>
@@ -666,7 +645,6 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override NumericValue Round(int scale, Round.RoundingRule roundingRule)
         {
             if (scale >= value.Scale())
@@ -756,19 +734,16 @@ namespace OutSmart.DAXon.Values
             return new BigDecimalValue(scaledValue.StripTrailingZeros());
         }
 
-        //    }
         public override int Signum()
         {
             return value.Sign;
         }
 
-        //    }
         public override bool IsWholeNumber()
         {
             return value.Scale() == 0 || value.CompareTo(value.SetScale(0, RoundingMode.DOWN)) == 0;
         }
 
-        //    }
         public override int AsSubscript()
         {
             if (IsWholeNumber() && value.CompareTo(BigDecimal.Zero) > 0 && value.CompareTo(MAX_INT) <= 0)
@@ -788,7 +763,6 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override NumericValue Abs()
         {
             if (value.Sign > 0)
@@ -801,13 +775,11 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override IXPathComparable GetXPathComparable(IStringCollator collator, int implicitTimezone)
         {
             return this;
         }
 
-        //    }
         public override int CompareTo(IXPathComparable other)
         {
             if (other is NumericValue)
@@ -844,7 +816,6 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override int CompareTo(long other)
         {
             if (other == 0)
@@ -855,7 +826,6 @@ namespace OutSmart.DAXon.Values
             return value.CompareTo(BigDecimal.ValueOf(other));
         }
 
-        //    }
         public override bool IsIdentical(AtomicValue v)
         {
             return (v is DecimalValue) && Equals(v);

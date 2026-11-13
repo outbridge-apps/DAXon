@@ -84,6 +84,11 @@ namespace OutSmart.DAXon.Model
                 expandedName = expandedName.Substring(1);
             }
 
+            if (expandedName.Length == 0)
+            {
+                throw new ArgumentException("Supplied Clark name is empty");   // a serialization property named "", say
+            }
+
             if (expandedName[0] == '{')
             {
                 int closeBrace = expandedName.IndexOf('}');
@@ -92,7 +97,7 @@ namespace OutSmart.DAXon.Model
                     throw new ArgumentException("No closing '}' in Clark name");
                 }
 
-                @namespace = expandedName.Substring(1, closeBrace - 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+                @namespace = expandedName.Substring(1, closeBrace - 1);
                 if (closeBrace == expandedName.Length)
                 {
                     throw new ArgumentException("Missing local part in Clark name");
@@ -179,7 +184,7 @@ namespace OutSmart.DAXon.Model
                     throw new ArgumentException("Invalid EQName: local part is missing");
                 }
 
-                string uri = eqName.Substring(2, endBrace - 2); /*Java substring(begin,END) -> C# (start,LENGTH)*/
+                string uri = eqName.Substring(2, endBrace - 2);
                 if (uri.IndexOf('{') >= 0)
                 {
                     throw new ArgumentException("Invalid EQName: open brace in URI part");

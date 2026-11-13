@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /*
      * Token numbers. Those in the range 0 to LAST_OPERATOR are tokens that can be followed
      * by a name or expression; those above this range are tokens that can be
-     * followed by an binary @operator.
+     * followed by an binary operator.
      */
         public const int IMPLICIT_EOF = -1;
         /// <summary>
@@ -81,11 +81,11 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /// </summary>
         public const int PLUS = 15;
         /// <summary>
-        /// Binary minus @operator
+        /// Binary minus operator
         /// </summary>
         public const int MINUS = 16;
         /// <summary>
-        /// Multiply @operator, "*" when used in an operator context
+        /// Multiply operator, "*" when used in an operator context
         /// </summary>
         public const int MULT = 17;
         /// <summary>
@@ -105,7 +105,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /// </summary>
         public const int DOLLAR = 21;
         /// <summary>
-        /// Operator not-equals. That @is, "!="
+        /// Operator not-equals. That is, "!="
         /// </summary>
         public const int NE = 22;
         /// <summary>
@@ -367,7 +367,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         public const int MAPPING_ARROW = 86;
         // The following tokens are used only in the query prolog. They are categorized
         // as operators on the basis that a following name is treated as a name rather than
-        // an @operator.
+        // an operator.
         /// <summary>
         /// "xquery version"
         /// </summary>
@@ -517,11 +517,11 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /// </summary>
         public const int SEMICOLON = 149;
         /// <summary>
-        /// Constant identifying the token number of the last token to be classified as an @operator
+        /// Constant identifying the token number of the last token to be classified as an operator
         /// </summary>
         public const int LAST_OPERATOR = 150;
         // Tokens that set "operator" context, so an immediately following "div" is recognized
-        // as an @operator, not as an element name
+        // as an operator, not as an element name
         /// <summary>
         /// Name token (a QName, in general)
         /// </summary>
@@ -567,7 +567,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         /// </summary>
         public const int DEFAULT = 212;
         /// <summary>
-        /// Question mark symbol. That @is, "?"
+        /// Question mark symbol. That is, "?"
         /// </summary>
         public const int QMARK = 213;
         /// <summary>

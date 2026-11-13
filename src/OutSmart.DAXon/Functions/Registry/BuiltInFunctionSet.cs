@@ -51,7 +51,7 @@ namespace OutSmart.DAXon.Functions.Registry
         protected const int ABS = 1 << 25; // = usage ABSORPTION (implicit when type is atomic)
         protected const int TRA = 1 << 26; // = usage TRANSMISSION (node is included in function result)
         protected const int NAV = 1 << 27; // = usage NAVIGATION (function navigates from this node)
-        public static ISequence EMPTY = EmptySequence.GetInstance();
+        public static readonly ISequence EMPTY = EmptySequence.GetInstance();
 
         private readonly Dictionary<string, Entry> functionTable = new Dictionary<string, Entry>(200);
         private readonly Dictionary<string, int> sequenceVariadicFunctions = new Dictionary<string, int>(10);
@@ -136,30 +136,9 @@ namespace OutSmart.DAXon.Functions.Registry
                             {
                                 reasons.Add("concat() prior to XPath 4.0 requires at least two arguments");
                                 return null;
-                            } //                        // Require each argument to be a singleton
-                            //                        Expression[] a2 = new Expression[staticArgs.length];
-                            //                        for (int i=0; i<staticArgs.length; i++) {
-                            //                            if (staticArgs[i] instanceof StringLiteral) {
-                            //                                a2[i] = staticArgs[i];
-                            //                            } else {
-                            //                                final int pos = i;
-                            //                                Func<RoleDiagnostic> role =
-                            //                                        () -> new RoleDiagnostic(RoleDiagnostic.FUNCTION, "concat", pos);
-                            //                                a2[i] = CardinalityChecker.makeCardinalityChecker(
-                            //                                        staticArgs[i], StaticProperty.ALLOWS_ZERO_OR_ONE, role);
-                            //                            }
-                            //                        }
-                            //                        staticArgs = a2;
+                            }
                         }
-                    } //                int declaredArity = entry.maxArity;
-                    //                Expression[] newArgs = Arrays.copyOf(staticArgs, declaredArity);
-                    //                if (declaredArity > staticArgs.length) {
-                    //                } else if (declaredArity < staticArgs.length) {
-                    //                    Expression block = new Block(Arrays.copyOfRange(staticArgs, declaredArity - 1, staticArgs.length));
-                    //                    ExpressionTool.copyLocationInfo(staticArgs[0], block);
-                    //                    newArgs[declaredArity - 1] = block;
-                    //                }
-                    //                staticArgs = newArgs;
+                    }
                 }
                 else if ((keywords != null && keywords.Count > 0) || staticArgs.Length < entry.maxArity)
                 {
@@ -249,11 +228,9 @@ namespace OutSmart.DAXon.Functions.Registry
             }
 
 
-            //}
             return true;
         }
 
-        //}
         public virtual IFunctionLibrary Copy()
         {
             return this;
@@ -323,7 +300,6 @@ namespace OutSmart.DAXon.Functions.Registry
             return NamespaceUri.FN;
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
 
         /// <summary>
         /// An entry in the table describing the properties of a function

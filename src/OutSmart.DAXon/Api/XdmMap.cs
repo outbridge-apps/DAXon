@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Api
     {
         // The empty map.
         public XdmMap() : base(new HashTrieMap()) { }
-        public XdmMap(OutSmart.DAXon.Model.IItem map) : base(map) { }
+        public XdmMap(OutSmart.DAXon.Model.IItem map) : base(ArgumentCheck.Checked(map, nameof(map))) { }
 
         // A copy of the entries: changing it leaves the map as it was.
         public override Dictionary<XdmAtomicValue, XdmValue> AsMap()
@@ -38,6 +38,8 @@ namespace OutSmart.DAXon.Api
         // upstream s9api XdmMap.put: functional add — returns a NEW map, the receiver is unchanged.
         public virtual XdmMap Put(XdmAtomicValue key, XdmValue value)
         {
+            ArgumentCheck.NotNull(key, nameof(key));
+            ArgumentCheck.NotNull(value, nameof(value));
             MapItem map = UnderlyingValue as MapItem ?? new HashTrieMap();
             return new XdmMap(map.AddEntry((AtomicValue)key.UnderlyingValue, (IGroundedValue)value.UnderlyingValue));
         }

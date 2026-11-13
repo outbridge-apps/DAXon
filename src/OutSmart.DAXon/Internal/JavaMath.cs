@@ -11,7 +11,7 @@ namespace OutSmart.DAXon.Internal
     /// Durable home for java.lang.Math members whose semantics have NO provably-identical
     /// System.Math equivalent on net472. The idiomatization pass (CollectionsModernizer
     /// --families math) rewrites the 1:1 shim forwards (Sin/Floor/Min/Ceil->Ceiling/...)
-    /// to System.Math and points Round/Rint here instead. New code goes to final
+    /// to System.Math and points Round here instead. New code goes to final
     /// namespaces, hence OutSmart.DAXon.Internal (the OutSmart.DAXon.Internal.Math shim forwards here
     /// so both surfaces share one implementation).
     /// </summary>
@@ -96,12 +96,5 @@ namespace OutSmart.DAXon.Internal
             }
             return (int)f;
         }
-
-        // Java Math.rint: round half to EVEN, returning double. System.Math.Round(double)
-        // (banker's rounding, zero digits) implements the identical contract on net472,
-        // including NaN -> NaN, +/-Infinity -> unchanged, already-integral -> unchanged,
-        // |x| >= 2^52 -> unchanged. Kept as a named utility (paired with Round) so the
-        // Java rounding call sites stay greppable and the forward is documented once.
-        public static double Rint(double a) => Math.Round(a);
     }
 }

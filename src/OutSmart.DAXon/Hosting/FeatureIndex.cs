@@ -16,7 +16,6 @@ namespace OutSmart.DAXon.Lib
 
         static FeatureIndex()
         {
-            FeatureData.Init();
             foreach (FeatureData data in FeatureData.featureList)
             {
                 byName[data.uri] = data;

@@ -89,6 +89,10 @@ namespace OutSmart.DAXon.Model
         /// </summary>
         public static readonly NamespaceUri EXSLT_COMMON = NamespaceUri.Of(NamespaceConstant.EXSLT_COMMON);
         /// <summary>
+        /// The namespace of the functions DAXon adds: NamespaceConstant.DAXON
+        /// </summary>
+        internal static readonly NamespaceUri DAXON = NamespaceUri.Of(NamespaceConstant.DAXON);
+        /// <summary>
         /// Fixed namespace name for EXSLT/math: NamespaceConstant.EXSLT_MATH
         /// </summary>
         public static readonly NamespaceUri EXSLT_MATH = NamespaceUri.Of(NamespaceConstant.EXSLT_MATH);

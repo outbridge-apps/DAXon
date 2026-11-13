@@ -112,11 +112,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
             processor.ProcessOperand(predicateOp);
         }
 
-        public override void AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            Predicate.AddToPathMap(pathMap, pathMapNodeSet);
-        }
-
         public override void Explain(ExpressionPresenter @out)
         {
             @out.StartElement("where");

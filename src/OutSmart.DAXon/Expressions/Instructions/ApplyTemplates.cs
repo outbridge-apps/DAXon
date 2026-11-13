@@ -244,15 +244,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return mode == null ? null : mode.GetSymbolicName();
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-
-            // This logic is assuming the mode is streamable (so that called templates can't return streamed nodes)
-            PathMap.PathMapNodeSet result = base.AddToPathMap(pathMap, pathMapNodeSet);
-            result.SetReturnable(false);
-            return new PathMap.PathMapNodeSet(pathMap.MakeNewRoot(this));
-        }
-
         public override void Export(ExpressionPresenter @out)
         {
             @out.StartElement("applyT", this);
@@ -420,8 +411,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             c2.SetCurrentGroupIterator(null);
                         }
 
-                        PipelineConfiguration pipe = output.GetPipelineConfiguration();
-                        pipe.XPathContext = c2;
                         try
                         {
                             ITailCall tc = thisMode.ApplyTemplates(@params, tunnels, separator, output, c2, expr.GetLocation());
@@ -434,7 +423,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             throw e.Describe("Too many nested apply-templates calls. The stylesheet may be looping.", DAXonErrorCode.SXLM0001, expr.GetLocation());
                         }
 
-                        pipe.XPathContext = context;
                         return null;
                     };
                 }

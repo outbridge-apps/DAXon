@@ -147,14 +147,14 @@ namespace OutSmart.DAXon.Expressions.Numbering
                 else if (o is BigInteger)
                 {
 
-                    // Saxon bug 2071; test case number-0111
-                    s = rgf.Format(o.ToString());
+                    // Saxon bug 2071; test case number-0111. In pieces: BigInteger.ToString is one call the time limit cannot stop.
+                    s = rgf.Format(BigIntegers.ToDecimalString((BigInteger)o));
                     s = TranslateDigits(s, formatTokens[tok]);
                 }
                 else
                 {
 
-                    // Not sure this can happen
+                    // A value with no integer form: "NaN" in backwards-compatible mode, or the one about to fail XTDE0980
                     s = o.ToString();
                 }
 

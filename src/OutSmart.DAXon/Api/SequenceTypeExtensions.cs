@@ -14,6 +14,6 @@ namespace OutSmart.DAXon.Api
         public static string ExplainMismatch(this SequenceType st, object item, object th) => "";
 
         // The occurrence indicator as the engine's cardinality bits (StaticProperty.ALLOWS_...).
-        public static int GetCardinality(this SequenceType st) => st.GetOccurrenceIndicator().GetCardinality();
+        public static int GetCardinality(this SequenceType st) => ArgumentCheck.Checked(st, nameof(st)).GetOccurrenceIndicator().GetCardinality();
     }
 }

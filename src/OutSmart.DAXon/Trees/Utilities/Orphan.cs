@@ -415,7 +415,7 @@ namespace OutSmart.DAXon.Trees.Utilities
         public ISequenceIterator Iterate() => SingletonIterator.MakeIterator(this); // upstream Item default
         public IItem ItemAt(int arg0) => arg0 == 0 ? this : null; // upstream Item default
         public IItem Head() => this; // upstream Item default
-        public IGroundedValue Subsequence(int arg0, int arg1) => arg0 <= 0 && (long)arg0 + arg1 > 0 ? (IGroundedValue)this : (IGroundedValue)EmptySequence.GetInstance(); // upstream Item default
+        public IGroundedValue Subsequence(int arg0, int arg1) => GroundedValueDefaults.Subsequence(this, arg0, arg1);
         public int GetLength() => 1; // upstream Item default
         public string GetStringValue() => stringValue == null ? "" : stringValue.ToString(); // upstream: the node's string value
         public int GetLineNumber() => -1; // an orphan has no source location
@@ -440,18 +440,8 @@ namespace OutSmart.DAXon.Trees.Utilities
         public IGroundedValue Reduce() => this; // upstream GroundedValue default method
         public IGroundedValue Materialize() => this; // upstream GroundedValue default method
         public IEnumerable<IItem> AsIterable() => new IItem[] { this }; // singleton grounded value (upstream GroundedValue default for an Item)
-        public bool ContainsNode(NodeInfo sought) => this == sought;
-        public IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this item with the others
-            var chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<IItem>().AddAll(AsIterable());
-            foreach (IGroundedValue v in others)
-            {
-                chain = chain.AddAll(v.AsIterable());
-            }
-
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(chain);
-        }
+        public bool ContainsNode(NodeInfo sought) => GroundedValueDefaults.ContainsNode(this, sought);
+        public IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         // A node is a single item - already repeatable.
         public ISequence MakeRepeatable() => this;
     }

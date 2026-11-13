@@ -168,7 +168,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 this.allow40 = allow40;
             }
 
-            public IItem MapItem(IItem item) /*Java covariant IFunctionItem widened (C# 7.3)*/
+            public IItem MapItem(IItem item)
             {
                 if (!(item is IFunctionItem))
                 {
@@ -180,9 +180,10 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                     CheckAnnotations((IFunctionItem)item, requiredItemType, config);
                     return new CoercedFunction((IFunctionItem)item, requiredItemType, allow40);
                 }
-                catch (XPathException err)
+                catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(locator)))
                 {
-                    throw err.MaybeWithLocation(locator);
+                    // Decorated in the filter, never handled (XPathException.PassOn).
+                    throw;
                 }
             }
             IItem IItemMappingFunction.MapItem(IItem arg0) => MapItem(arg0); // covariant bridge

@@ -26,6 +26,7 @@ namespace OutSmart.DAXon.Api
         {
             get => DestinationBaseURI; set
             {
+                ArgumentCheck.NotNull(value, nameof(value));
                 if (!value.IsAbsolute())
                 {
                     throw new ArgumentException("Supplied base URI must be absolute");
@@ -51,6 +52,8 @@ namespace OutSmart.DAXon.Api
 
         public override IReceiver GetReceiver(PipelineConfiguration pipe, SerializationProperties @params)
         {
+            ArgumentCheck.NotNull(pipe, nameof(pipe));
+            ArgumentCheck.NotNull(@params, nameof(@params));
             TreeModel model = treeModel;
             if (model == null)
             {
@@ -76,7 +79,7 @@ namespace OutSmart.DAXon.Api
 
             SequenceNormalizer sn = @params.MakeSequenceNormalizer(builder);
             sn.SetSystemId(systemId);
-            sn.OnClose(helper.Listeners);
+            sn.OnClose(helper.ListenersOfRun());
             return sn;
         }
 

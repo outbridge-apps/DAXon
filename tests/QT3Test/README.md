@@ -47,22 +47,37 @@ tests/QT3Test/bin/Release/net472/QT3Test.exe qt3tests xslt30-test
 
 Arguments are corpus roots; naming both runs them as one pool. Anything after the roots filters test
 sets by name, so `QT3Test.exe qt3tests fn-substring` runs a single set while you work on it.
+`QT3Test.exe --q "<expression>"` evaluates one expression and prints the result.
 
 Each test set runs in a child process, so one hanging or stack-exhausting case cannot take the whole
-sweep down with it: the parent kills a child past its set's limit and survives one that dies, and the sets
-after it go to a fresh child. A worker's child takes set after set (starting one costs about as much as
-hundreds of cases) and is replaced after 64; the slow sets get a child per slice, and `QT3_SERVE=0` gives
-every set its own. `QT3_FAILDUMP=<file>` writes every failure as `set/case :: reason`, which is what
-you want for triage and for comparing runs; the file is rewritten on every run.
+sweep down with it: the parent kills a child past its set's limit (HUNG) and survives one that dies
+(CRASHED), and the sets after it go to a fresh child. `QT3_PAR` worker threads (default: the core count)
+each keep a child that takes set after set - starting one costs about as much as hundreds of cases - and
+replace it after 64 sets. The slow sets (unicode-90, regex-classes, misc/catalog) are sliced across the
+workers and get 30 minutes; any other set gets 120 s.
+
+A normal run skips the cases whose expected results come from Unicode tables older than the platform's:
+the unicode-90 set, three `fn-normalize-unicode-11` cases and 22 cases of regex-classes, which Saxon-HE
+in Java fails as well. `QT3_NOSKIP` runs them.
+
+| Environment | Effect |
+|---|---|
+| `QT3_FAILDUMP=<file>` | every failure as `set/case :: reason`, for triage and for comparing runs; rewritten each run |
+| `QT3_VERDICTDUMP=<file>` | every case as `id<TAB>PASS\|FAIL\|SKIP` |
+| `QT3_PAR=<n>` | worker count |
+| `QT3_SERVE=0` | a child per set instead of served children |
+| `QT3_CASE=<substring>` | only the matching cases of the filtered sets |
+| `QT3_NOSKIP=1` | run the Unicode-version cases a normal run skips |
+| `QTDBG=1` | keep the engine's per-case warnings on stderr |
 
 ## Reading the result
 
 A clean run over the pinned revisions looks like this:
 
 ```
-TEST-SETS: 662   PASS: 38554   FAIL: 17   SKIP: 7851   HUNG-sets: 0   CRASHED-sets: 0
-  qt3tests       PASS: 30312   FAIL: 0   SKIP: 1509   (100.0%)
-  xslt30-test    PASS: 8242   FAIL: 17   SKIP: 6342   (99.8%)
+TEST-SETS: 662   PASS: 38693   FAIL: 17   SKIP: 7712   HUNG-sets: 0   CRASHED-sets: 0
+  qt3tests       PASS: 30353   FAIL: 0   SKIP: 1468   (100.0%)
+  xslt30-test    PASS: 8340   FAIL: 17   SKIP: 6244   (99.8%)
 ```
 
 **The gate is the set of failing ids, not the count** — a fix and a regression can cancel out in a
@@ -83,7 +98,10 @@ alternate weighting need full ICU), remote HTTP resources, and similar.
 ## Notes
 
 - The runner targets `net472`; the engine ships `net472`, `net8.0` and `net10.0` builds, and the runner uses the former.
-- Set `QTDBG=1` to see the engine's per-case warnings; they are silenced by default because they
-  dominate the log and slow the sweep down.
+- The engine's per-case warnings are silenced unless `QTDBG` is set: they dominate the log and slow the
+  sweep down.
+- 1.4 counted 38 554 passing cases. The 139 more are cases the runner skipped for a wrong reason (a
+  blanket Unicode-version skip, cases pinned to XSD 1.0 that the engine's XSD 1.0 mode runs, a few
+  dependencies the engine has) and now runs. The failures are the same 17.
 - Updating a corpus is a deliberate change: bump the revision in `corpus.pin`, re-run the sweep, and
   re-baseline `BASELINE-FAILS.txt` in the same commit, so the two never describe different worlds.

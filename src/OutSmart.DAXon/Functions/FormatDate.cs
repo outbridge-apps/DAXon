@@ -78,24 +78,20 @@ namespace OutSmart.DAXon.Functions
         private static readonly UnicodeString STR_Y = BMPString.Of("Y");
         private static readonly UnicodeString STR_Z = BMPString.Of("Z");
 
-        private static readonly ARegularExpression componentPattern = ARegularExpression.Compile("([YMDdWwFHhmsfZzPCE])\\s*(.*)", "");
+        // The patterns are compiled on first use, not in the type initializer: a compile probes the stack, and a type
+        // initializer that throws (first use deep in a recursion) breaks the type for the life of the process.
+        private static ARegularExpression componentPatternLazy;
+        private static ARegularExpression componentPattern => componentPatternLazy ??= ARegularExpression.Compile("([YMDdWwFHhmsfZzPCE])\\s*(.*)", "");
 
         private static readonly ClockCache<string, ComponentSpecifier> ComponentSpecifierCache
             = new ClockCache<string, ComponentSpecifier>(128);
 
-        // year
-        // month
-        // minutes
-        // seconds
-        // era
-        private static readonly ARegularExpression widthPattern = ARegularExpression.Compile(",(\\*|[0-9]+)(\\-(\\*|[0-9]+))?", "");
-        // year
-        // month
-        // minutes
-        // seconds
-        // era
-        private static readonly ARegularExpression digitsOrOptionalDigitsPattern = ARegularExpression.Compile("[#\\p{Nd}]+", "");
-        private static readonly ARegularExpression fractionalDigitsPattern = ARegularExpression.Compile("\\p{Nd}+#*", "");
+        private static ARegularExpression widthPatternLazy;
+        private static ARegularExpression widthPattern => widthPatternLazy ??= ARegularExpression.Compile(",(\\*|[0-9]+)(\\-(\\*|[0-9]+))?", "");
+        private static ARegularExpression digitsOrOptionalDigitsPatternLazy;
+        private static ARegularExpression digitsOrOptionalDigitsPattern => digitsOrOptionalDigitsPatternLazy ??= ARegularExpression.Compile("[#\\p{Nd}]+", "");
+        private static ARegularExpression fractionalDigitsPatternLazy;
+        private static ARegularExpression fractionalDigitsPattern => fractionalDigitsPatternLazy ??= ARegularExpression.Compile("\\p{Nd}+#*", "");
         // Unicode general category of a code point (BMP or supplementary).
         private static UnicodeCategory CategoryOf(int codePoint) =>
             codePoint <= 0xFFFF
@@ -164,23 +160,47 @@ namespace OutSmart.DAXon.Functions
             }
 
             INumberer numberer = config.MakeNumberer(language, place);
-            StringBuilder sb = new StringBuilder(64);
+            string formatted = FormatComponents(value, format, numberer, place, context);
+
+            // An English word, ordinal, half-day or era among the language's names: the prefix would name one language of
+            // the two shown. The output is then all English, as Java's is.
+            if (numberer is Numberer_bcl bcl && bcl.UsedEnglish)
+            {
+                Numberer_en english = new Numberer_en();
+                english.SetLanguage(language);
+                if (place != null)
+                {
+                    english.Country = place;
+                }
+
+                return "[Language: en]" + FormatComponents(value, format, english, place, context);
+            }
+
+            string prefix = "";
             if (!languageDefaulted && numberer.GetType() == typeof(Numberer_en) && !language.StartsWith("en", StringComparison.Ordinal))
             {
 
                 // See bug #4582. We're not outputting the prefix in cases where ICU is used for numbering.
                 // But the test on numberer.defaultedLocale() below may catch it...
-                sb.Append("[Language: en]");
+                prefix = "[Language: en]";
             }
 
             if (numberer.DefaultedLocale() != null)
             {
-                sb.Append("[Language: " + numberer.DefaultedLocale().TwoLetterISOLanguageName + "]");
+                prefix += "[Language: " + numberer.DefaultedLocale().TwoLetterISOLanguageName + "]";
             }
 
+            return prefix + formatted;
+        }
+
+        private static string FormatComponents(CalendarValue value, string format, INumberer numberer, string place, IXPathContext context)
+        {
+            StringBuilder sb = new StringBuilder(64);
             int i = 0;
             while (true)
             {
+                // A picture of millions of components is one call: 3M took 10 s under a 2 s limit.
+                Controller.CheckActiveTimeout();
                 while (i < format.Length && format[i] != '[')
                 {
                     sb.Append(format[i]);
@@ -223,18 +243,12 @@ namespace OutSmart.DAXon.Functions
                 }
             }
 
-            // Month and day names in the language, a word or an ordinal in English: the output names the fallback.
-            if (numberer is Numberer_bcl bcl && bcl.UsedEnglish)
-            {
-                sb.Insert(0, "[Language: en]");
-            }
-
             return sb.ToString();
         }
 
         private static ComponentSpecifier SplitComponentSpecifier(string specifier)
         {
-            UnicodeString uSpecifier = StringView.Of(specifier).Tidy();
+            UnicodeString uSpecifier = StringView.Of(specifier);
             ARegexIterator matcher = (ARegexIterator)componentPattern.Analyze(uSpecifier);
             IItem firstMatch = matcher.Next();
             if (firstMatch == null || firstMatch.UnicodeStringValue.Length32() != uSpecifier.Length32() || !matcher.IsMatching())
@@ -428,7 +442,7 @@ namespace OutSmart.DAXon.Functions
                     }
 
                 case 'C':
-                    return StringView.Of(numberer.GetCalendarName("AD")).Tidy();
+                    return StringView.Of(numberer.GetCalendarName("AD"));
                 case 'E':
                     if (ignoreDate)
                     {
@@ -437,7 +451,7 @@ namespace OutSmart.DAXon.Functions
                     else
                     {
                         int year = dtvalue.Year;
-                        return StringView.Of(numberer.GetEraName(year)).Tidy();
+                        return StringView.Of(numberer.GetEraName(year));
                     }
 
                 default:
@@ -611,13 +625,14 @@ namespace OutSmart.DAXon.Functions
                 int[] range = GetWidths(widths);
                 min = range[0];
 
-                //max = int.MaxValue;
                 string roman = numberer.Format(value, primary, null, letterValue, "", ordinal);
                 UnicodeBuilder s = new UnicodeBuilder(32);
                 s.Append(roman);
                 int len = StringTool.GetStringLength(roman);
+                HoldWidth(s, min);
                 while (len < min)
                 {
+                    Controller.CheckActiveTimeoutEvery64K(len);
                     s.Append(' ');
                     len++;
                 }
@@ -647,8 +662,10 @@ namespace OutSmart.DAXon.Functions
                         // codepoints anyway, so anything bigger is wasted allocation (and min + 1
                         // used to overflow at min = int.MaxValue before GetWidths capped the width).
                         UnicodeBuilder sb = new UnicodeBuilder(Math.Min(min + 1, 65536));
+                        HoldWidth(sb, min);
                         for (int i = 1; i < min; i++)
                         {
+                            Controller.CheckActiveTimeoutEvery64K(i);
                             sb.Append('0');
                         }
 
@@ -750,8 +767,10 @@ namespace OutSmart.DAXon.Functions
                 // One concat: Concat copies the whole accumulated string, so padding a digit at a
                 // time is quadratic in a width the picture alone decides.
                 UnicodeBuilder pad = new UnicodeBuilder((int)(min - str.Length()));
+                HoldWidth(pad, min);
                 for (long i = str.Length(); i < min; i++)
                 {
+                    Controller.CheckActiveTimeoutEvery64K(i);
                     pad.Append('0');
                 }
 
@@ -773,6 +792,7 @@ namespace OutSmart.DAXon.Functions
                 UnicodeBuilder family = new UnicodeBuilder(str.Length32());
                 for (long i = 0; i < str.Length(); i++)
                 {
+                    Controller.CheckActiveTimeoutEvery64K(i);
                     family.Append(zeroDigit + (str.CodePointAt(i) - '0'));
                 }
 
@@ -803,17 +823,18 @@ namespace OutSmart.DAXon.Functions
                 primary = STR_1;
             }
 
+            Numberer_bcl localized = numberer as Numberer_bcl;
             if (STR_N.Equals(primary))
             {
-                return StringView.Tidy(s.ToUpperInvariant());
+                return StringView.Tidy(localized != null ? localized.Upper(s) : s.ToUpperInvariant());
             }
             else if (STR_n.Equals(primary))
             {
-                return StringView.Tidy(s.ToLowerInvariant());
+                return StringView.Tidy(localized != null ? localized.Lower(s) : s.ToLowerInvariant());
             }
             else
             {
-                return StringView.Tidy(s);
+                return StringView.Tidy(localized != null ? localized.Title(s) : s);
             }
         }
 
@@ -851,11 +872,6 @@ namespace OutSmart.DAXon.Functions
             return StringView.Tidy(formattedStr);
         }
 
-        // year
-        // month
-        // minutes
-        // seconds
-        // era
         private static UnicodeString Reverse(UnicodeString @in)
         {
             UnicodeBuilder builder = new UnicodeBuilder(@in.Length32());
@@ -865,6 +881,16 @@ namespace OutSmart.DAXon.Functions
             }
 
             return builder.ToUnicodeString();
+        }
+
+        // A width the picture asks for, up to MAX_WIDTH, in the memory limit before it is built: [Y,100000000] held 654 MB
+        // under 300 MB. Six bytes a character: the padded picture, the number formatted to it and the result (measured).
+        private static void HoldWidth(UnicodeBuilder builder, long width)
+        {
+            if (width >= MemoryLedger.BigChars)
+            {
+                MemoryLedger.Hold(builder, 6L * width);
+            }
         }
 
         private static int[] GetWidths(UnicodeString widths)
@@ -923,10 +949,6 @@ namespace OutSmart.DAXon.Functions
                 }
 
 
-                //            if (min > max) {
-                //                XPathException e = new XPathException("Minimum width in date/time picture exceeds maximum width");
-                //                throw e;
-                //            }
                 int[] result = new int[2];
                 result[0] = min;
                 result[1] = max;
@@ -940,11 +962,6 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        // year
-        // month
-        // minutes
-        // seconds
-        // era
         private static UnicodeString FormatTimeZone(DateTimeValue value, char component, UnicodeString format, string country)
         {
             int comma = (int)StringTool.LastIndexOf(format, ',');
@@ -1085,7 +1102,7 @@ namespace OutSmart.DAXon.Functions
             }
             else if (format.CodePointAt(0) == 'N' || format.CodePointAt(0) == 'n')
             {
-                return StringView.Of(GetNamedTimeZone(value, country, format)).Tidy();
+                return StringView.Of(GetNamedTimeZone(value, country, format));
             }
             else
             {
@@ -1093,11 +1110,6 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        // year
-        // month
-        // minutes
-        // seconds
-        // era
         private static string GetNamedTimeZone(DateTimeValue value, string country, UnicodeString format)
         {
             int min = 1;
@@ -1177,11 +1189,11 @@ namespace OutSmart.DAXon.Functions
         {
             if (place.Contains("/") && value.HasTimezone() && !(value is TimeValue))
             {
-                TimeZoneInfo zone = NamedTimeZone.GetNamedTimeZone(place);
+                OutSmart.DAXon.Internal.Collections.ZoneRules zone = NamedTimeZone.GetNamedTimeZone(place);
                 if (zone != null)
                 {
-                    // preserves the legacy offset-at-now behaviour (old ToJavaInstant() returned Instant.now())
-                    int offsetSeconds = (int)zone.GetUtcOffset(DateTimeOffset.UtcNow).TotalSeconds;
+                    // At the value's instant, as Saxon: summer and winter dates of one place got the offset of today
+                    int offsetSeconds = NamedTimeZone.OffsetInSeconds(zone, value.ToDateTime().SecondsSinceEpoch().LongValue());
                     return value.AdjustTimezone(offsetSeconds / 60);
                 }
             }

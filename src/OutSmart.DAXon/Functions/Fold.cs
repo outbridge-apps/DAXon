@@ -8,7 +8,7 @@ using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Functions
 {
     /* Interface implemented by operations that compute the value of an expression using
- * a "fold" operation: that @is, by applying a function to each item in the input sequence
+ * a "fold" operation: that is, by applying a function to each item in the input sequence
  * in turn, maintaining working data as the items are processed, and finally computing
  * the final result of the expression from the value of the working data.
  */

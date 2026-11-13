@@ -23,14 +23,9 @@ namespace OutSmart.DAXon.Regex
         private UnicodeBlocks()
         {
             // Runs inside a type initializer: see Controller.SuspendThreadDeadline
-            Controller.DeadlineToken outer = Controller.SuspendThreadDeadline();
-            try
+            using (Controller.SuspendScope())
             {
                 Build();
-            }
-            finally
-            {
-                Controller.RestoreThreadDeadline(outer);
             }
         }
 

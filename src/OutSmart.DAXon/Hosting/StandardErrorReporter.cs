@@ -55,6 +55,17 @@ namespace OutSmart.DAXon.Lib
         // counters are reset per episode (StartCompilationEpisode) and mutated under a lock.
         private readonly object counterLock = new object();
 
+        // The error budget of the compilation running on this thread. Compiles from one Processor overlap on other
+        // threads: on the shared counter four at once spent each other's 1000 and ended in "Too many errors reported"
+        // with no code where one alone reported XPST0008.
+        private sealed class Episode
+        {
+            internal StandardErrorReporter owner;
+            internal int errors;
+        }
+
+        [ThreadStatic] private static Episode episode;
+
         /// <summary>
         /// Begin a new compilation episode: the error and warning budgets are per compilation,
         /// not per Processor lifetime.
@@ -69,6 +80,7 @@ namespace OutSmart.DAXon.Lib
         /// </remarks>
         internal void StartCompilationEpisode()
         {
+            episode = new Episode { owner = this };
             lock (counterLock)
             {
                 errorCount = 0;
@@ -162,6 +174,12 @@ namespace OutSmart.DAXon.Lib
             lock (counterLock)
             {
                 reported = errorCount++;
+            }
+
+            Episode own = episode;
+            if (own != null && own.owner == this)
+            {
+                reported = own.errors++;   // this compilation's count, whatever the Processor's other compiles report
             }
 
             if (reported > maximumNumberOfErrors)

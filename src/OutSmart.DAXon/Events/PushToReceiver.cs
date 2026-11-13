@@ -29,16 +29,29 @@ namespace OutSmart.DAXon.Events
 
         // Set when an event was refused: the document is not finished after that, only its destination released.
         private bool failed;
+        private bool started;
 
-        public PushToReceiver(IReceiver receiver, IDestination destination)
+        // The limits of the run a transformer or query destination armed, held on the thread for each event only; null
+        // for a destination that runs nothing.
+        private readonly Controller.DeadlineToken runLimits;
+
+        public PushToReceiver(IReceiver receiver, IDestination destination, Controller.DeadlineToken runLimits)
         {
             cco = new ComplexContentOutputter(new RegularSequenceChecker(receiver, false));
             config = receiver.GetPipelineConfiguration().GetConfiguration();
             this.destination = destination;
+            this.runLimits = runLimits;
         }
 
         public IDocument Document(bool wellFormed)
         {
+            // One document per push: a second would start inside the first's finished sequence.
+            if (started)
+            {
+                throw new InvalidOperationException("A push writes one document: Document() has already been called");
+            }
+
+            started = true;
             Send(() =>
             {
                 cco.Open();
@@ -54,6 +67,7 @@ namespace OutSmart.DAXon.Events
 
         private void Send(Action events)
         {
+            Controller.DeadlineToken previous = runLimits == null ? null : Controller.BeginLazyStep(runLimits);
             try
             {
                 events();
@@ -65,6 +79,13 @@ namespace OutSmart.DAXon.Events
             catch (RecursionDepthError e)
             {
                 throw Refused(new DAXonApiException(e.ToXPathException()));
+            }
+            finally
+            {
+                if (runLimits != null)
+                {
+                    Controller.EndLazyStep(runLimits, previous);
+                }
             }
         }
 

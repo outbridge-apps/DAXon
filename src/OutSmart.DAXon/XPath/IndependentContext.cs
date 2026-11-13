@@ -90,6 +90,38 @@ namespace OutSmart.DAXon.XPath
             return retainedStaticContext;
         }
 
+        // The retained context copies these when first made (Saxon too): a setting changed after the first compile was
+        // ignored by every later expression (another default collation still compared as the first).
+        public override void SetBaseURI(string baseURI)
+        {
+            base.SetBaseURI(baseURI);
+            retainedStaticContext = null;
+        }
+
+        public override void SetDefaultCollationName(string collationName)
+        {
+            base.SetDefaultCollationName(collationName);
+            retainedStaticContext = null;
+        }
+
+        public override void SetDefaultFunctionNamespace(NamespaceUri uri)
+        {
+            base.SetDefaultFunctionNamespace(uri);
+            retainedStaticContext = null;
+        }
+
+        public override void SetBackwardsCompatibilityMode(bool option)
+        {
+            base.SetBackwardsCompatibilityMode(option);
+            retainedStaticContext = null;
+        }
+
+        public override void SetDecimalFormatManager(DecimalFormatManager manager)
+        {
+            base.SetDecimalFormatManager(manager);
+            retainedStaticContext = null;
+        }
+
         public virtual void DeclareNamespace(string prefix, NamespaceUri uri)
         {
             if (prefix == null)
@@ -121,6 +153,7 @@ namespace OutSmart.DAXon.XPath
 
             base.SetDefaultElementNamespace(uri);
             namespaces[""] = uri;
+            retainedStaticContext = null;
         }
 
         public virtual void ClearNamespaces()
@@ -349,7 +382,25 @@ namespace OutSmart.DAXon.XPath
 
         public override OptimizerOptions GetOptimizerOptions()
         {
-            return this.optimizerOptions;
+            return unoptimizedOnThisThread == this ? NoOptimization : this.optimizerOptions;
+        }
+
+        // The context this thread compiles one expression of without the optimizer (XPathCompiler.Evaluate). A thread's
+        // setting: switching the context's own option, which other threads read, left it switched for good.
+        [ThreadStatic] private static IndependentContext unoptimizedOnThisThread;
+        private static readonly OptimizerOptions NoOptimization = new OptimizerOptions(0);
+
+        // Returns the setting to restore with EndUnoptimized.
+        internal IndependentContext BeginUnoptimized()
+        {
+            IndependentContext previous = unoptimizedOnThisThread;
+            unoptimizedOnThisThread = this;
+            return previous;
+        }
+
+        internal static void EndUnoptimized(IndependentContext previous)
+        {
+            unoptimizedOnThisThread = previous;
         }
 
         public virtual void SetExecutable(Executable exec)

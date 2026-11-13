@@ -19,12 +19,14 @@ namespace OutSmart.DAXon.Lib
     public class FeatureData
     {
 
-        public static List<FeatureData> featureList = new List<FeatureData>();
-        public string uri;
-        public int code;
-        public string editions;
-        public System.Type type;
-        public object defaultValue;
+        // Read-only and filled once, when the class initializes: a public mutable list (and a public Init that filled it
+        // again) let any host change the features of every Processor.
+        public static readonly IReadOnlyList<FeatureData> featureList = Build().AsReadOnly();
+        public readonly string uri;
+        public readonly int code;
+        public readonly string editions;
+        public readonly System.Type type;
+        public readonly object defaultValue;   // Configuration hands it out at run time
         public FeatureData(string uri, int code, string editions, System.Type type, object defaultValue)
         {
             this.uri = uri;
@@ -33,8 +35,9 @@ namespace OutSmart.DAXon.Lib
             this.type = type;
             this.defaultValue = defaultValue;
         }
-        public static void Init()
+        private static List<FeatureData> Build()
         {
+            var featureList = new List<FeatureData>();
             featureList.Add(new FeatureData(FeatureKeys.ALLOW_EXTERNAL_FUNCTIONS, FeatureCode.ALLOW_EXTERNAL_FUNCTIONS, "HE PE EE", typeof(bool), false));
             featureList.Add(new FeatureData(FeatureKeys.ALLOW_MULTITHREADING, FeatureCode.ALLOW_MULTITHREADING, "EE", typeof(bool), false));
             featureList.Add(new FeatureData(FeatureKeys.ALLOW_OLD_JAVA_URI_FORMAT, FeatureCode.ALLOW_OLD_JAVA_URI_FORMAT, "PE EE", typeof(bool), false));
@@ -161,6 +164,7 @@ namespace OutSmart.DAXon.Lib
             featureList.Add(new FeatureData(FeatureKeys.ZIP_URI_PATTERN, FeatureCode.ZIP_URI_PATTERN, "EE", typeof(string), null));
             featureList.Add(new FeatureData(FeatureKeys.RESOURCE_RESOLVER, FeatureCode.RESOURCE_RESOLVER, "HE PE EE", typeof(object), null));
             featureList.Add(new FeatureData(FeatureKeys.RESOURCE_RESOLVER_CLASS, FeatureCode.RESOURCE_RESOLVER_CLASS, "HE PE EE", typeof(string), null));
+            return featureList;
         }
     }
 }

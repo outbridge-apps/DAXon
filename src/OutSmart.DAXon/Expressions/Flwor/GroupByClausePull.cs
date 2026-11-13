@@ -6,7 +6,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using System.Collections.Generic;
 using OutSmart.DAXon.Expressions.Sorting;
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Model;
+
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     internal sealed class GroupByClausePull : TuplePull
@@ -15,6 +17,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
         private readonly GroupByClause groupByClause;
         private readonly GenericAtomicComparer[] comparers;
         private IEnumerator<List<GroupByClause.ObjectToBeGrouped>> groupIterator;
+        private long weight;   // of medium strings in the tuples (MemoryLedger.Weighs)
 
         public GroupByClausePull(TuplePull @base, GroupByClause groupBy, IXPathContext context)
         {
@@ -29,6 +32,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override bool NextTuple(IXPathContext context)
         {
+            StackGuard.Probe();
             if (groupIterator == null)
             {
                 TupleExpression groupingTupleExpr = groupByClause.GroupingTupleExpression;
@@ -43,7 +47,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                     otbg.retainedValues = (Tuple)retainedTupleExpr.EvaluateItem(context);
                     object key = groupByClause.GetComparisonKey(otbg.groupingValues, comparers);
                     map.TryGetValue(key, out var group);
-                    GroupByClausePush.AddToGroup(key, otbg, group, map);
+                    GroupByClausePush.AddToGroup(key, otbg, group, map, ref weight);
                 }
                 groupIterator = map.Values.GetEnumerator();
             }
@@ -57,6 +61,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void Dispose()
         {
+            StackGuard.Probe();
             @base.Dispose();
             groupIterator = null;
         }

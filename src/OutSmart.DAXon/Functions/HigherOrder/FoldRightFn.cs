@@ -62,6 +62,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                             ISequence zz = Values.Int64Value.MakeIntegerValue(acc);
                             for (; i < n; i++, v--)
                             {
+                                Core.Controller.CheckActiveTimeout();   // the boxed replay runs as long as the fast lane did
                                 zz = fused.CallTwoSeq(Values.Int64Value.MakeIntegerValue(v), zz);
                             }
 
@@ -136,9 +137,9 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 {
                     zero = DynamicCall(function, context, args);
                 }
-                catch (XPathException e)
+                catch (XPathException e) when (XPathException.PassOn(e.MaybeWithContext(context)))
                 {
-                    e.MaybeSetContext(context);
+                    // Decorated in the filter, never handled (XPathException.PassOn).
                     throw;
                 }
             }

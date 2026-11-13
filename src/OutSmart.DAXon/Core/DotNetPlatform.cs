@@ -46,7 +46,9 @@ namespace OutSmart.DAXon.Core
             config.CollectionFinder = new OutSmart.DAXon.Resources.StandardCollectionFinder();
         }
         public bool IsDotNet() => true;
-        public string GetDefaultLanguage() => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+        // Fixed, as XPath lets it be: the culture of the thread that built the Processor decided the names format-date wrote
+        // for the Processor's whole life, whatever thread ran it; a host asks for a language with DEFAULT_LANGUAGE.
+        public string GetDefaultLanguage() => "en";
         // Backed by embedded resources (upstream data/*.xml via the csproj): casevariants/categories/
         // unicodeBlocks — regex case-blind matching, \p{} categories and \p{Is...} blocks need them.
         public Stream LocateResource(string filename, IList<string> messages)
@@ -103,7 +105,8 @@ namespace OutSmart.DAXon.Core
                 throw new XPathException("Collation property 'rules' (RuleBasedCollator) is not supported on the .NET platform", "FOCH0002");
             }
 
-            // lang= : map to CultureInfo.CompareInfo. Absent -> current culture.
+            // lang= : map to CultureInfo.CompareInfo. Absent: the invariant culture, not the evaluating thread's, which a
+            // host may set per request (per user): the same compiled sort ordered 'ä' first for one user and last for another.
             string langAtt = props.GetProperty("lang");
             CompareInfo ci;
             if (langAtt != null)
@@ -112,7 +115,7 @@ namespace OutSmart.DAXon.Core
             }
             else
             {
-                ci = CultureInfo.CurrentCulture.CompareInfo;
+                ci = CultureInfo.InvariantCulture.CompareInfo;
             }
             CompareInfoComparer comparer = new CompareInfoComparer(ci, CompareOptions.None);
 
@@ -179,14 +182,23 @@ namespace OutSmart.DAXon.Core
             // decomposition and ignore-symbols: not separately configurable through CompareInfo -> ignored (as Java ignores ignore-symbols)
 
             IStringCollator stringCollator = new SimpleCollation(uri, comparer);
+            CompareInfoComparer substrings = null;
 
             // case-order / caseFirst : as in Java, force the base collator to ignore case differences
             // (setStrength(SECONDARY)) so the CaseFirstCollator wrapper decides the case order.
             string caseOrder = props.GetProperty("case-order");
             if (caseOrder != null && caseOrder != "#default")
             {
+                substrings = comparer.Copy();   // case order says nothing of what a substring function matches
                 comparer.Options = CompareOptions.IgnoreCase;
-                stringCollator = OutSmart.DAXon.Expressions.Sorting.CaseFirstCollator.MakeCaseOrderedCollator(uri, stringCollator, caseOrder);
+                var caseFirst = (OutSmart.DAXon.Expressions.Sorting.CaseFirstCollator)OutSmart.DAXon.Expressions.Sorting.CaseFirstCollator.MakeCaseOrderedCollator(uri, stringCollator, caseOrder);
+                caseFirst.SubstringCollation = new SimpleCollation(uri, substrings);
+                if (uri != null && uri.StartsWith("http://www.w3.org/2013/collation/UCA", StringComparison.Ordinal))
+                {
+                    caseFirst.Exact = caseFirst.SubstringCollation;
+                }
+
+                stringCollator = caseFirst;
             }
 
             // alternate=blanked|shifted: punctuation and symbols do not count (UCA variable weighting). Saxon-HE's Java
@@ -196,6 +208,10 @@ namespace OutSmart.DAXon.Core
             if ((alternate == "blanked" || alternate == "shifted") && !comparer.Ordinal)
             {
                 comparer.Options |= CompareOptions.IgnoreSymbols;
+                if (substrings != null)
+                {
+                    substrings.Options |= CompareOptions.IgnoreSymbols;
+                }
             }
 
             // alphanumeric=yes|codepoint  (pure algorithm; byte-identical to Java)
@@ -265,15 +281,10 @@ namespace OutSmart.DAXon.Core
         {
             if (namedCollation.Comparator is CompareInfoComparer cic)
             {
-                if (cic.Ordinal)
-                {
-                    // identical strength: the value's own UTF-16 bytes are the key (equal strings -> equal keys)
-                    return new Base64BinaryValue(Encoding.BigEndianUnicode.GetBytes(value));
-                }
                 SortKey sk;
                 try
                 {
-                    sk = cic.CompareInfo.GetSortKey(cic.Visible(value), cic.Options);
+                    sk = cic.Ordinal ? cic.CompareInfo.GetSortKey(value, CompareOptions.None) : cic.CompareInfo.GetSortKey(cic.Visible(value), cic.Options);
                 }
                 catch (ArgumentException)
                 {
@@ -281,11 +292,30 @@ namespace OutSmart.DAXon.Core
                     throw new XPathException("The collation cannot make a collation key of a string of " + value.Length + " characters", "FOCH0004");
                 }
 
-                return new Base64BinaryValue(sk.KeyData);
+                // KeyData is a copy each time it is asked for (.NET Framework).
+                byte[] data = sk.KeyData;
+                if (cic.Ordinal)
+                {
+                    // Identical strength: the full key, then the value's own UTF-16, so only equal strings have equal keys.
+                    byte[] own = Encoding.BigEndianUnicode.GetBytes(value);
+                    byte[] key = new byte[data.Length + 1 + own.Length];
+                    Buffer.BlockCopy(data, 0, key, 0, data.Length);
+                    Buffer.BlockCopy(own, 0, key, data.Length + 1, own.Length);
+                    data = key;
+                }
+
+                if (data.Length >= MemoryLedger.Big)
+                {
+                    // A key of a long string is several times its size, and the native call that made it saw no limit.
+                    MemoryLedger.HoldText(data);
+                    Controller.CheckActiveTimeoutNow();
+                }
+
+                return new CollationKeyBytes(data);
             }
             // Fallback: codepoint-equal key (equal strings -> equal keys). Not a locale sort key, but
             // satisfies the collation-key contract for any non-CompareInfo comparator.
-            return new Base64BinaryValue(Encoding.BigEndianUnicode.GetBytes(value));
+            return new CollationKeyBytes(Encoding.BigEndianUnicode.GetBytes(value));
         }
 
         // UCA collator: routed through the same CompareInfo path as lang= collations. The
@@ -293,18 +323,11 @@ namespace OutSmart.DAXon.Core
         // Properties consumed by MakeCollation, so we let that path build it. Returning null here makes
         // the resolver fall through to its param-translation + MakeCollation branch (the desired behaviour).
         public IStringCollator MakeUcaCollator(string uri, Configuration config) => null;
-        // Always the Saxon-native regex engine (ARegularExpression). Java's "!"-flag selects java.util.regex
-        // instead; that engine has no twin here, so the flag is stripped (XPath regex semantics ARE the
-        // Saxon engine's native dialect, so this stays spec-conformant).
+        // Always the Saxon-native regex engine (ARegularExpression). Java's "!" and ";" flags select engines that have
+        // no twin here: like any other unknown flag they are FORX0001, as F&O says, not an answer in another dialect.
         public IRegularExpression CompileRegularExpression(Configuration config, UnicodeString regex, string flags, string hostLanguage, IList<string> warnings)
         {
-            string f = flags == null ? "" : flags.Replace("!", "");
-            int semi = f.IndexOf(';');
-            if (semi >= 0) // implementation-defined engine selectors - not applicable
-            {
-                f = f.Substring(0, semi);
-            }
-            return new ARegularExpression(regex, f, hostLanguage, warnings, config);
+            return new ARegularExpression(regex, flags ?? "", hostLanguage, warnings, config);
         }
         // A type named in the .NET-type namespace: classes are not loaded by name here, so it is an unknown type.
         public ExternalObjectType GetExternalObjectType(Configuration config, NamespaceUri uri, string localName)
@@ -345,6 +368,11 @@ namespace OutSmart.DAXon.Core
                 Options = options;
             }
 
+            public CompareInfoComparer Copy()
+            {
+                return new CompareInfoComparer(CompareInfo, options) { Ordinal = Ordinal, DropsSpacesAndDashes = DropsSpacesAndDashes };
+            }
+
             public void UsePrimaryStrength()
             {
                 Options = CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace;
@@ -361,7 +389,10 @@ namespace OutSmart.DAXon.Core
             {
                 if (Ordinal)
                 {
-                    return string.CompareOrdinal(x, y);
+                    // Identical strength (UTS #10): the full comparison, code units only breaking a tie. Code units
+                    // alone sorted "B" before "a" and every accented letter after "z".
+                    int c = CompareInfo.Compare(x, y, CompareOptions.None);
+                    return c != 0 ? c : string.CompareOrdinal(x, y);
                 }
                 return CompareInfo.Compare(Visible(x), Visible(y), Options);
             }

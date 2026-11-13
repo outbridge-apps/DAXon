@@ -119,7 +119,7 @@ namespace OutSmart.DAXon.Lib
             {
                 try
                 {
-                    string outputFile = new Uri(absoluteURI.ToString()).LocalPath;
+                    string outputFile = OutSmart.DAXon.Internal.Net.BidiUri.LocalPath(absoluteURI.ToString());
                     if (Directory.Exists(outputFile))
                     {
                         throw new XPathException("Cannot write to a directory: " + absoluteURI, DAXonErrorCode.SXRD0004);

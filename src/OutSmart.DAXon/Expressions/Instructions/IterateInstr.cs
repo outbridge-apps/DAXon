@@ -202,8 +202,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     c2.Origin = expr;
                     IFocusIterator iter = c2.TrackFocus(select.Iterate(context));
                     c2.SetCurrentTemplateRule(null);
-                    PipelineConfiguration pipe = output.GetPipelineConfiguration();
-                    pipe.XPathContext = c2;
                     bool tracing = context.GetController().IsTracing();
                     ITraceListener listener = tracing ? context.GetController().GetTraceListener() : null;
                     ITailCall tc = initial.ProcessLeavingTail(output, context);
@@ -253,7 +251,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         }
                     }
 
-                    pipe.XPathContext = context;
                     return null;
                 };
             }

@@ -43,7 +43,9 @@ namespace OutSmart.DAXon.Api
                 case Serializer.Property.SAXON_SUPPLY_SOURCE_LOCATOR: return "{http://saxon.sf.net/}supply-source-locator";
                 // Standard XSLT 3.0 property despite the SAXON_ enum prefix (DAXonOutputKeys.SUPPRESS_INDENTATION).
                 case Serializer.Property.SAXON_SUPPRESS_INDENTATION: return "suppress-indentation";
-                default: return p.ToString().ToLowerInvariant().Replace('_', '-');
+                default:
+                    ArgumentCheck.Defined(p, nameof(p));
+                    return p.ToString().ToLowerInvariant().Replace('_', '-');
             }
         }
 

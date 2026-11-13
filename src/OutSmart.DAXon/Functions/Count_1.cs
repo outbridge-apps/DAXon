@@ -11,13 +11,8 @@ using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Functions
 {
-
-    // Count_1 (fn:count#1) -- REAL elaborator-free impl ported from the excluded Count.cs:69-74 + SteppingCount:57-66.
-    // The real Count.cs is excluded (csproj) AND its class name 'Count' is occupied here by a hollow static-helper
-    // stub (not a SystemFunction), so this is registered as a distinct class on the compiled SystemFunction base.
-    // GetElaborator() (CountFnElaborator) intentionally omitted (String_1/Tokenize_1 pattern): correctness from Call
-    // (interpreter path); the optimizer elaborator is deferred. The grounded fast-path uses IGroundedValue.GetLength();
-    // otherwise count by iterating (faithful to the real SteppingCount loop). UO/INS upstream flags are non-correctness.
+    // fn:count#1 (the name Count is taken by the static helpers): a grounded value answers its length, anything else
+    // is counted by iterating, as Saxon's SteppingCount does.
     internal sealed class Count_1 : SystemFunction
     {
         public Count_1() { }
@@ -90,6 +85,28 @@ namespace OutSmart.DAXon.Functions
                     return (context) => context.GetContextItem() is Trees.Tiny.TinyDocumentImpl doc
                         ? Int64Value.MakeIntegerValue(doc.tree.numberOfAttributes)
                         : Int64Value.MakeIntegerValue(CountIterator(puller(context)));
+                }
+
+                // count(NODES/NAME): the matching children counted by number; starts the walk cannot take count the general way.
+                int childFp = Trees.Tiny.TinyText.ChildName(arg, out Expression start);
+                if (childFp >= 0)
+                {
+                    Expressions.Elaboration.IPullEvaluator starts = start.MakeElaborator().ElaborateForPull();
+                    int startFp = Trees.Tiny.TinyText.DescendantName(start);
+                    return (context) =>
+                    {
+                        long n = 0;
+                        if (Trees.Tiny.TinyText.WalkChildren(context, starts, startFp, childFp, (tree, c) =>
+                        {
+                            n++;
+                            return true;
+                        }))
+                        {
+                            return Int64Value.MakeIntegerValue(n);
+                        }
+
+                        return Int64Value.MakeIntegerValue(CountIterator(puller(context)));
+                    };
                 }
 
                 return (context) => Int64Value.MakeIntegerValue(CountIterator(puller(context)));

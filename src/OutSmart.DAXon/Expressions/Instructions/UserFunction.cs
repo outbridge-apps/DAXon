@@ -510,9 +510,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     exp2 = visitor.GetConfiguration().GetTypeChecker(false).StaticTypeCheck(exp2, resultType, role, visitor);
                 }
             }
-            catch (XPathException err)
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(GetLocation())))
             {
-                throw err.MaybeWithLocation(GetLocation());
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
 
             if (exp2 != exp)
@@ -576,6 +577,8 @@ namespace OutSmart.DAXon.Expressions.Instructions
             // Every pull/item function invocation (classic and fused) enters here, so this one
             // probe bounds user-function recursion depth (RecursionDepthError -> SXLM0001).
             StackGuard.Probe();
+            // And the clock: a branching recursion of bounded depth reaches no loop or tail call that would look.
+            c2.GetController()?.CheckTimeoutPerStep();
 
             // Lock-free after first call (this is the per-function-call hot path); the volatile
             // field is assigned exactly one fully-built evaluator by ComputeEvaluationMode.
@@ -595,7 +598,8 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 body = bodyEvaluator;
             }
 
-            ISequence result;
+            ISequence result = null;
+            XPathException unwrapped = null;
             try
             {
                 result = body.Evaluate(c2);
@@ -607,15 +611,15 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 // internal-error wrap below. Filtered: one such catch per recursion level.
                 throw RecursionOverflow(e);
             }
-            catch (XPathException err) when (!(err is XPathException.StackOverflow))
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(GetLocation()).MaybeWithContext(c2)))
             {
-                // StackOverflow flies through decorating rethrows untouched — see the
-                // DocumentInstr elaborator note (deep-unwind stack discipline, round AQ).
-                throw err.MaybeWithLocation(GetLocation()).MaybeWithContext(c2);
+                // Decorated in the filter, never handled: one call per recursion level (XPathException.PassOn).
+                throw;
             }
             catch (UncheckedXPathException uxe)
             {
-                throw uxe.GetXPathException().MaybeWithLocation(GetLocation()).MaybeWithContext(c2);
+                // Thrown below, once this frame is unwound: a throw from here re-enters dispatch per level.
+                unwrapped = uxe.GetXPathException().MaybeWithLocation(GetLocation()).MaybeWithContext(c2);
             }
             catch (Exception err2) when (!(err2 is XPathException) && !(err2 is RecursionDepthError) && !(err2 is OutOfMemoryException) && !OutSmart.DAXon.Lib.HostDefects.IsHostDefect(err2))
             {
@@ -624,12 +628,18 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 throw new InvalidOperationException(message, err2);
             }
 
+            if (unwrapped != null)
+            {
+                throw unwrapped;
+            }
+
             return result;
         }
 
         public virtual void Process(XPathContextMajor context, ISequence[] actualArgs, Outputter output)
         {
             StackGuard.Probe();
+            context.GetController()?.CheckTimeoutPerStep();
             context.SetStackFrame(GetStackFrameMap(), actualArgs);
 
             // Lock-free after first call, same discipline as Call above.
@@ -677,13 +687,14 @@ namespace OutSmart.DAXon.Expressions.Instructions
             {
                 GetBody().MakeElaborator().ElaborateForUpdate().RegisterUpdates(context, pul);
             }
-            catch (XPathException err)
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(GetLocation()).MaybeWithContext(context)))
             {
-                throw err.MaybeWithLocation(GetLocation()).MaybeWithContext(context);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 
-        public override void Export(ExpressionPresenter presenter)
+        public virtual void Export(ExpressionPresenter presenter)
         {
             presenter.StartElement("function");
             if (GetFunctionName() != null)
@@ -778,11 +789,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return false;
         }
 
-        public bool DeepEquals(IFunctionItem other, IXPathContext context, IAtomicComparer comparer, int flags)
-        {
-            throw new XPathException("Cannot compare functions using deep-equal", "FOTY0015").AsTypeError().WithXPathContext(context);
-        }
-
         public bool DeepEqual40(IFunctionItem other, IXPathContext context, DeepEqual.DeepEqualOptions options)
         {
             throw new XPathException("Cannot compare functions using deep-equal", "FOTY0015").AsTypeError().WithXPathContext(context);
@@ -827,10 +833,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public virtual void IncrementReferenceCount()
         {
             refCount++;
-        }
-
-        public virtual void PrepareForStreaming()
-        {
         }
 
         public StructuredQName GetParameterName(int i)
@@ -898,12 +900,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 if (expandedArgs[a] == null)
                 {
                     Expression defaultVal = new DefaultedArgumentExpression(); // to be fixed up later
-                    expandedArgs[a] = defaultVal; //                Expression defaultVal = fd.getDefaultValueExpression(a);
-                    //                if (defaultVal == null) {
-                    //                    defaultVal = new DefaultedArgumentExpression(); // to be fixed up later
-                    //                }
-                    //                expandedArgs[a] = defaultVal.copy(new RebindingMap());
-                    //expandedArgs[a] = new ErrorExpression("UseDefault", "UseDefault", false); // for now
+                    expandedArgs[a] = defaultVal;
                 }
             }
 
@@ -922,7 +919,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         IGroundedValue IItem.Reduce() => Reduce();
         IGroundedValue IGroundedValue.Reduce() => Reduce();
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         // A user-declared function is never sequence-variadic (that's a 4.0 concept for fn:concat-style
         // built-ins; upstream Function.isSequenceVariadic defaults to false). Was a throwing stub that
         // FunctionCall.CheckFunctionCall hits for EVERY call to an XQuery `declare function` — blocked all
@@ -932,15 +928,8 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public virtual bool IsStreamed() => false; // upstream NodeInfo/Item default
         public virtual IGroundedValue Materialize() => this; // upstream GroundedValue default method
         public virtual IEnumerable<IItem> AsIterable() => new IItem[] { this }; // singleton grounded value (upstream GroundedValue default for an Item)
-        public virtual bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public virtual bool ContainsNode(NodeInfo sought) => false; // holds no node
+        public virtual IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         public virtual ISequence MakeRepeatable() => this; // upstream Sequence.makeRepeatable default
         public enum Determinism
         {

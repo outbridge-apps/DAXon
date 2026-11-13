@@ -51,6 +51,10 @@ namespace OutSmart.DAXon.Lib
         /// </summary>
         public const string EXSLT_COMMON = "http://exslt.org/common";
         /// <summary>
+        /// The namespace of the functions DAXon adds to the standard ones: "https://outbridge.app/ns/daxon"
+        /// </summary>
+        public const string DAXON = "https://outbridge.app/ns/daxon";
+        /// <summary>
         /// Fixed namespace name for EXSLT/math: "http://exslt.org/math"
         /// </summary>
         public const string EXSLT_MATH = "http://exslt.org/math";

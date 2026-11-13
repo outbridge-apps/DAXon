@@ -16,7 +16,6 @@ namespace OutSmart.DAXon.Regex
         IAtomicIterator Tokenize(UnicodeString input);
         IRegexIterator Analyze(UnicodeString input);
         UnicodeString Replace(UnicodeString input, UnicodeString replacement);
-        UnicodeString ReplaceWith(UnicodeString input, Func<UnicodeString, UnicodeString[], UnicodeString> replacement);
         string Flags { get; }
         bool IsPlatformNative();
     }

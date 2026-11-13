@@ -4,7 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.stream.ManualGroupIterator;
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Lib;
@@ -31,13 +30,41 @@ namespace OutSmart.DAXon.Expressions.Sorting
         // Many groups: the iterator is entered in the ledger of the call grouping, which sums them as they grow.
         private void GroupAdded()
         {
-            if (groups.Count == Core.MemoryLedger.BigCount)
+            if (groups.Count == Core.MemoryLedger.BigCount && membersSeen < Core.MemoryLedger.BigCount)
             {
                 Core.MemoryLedger.Hold(this, GroupsSizer);
             }
         }
 
-        private static readonly Func<object, long> GroupsSizer = o => 48 + 200L * ((GroupByIterator)o).groups.Count;   // a group, its key, its slot
+        // Many members, however few groups hold them: one group of 4 000 000 strings held 750 MB under a 100 MB limit.
+        private int membersSeen;
+
+        private void MemberSeen()
+        {
+            if (++membersSeen == Core.MemoryLedger.BigCount && groups.Count < Core.MemoryLedger.BigCount)
+            {
+                Core.MemoryLedger.Hold(this, GroupsSizer);
+            }
+        }
+
+        // A group, its key and its slot, and the members held (a few, spread over the groups, tell their size).
+        private static readonly Func<object, long> GroupsSizer = o =>
+        {
+            var it = (GroupByIterator)o;
+            int n = it.groups.Count;
+            var probes = new object[Core.MemoryLedger.Probes];
+            int taken = 0;
+            for (int i = 0; i < n && taken < probes.Length; i += Math.Max(1, n / probes.Length))
+            {
+                IList<IItem> g = it.groups[i];
+                if (!(g is TinyGrp) && g.Count > 0)
+                {
+                    probes[taken++] = g[g.Count / 2];
+                }
+            }
+
+            return 48 + 200L * n + 8L * it.membersSeen + Core.MemoryLedger.ProbedBytes(probes, taken, it.membersSeen);
+        };
 
         protected IList<IAtomicSequence> groupKeys = new List<IAtomicSequence>(40);
         protected bool composite;
@@ -66,167 +93,74 @@ namespace OutSmart.DAXon.Expressions.Sorting
         // materialized on demand — allocations scale with the number of GROUPS, not the population.
         // Off-span keys (16/24-bit text, mixed content, segment splits) take the generic string
         // route inside the same loop, so grouping results are identical either way.
-        internal GroupByIterator(TinyParentNodeImpl parent, int rowFp, int keyFp, Expression keyExpression, IXPathContext keyContext, IStringCollator collator)
+        // The rows are the children of parent, or with descendants the elements named rowFp below it.
+        internal GroupByIterator(TinyParentNodeImpl parent, int rowFp, int keyFp, bool descendants, Expression keyExpression, IXPathContext keyContext, IStringCollator collator)
         {
             this.population = null;
             this.keyExpression = keyExpression;
             this.keyContext = keyContext;
             this.collator = collator;
             this.composite = false;
-            BuildTinyGroups(parent, rowFp, keyFp);
+            BuildTinyGroups(parent, rowFp, keyFp, descendants);
         }
 
-        private void BuildTinyGroups(TinyParentNodeImpl parent, int rowFp, int keyFp)
+        private void BuildTinyGroups(TinyParentNodeImpl parent, int rowFp, int keyFp, bool descendants)
         {
             TinyTree tree = parent.tree;
             int p = parent.nodeNr;
-            int firstChild = p + 1;
-            if (firstChild >= tree.numberOfNodes || tree.depth[firstChild] != tree.depth[p] + 1)
+            int walk = p;
+            int row = descendants ? TinyText.NextDescendant(tree, p, rowFp, ref walk) : TinyText.FirstChild(tree, p);
+            if (row < 0)
             {
                 return;
             }
 
             byte[] kinds = tree.nodeKind;
-            int[] nextArr = tree.next;
             int[] nameCodes = tree.nameCode;
-            int[] alphaArr = tree.alpha;
-            int[] betaArr = tree.beta;
-            LargeTextBuffer buffer = tree.textBuffer;
-
-            // open-addressing key table: slot empty while tKey is null; hashes follow the
-            // Slice8/UnicodeString algorithm (h = 31*h + codepoint) so span and string probes agree
-            int cap = 128;
-            int mask = cap - 1;
-            int used = 0;
-            int[] tHash = new int[cap];
-            UnicodeString[] tKey = new UnicodeString[cap];
-            TinyGrp[] tGroup = new TinyGrp[cap];
-
-            int row = firstChild;
+            var table = new SpanKeyTable<TinyGrp>();
+            int steps = 0;
             while (true)
             {
+                Core.Controller.CheckActiveTimeoutEvery64K(steps++);
                 // textual-element rows can hold no element children, hence no keys and no group
-                int rk = kinds[row];
-                if (rk == Types.Type.ELEMENT && (rowFp < 0 || (nameCodes[row] & NamePool.FP_MASK) == rowFp))
+                if (kinds[row] == Types.Type.ELEMENT && (rowFp < 0 || (nameCodes[row] & NamePool.FP_MASK) == rowFp))
                 {
-                    int c = row + 1;
-                    if (c < tree.numberOfNodes && tree.depth[c] == tree.depth[row] + 1)
+                    int n = TinyText.FirstChild(tree, row);
+                    for (int cur; (cur = TinyText.NextChildNamed(tree, keyFp, ref n)) >= 0;)
                     {
-                        int n = c;
-                        while (n >= 0)
+                        // the key's bytes in place when it is one Latin-1 span, else its string
+                        int h;
+                        int slot;
+                        UnicodeString genericKey = null;
+                        if (TinyText.TrySpan(tree, cur, out byte[] b, out int off, out int len))
                         {
-                            int cur = n;
-                            int n2 = nextArr[cur];
-                            n = n2 > cur ? n2 : -1;
-                            int ck = kinds[cur];
-                            if ((ck == Types.Type.ELEMENT || ck == Types.Type.TEXTUAL_ELEMENT) && (nameCodes[cur] & NamePool.FP_MASK) == keyFp)
-                            {
-                                // contiguous Latin-1 span when the key is inline text or a single text child
-                                int spanStart = -1;
-                                int spanEnd = -1;
-                                if (ck == Types.Type.TEXTUAL_ELEMENT)
-                                {
-                                    spanStart = alphaArr[cur];
-                                    spanEnd = spanStart + betaArr[cur];
-                                }
-                                else
-                                {
-                                    int cc = cur + 1;
-                                    if (cc < tree.numberOfNodes && tree.depth[cc] == tree.depth[cur] + 1
-                                        && kinds[cc] == Types.Type.TEXT && nextArr[cc] <= cc)
-                                    {
-                                        spanStart = alphaArr[cc];
-                                        spanEnd = spanStart + betaArr[cc];
-                                    }
-                                }
+                            h = SpanKeyTable<TinyGrp>.Hash(b, off, len);
+                            slot = table.Find(b, off, len, h);
+                        }
+                        else
+                        {
+                            genericKey = TinyParentNodeImpl.GetStringValue(tree, cur);
+                            h = genericKey.GetHashCode();
+                            slot = table.Find(genericKey, h);
+                        }
 
-                                int h;
-                                int spanOff = 0;
-                                int spanLen = 0;
-                                UnicodeString genericKey = null;
-                                byte[] spanBytes;
-                                if (spanStart >= 0 && buffer.TryGetByteSpan(spanStart, spanEnd, out spanBytes, out spanOff, out spanLen))
-                                {
-                                    h = 0;
-                                    for (int i = 0; i < spanLen; i++)
-                                    {
-                                        h = 31 * h + (spanBytes[i + spanOff] & 0xff);
-                                    }
-                                }
-                                else
-                                {
-                                    spanBytes = null;
-                                    genericKey = TinyParentNodeImpl.GetStringValue(tree, cur);
-                                    h = genericKey.GetHashCode();
-                                }
-
-                                int slot = h & mask;
-                                TinyGrp grp = null;
-                                while (tKey[slot] != null)
-                                {
-                                    if (tHash[slot] == h
-                                        && (spanBytes != null
-                                            ? (tKey[slot] is Slice8 s8 ? s8.ContentEqualsSpan(spanBytes, spanOff, spanLen)
-                                                                       : new Slice8(spanBytes, spanOff, spanOff + spanLen).Equals(tKey[slot]))
-                                            : genericKey.Equals(tKey[slot])))
-                                    {
-                                        grp = tGroup[slot];
-                                        break;
-                                    }
-
-                                    slot = (slot + 1) & mask;
-                                }
-
-                                if (grp == null)
-                                {
-                                    UnicodeString keyString = spanBytes != null ? new Slice8(spanBytes, spanOff, spanOff + spanLen) : genericKey;
-                                    grp = new TinyGrp(tree, row);
-                                    groups.Add(grp);
-                                    GroupAdded();
-                                    groupKeys.Add(StringValue.MakeUntypedAtomic(keyString));
-                                    tHash[slot] = h;
-                                    tKey[slot] = keyString;
-                                    tGroup[slot] = grp;
-                                    if (++used * 3 > cap * 2)
-                                    {
-                                        int newCap = cap << 1;
-                                        int newMask = newCap - 1;
-                                        int[] nHash = new int[newCap];
-                                        UnicodeString[] nKey = new UnicodeString[newCap];
-                                        TinyGrp[] nGroup = new TinyGrp[newCap];
-                                        for (int i = 0; i < cap; i++)
-                                        {
-                                            if (tKey[i] != null)
-                                            {
-                                                int s = tHash[i] & newMask;
-                                                while (nKey[s] != null)
-                                                {
-                                                    s = (s + 1) & newMask;
-                                                }
-
-                                                nHash[s] = tHash[i];
-                                                nKey[s] = tKey[i];
-                                                nGroup[s] = tGroup[i];
-                                            }
-                                        }
-
-                                        cap = newCap;
-                                        mask = newMask;
-                                        tHash = nHash;
-                                        tKey = nKey;
-                                        tGroup = nGroup;
-                                    }
-                                }
-                                else if (grp.LastNode != row)
-                                {
-                                    grp.AddNode(row);
-                                }
-                            }
+                        if (slot < 0)
+                        {
+                            UnicodeString keyString = genericKey ?? new Slice8(b, off, off + len);
+                            var grp = new TinyGrp(tree, row);
+                            groups.Add(grp);
+                            GroupAdded();
+                            groupKeys.Add(StringValue.MakeUntypedAtomic(keyString));
+                            table.Add(~slot, h, keyString, grp);
+                        }
+                        else if (table[slot].LastNode != row)
+                        {
+                            table[slot].AddNode(row);
                         }
                     }
                 }
 
-                int r2 = nextArr[row];
+                int r2 = descendants ? TinyText.NextDescendant(tree, p, rowFp, ref walk) : tree.next[row];
                 if (r2 <= row)
                 {
                     break;
@@ -343,6 +277,8 @@ namespace OutSmart.DAXon.Expressions.Sorting
             IItem item;
             while ((item = focus.Next()) != null)
             {
+                Core.Controller.CheckActiveTimeout();
+                MemberSeen();
                 ISequenceIterator keys;
                 if (fusedIter != null && item is TinyParentNodeImpl tp && tp.tree.TypeArray == null)
                 {
@@ -411,7 +347,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
                     // if this is not the first key value for this item, we
                     // check whether the item is already in this group before
-                    // adding it again. If it @is in this group, then we know
+                    // adding it again. If it is in this group, then we know
                     // it will be at the end.
                     if (g[g.Count - 1] != item)
                     {
@@ -431,6 +367,8 @@ namespace OutSmart.DAXon.Expressions.Sorting
             IItem item;
             while ((item = focus.Next()) != null)
             {
+                Core.Controller.CheckActiveTimeout();
+                MemberSeen();
                 ISequenceIterator keys = keyPull.Iterate(c2);
                 IList<IAtomicMatchKey> ckList = new List<IAtomicMatchKey>();
                 IList<AtomicValue> compositeKey = new List<AtomicValue>();
@@ -531,7 +469,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         }
 
         /// <summary>
-        /// Get the last position (that @is, the number of groups)
+        /// Get the last position (that is, the number of groups)
         /// </summary>
         public int GetLength()
         {

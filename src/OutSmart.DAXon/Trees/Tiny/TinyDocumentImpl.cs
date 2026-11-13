@@ -15,13 +15,17 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Collections;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 namespace OutSmart.DAXon.Trees.Tiny
 {
     internal sealed class TinyDocumentImpl : TinyParentNodeImpl
     {
-        private IntHashMap<IList<NodeInfo>> elementList;
+        // The elements of each name, built once and shared by the runs over this document, which may be at once: published
+        // whole into a concurrent map (an IntHashMap filled by two threads could lose or mix entries).
+        private ConcurrentDictionary<int, IList<NodeInfo>> elementList;
         private string baseURI;
 
         /// <summary>
@@ -104,16 +108,10 @@ namespace OutSmart.DAXon.Trees.Tiny
 
         public IAxisIterator GetAllElements(int fingerprint)
         {
-            if (elementList == null)
+            ConcurrentDictionary<int, IList<NodeInfo>> eList = LazyInitializer.EnsureInitialized(ref elementList);
+            if (!eList.TryGetValue(fingerprint, out IList<NodeInfo> list))
             {
-                elementList = new IntHashMap<IList<NodeInfo>>(20);
-            }
-
-            IList<NodeInfo> list = elementList[fingerprint];
-            if (list == null)
-            {
-                list = MakeElementList(fingerprint);
-                elementList.Put(fingerprint, list);
+                list = eList.GetOrAdd(fingerprint, MakeElementList(fingerprint));
             }
 
             return new NodeListIterator(list);
@@ -138,6 +136,7 @@ namespace OutSmart.DAXon.Trees.Tiny
             {
                 while (tree.depth[i] != 0)
                 {
+                    Controller.CheckActiveTimeout();   // every node of the document; a walk the limit stops is not kept
                     byte kind = tree.nodeKind[i];
                     if ((kind & 0x0f) == Types.Type.ELEMENT && (tree.nameCode[i] & 0xfffff) == fingerprint)
                     {

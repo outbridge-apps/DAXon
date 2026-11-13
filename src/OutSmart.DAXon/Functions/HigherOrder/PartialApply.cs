@@ -51,7 +51,6 @@ namespace OutSmart.DAXon.Functions.HigherOrder
 
         public override int ImplementationMethod => EVALUATE_METHOD;
 
-        //
         public override string ExpressionName => "partialApply";
         public PartialApply(Expression @base, Expression[] boundArguments)
         {
@@ -110,7 +109,6 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             return this;
         }
 
-        //
         public override ItemType GetItemType()
         {
             ItemType baseItemType = BaseExpression.GetItemType();
@@ -196,7 +194,6 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             }
         }
 
-        //
         protected override int ComputeHashCode()
         {
             int h = 0x236b92a0;
@@ -209,7 +206,6 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             return h;
         }
 
-        //
         public override void Export(ExpressionPresenter @out)
         {
             @out.StartElement("partialApply", this);
@@ -230,13 +226,11 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             @out.EndElement();
         }
 
-        //
         protected override int ComputeCardinality()
         {
             return StaticProperty.EXACTLY_ONE;
         }
 
-        //
         public override Expression Copy(RebindingMap rebindings)
         {
             Expression[] boundArgumentsCopy = new Expression[boundArgumentsOp.Length];
@@ -257,7 +251,6 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             return exp;
         }
 
-        //
         public override string ToString()
         {
             StringBuilder buff = new StringBuilder(64);
@@ -303,13 +296,11 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             return (IFunctionItem)MakeElaborator().ElaborateForItem().Eval(context);
         }
 
-        //
         public override Elaborator GetElaborator()
         {
             return new PartialApplyElaborator();
         }
 
-        //
         private sealed class PartialApplyElaborator : ItemElaborator
         {
             public override IItemEvaluator ElaborateForItem()

@@ -9,6 +9,8 @@ namespace OutSmart.DAXon.Expressions.Flwor
 {
     public abstract class TuplePull
     {
+        // A clause pulls from the one before it, so a long chain recurses once per clause: each override that does
+        // so probes the stack first (5000 where-clauses overflowed a 256KB thread).
         public abstract bool NextTuple(IXPathContext context);
         public virtual void Dispose()
         {

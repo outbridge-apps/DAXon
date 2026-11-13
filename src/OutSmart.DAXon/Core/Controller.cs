@@ -31,11 +31,6 @@ using OutSmart.DAXon.Internal.Collections;
 
 namespace OutSmart.DAXon.Core
 {
-    //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
-    //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
-    //                + "    }"
-    //})
     public class Controller : IContextOriginator
     {
         protected internal readonly object syncLock = new object();
@@ -65,7 +60,6 @@ namespace OutSmart.DAXon.Core
         private int lastRememberedNumber = -1;
         private DateTimeValue currentDateTime;
         private bool dateTimePreset;
-        private PathMap pathMap;
         protected int validationMode = Validation.DEFAULT;
         protected bool inUse;
         private bool stripSourceTrees = true;
@@ -116,6 +110,7 @@ namespace OutSmart.DAXon.Core
             internal TimeSpan setting;
             internal string activity;   // what the limit stopped when not a transformation: "Compilation", "Parsing", ...
             internal int stackThreshold;   // the Processor's ProcessorOptions.StackSizeThreshold; 0 for the default
+            internal long stackLimit;      // ProcessorOptions.MaxStackBytes, of this call or one it runs in; 0 for none
 
             // ProcessorOptions.MaxMemoryBytes, 0 for none. What the call holds is in the ledger of memoryOwner - the call
             // itself or the one it is nested in - made when something is first entered; the thread's allocation counter
@@ -216,21 +211,34 @@ namespace OutSmart.DAXon.Core
 
             // A lazy result goes back to the host, whose allocations until the next step do not bring the next sum nearer;
             // the next step counts on, on whatever thread the host iterates.
-            internal void PauseMemory()
+            // A lazy result between pulls: neither the host's allocations nor its time count against the call's limits
+            // (the deadline used to run on while the host worked between two MoveNext calls).
+            internal void Pause()
             {
                 if (memoryOwner != null)
                 {
                     untilLook = nextLook - OutSmart.DAXon.Internal.AllocationMeter.Read();
                 }
+
+                pausedAt = System.Diagnostics.Stopwatch.GetTimestamp();
             }
 
-            internal void ResumeMemory()
+            internal void Resume()
             {
                 if (memoryOwner != null)
                 {
                     nextLook = OutSmart.DAXon.Internal.AllocationMeter.Read() + untilLook;
                 }
+
+                if (hasDeadline && pausedAt != 0)
+                {
+                    deadlineTimestamp += System.Diagnostics.Stopwatch.GetTimestamp() - pausedAt;
+                }
+
+                pausedAt = 0;
             }
+
+            private long pausedAt;
 
             private void StartSampling(long now)
             {
@@ -374,6 +382,22 @@ namespace OutSmart.DAXon.Core
 
                 CheckMemory();
             }
+
+            // For a callback on a thread the call does not run on (AngleSharp builds its DOM in a task of its own): the
+            // clock, and the ledger summed by that thread's allocations, since the call's own thread is waiting.
+            internal void CheckFromElsewhere()
+            {
+                if (hasDeadline && System.Diagnostics.Stopwatch.GetTimestamp() >= deadlineTimestamp)
+                {
+                    throw Exceeded();
+                }
+
+                MemoryLedger ledger = memoryOwner?.memory;
+                if (ledger != null && ledger.Over(OutSmart.DAXon.Internal.AllocationMeter.Read(), memoryOwner.memoryInputs, out long held))
+                {
+                    throw MemoryExceeded(held, memoryOwner.memoryInputs);
+                }
+            }
         }
 
         /// <summary>
@@ -408,16 +432,30 @@ namespace OutSmart.DAXon.Core
         }
 
         /// <summary>
-        /// The memory limit alone, from every buffer an input stream reads: a huge text node grows inside the XML reader,
-        /// where no check of the parse runs until the node is complete.
+        /// <see cref="CheckActiveTimeoutNow"/> once in 64K units of work, for a loop whose steps cost anything from one unit
+        /// to millions (a candidate of a substring search compares up to the needle's length): the strided check counts
+        /// steps, so a stride grown on cheap work let 4096 such steps run unchecked. The caller keeps the count.
         /// </summary>
-        internal static void CheckActiveMemory()
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal static void CheckActiveTimeoutAfterWork(ref long work, long units)
         {
-            activeOnThread?.CheckMemory();
+            work += units;
+            if (work >= 0x10000)
+            {
+                work = 0;
+                activeOnThread?.CheckNow();
+            }
         }
+
+        // Steps of the ancestor climbs on this thread (Navigator.IsAncestorOrSelf), for CheckActiveTimeoutAfterWork: one climb
+        // is short, a call per node of a deep document quadratic.
+        [ThreadStatic] internal static long climbed;
 
         // Whether the call on this thread has a memory limit: its input streams are then metered even when their length is known.
         internal static bool HasActiveMemoryLimit => activeOnThread?.memoryLimit > 0;
+
+        // Whether it has a time limit: its input streams are then metered too, each buffer read checking the clock.
+        internal static bool HasActiveDeadline => activeOnThread?.hasDeadline == true;
 
         // The ledger of the call on this thread, when it has a memory limit: what the call builds is entered there.
         internal static MemoryLedger ActiveLedger => activeOnThread?.Ledger;
@@ -433,14 +471,14 @@ namespace OutSmart.DAXon.Core
         internal static DeadlineToken BeginLazyStep(DeadlineToken limits)
         {
             DeadlineToken previous = activeOnThread;
-            limits.ResumeMemory();
+            limits.Resume();
             Own(limits);
             return previous;
         }
 
         internal static void EndLazyStep(DeadlineToken limits, DeadlineToken previous)
         {
-            limits.PauseMemory();
+            limits.Pause();
             Own(previous);
         }
 
@@ -476,6 +514,15 @@ namespace OutSmart.DAXon.Core
             return ms >= int.MaxValue ? int.MaxValue : (int)ms + 1;
         }
 
+        // The deadline the enclosing run is held to now: its token's. A lazy result's token moves past the host's pauses
+        // and the controller's own copy does not, so a nested transform in a step after a pause was held to the unmoved one,
+        // and failed with SXTO0001.
+        private static long LiveDeadline(Controller parent)
+        {
+            DeadlineToken token = parent.deadlineToken;
+            return token != null && token.hasDeadline ? token.deadlineTimestamp : parent.deadlineTimestamp;
+        }
+
         /// <summary>
         /// Cap this controller's deadline at an enclosing run's. A nested transformation
         /// (fn:transform) builds its own Processor-derived controller and would otherwise arm a
@@ -489,7 +536,7 @@ namespace OutSmart.DAXon.Core
             if (parent != null && parent.hasDeadline)
             {
                 hasInheritedCap = true;
-                inheritedDeadline = parent.deadlineTimestamp;
+                inheritedDeadline = LiveDeadline(parent);
                 inheritedSetting = parent.timeoutSetting;
             }
 
@@ -518,6 +565,7 @@ namespace OutSmart.DAXon.Core
             DeadlineToken token = spareToken ?? new DeadlineToken();
             spareToken = null;
             token.Reset(activity, StackThresholdOf(config));
+            token.stackLimit = StackLimitOf(config);
             Own(token);   // this run now owns the deadline slot on the running thread
             hasDeadline = false;
             chargedTrees?.Clear();
@@ -651,7 +699,7 @@ namespace OutSmart.DAXon.Core
         /// </summary>
         public void InheritDeadlineFrom(Controller parent)
         {
-            var token = new DeadlineToken { activity = parent?.deadlineToken?.activity, stackThreshold = StackThresholdOf(config) };
+            var token = new DeadlineToken { activity = parent?.deadlineToken?.activity, stackThreshold = StackThresholdOf(config), stackLimit = StackLimitOf(config) };
             Own(token);   // the nested run now owns the deadline slot on the running thread
             chargesInputs = false;   // and continues the parent's memory count, which counted the inputs
             long now = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -671,7 +719,7 @@ namespace OutSmart.DAXon.Core
                 return;               // no deadline: the token holds at most the memory limit
             }
 
-            deadlineTimestamp = parent.deadlineTimestamp;
+            deadlineTimestamp = LiveDeadline(parent);
             timeoutSetting = parent.timeoutSetting;
             hasDeadline = true;
             token.Arm(deadlineTimestamp, timeoutSetting, now);
@@ -715,10 +763,11 @@ namespace OutSmart.DAXon.Core
             {
                 // The token alone, as SetTimeout arms it for a fresh Controller: building one to arm it cost
                 // ~2.8 KB and ~3 us on every API call.
-                var token = new DeadlineToken { activity = activity, stackThreshold = p.Options.StackSizeThreshold };
+                var token = new DeadlineToken { activity = activity, stackThreshold = p.Options.StackSizeThreshold, stackLimit = StackLimitOf(config) };
                 TimeSpan timeout = p.TransformTimeout;
                 long? memory = p.Options.MaxMemoryBytes;
-                if (timeout > TimeSpan.Zero || memory != null)
+                bool nested = previous != null && (previous.hasDeadline || previous.memoryLimit > 0);
+                if (timeout > TimeSpan.Zero || memory != null || nested)
                 {
                     long now = System.Diagnostics.Stopwatch.GetTimestamp();
                     if (timeout > TimeSpan.Zero)
@@ -726,7 +775,19 @@ namespace OutSmart.DAXon.Core
                         token.Arm(DeadlineFromNow(timeout, now), timeout, now);
                     }
 
-                    if (memory != null)
+                    // Nested in a running call - fn:transform's compile, a host function parsing through the engine - the
+                    // scope ends no later than the call and counts in its ledger: a fresh budget of each let a run with
+                    // a stylesheet cache hold 745 MB under 50 MB, and take twice its time limit.
+                    if (previous != null && previous.hasDeadline && (!token.hasDeadline || previous.deadlineTimestamp < token.deadlineTimestamp))
+                    {
+                        token.Arm(previous.deadlineTimestamp, previous.setting, now);
+                    }
+
+                    if (previous != null && previous.memoryLimit > 0)
+                    {
+                        token.ContinueMemory(previous, now);
+                    }
+                    else if (memory != null)
                     {
                         token.ArmMemory(memory.Value, now);
                     }
@@ -736,7 +797,7 @@ namespace OutSmart.DAXon.Core
             }
             else
             {
-                Own(null);
+                Own(previous);   // a configuration with no Processor adds no limit, and takes none away
             }
 
             return previous;
@@ -747,18 +808,56 @@ namespace OutSmart.DAXon.Core
             Own(previous);
         }
 
+        // ArmThreadDeadline for the length of a scope: using (Controller.ArmScope(config, "Parsing")) { ... }.
+        internal static ThreadLimits ArmScope(Configuration config, string activity)
+        {
+            return new ThreadLimits(ArmThreadDeadline(config, activity));
+        }
+
+        // SuspendThreadDeadline for the length of a scope.
+        internal static ThreadLimits SuspendScope()
+        {
+            return new ThreadLimits(SuspendThreadDeadline());
+        }
+
+        // The thread's limit slot as a scope found it, given back when the scope ends.
+        internal readonly struct ThreadLimits : IDisposable
+        {
+            private readonly DeadlineToken previous;
+
+            internal ThreadLimits(DeadlineToken previous)
+            {
+                this.previous = previous;
+            }
+
+            public void Dispose()
+            {
+                RestoreThreadDeadline(previous);
+            }
+        }
+
         // The thread now runs a call of the token's owner: its deadline for the checks with no context at hand, and the
         // stack its options keep free for the recursion guard. Every change of the slot goes through here.
         private static void Own(DeadlineToken token)
         {
             // The guard holds the slot's threshold already; the default and 0 (no call) both keep the minimum.
             int threshold = Math.Max(token?.stackThreshold ?? 0, OutSmart.DAXon.Internal.StackGuard.MinThreshold);
-            if (threshold != Math.Max(activeOnThread?.stackThreshold ?? 0, OutSmart.DAXon.Internal.StackGuard.MinThreshold))
+            long limit = token?.stackLimit ?? 0;
+            if (threshold != Math.Max(activeOnThread?.stackThreshold ?? 0, OutSmart.DAXon.Internal.StackGuard.MinThreshold) || limit != (activeOnThread?.stackLimit ?? 0))
             {
-                OutSmart.DAXon.Internal.StackGuard.UseThreshold(threshold);
+                OutSmart.DAXon.Internal.StackGuard.UseThreshold(threshold, limit);
             }
 
             activeOnThread = token;
+        }
+
+        // The MaxStackBytes of the Processor a configuration serves, or of the call on this thread when that keeps less; 0
+        // for none.
+        private static long StackLimitOf(Configuration config)
+        {
+            long own = (config?.GetProcessor() as OutSmart.DAXon.Api.Processor)?.Options.MaxStackBytes ?? 0;
+            long outer = activeOnThread?.stackLimit ?? 0;
+            return own == 0 ? outer : outer == 0 ? own : Math.Min(own, outer);
         }
 
         // The StackSizeThreshold of the Processor a configuration serves; 0 (the default) for the engine's own.
@@ -891,7 +990,6 @@ namespace OutSmart.DAXon.Core
             }
         }
 
-        public virtual PathMap PathMapForDocumentProjection => pathMap;
         public Controller(Configuration config)
         {
             this.config = config;
@@ -1003,23 +1101,10 @@ namespace OutSmart.DAXon.Core
             if (val != null)
             {
 
-                // Check that any nodes belong to the right configuration. A value handed in can run to millions of items,
-                // and the run's limits hold from its first item on: one in 1024 looks at them.
-                Configuration config = GetConfiguration();
-                ISequenceIterator iter = val.Iterate();
-                IItem next;
-                int seen = 0;
-                while ((next = iter.Next()) != null)
+                // Check that any nodes belong to the right configuration, in maps and arrays too.
+                if (GetConfiguration().HoldsForeignNode(val))
                 {
-                    if ((++seen & 1023) == 0)
-                    {
-                        CheckActiveTimeoutNow();
-                    }
-
-                    if (next is NodeInfo && !config.IsCompatible(((NodeInfo)next).GetConfiguration()))
-                    {
-                        throw new XPathException("A node supplied in a global parameter must be built using the same Configuration " + "that was used to compile the stylesheet or query", DAXonErrorCode.SXXP0004);
-                    }
+                    throw new XPathException("A node supplied in a global parameter must be built using the same Configuration " + "that was used to compile the stylesheet or query", DAXonErrorCode.SXXP0004);
                 }
 
 
@@ -1215,6 +1300,10 @@ namespace OutSmart.DAXon.Core
                     throw new XPathException("Cannot use a schema-validated source document unless the stylesheet is schema-aware");
                 }
             }
+            else if (executable.GetConfiguration().HoldsForeignNode(contextItem))   // a map or an array of such nodes
+            {
+                throw new XPathException("Source document and stylesheet must use the same or compatible Configurations", DAXonErrorCode.SXXP0004);
+            }
 
             this.globalContextItem = contextItem;
             this.globalContextItemPreset = true;
@@ -1344,7 +1433,7 @@ namespace OutSmart.DAXon.Core
         {
             if (trace != null)
             {
-                traceListener = (ITraceListener)TraceEventMulticaster.Add(traceListener, trace);
+                traceListener = TraceEventMulticaster.Add(traceListener, trace);
             }
         }
 
@@ -1366,7 +1455,7 @@ namespace OutSmart.DAXon.Core
 
         public virtual void RemoveTraceListener(ITraceListener trace)
         {
-            traceListener = (ITraceListener)TraceEventMulticaster.Remove(traceListener);
+            traceListener = TraceEventMulticaster.Remove(traceListener, trace);
         }
 
         public virtual void InitializeController(GlobalParameterSet @params)
@@ -1384,7 +1473,9 @@ namespace OutSmart.DAXon.Core
             {
                 if (!e.HasBeenReported())
                 {
+                    // marked, as ReportFatalError marks: the run around this reported it a second time
                     ErrorReporter.Report(new XmlProcessingException(e));
+                    e.SetHasBeenReported(true);
                     throw;
                 }
             }
@@ -1395,11 +1486,6 @@ namespace OutSmart.DAXon.Core
             if (executable.GlobalContextRequirement != null)
             {
                 globalContextItem = executable.CheckInitialContextItem(globalContextItem, NewXPathContext());
-            }
-            if (traceListener != null)
-            {
-
-                PreEvaluateGlobals(NewXPathContext());
             }
         }
 
@@ -1509,42 +1595,7 @@ namespace OutSmart.DAXon.Core
                 }
             }
 
-            Builder sourceBuilder = MakeBuilder();
-            sourceBuilder.SetUseEventLocation(true);
-            if (sourceBuilder is TinyBuilder)
-            {
-                ((TinyBuilder)sourceBuilder).SetStatistics(config.GetTreeStatistics().SOURCE_DOCUMENT_STATISTICS);
-                ((TinyBuilder)sourceBuilder).SetInputLength((source as ActiveStreamSource)?.InputLength ?? -1);
-            }
-
-            IReceiver r = sourceBuilder;
-            ISpaceStrippingRule spaceStrippingRule = NoElementsSpaceStrippingRule.GetInstance();
-            if (config.IsStripsAllWhiteSpace() || IsStylesheetContainingStripSpace() || validationMode == Validation.STRICT || validationMode == Validation.LAX)
-            {
-                r = MakeStripper(sourceBuilder);
-                spaceStrippingRule = SpaceStrippingRule;
-            }
-
-            if (IsStylesheetStrippingTypeAnnotations())
-            {
-                r = config.GetAnnotationStripper(r);
-            }
-
-            PipelineConfiguration pipe = sourceBuilder.GetPipelineConfiguration();
-            pipe.SetParseOptions(pipe.GetParseOptions().WithSchemaValidationMode(validationMode));
-            r.SetPipelineConfiguration(pipe);
-            Sender.Send(source, r, null);
-            NodeInfo doc = sourceBuilder.CurrentRoot;
-
-            //globalContextItem = doc;
-            sourceBuilder.Reset();
-            if (source.GetSystemId() != null)
-            {
-                RegisterDocument(doc.GetTreeInfo(), new DocumentKey(source.GetSystemId()));
-            }
-
-            doc.GetTreeInfo().SpaceStrippingRule = spaceStrippingRule;
-            return doc;
+            return BuildSourceTree(source.GetSystemId(), validationMode, (source as ActiveStreamSource)?.InputLength ?? -1, r => Sender.Send(source, r, null));
         }
 
         // Source-free source-tree build (P5): parse a System.Xml.XmlReader into the transform's source tree,
@@ -1556,8 +1607,14 @@ namespace OutSmart.DAXon.Core
             return MakeSourceTree(reader, systemId, validationMode, -1);
         }
 
-        // inputLength: of what the reader parses, when known (sizes a tiny tree), else -1.
+        // inputLength: of what the reader parses, when known (sizes a tiny tree), else -1. A reader is parsed
+        // every time: like a stream it is not looked up in the document pool.
         internal NodeInfo MakeSourceTree(System.Xml.XmlReader reader, string systemId, int validationMode, long inputLength)
+        {
+            return BuildSourceTree(systemId, validationMode, inputLength, r => Sender.Send(reader, systemId, r, null));
+        }
+
+        private NodeInfo BuildSourceTree(string systemId, int validationMode, long inputLength, Action<IReceiver> send)
         {
             Builder sourceBuilder = MakeBuilder();
             sourceBuilder.SetUseEventLocation(true);
@@ -1583,7 +1640,7 @@ namespace OutSmart.DAXon.Core
             PipelineConfiguration pipe = sourceBuilder.GetPipelineConfiguration();
             pipe.SetParseOptions(pipe.GetParseOptions().WithSchemaValidationMode(validationMode));
             r.SetPipelineConfiguration(pipe);
-            Sender.Send(reader, systemId, r, null);
+            send(r);
             NodeInfo doc = sourceBuilder.CurrentRoot;
             sourceBuilder.Reset();
             if (systemId != null)
@@ -1733,11 +1790,6 @@ namespace OutSmart.DAXon.Core
             XPathContextMajor c = new XPathContextMajor(this);
             c.CurrentOutputUri = principalResultURI;
             return c;
-        }
-
-        public virtual void SetUseDocumentProjection(PathMap pathMap)
-        {
-            this.pathMap = pathMap;
         }
 
         public virtual StylesheetCache GetStylesheetCache()

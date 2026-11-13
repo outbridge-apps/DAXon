@@ -236,9 +236,9 @@ namespace OutSmart.DAXon.Expressions.Parsing
             int v = @in.IndexOf('|');
             int kind = int.Parse(@in.Substring(0, v), CultureInfo.InvariantCulture);
             int w = @in.IndexOf('|', v + 1);
-            int operand = int.Parse(@in.Substring(v + 1, w - v - 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/, CultureInfo.InvariantCulture);
+            int operand = int.Parse(@in.Substring(v + 1, w - v - 1), CultureInfo.InvariantCulture);
             int x = @in.IndexOf('|', w + 1);
-            string errorCode = @in.Substring(w + 1, x - w - 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+            string errorCode = @in.Substring(w + 1, x - w - 1);
             string operation = @in.Substring(x + 1);
             RoleDiagnostic cd = new RoleDiagnostic(kind, operation, operand);
             if (!(errorCode.Length == 0))

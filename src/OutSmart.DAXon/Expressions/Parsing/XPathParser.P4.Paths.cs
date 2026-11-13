@@ -24,15 +24,9 @@ namespace OutSmart.DAXon.Expressions.Parsing
             {
                 case Token.MINUS:
                     {
-                        // Direct recursion bypassing the ParseExprSingle guard: an unguarded ----...-1
-                        // sign chain overflows the uncatchable .NET stack (~3M signs). Same idiom:
-                        // increment before the try so the finally pairs only with a successful entry.
-                        if (++expressionDepth > MAX_EXPRESSION_NESTING)
-                        {
-                            expressionDepth--;
-                            Grumble("Expression is too deeply nested (exceeds the limit of " + MAX_EXPRESSION_NESTING + ")", "XPST0003");
-                        }
-
+                        // Direct recursion bypassing ParseExprSingle: a ----...-1 sign chain takes its guard here, the
+                        // stack probe included (2999 signs killed a 256 KB thread).
+                        EnterNested();
                         try
                         {
                             NextToken();
@@ -50,12 +44,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 case Token.PLUS:
                     {
                         // Same direct-recursion guard as MINUS above.
-                        if (++expressionDepth > MAX_EXPRESSION_NESTING)
-                        {
-                            expressionDepth--;
-                            Grumble("Expression is too deeply nested (exceeds the limit of " + MAX_EXPRESSION_NESTING + ")", "XPST0003");
-                        }
-
+                        EnterNested();
                         try
                         {
                             NextToken();
@@ -258,7 +247,6 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 if (op == Token.SLASH)
                 {
 
-                    //return new RawSlashExpression(start, step);
                     exp = new HomogeneityChecker(new SlashExpression(exp, next));
                 } /* (op == Token.SLASH_SLASH)*/
                 else
@@ -292,7 +280,6 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 if (op == Token.SLASH)
                 {
 
-                    //return new RawSlashExpression(start, step);
                     exp = new HomogeneityChecker(new SlashExpression(exp, next));
                 }
                 else if (op == Token.SLASH_SLASH)

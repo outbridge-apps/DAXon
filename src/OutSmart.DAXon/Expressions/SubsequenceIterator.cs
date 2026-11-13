@@ -120,7 +120,7 @@ namespace OutSmart.DAXon.Expressions
         }
 
         /// <summary>
-        /// Get the last position (that @is, the number of items in the sequence).
+        /// Get the last position (that is, the number of items in the sequence).
         /// </summary>
         public int GetLength()
         {

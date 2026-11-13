@@ -78,19 +78,11 @@ namespace OutSmart.DAXon.Model
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
         IGroundedValue IGroundedValue.Reduce() => Reduce();
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public IGroundedValue Materialize() => this; // upstream GroundedValue default
         public string ToShortString() => OutSmart.DAXon.Transformation.Err.DepictSequence(this); // upstream GroundedValue default
         public IEnumerable<IItem> AsIterable() => new IItem[0]; // empty (upstream GroundedValue.asIterable default over an empty sequence)
-        public bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
-        public IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public bool ContainsNode(NodeInfo sought) => false; // holds no node
+        public IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         public ISequence MakeRepeatable() => this; // upstream Sequence.makeRepeatable default
     }
 }

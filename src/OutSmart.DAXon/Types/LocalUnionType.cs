@@ -188,7 +188,7 @@ namespace OutSmart.DAXon.Types
             return null;
         }
 
-        public virtual IAtomicSequence GetTypedValue(UnicodeString value, INamespaceResolver resolver, ConversionRules rules) /*Java covariant AtomicValue widened (C# 7.3)*/
+        public virtual IAtomicSequence GetTypedValue(UnicodeString value, INamespaceResolver resolver, ConversionRules rules)
         {
             foreach (IAtomicType type in memberTypes)
             {
@@ -245,6 +245,5 @@ namespace OutSmart.DAXon.Types
         }
         IAtomicSequence IUnionType.GetTypedValue(UnicodeString arg0, INamespaceResolver arg1, ConversionRules arg2) => GetTypedValue(arg0, arg1, arg2); // covariant bridge
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
     }
 }

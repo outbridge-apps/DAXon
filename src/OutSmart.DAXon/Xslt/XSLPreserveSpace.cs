@@ -101,7 +101,7 @@ namespace OutSmart.DAXon.Xslt
                         }
                         else
                         {
-                            NamespaceUri uri = NamespaceUri.Of(s.Substring(2, brace - 2) /*Java substring(begin,END) -> C# (start,LENGTH)*/);
+                            NamespaceUri uri = NamespaceUri.Of(s.Substring(2, brace - 2));
                             string local = s.Substring(brace + 1);
                             if (local.Equals("*"))
                             {

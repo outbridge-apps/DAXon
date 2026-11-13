@@ -108,7 +108,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         // static-analysis depth guard later. Capping loop iterations at the same bound rejects after
         // ~3000 tokens; N iterations imply a tree >= N deep, so anything rejected here would fail that
         // guard anyway — no new rejections.
-        private void CheckIterativeDepth(int chainLength)
+        protected void CheckIterativeDepth(int chainLength)
         {
             if (chainLength > MAX_EXPRESSION_NESTING)
             {

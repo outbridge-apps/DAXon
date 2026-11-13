@@ -32,7 +32,6 @@ namespace OutSmart.DAXon.Collections
             return p1.ToString() + "||" + p2.ToString();
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public IIntPredicateProxy Union(IIntPredicateProxy other) => MakeUnion(this, other); // upstream IntPredicateProxy default method
     }
 }

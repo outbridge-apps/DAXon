@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.XQuery
         public virtual ComplexContentOutputter Destination => @out;
         public SequenceWrapper(IReceiver destination) : base(destination.GetPipelineConfiguration())
         {
-            @out = new ComplexContentOutputter(destination); // @out = new TracingFilter(@out);
+            @out = new ComplexContentOutputter(destination);
         }
 
         private void StartWrapper(INodeName name)

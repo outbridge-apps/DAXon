@@ -9,7 +9,6 @@ namespace OutSmart.DAXon.Lib
 {
     public interface ICollectionFinder
     {
-        //@CSharpReplaceMethod(code="object findCollection(OutSmart.DAXon.Expressions.IXPathContext context, string collectionURI);")
         IResourceCollection FindCollection(IXPathContext context, string collectionURI);
     }
 }

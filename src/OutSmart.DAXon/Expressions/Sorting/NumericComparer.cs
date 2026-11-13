@@ -108,6 +108,23 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return 0;
         }
 
+        // The double a key compares as: CompareAtomicValues orders by exactly this value, NaN first, so a sort can convert
+        // each key once instead of on every comparison.
+        internal double ToDouble(AtomicValue a)
+        {
+            if (a is NumericValue n)
+            {
+                return n.GetDoubleValue();
+            }
+
+            if (a == null)
+            {
+                return double.NaN;
+            }
+
+            return converter.TryStringToNumber(a.UnicodeStringValue, out double v) ? v : double.NaN;
+        }
+
         public virtual bool ComparesEqual(AtomicValue a, AtomicValue b)
         {
             return CompareAtomicValues(a, b) == 0;

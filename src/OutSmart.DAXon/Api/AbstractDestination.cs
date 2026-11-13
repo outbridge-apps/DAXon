@@ -23,6 +23,12 @@ namespace OutSmart.DAXon.Api
         {
             get => baseURI; set
             {
+                // Refused here, as XdmDestination.BaseURI refuses it: taken, a relative URI failed the next run raw.
+                if (value != null && !value.IsAbsolute())
+                {
+                    throw new System.ArgumentException("Supplied base URI must be absolute", nameof(value));
+                }
+
                 this.baseURI = value;
             }
         }

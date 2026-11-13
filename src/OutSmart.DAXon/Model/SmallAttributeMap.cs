@@ -76,7 +76,6 @@ namespace OutSmart.DAXon.Model
         public IEnumerator<AttributeInfo> GetEnumerator() => attributes.GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => attributes.GetEnumerator();
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public string GetValue(NamespaceUri uri, string local)
         {
             AttributeInfo att = Get(uri, local);

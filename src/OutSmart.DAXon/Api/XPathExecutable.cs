@@ -40,6 +40,9 @@ namespace OutSmart.DAXon.Api
         // protected constructor
         public XPathExecutable(XPathExpression exp, Processor processor, IndependentContext env)
         {
+            ArgumentCheck.NotNull(exp, nameof(exp));
+            ArgumentCheck.NotNull(processor, nameof(processor));
+            ArgumentCheck.NotNull(env, nameof(env));
             this.exp = exp;
             this.processor = processor;
             this.env = env; //this.declaredVariables = declaredVariables;
@@ -69,6 +72,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual ItemType GetRequiredItemTypeForVariable(QName variableName)
         {
+            ArgumentCheck.NotNull(variableName, nameof(variableName));
             XPathVariable var = env.GetExternalVariable(variableName.GetStructuredQName());
             if (var == null)
             {
@@ -82,6 +86,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual OccurrenceIndicator? GetRequiredCardinalityForVariable(QName variableName)
         {
+            ArgumentCheck.NotNull(variableName, nameof(variableName));
             XPathVariable var = env.GetExternalVariable(variableName.GetStructuredQName());
             if (var == null)
             {

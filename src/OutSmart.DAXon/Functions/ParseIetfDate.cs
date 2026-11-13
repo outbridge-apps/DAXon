@@ -22,17 +22,6 @@ namespace OutSmart.DAXon.Functions
     internal sealed class ParseIetfDate : SystemFunction, ICallable
     {
 
-        /* what should this return? */
-        /* Now expect either day number or month name */
-        /* Now expect time string */
-        /* Now expect time string ("after..." may differ) */
-        /*the number of microseconds, 0-999999*/
-        /*the timezone displacement in minutes from UTC.*/
-        /* the final token index, returned by the method */
-        /* seconds, microseconds, timezones not given*/
-        /* microseconds, timezones not given*/
-        /* no timezone is given in the time, we must have reached a year */
-        /* we must have reached the year */
         private static readonly string EOF = "";
 
         private readonly string[] dayNames = new string[]
@@ -260,7 +249,6 @@ namespace OutSmart.DAXon.Functions
             return 0; /* what should this return? */
         }
 
-        /* what should this return? */
         public DateTimeValue Parse(string input)
         {
             IList<string> tokens = Tokenize(input);
@@ -389,10 +377,6 @@ namespace OutSmart.DAXon.Functions
             return DateTimeValue.MakeDateTimeValue(date, time);
         }
 
-        /* what should this return? */
-        /* Now expect either day number or month name */
-        /* Now expect time string */
-        /* Now expect time string ("after..." may differ) */
         private int CheckTwoOrFourDigits(string input, string currentToken)
         {
             int year;
@@ -413,10 +397,6 @@ namespace OutSmart.DAXon.Functions
             return year;
         }
 
-        /* what should this return? */
-        /* Now expect either day number or month name */
-        /* Now expect time string */
-        /* Now expect time string ("after..." may differ) */
         public int ParseTime(IList<string> tokens, int currentPosition, IList<TimeValue> result, string input)
         {
             byte hour;
@@ -668,37 +648,16 @@ namespace OutSmart.DAXon.Functions
             return n;
         }
 
-        /* what should this return? */
-        /* Now expect either day number or month name */
-        /* Now expect time string */
-        /* Now expect time string ("after..." may differ) */
-        /*the number of microseconds, 0-999999*/
-        /*the timezone displacement in minutes from UTC.*/
-        /* the final token index, returned by the method */
-        /* seconds, microseconds, timezones not given*/
-        /* microseconds, timezones not given*/
-        /* no timezone is given in the time, we must have reached a year */
-        /* we must have reached the year */
         public static bool IsValidTime(int hour, int minute, int second, int microsecond, int tz)
         {
             return (hour >= 0 && hour <= 23 && minute >= 0 && minute < 60 && second >= 0 && second < 60 && microsecond >= 0 && microsecond < 1000000 || hour == 24 && minute == 0 && second == 0 && microsecond == 0) && tz >= -14 * 60 && tz <= 14 * 60;
         }
 
-        /* what should this return? */
-        /* Now expect either day number or month name */
-        /* Now expect time string */
-        /* Now expect time string ("after..." may differ) */
-        /*the number of microseconds, 0-999999*/
-        /*the timezone displacement in minutes from UTC.*/
-        /* the final token index, returned by the method */
-        /* seconds, microseconds, timezones not given*/
-        /* microseconds, timezones not given*/
-        /* no timezone is given in the time, we must have reached a year */
-        /* we must have reached the year */
         private IList<string> Tokenize(string input)
         {
             IList<string> tokens = new List<string>();
-            input = input.Trim();
+            // XML whitespace only, as the grammar's S: string.Trim() also took U+00A0, U+3000 and the like.
+            input = Whitespace.Trim(input);
             if ((input.Length == 0))
             {
                 BadDate("Input is empty", input);

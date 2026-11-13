@@ -113,112 +113,13 @@ namespace OutSmart.DAXon.Values
         {
 
             // input must have format hh:mm:ss[.fff*][([+|-]hh:mm | Z)]
-            StringTokenizer tok = new StringTokenizer(Whitespace.Trim(s).ToString(), "-:.+Z", true);
-            if (!tok.HasMoreTokens())
+            DateTimeLex tok = new DateTimeLex(Whitespace.Trim(s));
+            int nanosecond = 0;
+            int tz = NO_TIMEZONE;
+            string wrong = tok.ReadClock(out byte hour, out byte minute, out byte second) ?? tok.ReadTail(true, hour == 24, out nanosecond, out tz);
+            if (wrong != null)
             {
-                return BadTime("too short", s);
-            }
-
-            string part = tok.NextToken();
-            if (part.Length != 2)
-            {
-                return BadTime("hour must be two digits", s);
-            }
-
-            int value = DurationValue.SimpleInteger(part);
-            if (value < 0)
-            {
-                return BadTime("Non-numeric hour component", s);
-            }
-
-            byte hour = (byte)value;
-            if (hour > 24)
-            {
-                return BadTime("hour is out of range", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadTime("too short", s);
-            }
-
-            if (tok.NextToken() != ":")
-            {
-                return BadTime("wrong delimiter after hour", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadTime("too short", s);
-            }
-
-            part = tok.NextToken();
-            if (part.Length != 2)
-            {
-                return BadTime("minute must be two digits", s);
-            }
-
-            value = DurationValue.SimpleInteger(part);
-            if (value < 0)
-            {
-                return BadTime("Non-numeric minute component", s);
-            }
-
-            byte minute = (byte)value;
-            if (minute > 59)
-            {
-                return BadTime("minute is out of range", s);
-            }
-
-            if (hour == 24 && minute != 0)
-            {
-                return BadTime("If hour is 24, minute must be 00", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadTime("too short", s);
-            }
-
-            if (tok.NextToken() != ":")
-            {
-                return BadTime("wrong delimiter after minute", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadTime("too short", s);
-            }
-
-            part = tok.NextToken();
-            if (part.Length != 2)
-            {
-                return BadTime("second must be two digits", s);
-            }
-
-            value = DurationValue.SimpleInteger(part);
-            if (value < 0)
-            {
-                return BadTime("Non-numeric second component", s);
-            }
-
-            byte second = (byte)value;
-            if (second > 59)
-            {
-                return BadTime("second is out of range", s);
-            }
-
-            if (hour == 24 && second != 0)
-            {
-                return BadTime("If hour is 24, second must be 00", s);
-            }
-
-            int tz;
-            int nanosecond;
-            ValidationFailure tzError = ParseTimezoneTail(tok, hour, s, out tz, out nanosecond);
-            if (tzError != null)
-            {
-                return tzError;
+                return BadTime(wrong, s);
             }
 
             if (hour == 24)
@@ -227,156 +128,6 @@ namespace OutSmart.DAXon.Values
             }
 
             return new TimeValue(hour, minute, second, nanosecond, tz, BuiltInAtomicType.TIME);
-        }
-
-        // Parse the optional fractional-seconds and timezone tail. hour is needed for the 24:00 checks;
-        // tz (defaulting to NO_TIMEZONE) and nanosecond receive the results. Returns BadTime on error, null on success.
-        private static ValidationFailure ParseTimezoneTail(StringTokenizer tok, byte hour, UnicodeString s, out int tz, out int nanosecond)
-        {
-            tz = NO_TIMEZONE;
-            bool negativeTz = false;
-            int state = 0;
-            nanosecond = 0;
-            string part;
-            int value;
-            while (tok.HasMoreTokens())
-            {
-                if (state == 9)
-                {
-                    return BadTime("characters after the end", s);
-                }
-
-                string delim = tok.NextToken();
-                if (delim == ".")
-                {
-                    if (state != 0)
-                    {
-                        return BadTime("decimal separator occurs twice", s);
-                    }
-
-                    if (!tok.HasMoreTokens())
-                    {
-                        return BadTime("decimal point must be followed by digits", s);
-                    }
-
-                    part = tok.NextToken();
-                    if (part.Length > 9 && part.MatchesRegex("^[0-9]+$"))
-                    {
-                        part = part.Substring(0, 9);
-                    }
-
-                    value = DurationValue.SimpleInteger(part);
-                    if (value < 0)
-                    {
-                        return BadTime("Non-numeric fractional seconds component", s);
-                    }
-
-                    double fractionalSeconds = double.Parse('.' + part, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
-                    nanosecond = (int)JavaMath.Round(fractionalSeconds * 1000000000);
-                    if (hour == 24 && nanosecond != 0)
-                    {
-                        return BadTime("If hour is 24, fractional seconds must be 0", s);
-                    }
-
-                    state = 1;
-                }
-                else if (delim == "Z")
-                {
-                    if (state > 1)
-                    {
-                        return BadTime("Z cannot occur here", s);
-                    }
-
-                    tz = 0;
-                    state = 9; // we've finished
-                }
-                else if (delim == "+" || delim == "-")
-                {
-                    if (state > 1)
-                    {
-                        return BadTime(delim + " cannot occur here", s);
-                    }
-
-                    state = 2;
-                    if (!tok.HasMoreTokens())
-                    {
-                        return BadTime("missing timezone", s);
-                    }
-
-                    part = tok.NextToken();
-                    if (part.Length != 2)
-                    {
-                        return BadTime("timezone hour must be two digits", s);
-                    }
-
-                    value = DurationValue.SimpleInteger(part);
-                    if (value < 0)
-                    {
-                        return BadTime("Non-numeric timezone hour component", s);
-                    }
-
-                    tz = value * 60;
-                    if (tz > 14 * 60)
-                    {
-                        return BadTime("timezone hour is out of range", s);
-                    }
-
-                    if (delim == "-")
-                    {
-                        negativeTz = true;
-                    }
-                }
-                else if (delim == ":")
-                {
-                    if (state != 2)
-                    {
-                        return BadTime("colon cannot occur here", s);
-                    }
-
-                    state = 9;
-                    if (!tok.HasMoreTokens())
-                    {
-                        // Upstream lets StringTokenizer throw here and the crash escapes the cast;
-                        // a dangling ':' is a lexical error.
-                        return BadTime("no minutes in timezone", s);
-                    }
-
-                    part = tok.NextToken();
-                    value = DurationValue.SimpleInteger(part);
-                    if (value < 0)
-                    {
-                        return BadTime("Non-numeric timezone minute component", s);
-                    }
-
-                    int tzminute = value;
-                    if (part.Length != 2)
-                    {
-                        return BadTime("timezone minute must be two digits", s);
-                    }
-
-                    if (tzminute > 59)
-                    {
-                        return BadTime("timezone minute is out of range", s);
-                    }
-
-                    tz += tzminute;
-                    if (negativeTz)
-                    {
-                        tz = -tz;
-                    }
-                }
-                else
-                {
-                    return BadTime("timezone format is incorrect", s);
-                }
-            }
-
-            if (state == 2 || state == 3)
-            {
-                return BadTime("timezone incomplete", s);
-            }
-
-            return null;
         }
 
         private static ValidationFailure BadTime(string msg, UnicodeString value)
@@ -411,10 +162,8 @@ namespace OutSmart.DAXon.Values
                 case AccessorFn.Component.MINUTES:
                     return Int64Value.MakeIntegerValue(minute);
                 case AccessorFn.Component.SECONDS:
-                    BigDecimal d = BigDecimal.ValueOf(nanosecond);
-                    d = d.Divide(BigDecimalValue.BIG_DECIMAL_ONE_BILLION, 6, RoundingMode.HALF_UP);
-                    d = d + BigDecimal.ValueOf(second);
-                    return new BigDecimalValue(d);
+                    // All nine digits: to six, half up, 59.9999995 became 60 and the 7th-9th were lost (Saxon the same).
+                    return new BigDecimalValue(new BigDecimal(new System.Numerics.BigInteger(second * 1000000000L + nanosecond), 9).StripTrailingZeros());
                 case AccessorFn.Component.WHOLE_SECONDS:
                     return Int64Value.MakeIntegerValue(second);
                 case AccessorFn.Component.MICROSECONDS:
@@ -525,6 +274,12 @@ namespace OutSmart.DAXon.Values
         {
             if (duration is DayTimeDurationValue)
             {
+                // Only the time of day moves, so the duration counts modulo a day, as the spec wraps: in full it went
+                // through a dateTime in 1972 and that range's check (P500000000D raised FODT0001).
+                long seconds = duration.AbsoluteSeconds % (24 * 60 * 60);
+                int nanos = duration.AbsoluteNanoseconds;
+                bool back = duration.IsNegative;
+                duration = new DayTimeDurationValue(0, 0, 0, back ? -seconds : seconds, back ? -nanos : nanos);
                 DateTimeValue dt = (DateTimeValue)ToDateTime().Add(duration);
                 return new TimeValue(dt.Hour, dt.Minute, dt.Second, dt.Nanosecond, TimezoneInMinutes, BuiltInAtomicType.TIME);
             }

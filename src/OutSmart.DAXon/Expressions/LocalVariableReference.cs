@@ -100,13 +100,11 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //    }
         public override Elaborator GetElaborator()
         {
             return new LocalVariableReferenceElaborator();
         }
 
-        //    }
         /// <summary>
         /// Elaborator for a local variable reference, for example {@code $var}.
         /// </summary>
@@ -170,9 +168,10 @@ namespace OutSmart.DAXon.Expressions
                     {
                         throw e.GetXPathException().MaybeWithLocation(GetExpression().GetLocation()).MaybeWithContext(context);
                     }
-                    catch (XPathException e)
+                    catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetExpression().GetLocation()).MaybeWithContext(context)))
                     {
-                        throw e.MaybeWithLocation(GetExpression().GetLocation()).MaybeWithContext(context);
+                        // Decorated in the filter, never handled (XPathException.PassOn).
+                        throw;
                     }
                 };
             }
@@ -191,9 +190,10 @@ namespace OutSmart.DAXon.Expressions
                     {
                         throw e.GetXPathException().MaybeWithLocation(GetExpression().GetLocation()).MaybeWithContext(context);
                     }
-                    catch (XPathException e)
+                    catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetExpression().GetLocation()).MaybeWithContext(context)))
                     {
-                        throw e.MaybeWithLocation(GetExpression().GetLocation()).MaybeWithContext(context);
+                        // Decorated in the filter, never handled (XPathException.PassOn).
+                        throw;
                     }
                 };
             }

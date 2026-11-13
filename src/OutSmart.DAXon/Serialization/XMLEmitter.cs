@@ -114,11 +114,6 @@ namespace OutSmart.DAXon.Serialization
         {
         }
 
-        public virtual void SetCharacterReferenceGenerator(ICharacterReferenceGenerator generator)
-        {
-            this.characterReferenceGenerator = generator;
-        }
-
         public virtual void SetEscapeNonAscii(bool escape)
         {
         }
@@ -297,13 +292,13 @@ namespace OutSmart.DAXon.Serialization
                         writer.WriteCodePoint(delimiter);
                     }
 
-                    writer.WriteAscii(StringConstants.PI_END); //                writer.write("<?xml version=\"" + version + "\" " + "encoding=\"" + encoding + '\"' +
+                    writer.WriteAscii(StringConstants.PI_END);
                     //                                     (standalone != null ? " standalone=\"" + standalone + '\"' : "") + "?>");
                     // don't write a newline character: it's wrong if the output is an
                     // external general parsed entity
                 }
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
@@ -378,7 +373,7 @@ namespace OutSmart.DAXon.Serialization
                     writer.WriteAscii(RIGHT_ANGLE_NEWLINE);
                 }
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
@@ -400,7 +395,7 @@ namespace OutSmart.DAXon.Serialization
                     writer.Flush();
                 }
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
@@ -499,7 +494,7 @@ namespace OutSmart.DAXon.Serialization
                 openStartTag = true;
                 indentForNextAttribute = -1;
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
@@ -553,19 +548,17 @@ namespace OutSmart.DAXon.Serialization
                     }
                 }
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
         }
 
-        //return;
         public virtual void SetIndentForNextAttribute(int indent)
         {
             indentForNextAttribute = indent;
         }
 
-        //return;
         private void Attribute(INodeName nameCode, string value, int properties, bool isFirst)
         {
             string displayName = nameCode.DisplayName;
@@ -596,7 +589,7 @@ namespace OutSmart.DAXon.Serialization
                     WriteAttributeIndentString();
                 }
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
@@ -604,7 +597,6 @@ namespace OutSmart.DAXon.Serialization
             WriteAttribute(elementCode, displayName, value, properties);
         }
 
-        //return;
         protected virtual void WriteAttributeIndentString()
         {
             if (indentForNextAttribute < 0)
@@ -618,7 +610,6 @@ namespace OutSmart.DAXon.Serialization
             }
         }
 
-        //return;
         public virtual void CloseStartTag()
         {
             try
@@ -629,13 +620,12 @@ namespace OutSmart.DAXon.Serialization
                     openStartTag = false;
                 }
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
         }
 
-        //return;
         protected virtual void WriteEmptyElementTagCloser(string displayName, INodeName nameCode)
         {
             if (canonical)
@@ -651,7 +641,6 @@ namespace OutSmart.DAXon.Serialization
             }
         }
 
-        //return;
         protected virtual void WriteAttribute(INodeName elCode, string attname, string value, int properties)
         {
             try
@@ -693,13 +682,12 @@ namespace OutSmart.DAXon.Serialization
                     writer.WriteCodePoint(delimiter);
                 }
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
         }
 
-        //return;
         protected virtual int TestCharacters(UnicodeString chars)
         {
             // UTF-8/16 encode every code point: skip the per-character delegate scan
@@ -717,7 +705,6 @@ namespace OutSmart.DAXon.Serialization
             return 0;
         }
 
-        //return;
         protected virtual UnicodeString ConvertToAscii(UnicodeString chars)
         {
             UnicodeBuilder buff = new UnicodeBuilder();
@@ -738,7 +725,6 @@ namespace OutSmart.DAXon.Serialization
             return buff.ToUnicodeString();
         }
 
-        //return;
         /// <summary>
         /// End of an element.
         /// </summary>
@@ -759,13 +745,12 @@ namespace OutSmart.DAXon.Serialization
                     writer.WriteCodePoint('>');
                 }
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
         }
 
-        //return;
         /// <summary>
         /// Character data.
         /// </summary>
@@ -788,11 +773,8 @@ namespace OutSmart.DAXon.Serialization
                     CloseStartTag();
                 }
 
-                if (chars is WhitespaceString)
-                {
-                    ((WhitespaceString)chars).Write(writer);
-                }
-                else if (ReceiverOption.Contains(properties, ReceiverOption.NO_SPECIAL_CHARS))
+                // Whitespace-only text goes through WriteEscape like any other: written raw, a lone CR came back as a newline.
+                if (ReceiverOption.Contains(properties, ReceiverOption.NO_SPECIAL_CHARS))
                 {
                     writer.Write(chars);
                 }
@@ -856,13 +838,12 @@ namespace OutSmart.DAXon.Serialization
                     }
                 }
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
         }
 
-        //return;
         public override void ProcessingInstruction(string target, UnicodeString data, ILocation locationId, int properties)
         {
             if (!started)
@@ -914,13 +895,12 @@ namespace OutSmart.DAXon.Serialization
 
                 writer.WriteAscii(StringConstants.PI_END);
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
         }
 
-        //return;
         protected virtual void WriteEscape(UnicodeString chars, bool inAttribute)
         {
             long segstart = 0;
@@ -1065,7 +1045,6 @@ namespace OutSmart.DAXon.Serialization
             }
         }
 
-        //return;
         protected virtual void WriteCodePoint(int c)
         {
             writer.WriteCodePoint(c);
@@ -1110,7 +1089,6 @@ namespace OutSmart.DAXon.Serialization
             return clean.ToUnicodeString();
         }
 
-        //return;
         public override void Comment(UnicodeString chars, ILocation locationId, int properties)
         {
             if (!started)
@@ -1143,22 +1121,15 @@ namespace OutSmart.DAXon.Serialization
                 writer.Write(chars);
                 writer.WriteAscii(StringConstants.COMMENT_END);
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
         }
 
-        //return;
         public override bool UsesTypeAnnotations()
         {
             return false;
-        }
-
-        //return;
-        public virtual bool IsStarted()
-        {
-            return started;
         }
     }
 }

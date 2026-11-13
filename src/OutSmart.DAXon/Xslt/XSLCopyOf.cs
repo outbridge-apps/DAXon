@@ -99,30 +99,7 @@ namespace OutSmart.DAXon.Xslt
                 copyNamespaces = ProcessBooleanAttribute("copy-namespaces", copyNamespacesAtt);
             }
 
-            if (validationAtt != null)
-            {
-                validation = ValidateValidationAttribute(validationAtt);
-            }
-            else
-            {
-                validation = DefaultValidation;
-            }
-
-            if (typeAtt != null)
-            {
-                schemaType = GetSchemaType(typeAtt);
-                if (!IsSchemaAware())
-                {
-                    CompileError("The @type attribute is available only with a schema-aware XSLT processor", "XTSE1660");
-                }
-
-                validation = Validation.BY_TYPE;
-            }
-
-            if (typeAtt != null && validationAtt != null)
-            {
-                CompileError("The @validation and @type attributes are mutually exclusive", "XTSE1505");
-            }
+            validation = ValidationAction(validationAtt, typeAtt, out schemaType);
         }
 
         public override void Validate(ComponentDeclaration decl)

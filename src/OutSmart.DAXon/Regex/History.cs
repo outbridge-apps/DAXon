@@ -17,7 +17,7 @@ namespace OutSmart.DAXon.Regex
             IntSet positions = zeroLengthMatches.GetOrDefault(op);
             if (positions == null)
             {
-                positions = new IntHashSet(position);
+                positions = new IntHashSet();   // sized by what it holds: by the subject position it took nextPow2(4 * position) ints
                 positions.Add(position);
                 zeroLengthMatches[op] = positions;
                 return false;

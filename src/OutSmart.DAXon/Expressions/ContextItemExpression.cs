@@ -133,16 +133,6 @@ namespace OutSmart.DAXon.Expressions
             return "ContextItemExpression".GetHashCode();
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            if (pathMapNodeSet == null)
-            {
-                pathMapNodeSet = new PathMap.PathMapNodeSet(pathMap.MakeNewRoot(this));
-            }
-
-            return pathMapNodeSet;
-        }
-
         public override bool IsSubtreeExpression()
         {
             return true;

@@ -84,7 +84,7 @@ namespace OutSmart.DAXon.Regex
             REMatcher matcher = new REMatcher(regex);
             try
             {
-                return matcher.IsAnchoredMatch(input.Tidy());
+                return matcher.IsAnchoredMatch(input);
             }
             catch (RecursionDepthError e) when (!e.Described)
             {
@@ -100,6 +100,12 @@ namespace OutSmart.DAXon.Regex
         // process before round BC.
         internal static Internal.RecursionDepthError DescribeOverflow(Internal.RecursionDepthError e)
         {
+            // Nearly nothing left where the regex began: the recursion above it spent the stack, and its site says so.
+            if (StackGuard.NearlySpent())
+            {
+                return e;
+            }
+
             return e.Describe("Stack overflow (excessive recursion) during regular expression evaluation", DAXonErrorCode.SXRE0001, Loc.NONE);
         }
 
@@ -108,7 +114,7 @@ namespace OutSmart.DAXon.Regex
             REMatcher matcher = new REMatcher(regex);
             try
             {
-                return matcher.Match(input.Tidy(), 0);
+                return matcher.Match(input, 0);
             }
             catch (RecursionDepthError e) when (!e.Described)
             {
@@ -121,10 +127,10 @@ namespace OutSmart.DAXon.Regex
             int cp = SingleCharLiteral();
             if (cp >= 0)
             {
-                return new SingleCharTokenIterator(input.Tidy(), cp);
+                return new SingleCharTokenIterator(input, cp);
             }
 
-            return new ATokenIterator(input.Tidy(), new REMatcher(regex));
+            return new ATokenIterator(input, new REMatcher(regex));
         }
 
         // The codepoint of a bare single-character literal pattern (e.g. ";"), or -1. Exposed so the
@@ -154,7 +160,7 @@ namespace OutSmart.DAXon.Regex
 
         public IRegexIterator Analyze(UnicodeString input)
         {
-            return new ARegexIterator(input.Tidy(), rawPattern, new REMatcher(regex));
+            return new ARegexIterator(input, rawPattern, new REMatcher(regex));
         }
 
         public UnicodeString Replace(UnicodeString input, UnicodeString replacement)
@@ -162,24 +168,7 @@ namespace OutSmart.DAXon.Regex
             REMatcher matcher = new REMatcher(regex);
             try
             {
-                return matcher.Replace(input.Tidy(), replacement);
-            }
-            catch (RESyntaxException err)
-            {
-                throw new XPathException(err.Message, "FORX0004");
-            }
-            catch (RecursionDepthError e) when (!e.Described)
-            {
-                throw DescribeOverflow(e);
-            }
-        }
-
-        public UnicodeString ReplaceWith(UnicodeString input, Func<UnicodeString, UnicodeString[], UnicodeString> replacer)
-        {
-            REMatcher matcher = new REMatcher(regex);
-            try
-            {
-                return matcher.ReplaceWith(input.Tidy(), replacer);
+                return matcher.Replace(input, replacement);
             }
             catch (RESyntaxException err)
             {

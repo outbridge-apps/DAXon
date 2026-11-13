@@ -18,7 +18,7 @@ namespace OutSmart.DAXon.Regex
             {
                 if (op.MatchLength != -1 && min == max)
                 {
-                    return op.MatchLength * min;
+                    return Fixed((long)op.MatchLength * min);
                 }
                 else
                 {
@@ -50,6 +50,9 @@ namespace OutSmart.DAXon.Regex
 
         public override IIntIterator IterateMatches(REMatcher matcher, int position)
         {
+            // Nested quantifiers and choices recurse here per level of the pattern: the guard of OpCapture, so a pattern
+            // compiled on a large stack and cached cannot overflow a smaller thread that matches it.
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             int guard = matcher.search.Length32();
             int p = position;
             int matches = 0;

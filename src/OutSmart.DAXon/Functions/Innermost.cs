@@ -48,7 +48,7 @@ namespace OutSmart.DAXon.Functions
         {
             if (!presorted)
             {
-                @in = new DocumentOrderIterator(@in, GlobalOrderComparer.GetInstance());
+                @in = DocumentOrderIterator.Of(@in, GlobalOrderComparer.GetInstance());
             }
 
             return new InnermostIterator(@in);

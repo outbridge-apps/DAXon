@@ -78,7 +78,7 @@ namespace OutSmart.DAXon.Functions
             map.locator = location;
             ItemMappingIterator iter = new ItemMappingIterator(hrefSequence, map);
 
-            return SequenceTool.ToLazySequence(new DocumentOrderIterator(iter, GlobalOrderComparer.GetInstance())); // this is to make sure we eliminate duplicates: two href's might be the same
+            return SequenceTool.ToLazySequence(DocumentOrderIterator.Of(iter, GlobalOrderComparer.GetInstance())); // this is to make sure we eliminate duplicates: two href's might be the same
         }
 
         public static NodeInfo MakeDoc(string href, string baseURI, PackageData packageData, ParseOptions options, IXPathContext c, ILocation locator)
@@ -100,6 +100,11 @@ namespace OutSmart.DAXon.Functions
                     @params = new URIQueryParameters(href.Substring(qMark + 1), config);
                     href = href.Substring(0, qMark);
                 }
+            }
+            else if (URIQueryParameters.AsksForXInclude(href))
+            {
+                // Off, the query reaches the resolver, and the file resolver drops it: asked for, XInclude is refused all the same.
+                throw new XPathException("XInclude is not supported on this platform", "FODC0002");
             }
 
             Controller controller = c.GetController();
@@ -207,16 +212,6 @@ namespace OutSmart.DAXon.Functions
                     if (packageData is StylesheetPackage && ((StylesheetPackage)packageData).IsStripsTypeAnnotations())
                     {
                         s = config.GetAnnotationStripper(s);
-                    }
-
-                    PathMap map = controller.PathMapForDocumentProjection;
-                    if (map != null)
-                    {
-                        PathMap.PathMapRoot pathRoot = map.GetRootForDocument(documentKey.ToString());
-                        if (pathRoot != null && !pathRoot.IsReturnable() && !pathRoot.HasUnknownDependencies())
-                        {
-                            options = options.WithFilter(config.MakeDocumentProjector(pathRoot));
-                        }
                     }
 
                     s.SetPipelineConfiguration(b.GetPipelineConfiguration());
@@ -337,7 +332,8 @@ namespace OutSmart.DAXon.Functions
                 }
                 catch (URISyntaxException)
                 {
-                    throw new XPathException("Invalid URI passed to document() function: " + href, "FODC0005");
+                    // Too long for System.Uri is still a URI: nothing can be fetched by it.
+                    throw new XPathException((href.Length > URI.LongestForPlatform ? "Cannot read " : "Invalid URI passed to document() function: ") + href, href.Length > URI.LongestForPlatform ? "FODC0002" : "FODC0005");
                 }
             }
 
@@ -519,7 +515,6 @@ namespace OutSmart.DAXon.Functions
             if (pipe == null)
             {
                 pipe = context.GetController().MakePipelineConfiguration();
-                pipe.XPathContext = context;
                 @out.SetPipelineConfiguration(pipe);
             }
 

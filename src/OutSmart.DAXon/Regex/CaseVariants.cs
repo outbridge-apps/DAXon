@@ -35,14 +35,9 @@ namespace OutSmart.DAXon.Regex
         private CaseVariants()
         {
             // Runs inside a type initializer: see Controller.SuspendThreadDeadline
-            Controller.DeadlineToken outer = Controller.SuspendThreadDeadline();
-            try
+            using (Controller.SuspendScope())
             {
                 Build();
-            }
-            finally
-            {
-                Controller.RestoreThreadDeadline(outer);
             }
         }
 
@@ -104,6 +99,21 @@ namespace OutSmart.DAXon.Regex
                     polyVariants.Put(icode, vint);
                 }
             }
+        }
+
+        // Whether 'other' is a case variant of 'code': what GetCaseVariants answers, without the array it makes for a
+        // single variant - per character of a case-blind match.
+        public static bool IsCaseVariant(int code, int other)
+        {
+            CaseVariants variants = GetInstance();
+            int mono = variants.monoVariants.Get(code);
+            if (mono != variants.monoVariants.DefaultValue)
+            {
+                return mono == other;
+            }
+
+            int[] poly = variants.polyVariants[code];
+            return poly != null && Array.IndexOf(poly, other) >= 0;
         }
 
         public static int[] GetCaseVariants(int code)

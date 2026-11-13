@@ -53,7 +53,7 @@ namespace OutSmart.DAXon.Types
                 return new OutSmart.DAXon.Values.BigIntegerValue(new OutSmart.DAXon.Internal.Numerics.BigDecimal(d).ToBigInteger());
             }
 
-            return new Int64Value((long)d);
+            return Int64Value.MakeIntegerValue((long)d);   // the shared small integers, as idiv had them
         }
         // Java semantics: cast to xs:integer truncates toward zero = NumericValue.longValue().
         internal sealed class FloatToInteger : Converter
@@ -328,7 +328,7 @@ namespace OutSmart.DAXon.Types
             public static readonly ToStringConverter INSTANCE = new ToStringConverter();
             public override IConversionResult Convert(object value)
             {
-                var us = ((AtomicValue)value).UnicodeStringValue.Tidy();
+                var us = ((AtomicValue)value).UnicodeStringValue;
                 return (IConversionResult)new StringValue((UnicodeString)us);
             }
         }
@@ -340,12 +340,14 @@ namespace OutSmart.DAXon.Types
             public override IConversionResult Convert(object value)
             {
                 var d = (DurationValue)value;
-                int days = d.Days, hours = d.Hours, minutes = d.Minutes, seconds = d.Seconds, nanos = d.Nanoseconds;
+                // From the whole seconds, not the int day component: arithmetic makes durations of more than 2^31 days.
+                long seconds = d.AbsoluteSeconds;
+                int nanos = d.Nanoseconds;
                 if (d.Signum() < 0)
                 {
-                    return (IConversionResult)new DayTimeDurationValue(-days, -hours, -minutes, -(long)seconds, -nanos);
+                    return (IConversionResult)new DayTimeDurationValue(0, 0, 0, -seconds, -nanos);
                 }
-                return (IConversionResult)new DayTimeDurationValue(days, hours, minutes, (long)seconds, nanos);
+                return (IConversionResult)new DayTimeDurationValue(0, 0, 0, seconds, nanos);
             }
         }
         internal sealed class DurationToYearMonthDuration : Converter

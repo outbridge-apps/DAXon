@@ -20,24 +20,18 @@ namespace OutSmart.DAXon.Internal
     ///     HexNumber style is two's-complement ("ff" => -1, Java says 255).
     ///   - IntValue/LongValue: Java NARROWS (keeps low bits); the .NET explicit cast throws.
     ///   - DoubleValue: Java rounds to nearest; the .NET cast truncates above 2^53.
-    ///   - ToString(radix): a division loop (Convert.ToString overflows past 64 bits).
-    ///
-    /// NOT overridable (instance member always beats an extension): ToByteArray() binds
-    /// the BCL little-endian two's-complement form. Java's big-endian toByteArray() is
-    /// available as ToJavaByteArray().
     /// </summary>
     internal static class BigIntegers
     {
-        // Java BigInteger.TEN (ZERO/ONE map to SysBigInteger.Zero/One; there is no .Ten).
-        public static readonly SysBigInteger Ten = new SysBigInteger(10);
 
         // Java doubleValue(): IEEE round-to-nearest (ties-to-even), overflowing to +/-Infinity.
         // The .NET explicit (double) conversion TRUNCATES toward zero (documented BCL behaviour), so it
         // is up to 1 ULP low in magnitude above 2^53 — e.g. (double)Long.MAX_VALUE gives
         // 9.223372036854775E18 where Java gives 9.223372036854776E18. Match Java: integers that are
         // exactly representable (|v| <= 2^53) use the direct cast; larger magnitudes round correctly by
-        // parsing the exact decimal string (double.Parse is correctly rounded). net472's double.Parse
-        // throws OverflowException past double.MaxValue where Java yields Infinity, so translate that.
+        // parsing the exact decimal string (on .NET Framework double.Parse is not always correctly rounded,
+        // and StringToDouble.Nearest corrects it). net472's double.Parse throws OverflowException past
+        // double.MaxValue where Java yields Infinity, so translate that.
         private static readonly SysBigInteger TwoPow53 = new SysBigInteger(9007199254740992L);
 
         // Factories (Java-specific constructor semantics)
@@ -65,6 +59,11 @@ namespace OutSmart.DAXon.Internal
             if (s.Length > 0 && (s[0] == '+' || s[0] == '-')) { negative = s[0] == '-'; i = 1; }
             if (i >= s.Length)
                 throw new System.FormatException("Zero length BigInteger");
+            if (radix == 10)
+            {
+                return FromDecimalDigits(s, i, negative);
+            }
+
             SysBigInteger v = SysBigInteger.Zero;
             SysBigInteger r = new SysBigInteger(radix);
             for (; i < s.Length; i++)
@@ -94,25 +93,112 @@ namespace OutSmart.DAXon.Internal
             return negative ? -v : v;
         }
 
-        // Java new BigInteger(int signum, byte[] magnitude): BIG-ENDIAN UNSIGNED
-        // magnitude plus an explicit sign (-1/0/1). NOT equivalent to
-        // new SysBigInteger(byte[]) which is little-endian two's-complement.
-        // Java contract: zero-length/all-zero magnitude => ZERO for any signum;
-        // signum 0 with a non-zero magnitude => NumberFormatException; signum outside
-        // -1..1 => NumberFormatException. (DigestMaker uses (1, sha256) to format hashes.)
-        public static SysBigInteger FromSignumMagnitude(int signum, byte[] magnitude)
+        // Decimal digits as a number. .NET Framework's BigInteger.Parse and a multiply per digit are quadratic with a large
+        // constant (a million digits: 272 s, and nothing looks at the clock): there the digits go nine at a time into
+        // the words of the result, in place, the clock read per nine. .NET's own Parse is fast (1 s).
+        private static SysBigInteger FromDecimalDigits(string s, int start, bool negative)
         {
-            if (signum < -1 || signum > 1)
-                throw new System.FormatException("Invalid signum value");
-            SysBigInteger v = SysBigInteger.Zero;
-            if (magnitude != null)
-                for (int i = 0; i < magnitude.Length; i++)
-                    v = (v << 8) + magnitude[i];
-            if (v.IsZero)
-                return SysBigInteger.Zero;
-            if (signum == 0)
-                throw new System.FormatException("signum-magnitude mismatch");
-            return signum < 0 ? -v : v;
+            for (int k = start; k < s.Length; k++)
+            {
+                if (s[k] < '0' || s[k] > '9')
+                {
+                    throw new System.FormatException("For input string: \"" + s + "\"");
+                }
+            }
+#if NET
+            SysBigInteger v = SysBigInteger.Parse(System.MemoryExtensions.AsSpan(s, start), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture);
+#else
+            int n = s.Length - start;
+            uint[] words = new uint[n / 9 + 2];
+            int len = 0;
+            int i = start;
+            int chunk = n % 9 == 0 ? 9 : n % 9;
+            while (i < s.Length)
+            {
+                uint part = 0;
+                for (int end = i + chunk; i < end; i++)
+                {
+                    part = part * 10 + (uint)(s[i] - '0');
+                }
+
+                ulong carry = part;
+                for (int k = 0; k < len; k++)
+                {
+                    ulong t = (ulong)words[k] * 1000000000UL + carry;
+                    words[k] = (uint)t;
+                    carry = t >> 32;
+                }
+
+                if (carry != 0)
+                {
+                    words[len++] = (uint)carry;
+                }
+
+                chunk = 9;
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+            }
+
+            byte[] bytes = new byte[len * 4 + 1];   // little-endian, a zero top byte: never negative
+            System.Buffer.BlockCopy(words, 0, bytes, 0, len * 4);
+            SysBigInteger v = new SysBigInteger(bytes);
+#endif
+            return negative ? -v : v;
+        }
+
+        // The decimal digits of v. BigInteger.ToString is quadratic on every runtime, one call the time limit cannot stop
+        // (a million digits: 33 s on .NET Framework, 109 s on .NET 10). A long number is divided by 10^9 in place, one
+        // pass per nine digits, the clock read per pass: as fast on .NET Framework, three times faster on .NET 10.
+        public static string ToDecimalString(SysBigInteger v)
+        {
+            byte[] bytes = SysBigInteger.Abs(v).ToByteArray();
+            if (bytes.Length < 1024)   // under 2466 digits
+            {
+                return v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            int len = (bytes.Length + 3) / 4;
+            uint[] words = new uint[len];
+            System.Buffer.BlockCopy(bytes, 0, words, 0, bytes.Length);
+            while (len > 0 && words[len - 1] == 0)
+            {
+                len--;
+            }
+
+            uint[] nines = new uint[len * 10 / 9 + 2];   // 9 decimal digits per 29.9 bits
+            int count = 0;
+            while (len > 0)
+            {
+                ulong rem = 0;
+                for (int k = len - 1; k >= 0; k--)
+                {
+                    ulong cur = (rem << 32) | words[k];
+                    ulong q = cur / 1000000000UL;
+                    words[k] = (uint)q;
+                    rem = cur - q * 1000000000UL;
+                }
+
+                nines[count++] = (uint)rem;
+                while (len > 0 && words[len - 1] == 0)
+                {
+                    len--;
+                }
+
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+            }
+
+            var sb = new System.Text.StringBuilder(count * 9 + 1);
+            if (v.Sign < 0)
+            {
+                sb.Append('-');
+            }
+
+            sb.Append(nines[count - 1].ToString(System.Globalization.CultureInfo.InvariantCulture));
+            for (int k = count - 2; k >= 0; k--)
+            {
+                sb.Append(nines[k].ToString("D9", System.Globalization.CultureInfo.InvariantCulture));
+            }
+
+            return sb.ToString();
         }
 
         // Extensions: faithful Java semantics (NOT forwards - documented gaps)
@@ -125,33 +211,6 @@ namespace OutSmart.DAXon.Internal
                 throw new System.ArithmeticException("BigInteger: modulus not positive");
             SysBigInteger r = v % m;
             return r.Sign < 0 ? r + m : r;
-        }
-
-        // Java testBit() rejects a negative index with ArithmeticException; the shifted
-        // probe itself is exact because >> is arithmetic (infinite two's complement).
-        public static bool TestBit(this SysBigInteger v, int n)
-        {
-            if (n < 0)
-                throw new System.ArithmeticException("Negative bit address");
-            return !((v >> n) & SysBigInteger.One).IsZero;
-        }
-
-        // Java bitLength(): bits in the minimal two's-complement form EXCLUDING the sign
-        // bit. For n>0 that is floor(log2 n)+1; for n<0 it is ceil(log2(-n)) (one LESS
-        // for exact powers of two); for 0 it is 0; bitLength(-1) == 0. (The old wrapper's
-        // log-based formula broke on 0 and on negative powers of two.)
-        public static int BitLength(this SysBigInteger v)
-        {
-            if (v.IsZero)
-                return 0;
-            SysBigInteger m = v.Sign < 0 ? -v : v;
-            int bits = -1;
-            for (SysBigInteger t = m; !t.IsZero; t >>= 1) // floor(log2 m)
-            {
-                bits++;
-            }
-            bool powerOfTwo = (m & (m - SysBigInteger.One)).IsZero;
-            return v.Sign > 0 ? bits + 1 : (powerOfTwo ? bits : bits + 1);
         }
 
         // Java intValue()/longValue() NARROW: they keep the low 32/64 bits (two's
@@ -169,16 +228,6 @@ namespace OutSmart.DAXon.Internal
             return unchecked((long)low);
         }
 
-        // Java intValueExact()/longValueExact(): java.lang.ArithmeticException on overflow
-        // (the .NET cast would throw OverflowException - different type; thrown as
-        // System.ArithmeticException per the tree's catch convention).
-        public static int IntValueExact(this SysBigInteger v)
-        {
-            if (v < int.MinValue || v > int.MaxValue)
-                throw new System.ArithmeticException("BigInteger out of int range");
-            return (int)v;
-        }
-
         public static long LongValueExact(this SysBigInteger v)
         {
             if (v < long.MinValue || v > long.MaxValue)
@@ -192,62 +241,21 @@ namespace OutSmart.DAXon.Internal
                 return (double)v;
             }
 
+            // Past 2^1031 no double comes near, and the text of such a number is what a time limit cannot stop.
+            if (v.ToByteArray().Length > 129)
+            {
+                return v.Sign < 0 ? double.NegativeInfinity : double.PositiveInfinity;
+            }
+
             try
             {
-                return double.Parse(
-                    v.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                    System.Globalization.NumberStyles.Integer,
-                    System.Globalization.CultureInfo.InvariantCulture);
+                string text = v.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                return OutSmart.DAXon.Types.StringToDouble.ParseNearest(text, System.Globalization.NumberStyles.Integer);
             }
             catch (System.OverflowException)
             {
                 return v.Sign < 0 ? double.NegativeInfinity : double.PositiveInfinity;
             }
-        }
-
-        // Java toString(radix): out-of-range radix silently falls back to 10 (Java uses
-        // Character.MIN_RADIX/MAX_RADIX), lowercase digits, leading '-' for negatives.
-        // The old wrapper funneled through Convert.ToString((long)v, radix), which threw
-        // for values beyond 64 bits (e.g. DigestMaker's 256-bit hashes) and only
-        // supported bases 2/8/10/16 - implemented faithfully with a division loop.
-        // (Named ToString(int) is callable as an extension because the instance method
-        // overloads take string/IFormatProvider, never int.)
-        public static string ToString(this SysBigInteger v, int radix)
-        {
-            if (radix < 2 || radix > 36) // Java falls back to base 10
-            {
-                radix = 10;
-            }
-            if (v.IsZero)
-                return "0";
-            bool negative = v.Sign < 0;
-            SysBigInteger m = negative ? -v : v;
-            SysBigInteger r = new SysBigInteger(radix);
-            var sb = new System.Text.StringBuilder();
-            while (!m.IsZero)
-            {
-                SysBigInteger rem;
-                m = SysBigInteger.DivRem(m, r, out rem);
-                int d = (int)rem;
-                sb.Insert(0, (char)(d < 10 ? '0' + d : 'a' + d - 10));
-            }
-            if (negative)
-                sb.Insert(0, '-');
-            return sb.ToString();
-        }
-
-        // Java toByteArray(): minimal BIG-ENDIAN two's complement (incl. sign bit). The
-        // BCL instance ToByteArray() is the same representation LITTLE-endian, and an
-        // extension can never shadow an instance method - so faithful Java byte order
-        // gets its own name. (Call sites that kept .ToByteArray() behave exactly like
-        // the old wrapper, which also forwarded to the little-endian BCL form.)
-        public static byte[] ToJavaByteArray(this SysBigInteger v)
-        {
-            byte[] little = v.ToByteArray();
-            byte[] big = new byte[little.Length];
-            for (int i = 0; i < little.Length; i++)
-                big[i] = little[little.Length - 1 - i];
-            return big;
         }
     }
 }

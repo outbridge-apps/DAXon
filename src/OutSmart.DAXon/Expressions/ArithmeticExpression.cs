@@ -23,8 +23,6 @@ namespace OutSmart.DAXon.Expressions
 
         public override string ExpressionName => "arithmetic";
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         public override IntegerValue[] IntegerBounds
         {
             get
@@ -280,8 +278,6 @@ namespace OutSmart.DAXon.Expressions
             return this;
         }
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         public override Expression Copy(RebindingMap rebindings)
         {
             ArithmeticExpression ae = new ArithmeticExpression(GetLhsExpression().Copy(rebindings), @operator, GetRhsExpression().Copy(rebindings));
@@ -290,8 +286,6 @@ namespace OutSmart.DAXon.Expressions
             return ae;
         }
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         public static AtomicValue Compute(AtomicValue value0, int @operator, AtomicValue value1, IXPathContext context)
         {
             int p0 = value0.PrimitiveType.Fingerprint;
@@ -300,8 +294,6 @@ namespace OutSmart.DAXon.Expressions
             return calculator.Compute(value0, value1, context);
         }
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         public static int MapOpCode(int op)
         {
             switch (op)
@@ -324,8 +316,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         public override ItemType GetItemType()
         {
             if (itemType != null)
@@ -368,12 +358,10 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         public override UType GetStaticUType(UType contextItemType)
         {
 
-            // The rationale for this @is in the XSLT 3.0 spec
+            // The rationale for this is in the XSLT 3.0 spec
             if (ParentExpression is FilterExpression && ((FilterExpression)ParentExpression).GetRhsExpression() == this)
             {
                 return UType.NUMERIC;
@@ -388,30 +376,22 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         public override void ResetLocalStaticProperties()
         {
             base.ResetLocalStaticProperties();
             itemType = null;
         }
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         public override IItem EvaluateItem(IXPathContext context)
         {
             return (AtomicValue)MakeElaborator().ElaborateForItem().Eval(context);
         }
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         protected override string Tag()
         {
             return "arith";
         }
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         protected override void ExplainExtraAttributes(ExpressionPresenter @out)
         {
             if (calculator != null)
@@ -422,15 +402,11 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         public override Elaborator GetElaborator()
         {
             return new ArithmeticElaborator();
         }
 
-        /*!(operand0 instanceof UntypedAtomicConverter)*/
-        /*!(operand1 instanceof UntypedAtomicConverter) &&*/
         /// <summary>
         /// Elaborator for an ArithmeticExpression (for example P + Q)
         /// </summary>
@@ -466,9 +442,10 @@ namespace OutSmart.DAXon.Expressions
                         {
                             return calc.Compute(v0, v1, context);
                         }
-                        catch (XPathException e)
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(exp.GetLocation()).MaybeWithContext(context)))
                         {
-                            throw e.MaybeWithLocation(exp.GetLocation()).MaybeWithContext(context);
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     };
                 }
@@ -514,9 +491,10 @@ namespace OutSmart.DAXon.Expressions
                     {
                         return calc.Compute(v0, v1, context);
                     }
-                    catch (XPathException e)
+                    catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(exp.GetLocation()).MaybeWithContext(context)))
                     {
-                        throw e.MaybeWithLocation(exp.GetLocation()).MaybeWithContext(context);
+                        // Decorated in the filter, never handled (XPathException.PassOn).
+                        throw;
                     }
                 }
             }

@@ -41,7 +41,6 @@ namespace OutSmart.DAXon.Regex.CharClass
             }
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public IIntPredicateProxy Union(IIntPredicateProxy other) => OutSmart.DAXon.Collections.IntUnionPredicate.MakeUnion(this, other); // upstream IntPredicateProxy default
     }
 }

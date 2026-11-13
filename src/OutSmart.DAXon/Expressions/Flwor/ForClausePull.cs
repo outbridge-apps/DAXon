@@ -4,8 +4,10 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Values;
+
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     internal class ForClausePull : TuplePull
@@ -21,6 +23,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override bool NextTuple(IXPathContext context)
         {
+            StackGuard.Probe();
             while (true)
             {
                 // Per-tuple deadline check: this is the choke point every FLWOR tuple flows through
@@ -57,6 +60,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void Dispose()
         {
+            StackGuard.Probe();
             @base.Dispose();
             if (currentIteration != null)
             {

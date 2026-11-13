@@ -134,6 +134,12 @@ namespace OutSmart.DAXon.Values
         public abstract CalendarValue AdjustTimezone(int tz);
         public CalendarValue AdjustTimezone(DayTimeDurationValue tz)
         {
+            // A duration may be too long to count in microseconds; no timezone is.
+            if (Math.Abs(tz.LengthInSeconds) > 14 * 3600)
+            {
+                throw new XPathException("Timezone out of range (-14:00 to +14:00)", "FODT0003");
+            }
+
             long microseconds = tz.LengthInMicroseconds;
             if (microseconds % 60000000 != 0)
             {

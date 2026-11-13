@@ -238,6 +238,12 @@ namespace OutSmart.DAXon.Regex
             this.prefix = null;
             this.operation = operation.Optimize(this, flags);
 
+            // Matching asks both of each level, and each answer walks the subtree below once: compute them here, on the
+            // compiling thread, so a smaller thread that matches a cached pattern only reads them (a 3000-level pattern
+            // killed a 256 KB thread through the first ContainsCapturingExpressions).
+            this.operation.ContainsCapturingExpressions();
+            _ = this.operation.MaxLoopingDepth;
+
             // Try various compile-time optimizations
             if (operation is OpSequence)
             {
@@ -307,14 +313,14 @@ namespace OutSmart.DAXon.Regex
                     AddPrecondition(o, fp, mp);
                     if (fp != -1 && o.MatchLength != -1)
                     {
-                        fp += o.MatchLength;
+                        fp = Operation.Fixed((long)fp + o.MatchLength);
                     }
                     else
                     {
                         fp = -1;
                     }
 
-                    mp += o.MinimumMatchLength;
+                    mp = Operation.Least((long)mp + o.MinimumMatchLength);
                 }
             }
         }

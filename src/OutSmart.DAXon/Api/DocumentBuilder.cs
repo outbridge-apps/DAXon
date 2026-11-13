@@ -41,16 +41,25 @@ namespace OutSmart.DAXon.Api
         {
             get => this.projectionQuery; set
             {
+                // Saxon-EE's: refused when set, as SetJustInTimeCompilation(true) is. Accepted, it failed every later
+                // Build with a raw NotSupportedException, outside the API's errors.
+                if (value != null)
+                {
+                    throw new NotSupportedException("Document projection requires a Saxon-EE license");
+                }
+
                 this.projectionQuery = value;
             }
         }
         public DocumentBuilder(Configuration config)
         {
+            ArgumentCheck.NotNull(config, nameof(config));
             this.config = config;
         }
 
         public virtual void SetTreeModel(TreeModel model)
         {
+            ArgumentCheck.NotNull(model, nameof(model));
             this.treeModel = model;
         }
 
@@ -81,6 +90,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetWhitespaceStrippingPolicy(WhitespaceStrippingPolicy policy)
         {
+            ArgumentCheck.NotNull(policy, nameof(policy));
             whitespacePolicy = policy;
         }
 
@@ -91,32 +101,19 @@ namespace OutSmart.DAXon.Api
 
         internal virtual XdmNode Build(ResolvedResource source)
         {
-            if (source == null)
-                throw new NullReferenceException("source");
+            ArgumentCheck.NotNull(source, nameof(source));
             ParseOptions options = GetParseOptions(source);
             // Claims the deadline slot as BuildFromXmlReader does: a spent token from an earlier run on this thread
             // failed the parse at once.
-            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(config, "Parsing");
+            using OutSmart.DAXon.Core.Controller.ThreadLimits deadline = OutSmart.DAXon.Core.Controller.ArmScope(config, "Parsing");
             try
             {
                 ITreeInfo doc = config.BuildDocumentTree(InputSizeLimit.Apply(source, MaxInput, "FODC0002"), options);
                 return new XdmNode(doc.GetRootNode());
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            catch (System.Xml.XmlException e)
-            {
-                throw DAXonApiException.FromXmlParser(e, source.SystemId);
-            }
-            finally
-            {
-                OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e, source.SystemId);
             }
         }
 
@@ -178,16 +175,6 @@ namespace OutSmart.DAXon.Api
             }
 
             options = options.WithLineNumbering(lineNumbering);
-            if (projectionQuery != null)
-            {
-                XQueryExpression exp = projectionQuery.UnderlyingCompiledQuery;
-                IFilterFactory ff = config.MakeDocumentProjector(exp);
-                if (ff != null)
-                {
-                    options = options.WithFilter(ff);
-                }
-            }
-
             return options;
         }
 
@@ -218,8 +205,7 @@ namespace OutSmart.DAXon.Api
         // explicit system identifier — the caller no longer constructs a JAXP Source.
         public virtual XdmNode Build(System.IO.Stream input, string systemId)
         {
-            if (input == null)
-                throw new NullReferenceException("input");
+            ArgumentCheck.NotNull(input, nameof(input));
             long length = OutSmart.DAXon.Resources.ActiveStreamSource.RemainingLength(input);
             return BuildFromXmlReader(() => XmlReaderToReceiver.CreateXmlReader(
                 null, InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), systemId, null, DtdUse, config), systemId, length);
@@ -227,8 +213,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual XdmNode Build(System.IO.TextReader input, string systemId)
         {
-            if (input == null)
-                throw new NullReferenceException("input");
+            ArgumentCheck.NotNull(input, nameof(input));
             long length = OutSmart.DAXon.Resources.ActiveStreamSource.RemainingLength(input);
             return BuildFromXmlReader(() => XmlReaderToReceiver.CreateXmlReader(
                 InputSizeLimit.Apply(input, MaxInput, systemId, "FODC0002"), null, systemId, null, DtdUse, config), systemId, length);
@@ -273,7 +258,7 @@ namespace OutSmart.DAXon.Api
             // A standalone build runs outside any transformation, but the parse loop honours the
             // thread's active deadline and a spent token from an earlier run may still sit in the
             // slot. Claim a fresh full budget for the parse scope (same pattern as the compilers).
-            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(config, "Parsing");
+            using OutSmart.DAXon.Core.Controller.ThreadLimits deadline = OutSmart.DAXon.Core.Controller.ArmScope(config, "Parsing");
             try
             {
                 using (System.Xml.XmlReader reader = makeReader())
@@ -282,30 +267,15 @@ namespace OutSmart.DAXon.Api
                     return new XdmNode(doc.GetRootNode());
                 }
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsInputError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            catch (System.Xml.XmlException e)
-            {
-                throw DAXonApiException.FromXmlParser(e, systemId);
-            }
-            catch (Exception e) when (DAXonApiException.IsIO(e))
-            {
-                throw DAXonApiException.FromIO(e, systemId);
-            }
-            finally
-            {
-                OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e, systemId);
             }
         }
 
         public virtual XdmNode Build(string file)
         {
+            ArgumentCheck.NotNull(file, nameof(file));
             // P5: build via the native XmlReader path (a bare systemId opens through XmlReader.Create), no JAXP Source.
             // The size comes from the handle the reader opens: asking the file system by path costs ~165 us here.
             var opener = new XmlReaderToReceiver.FileOnlyXmlResolver(config, file);
@@ -337,13 +307,13 @@ namespace OutSmart.DAXon.Api
             Builder builder = treeModel.MakeBuilder(pipe);
             builder.SetLineNumbering(lineNumbering);
             IReceiver r = builder;
-            r = new NamespaceReducer(r);
             r = InjectValidator(r, builder);
             return new BuildingStreamWriterImpl(r, builder);
         }
 
         public virtual XdmNode Wrap(object node)
         {
+            ArgumentCheck.NotNull(node, nameof(node));
             if (node is NodeInfo)
             {
                 NodeInfo nodeInfo = (NodeInfo)node;
@@ -377,61 +347,46 @@ namespace OutSmart.DAXon.Api
 
         public virtual void Parse(ResolvedResource source, IDestination destination)
         {
+            ArgumentCheck.NotNull(source, nameof(source));
+            ArgumentCheck.NotNull(destination, nameof(destination));
             // Claims the deadline slot as BuildFromXmlReader does.
-            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(config, "Parsing");
+            using OutSmart.DAXon.Core.Controller.ThreadLimits deadline = OutSmart.DAXon.Core.Controller.ArmScope(config, "Parsing");
             try
             {
                 ParseOptions options = GetParseOptions(source);
                 PipelineConfiguration pipe = config.MakePipelineConfiguration();
-                Sender.Send(InputSizeLimit.Apply(source, MaxInput, "FODC0002"), destination.GetReceiver(pipe, new SerializationProperties()), options);
+                // Closed and notified when the parse succeeds, released when it fails: a failed parse left a serializer's
+                // output file open and locked.
+                DestinationHelper.RunTo(destination, () => Sender.Send(InputSizeLimit.Apply(source, MaxInput, "FODC0002"), destination.GetReceiver(pipe, new SerializationProperties()), options));
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsInputError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            finally
-            {
-                OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e, source.SystemId);
             }
         }
 
         public virtual void Parse(string file, IDestination destination)
         {
+            ArgumentCheck.NotNull(file, nameof(file));
+            ArgumentCheck.NotNull(destination, nameof(destination));
             // P5: parse via the native XmlReader path (no JAXP StreamSource); mirrors Parse(Source).
             // Claims the deadline slot as BuildFromXmlReader does.
-            OutSmart.DAXon.Core.Controller.DeadlineToken prevDeadline = OutSmart.DAXon.Core.Controller.ArmThreadDeadline(config, "Parsing");
+            using OutSmart.DAXon.Core.Controller.ThreadLimits deadline = OutSmart.DAXon.Core.Controller.ArmScope(config, "Parsing");
             try
             {
                 ParseOptions options = GetParseOptions();
                 PipelineConfiguration pipe = config.MakePipelineConfiguration();
-                using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(null, null, file, null, DtdUse, config))
+                DestinationHelper.RunTo(destination, () =>
                 {
-                    Sender.Send(reader, file, destination.GetReceiver(pipe, new SerializationProperties()), options);
-                }
+                    using (System.Xml.XmlReader reader = XmlReaderToReceiver.CreateXmlReader(null, null, file, null, DtdUse, config))
+                    {
+                        Sender.Send(reader, file, destination.GetReceiver(pipe, new SerializationProperties()), options);
+                    }
+                });
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsInputError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            catch (System.Xml.XmlException e)
-            {
-                throw DAXonApiException.FromXmlParser(e, file);
-            }
-            catch (Exception e) when (DAXonApiException.IsIO(e))
-            {
-                throw DAXonApiException.FromIO(e, file);
-            }
-            finally
-            {
-                OutSmart.DAXon.Core.Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e, file);
             }
         }
     }

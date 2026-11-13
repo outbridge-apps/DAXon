@@ -45,7 +45,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        //
         public override int IntrinsicDependencies
         {
             get
@@ -68,7 +67,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             this.noNodeIfEmpty = noNodeIfEmpty;
             AdoptChildExpression(select);
 
-            // If value is @fixed, test whether there are any special characters that might need to be
+            // If value is fixed, test whether there are any special characters that might need to be
             // escaped when the time comes for serialization
             if (select is StringLiteral)
             {
@@ -137,7 +136,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         {
         }
 
-        //
         public override Expression Copy(RebindingMap rebindings)
         {
             ValueOf exp = new ValueOf(Select.Copy(rebindings), ReceiverOption.Contains(options, ReceiverOption.DISABLE_ESCAPING), noNodeIfEmpty);
@@ -150,7 +148,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return exp;
         }
 
-        //
         public override void CheckPermittedContents(ISchemaType parentType, bool whole)
         {
 
@@ -193,7 +190,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        //
         public Expression ConvertToCastAsString()
         {
             if (noNodeIfEmpty || !Cardinality.AllowsZero(Select.GetCardinality()))
@@ -209,13 +205,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        //
         public override void ProcessValue(UnicodeString value, Outputter output, IXPathContext context)
         {
             output.Characters(value, GetLocation(), options);
         }
 
-        //
         public override IItem EvaluateItem(IXPathContext context)
         {
             try
@@ -223,13 +217,13 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 IItem content = Select.MakeElaborator().ElaborateForItem().Eval(context);
                 return MakeTextNode(content, noNodeIfEmpty, IsDisableOutputEscaping(), context);
             }
-            catch (XPathException err)
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(GetLocation()).MaybeWithContext(context)))
             {
-                throw err.MaybeWithLocation(GetLocation()).MaybeWithContext(context);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 
-        //
         private static NodeInfo MakeTextNode(IItem content, bool noNodeIfEmpty, bool doe, IXPathContext context)
         {
             UnicodeString val;
@@ -260,7 +254,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return o;
         }
 
-        //
         public override void Export(ExpressionPresenter @out)
         {
             @out.StartElement("valueOf", this);
@@ -294,13 +287,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
             @out.EndElement();
         }
 
-        //
         public override Elaborator GetElaborator()
         {
             return new ValueOfElaborator();
         }
 
-        //
         private sealed class ValueOfElaborator : SimpleNodePushElaborator
         {
             public override IPushEvaluator ElaborateForPush()
@@ -324,9 +315,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
                             return null;
                         }
-                        catch (XPathException e)
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.Select.GetLocation())))
                         {
-                            throw e.MaybeWithLocation(expr.Select.GetLocation());
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     };
                 }
@@ -348,9 +340,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             Outputter streamer = new TextNodeOutputStreamer(output, loc, options);
                             return contentEval.ProcessLeavingTail(streamer, context);
                         }
-                        catch (XPathException e)
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.Select.GetLocation())))
                         {
-                            throw e.MaybeWithLocation(expr.Select.GetLocation());
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     };
                 }
@@ -368,9 +361,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
                             output.Characters(value, loc, options);
                             return null;
                         }
-                        catch (XPathException e)
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.Select.GetLocation())))
                         {
-                            throw e.MaybeWithLocation(expr.Select.GetLocation());
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     };
                 }
@@ -388,15 +382,15 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     {
                         return ValueOf.MakeTextNode(contentEval.Eval(context), noNodeIfEmpty, doe, context);
                     }
-                    catch (XPathException e)
+                    catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.Select.GetLocation())))
                     {
-                        throw e.MaybeWithLocation(expr.Select.GetLocation());
+                        // Decorated in the filter, never handled (XPathException.PassOn).
+                        throw;
                     }
                 };
             }
         }
 
-        //
         private sealed class TextNodeOutputStreamer : ProxyOutputter
         {
             private readonly ILocation instructionLoc;

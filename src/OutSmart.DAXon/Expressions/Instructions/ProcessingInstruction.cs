@@ -124,10 +124,23 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public static UnicodeString CheckContentXSLT(UnicodeString data)
         {
-            long hh;
-            while ((hh = data.IndexOf(PI_TERMINATOR, 0)) >= 0)
+            // One pass, a space between each ? and the > after it: Saxon searched from the start and rebuilt the data per
+            // terminator, quadratic in a run of them.
+            if (data.IndexOf(PI_TERMINATOR, 0) >= 0)
             {
-                data = data.Substring(0, hh + 1).Concat(StringConstants.SINGLE_SPACE.Concat(data.Substring(hh + 1)));
+                string s = data.ToString();
+                var sb = new System.Text.StringBuilder(s.Length + 16);
+                for (int i = 0; i < s.Length; i++)
+                {
+                    Core.Controller.CheckActiveTimeoutEvery64K(i);
+                    sb.Append(s[i]);
+                    if (s[i] == '?' && i + 1 < s.Length && s[i + 1] == '>')
+                    {
+                        sb.Append(' ');
+                    }
+                }
+
+                data = StringTool.FromCharSequence(sb.ToString());
             }
 
             return Whitespace.RemoveLeadingWhitespace(data);

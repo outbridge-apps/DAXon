@@ -307,9 +307,10 @@ namespace OutSmart.DAXon.Values.Maps
                             ISequence value = map[key];
                             return (value ?? EmptySequence.GetInstance()).Iterate();
                         }
-                        catch (XPathException err)
+                        catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                         {
-                            throw err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     };
                 }
@@ -341,6 +342,8 @@ namespace OutSmart.DAXon.Values.Maps
             {
                 // The depth is the input's: nested JSON reaches it.
                 StackGuard.Probe();
+                // And the breadth: a level may hold the one below twice (60 levels, 2^60 visits).
+                Core.Controller.CheckActiveTimeout();
                 SequenceTool.Supply(@in.Iterate(), (item) =>
                 {
                     if (item is ArrayItem)
@@ -356,6 +359,7 @@ namespace OutSmart.DAXon.Values.Maps
                         if (value != null)
                         {
                             result.Add(value);
+                            Core.MemoryLedger.Collected(result);
                         }
 
                         foreach (KeyValuePair entry in ((MapItem)item).KeyValuePairs())
@@ -424,9 +428,10 @@ namespace OutSmart.DAXon.Values.Maps
                             IGroundedValue value = eager1 ? pre1 : valueEval.Eval(context);
                             return new SingleEntryMap(key, value ?? EmptySequence.GetInstance());
                         }
-                        catch (XPathException err)
+                        catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                         {
-                            throw err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     };
                 }
@@ -726,9 +731,10 @@ namespace OutSmart.DAXon.Values.Maps
                             {
                                 throw e.GetXPathException().MaybeWithLocation(call.GetLocation()).MaybeWithContext(context);
                             }
-                            catch (XPathException err)
+                            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(call.GetLocation()).MaybeWithContext(context)))
                             {
-                                throw err.MaybeWithLocation(call.GetLocation()).MaybeWithContext(context);
+                                // Decorated in the filter, never handled (XPathException.PassOn).
+                                throw;
                             }
                         };
                     }
@@ -1144,7 +1150,6 @@ namespace OutSmart.DAXon.Values.Maps
             }
         }
 
-        //
         /// <summary>
         /// Implementation of the function map:of-pairs() =&gt; IMap
         /// </summary>
@@ -1190,7 +1195,6 @@ namespace OutSmart.DAXon.Values.Maps
             }
         }
 
-        //
         /// <summary>
         /// Implementation of the extension function map:put() =&gt; IMap
         /// </summary>
@@ -1210,7 +1214,6 @@ namespace OutSmart.DAXon.Values.Maps
             }
         }
 
-        //
         /// <summary>
         /// Implementation of the XPath 3.1 function map:remove(IMap, key) =&gt; value
         /// </summary>
@@ -1230,7 +1233,6 @@ namespace OutSmart.DAXon.Values.Maps
             }
         }
 
-        //
         /// <summary>
         /// Implementation of the extension function map:size(map) =&gt; integer
         /// </summary>

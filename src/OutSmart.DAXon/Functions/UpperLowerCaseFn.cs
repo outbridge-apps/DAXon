@@ -72,6 +72,112 @@ namespace OutSmart.DAXon.Functions
             { 0xFB15, new[] { 0x0544, 0x053B } },                 // ﬕ  ARMENIAN MEN INI
             { 0xFB16, new[] { 0x054E, 0x0546 } },                 // ﬖ  ARMENIAN VEW NOW
             { 0xFB17, new[] { 0x0544, 0x053D } },                 // ﬗ  ARMENIAN MEN XEH
+            // Java's mappings that .NET's invariant tables lack, on .NET Framework or on both (every codepoint
+            // compared against Java 17; the ones only .NET 10 maps, from a later Unicode, are left to it).
+            { 0x0131, new[] { 0x0049 } },
+            { 0x017F, new[] { 0x0053 } },
+            { 0x023F, new[] { 0x2C7E } },
+            { 0x0240, new[] { 0x2C7F } },
+            { 0x0252, new[] { 0x2C70 } },
+            { 0x0265, new[] { 0xA78D } },
+            { 0x0266, new[] { 0xA7AA } },
+            { 0x0345, new[] { 0x0399 } },
+            { 0x0525, new[] { 0x0524 } },
+            { 0x0527, new[] { 0x0526 } },
+            { 0x1E9B, new[] { 0x1E60 } },
+            { 0x1F50, new[] { 0x03A5, 0x0313 } },
+            { 0x1F52, new[] { 0x03A5, 0x0313, 0x0300 } },
+            { 0x1F54, new[] { 0x03A5, 0x0313, 0x0301 } },
+            { 0x1F56, new[] { 0x03A5, 0x0313, 0x0342 } },
+            { 0x1F80, new[] { 0x1F08, 0x0399 } },
+            { 0x1F81, new[] { 0x1F09, 0x0399 } },
+            { 0x1F82, new[] { 0x1F0A, 0x0399 } },
+            { 0x1F83, new[] { 0x1F0B, 0x0399 } },
+            { 0x1F84, new[] { 0x1F0C, 0x0399 } },
+            { 0x1F85, new[] { 0x1F0D, 0x0399 } },
+            { 0x1F86, new[] { 0x1F0E, 0x0399 } },
+            { 0x1F87, new[] { 0x1F0F, 0x0399 } },
+            { 0x1F88, new[] { 0x1F08, 0x0399 } },
+            { 0x1F89, new[] { 0x1F09, 0x0399 } },
+            { 0x1F8A, new[] { 0x1F0A, 0x0399 } },
+            { 0x1F8B, new[] { 0x1F0B, 0x0399 } },
+            { 0x1F8C, new[] { 0x1F0C, 0x0399 } },
+            { 0x1F8D, new[] { 0x1F0D, 0x0399 } },
+            { 0x1F8E, new[] { 0x1F0E, 0x0399 } },
+            { 0x1F8F, new[] { 0x1F0F, 0x0399 } },
+            { 0x1F90, new[] { 0x1F28, 0x0399 } },
+            { 0x1F91, new[] { 0x1F29, 0x0399 } },
+            { 0x1F92, new[] { 0x1F2A, 0x0399 } },
+            { 0x1F93, new[] { 0x1F2B, 0x0399 } },
+            { 0x1F94, new[] { 0x1F2C, 0x0399 } },
+            { 0x1F95, new[] { 0x1F2D, 0x0399 } },
+            { 0x1F96, new[] { 0x1F2E, 0x0399 } },
+            { 0x1F97, new[] { 0x1F2F, 0x0399 } },
+            { 0x1F98, new[] { 0x1F28, 0x0399 } },
+            { 0x1F99, new[] { 0x1F29, 0x0399 } },
+            { 0x1F9A, new[] { 0x1F2A, 0x0399 } },
+            { 0x1F9B, new[] { 0x1F2B, 0x0399 } },
+            { 0x1F9C, new[] { 0x1F2C, 0x0399 } },
+            { 0x1F9D, new[] { 0x1F2D, 0x0399 } },
+            { 0x1F9E, new[] { 0x1F2E, 0x0399 } },
+            { 0x1F9F, new[] { 0x1F2F, 0x0399 } },
+            { 0x1FA0, new[] { 0x1F68, 0x0399 } },
+            { 0x1FA1, new[] { 0x1F69, 0x0399 } },
+            { 0x1FA2, new[] { 0x1F6A, 0x0399 } },
+            { 0x1FA3, new[] { 0x1F6B, 0x0399 } },
+            { 0x1FA4, new[] { 0x1F6C, 0x0399 } },
+            { 0x1FA5, new[] { 0x1F6D, 0x0399 } },
+            { 0x1FA6, new[] { 0x1F6E, 0x0399 } },
+            { 0x1FA7, new[] { 0x1F6F, 0x0399 } },
+            { 0x1FA8, new[] { 0x1F68, 0x0399 } },
+            { 0x1FA9, new[] { 0x1F69, 0x0399 } },
+            { 0x1FAA, new[] { 0x1F6A, 0x0399 } },
+            { 0x1FAB, new[] { 0x1F6B, 0x0399 } },
+            { 0x1FAC, new[] { 0x1F6C, 0x0399 } },
+            { 0x1FAD, new[] { 0x1F6D, 0x0399 } },
+            { 0x1FAE, new[] { 0x1F6E, 0x0399 } },
+            { 0x1FAF, new[] { 0x1F6F, 0x0399 } },
+            { 0x1FB2, new[] { 0x1FBA, 0x0399 } },
+            { 0x1FB3, new[] { 0x0391, 0x0399 } },
+            { 0x1FB4, new[] { 0x0386, 0x0399 } },
+            { 0x1FB6, new[] { 0x0391, 0x0342 } },
+            { 0x1FB7, new[] { 0x0391, 0x0342, 0x0399 } },
+            { 0x1FBC, new[] { 0x0391, 0x0399 } },
+            { 0x1FBE, new[] { 0x0399 } },
+            { 0x1FC2, new[] { 0x1FCA, 0x0399 } },
+            { 0x1FC3, new[] { 0x0397, 0x0399 } },
+            { 0x1FC4, new[] { 0x0389, 0x0399 } },
+            { 0x1FC6, new[] { 0x0397, 0x0342 } },
+            { 0x1FC7, new[] { 0x0397, 0x0342, 0x0399 } },
+            { 0x1FCC, new[] { 0x0397, 0x0399 } },
+            { 0x1FD2, new[] { 0x0399, 0x0308, 0x0300 } },
+            { 0x1FD3, new[] { 0x0399, 0x0308, 0x0301 } },
+            { 0x1FD6, new[] { 0x0399, 0x0342 } },
+            { 0x1FD7, new[] { 0x0399, 0x0308, 0x0342 } },
+            { 0x1FE2, new[] { 0x03A5, 0x0308, 0x0300 } },
+            { 0x1FE3, new[] { 0x03A5, 0x0308, 0x0301 } },
+            { 0x1FE4, new[] { 0x03A1, 0x0313 } },
+            { 0x1FE6, new[] { 0x03A5, 0x0342 } },
+            { 0x1FE7, new[] { 0x03A5, 0x0308, 0x0342 } },
+            { 0x1FF2, new[] { 0x1FFA, 0x0399 } },
+            { 0x1FF3, new[] { 0x03A9, 0x0399 } },
+            { 0x1FF4, new[] { 0x038F, 0x0399 } },
+            { 0x1FF6, new[] { 0x03A9, 0x0342 } },
+            { 0x1FF7, new[] { 0x03A9, 0x0342, 0x0399 } },
+            { 0x1FFC, new[] { 0x03A9, 0x0399 } },
+            { 0x2CEC, new[] { 0x2CEB } },
+            { 0x2CEE, new[] { 0x2CED } },
+            { 0x2CF3, new[] { 0x2CF2 } },
+            { 0x2D27, new[] { 0x10C7 } },
+            { 0x2D2D, new[] { 0x10CD } },
+            { 0xA661, new[] { 0xA660 } },
+            { 0xA791, new[] { 0xA790 } },
+            { 0xA793, new[] { 0xA792 } },
+            { 0xA7A1, new[] { 0xA7A0 } },
+            { 0xA7A3, new[] { 0xA7A2 } },
+            { 0xA7A5, new[] { 0xA7A4 } },
+            { 0xA7A7, new[] { 0xA7A6 } },
+            { 0xA7A9, new[] { 0xA7A8 } },
         };
 
         // LOWERCASE overlay: the İ one-to-many expansion plus the title-case digraphs (simple, missed by .NET).
@@ -83,6 +189,32 @@ namespace OutSmart.DAXon.Functions
             { 0x01C8, new[] { 0x01C9 } },                         // ǈ  → ǉ
             { 0x01CB, new[] { 0x01CC } },                         // ǋ  → ǌ
             { 0x01F2, new[] { 0x01F3 } },                         // ǲ  → ǳ
+            // Java's mappings that .NET's invariant tables lack, on .NET Framework or on both (every codepoint
+            // compared against Java 17; the ones only .NET 10 maps, from a later Unicode, are left to it).
+            { 0x0524, new[] { 0x0525 } },
+            { 0x0526, new[] { 0x0527 } },
+            { 0x10C7, new[] { 0x2D27 } },
+            { 0x10CD, new[] { 0x2D2D } },
+            { 0x1E9E, new[] { 0x00DF } },
+            { 0x2126, new[] { 0x03C9 } },
+            { 0x212A, new[] { 0x006B } },
+            { 0x212B, new[] { 0x00E5 } },
+            { 0x2C70, new[] { 0x0252 } },
+            { 0x2C7E, new[] { 0x023F } },
+            { 0x2C7F, new[] { 0x0240 } },
+            { 0x2CEB, new[] { 0x2CEC } },
+            { 0x2CED, new[] { 0x2CEE } },
+            { 0x2CF2, new[] { 0x2CF3 } },
+            { 0xA660, new[] { 0xA661 } },
+            { 0xA78D, new[] { 0x0265 } },
+            { 0xA790, new[] { 0xA791 } },
+            { 0xA792, new[] { 0xA793 } },
+            { 0xA7A0, new[] { 0xA7A1 } },
+            { 0xA7A2, new[] { 0xA7A3 } },
+            { 0xA7A4, new[] { 0xA7A5 } },
+            { 0xA7A6, new[] { 0xA7A7 } },
+            { 0xA7A8, new[] { 0xA7A9 } },
+            { 0xA7AA, new[] { 0x0266 } },
         };
         private readonly bool _upper;
         public UpperLowerCaseFn(bool upper) { _upper = upper; }
@@ -105,24 +237,12 @@ namespace OutSmart.DAXon.Functions
 
         private static AtomicValue TryAsciiCase(UnicodeString us, bool upper)
         {
-            byte[] b;
-            int off, len;
-            if (us is Slice8 s8)
-            {
-                b = s8.ByteArray;
-                off = s8.Start;
-                len = s8.End - s8.Start;
-            }
-            else if (us is Twine8 t8)
-            {
-                b = t8.ByteArray;
-                off = 0;
-                len = b.Length;
-            }
-            else
+            if (!Slice8.Latin1Span(us, out byte[] b, out int off, out int end))
             {
                 return null;
             }
+
+            int len = end - off;
 
             int firstChange = -1;
             for (int k = 0; k < len; k++)

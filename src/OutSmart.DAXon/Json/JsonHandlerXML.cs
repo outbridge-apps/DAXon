@@ -138,9 +138,6 @@ namespace OutSmart.DAXon.Json
             }
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         private void LoadSchema(Configuration config)
         {
             if (!config.IsSchemaAvailable(JSON_NS))
@@ -156,26 +153,50 @@ namespace OutSmart.DAXon.Json
             }
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         public void SetType(string name, ISchemaType st)
         {
             types[name] = st;
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
+        // A clean key range: one string per distinct key, which every key attribute with that name then holds - a
+        // document of 100 000 objects held as many copies of "quantity".
+        public override string Key(string input, int start, int length)
+        {
+            if (escape)
+            {
+                return null;
+            }
+
+            for (int i = start, end = start + length; i < end; i++)
+            {
+                if (input[i] >= 0xD800)
+                {
+                    return null;
+                }
+            }
+
+            keyPool = keyPool ?? new RangePool<string>(KeyPoolCap);
+            int hash = RangePool<string>.Hash(input, start, length);
+            int slot = keyPool.Find(input, start, length, hash);
+            if (slot >= 0)
+            {
+                return keyPool.Value(slot);
+            }
+
+            string key = input.Substring(start, length);
+            keyPool.Add(key, key, hash);
+            return key;
+        }
+
+        private const int KeyPoolCap = 1024;
+        private RangePool<string> keyPool;
+
         public override bool SetKey(string unEscaped, string reEscaped)
         {
             this.keys.Push(unEscaped);
             return checkForDuplicates && !mapKeys.Peek().Add(reEscaped);
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         public override ISequence GetResult()
         {
             @out.EndDocument();
@@ -183,34 +204,22 @@ namespace OutSmart.DAXon.Json
             return builder.CurrentRoot;
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         private bool ContainsEscape(string literal)
         {
             return literal.IndexOf('\\') >= 0;
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         private bool IsInMap()
         {
             return inMap.Count > 0 && inMap.Peek();
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         private void StartElement(FingerprintedQName qn, string typeName)
         {
             // types is populated only under validation; skip the dictionary lookup otherwise
             StartElement(qn, validate ? types.GetOrDefault(typeName) : null);
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         private void StartElement(FingerprintedQName qn, ISchemaType st)
         {
             @out.StartElement(qn, validate && st != null ? st : Untyped.INSTANCE, Loc.NONE, ReceiverOption.NONE);
@@ -227,17 +236,11 @@ namespace OutSmart.DAXon.Json
             }
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         private void StartContent()
         {
             @out.StartContent();
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         private void Characters(string s)
         {
             @out.Characters(StringView.Of(s), Loc.NONE, ReceiverOption.NONE);
@@ -250,17 +253,11 @@ namespace OutSmart.DAXon.Json
             @out.Characters(BMPString.Of(s), Loc.NONE, ReceiverOption.NONE);
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         private void EndElement()
         {
             @out.EndElement();
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         public override void StartArray()
         {
             StartElement(arrayQN, IsInMap() ? "arrayWithinMapType" : "arrayType");
@@ -268,18 +265,12 @@ namespace OutSmart.DAXon.Json
             StartContent();
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         public override void EndArray()
         {
             inMap.Pop();
             EndElement();
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         public override void StartMap()
         {
             StartElement(mapQN, IsInMap() ? "mapWithinMapType" : "mapType");
@@ -292,9 +283,6 @@ namespace OutSmart.DAXon.Json
             StartContent();
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         public override void EndMap()
         {
             inMap.Pop();
@@ -306,9 +294,6 @@ namespace OutSmart.DAXon.Json
             EndElement();
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         public override void WriteNumeric(string asString, AtomicValue parsedValue)
         {
             StartElement(numberQN, IsInMap() ? "numberWithinMapType" : "numberType");
@@ -317,9 +302,6 @@ namespace OutSmart.DAXon.Json
             EndElement();
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         public override void WriteString(string val)
         {
             StartElement(stringQN, IsInMap() ? "stringWithinMapType" : "stringType");
@@ -343,9 +325,6 @@ namespace OutSmart.DAXon.Json
             EndElement();
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         protected override void MarkAsEscaped(string escaped, bool isKey)
         {
             if (ContainsEscape(escaped) && escape)
@@ -355,9 +334,6 @@ namespace OutSmart.DAXon.Json
             }
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         public override void WriteBoolean(bool value)
         {
             StartElement(booleanQN, IsInMap() ? "booleanWithinMapType" : "booleanType");
@@ -366,9 +342,6 @@ namespace OutSmart.DAXon.Json
             EndElement();
         }
 
-        /* This may not need to be a stack as there should only be at most one pre-selected key
-       * However, the stack neatly indicates its empty state
-       * */
         public override void WriteNull()
         {
             StartElement(nullQN, IsInMap() ? "nullWithinMapType" : "nullType");

@@ -147,6 +147,12 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             IXPathContext c = boundContext == null ? context : boundContext;
             QNameValue qname = (QNameValue)arguments[0].Head();
             IntegerValue arity = (IntegerValue)arguments[1].Head();
+            // An arity outside int names no function; (int)LongValue() wrapped 4294967297 to 1.
+            if (arity.Signum() < 0 || arity.CompareTo(int.MaxValue) > 0)
+            {
+                return EmptySequence.GetInstance();
+            }
+
             IFunctionItem fi = Lookup(qname.GetStructuredQName(), (int)arity.LongValue(), c);
             if (fi == null)
             {

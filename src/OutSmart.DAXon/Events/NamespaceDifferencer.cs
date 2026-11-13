@@ -47,16 +47,29 @@ namespace OutSmart.DAXon.Events
             if (thisMap != parentMap)
             {
                 NamespaceMap delta = NamespaceDeltaMap.EmptyMap();
+                NamespaceMap.Builder wide = thisMap.Size() > 16 || parentMap.Size() > 16 ? new NamespaceMap.Builder(delta) : null;   // one sort
+                void Put(string prefix, NamespaceUri uri)
+                {
+                    if (wide != null)
+                    {
+                        wide.Put(prefix, uri);
+                    }
+                    else
+                    {
+                        delta = delta.Put(prefix, uri);
+                    }
+                }
+
                 foreach (NamespaceBinding nb in thisMap)
                 {
                     NamespaceUri parentUri = parentMap.GetNamespaceUri(nb.GetPrefix());
                     if (parentUri == null)
                     {
-                        delta = delta.Put(nb.GetPrefix(), nb.GetNamespaceUri());
+                        Put(nb.GetPrefix(), nb.GetNamespaceUri());
                     }
                     else if (!parentUri.Equals(nb.GetNamespaceUri()))
                     {
-                        delta = delta.Put(nb.GetPrefix(), nb.GetNamespaceUri());
+                        Put(nb.GetPrefix(), nb.GetNamespaceUri());
                     }
                 }
 
@@ -66,7 +79,7 @@ namespace OutSmart.DAXon.Events
                     {
                         if (thisMap.GetNamespaceUri(nb.GetPrefix()) == null)
                         {
-                            delta = delta.Put(nb.GetPrefix(), NamespaceUri.NULL);
+                            Put(nb.GetPrefix(), NamespaceUri.NULL);
                         }
                     }
                 }
@@ -77,11 +90,11 @@ namespace OutSmart.DAXon.Events
                     // See also bug 4696, test
                     if (!parentMap.DefaultNamespace.IsEmpty() && thisMap.DefaultNamespace.IsEmpty())
                     {
-                        delta = delta.Put("", NamespaceUri.NULL);
+                        Put("", NamespaceUri.NULL);
                     }
                 }
 
-                return delta;
+                return wide?.ToMap() ?? delta;
             }
 
             return NamespaceMap.EmptyMap();

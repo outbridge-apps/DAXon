@@ -12,6 +12,7 @@ using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Types;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Xml;
 using OutSmart.DAXon.Model;
@@ -20,8 +21,8 @@ namespace OutSmart.DAXon.Events
 {
     // A System.Xml.XmlWriter that feeds the Receiver pipeline (push-building of documents).
     // Per the port's Dispose/Close contract: Close() is the normal finish (implicitly ends the
-    // document, may throw XPathException); Dispose without Close releases quietly and DISCARDS.
-    // XPathException from the pipeline propagates as-is — no checked-exception wrapper.
+    // document, may throw); Dispose without Close releases quietly and DISCARDS.
+    // An error of the pipeline reaches the caller as the API's (ApiErrorReceiver), as from every other call.
     // Names and prefixes mean what they mean to System.Xml's writer: a null namespace is the one the prefix has in
     // scope, an attribute in a namespace gets a prefix, and a prefix means one namespace in a start tag.
     public class StreamWriterToReceiver : XmlWriter
@@ -33,6 +34,7 @@ namespace OutSmart.DAXon.Events
         private bool isChecking;
         private int depth = -1;
         private bool closed;
+        private bool rootStarted;
 
         // Attribute values stream in between WriteStartAttribute and WriteEndAttribute.
         private Triple pendingAttribute;
@@ -49,7 +51,7 @@ namespace OutSmart.DAXon.Events
         {
             PipelineConfiguration pipe = receiver.GetPipelineConfiguration();
             this.namespaceStack.Push(NamespaceMap.EmptyMap());
-            this.receiver = new NamespaceReducer(receiver);
+            this.receiver = new ApiErrorReceiver(receiver);
             this.charChecker = pipe.GetConfiguration().ValidCharacterChecker;
         }
 
@@ -270,6 +272,7 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteStartDocument()
         {
+            CheckOpen();
             if (depth != -1)
             {
                 throw new InvalidOperationException("WriteStartDocument must be the first call");
@@ -287,6 +290,7 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteEndDocument()
         {
+            CheckOpen();
             if (depth == -1)
             {
                 throw new InvalidOperationException("WriteEndDocument with no matching WriteStartDocument");
@@ -303,13 +307,28 @@ namespace OutSmart.DAXon.Events
             depth = -1;
         }
 
-        // The Receiver pipeline has no DTD event; the document type declaration is ignored.
+        // The Receiver pipeline has no DTD event; the document type declaration is ignored - where System.Xml takes one.
         public override void WriteDocType(string name, string pubid, string sysid, string subset)
         {
+            CheckOpen();
+            if (rootStarted)
+            {
+                throw new InvalidOperationException("WriteDocType after the root element");
+            }
+        }
+
+        // As System.Xml: nothing is written once the writer is closed (it went to nothing, silently).
+        private void CheckOpen()
+        {
+            if (closed)
+            {
+                throw new InvalidOperationException("The writer is closed");
+            }
         }
 
         public override void WriteStartElement(string prefix, string localName, string ns)
         {
+            CheckOpen();
             CheckName(localName, "element name");
             if (!string.IsNullOrEmpty(prefix))
             {
@@ -340,6 +359,7 @@ namespace OutSmart.DAXon.Events
                 CheckReserved(prefix, uri);
             }
 
+            rootStarted = true;
             depth++;
             pendingTag = new StartTag();
             pendingTag.elementName.local = localName;
@@ -350,6 +370,7 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteEndElement()
         {
+            CheckOpen();
             if (depth <= 0)
             {
                 throw new InvalidOperationException("WriteEndElement with no matching WriteStartElement");
@@ -370,6 +391,7 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteStartAttribute(string prefix, string localName, string ns)
         {
+            CheckOpen();
             CheckName(localName, "attribute name");
             if (pendingTag == null)
             {
@@ -506,6 +528,7 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteString(string text)
         {
+            CheckOpen();
             if (text == null)
             {
                 return;
@@ -544,18 +567,35 @@ namespace OutSmart.DAXon.Events
             WriteString(text);
         }
 
+        // These three refuse what System.Xml refuses, where they wrote something else: a whitespace call with other text, a
+        // reference to a character XML cannot hold (it became U+FFFD), a pair that is none (it became the two halves).
         public override void WriteWhitespace(string ws)
         {
+            if (ws != null && ws.Trim(' ', '\t', '\r', '\n').Length != 0)
+            {
+                throw new ArgumentException("Only white space characters can be written with WriteWhitespace");
+            }
+
             WriteString(ws);
         }
 
         public override void WriteCharEntity(char ch)
         {
+            if (!XmlConvert.IsXmlChar(ch))
+            {
+                throw new ArgumentException("No character reference can be written for 0x" + ((int)ch).ToString("X4", CultureInfo.InvariantCulture));
+            }
+
             WriteString(ch.ToString());
         }
 
         public override void WriteSurrogateCharEntity(char lowChar, char highChar)
         {
+            if (!char.IsSurrogatePair(highChar, lowChar))
+            {
+                throw new ArgumentException("0x" + ((int)highChar).ToString("X4", CultureInfo.InvariantCulture) + " 0x" + ((int)lowChar).ToString("X4", CultureInfo.InvariantCulture) + " is no surrogate pair");
+            }
+
             WriteString(new string(new[] { highChar, lowChar }));
         }
 
@@ -582,6 +622,7 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteComment(string text)
         {
+            CheckOpen();
             FlushStartTag();
             ReleaseHalf();
             text = text == null ? "" : StringTool.WithoutHalfPairs(text);
@@ -602,6 +643,7 @@ namespace OutSmart.DAXon.Events
 
         public override void WriteProcessingInstruction(string name, string text)
         {
+            CheckOpen();
             CheckName(name, "processing instruction name");
             if ("xml".Equals(name, StringComparison.OrdinalIgnoreCase))
             {

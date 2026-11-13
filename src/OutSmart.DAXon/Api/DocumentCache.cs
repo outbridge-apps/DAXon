@@ -18,8 +18,11 @@ namespace OutSmart.DAXon.Api
     /// may only be fed to transformations created from the same Processor.
     ///
     /// Correctness of the keys:
-    ///  - file entries are keyed by full path + last-write time + length, so a modified
-    ///    file is re-parsed on the next call; the superseded tree ages out by LFU eviction;
+    ///  - file entries are keyed by full path + last-write time + length, so a file written
+    ///    since is re-parsed on the next call - unless the write kept both (the same length,
+    ///    the last-write time set back), which this size-and-time check, like rsync's, does not
+    ///    see; a host that must be exact gives the text (GetOrParseContent). The superseded tree
+    ///    ages out by CLOCK eviction;
     ///  - content entries hold the document text itself in the key, so a hash collision
     ///    can never serve the wrong document (equality is a full comparison).
     ///
@@ -54,6 +57,7 @@ namespace OutSmart.DAXon.Api
         /// </summary>
         public XdmNode GetOrParseFile(string path)
         {
+            ArgumentCheck.NotNull(path, nameof(path));
             try
             {
                 string full = Path.GetFullPath(path);
@@ -75,7 +79,7 @@ namespace OutSmart.DAXon.Api
                 {
                     using (var s = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(full))
                     {
-                        return processor.NewDocumentBuilder().Build(s, new Uri(full).AbsoluteUri);
+                        return processor.NewDocumentBuilder().Build(s, OutSmart.DAXon.Internal.Net.FileUris.Of(full));
                     }
                 });
             }
@@ -83,7 +87,7 @@ namespace OutSmart.DAXon.Api
             {
                 // A file that cannot be read - missing, held, named as the file system will not have it - as
                 // DocumentBuilder.Build(path) reports it: SXXP0003, the reason in the message, the cause inside.
-                throw DAXonApiException.FromIO(e, path);
+                throw ApiErrors.Wrap(e, path);
             }
         }
 

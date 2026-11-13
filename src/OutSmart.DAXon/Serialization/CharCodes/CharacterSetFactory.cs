@@ -7,6 +7,7 @@
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Internal.Collections;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,13 +16,18 @@ namespace OutSmart.DAXon.Serialization.CharCodes
 {
     public class CharacterSetFactory
     {
-        private readonly Dictionary<string, ICharacterSet> characterSets = new Dictionary<string, ICharacterSet>(10);
+        // Concurrent: runs of one Configuration add the encodings they meet, from any thread (a plain Dictionary
+        // threw from Resize when two first uses met).
+        private readonly ConcurrentDictionary<string, ICharacterSet> characterSets = new ConcurrentDictionary<string, ICharacterSet>();
+
+        // What the platform gave, under the name as asked: "windows1252" is no name for windows-1252, whatever was asked before.
+        private readonly ConcurrentDictionary<string, ICharacterSet> platformSets = new ConcurrentDictionary<string, ICharacterSet>(StringComparer.OrdinalIgnoreCase);
         /// <summary>
         /// Class has a single instance per Configuration
         /// </summary>
         public CharacterSetFactory()
         {
-            Dictionary<string, ICharacterSet> c = characterSets;
+            ConcurrentDictionary<string, ICharacterSet> c = characterSets;
             UTF8CharacterSet utf8 = UTF8CharacterSet.GetInstance();
             c["utf8"] = utf8;
             UTF16CharacterSet utf16 = UTF16CharacterSet.GetInstance();
@@ -64,8 +70,13 @@ namespace OutSmart.DAXon.Serialization.CharCodes
             else
             {
                 string encodingKey = NormalizeCharsetName(encoding);
-                ICharacterSet cs = characterSets.GetOrDefault(encodingKey);
+                characterSets.TryGetValue(encodingKey, out ICharacterSet cs);
                 if (cs != null)
+                {
+                    return cs;
+                }
+
+                if (platformSets.TryGetValue(encoding, out cs))
                 {
                     return cs;
                 }
@@ -77,15 +88,15 @@ namespace OutSmart.DAXon.Serialization.CharCodes
                 Encoding platformEncoding;
                 try
                 {
-                    platformEncoding = Encoding.GetEncoding(encoding);
+                    platformEncoding = OutSmart.DAXon.Internal.PlatformEncodings.Get(encoding);
                 }
-                catch (ArgumentException)
+                catch (Exception e) when (e is ArgumentException || e is NotSupportedException)   // UTF-7 among them
                 {
                     throw new XPathException("Unknown encoding requested: " + encoding, "SESU0007");
                 }
 
                 ICharacterSet res = JavaCharacterSet.MakeCharSet(platformEncoding);
-                characterSets[encodingKey] = res;
+                platformSets[encoding] = res;
                 return res;
             }
         }

@@ -9,7 +9,7 @@ namespace OutSmart.DAXon.Types
 {
     public class AnyExternalObjectType : ItemType
     {
-        public static AnyExternalObjectType THE_INSTANCE = new AnyExternalObjectType();
+        public static readonly AnyExternalObjectType THE_INSTANCE = new AnyExternalObjectType();
 
         public virtual int PrimitiveType => -1;
 

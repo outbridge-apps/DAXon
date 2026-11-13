@@ -29,9 +29,17 @@ namespace OutSmart.DAXon.Collections
 
         public override int Next()
         {
+            // A regex backtracks through these one position at a time: 100M positions of a picture ran 7 s unchecked.
+            if ((++steps & 0xFFFF) == 0)
+            {
+                Core.Controller.CheckActiveTimeoutNow();
+            }
+
             int n = current;
             current += step;
             return n;
         }
+
+        private int steps;
     }
 }

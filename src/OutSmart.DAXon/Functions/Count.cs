@@ -11,7 +11,7 @@ namespace OutSmart.DAXon.Functions
 {
     internal sealed class Count
     {
-        // Java's static Count.count(iter) -> static method (same name as class).
+        // Counts the items an iterator has left (Saxon's static Count.count).
         public static int CountFn(ISequenceIterator iter)
         {
             int n = 0;
@@ -25,11 +25,7 @@ namespace OutSmart.DAXon.Functions
 
             return n;
         }
-        public static int CountLocal(ISequenceIterator iter)
-        {
-            int n = 0; while (iter != null && iter.Next() != null) n++; return n;
-        }
-        public static int SteppingCount(ISequenceIterator iter) => CountLocal(iter);
-        // The Java code calls Count.Count(iter) Ã¢â‚¬â€ provide alias.
+
+        public static int SteppingCount(ISequenceIterator iter) => CountFn(iter);
     }
 }

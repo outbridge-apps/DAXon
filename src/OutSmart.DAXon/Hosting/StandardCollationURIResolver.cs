@@ -152,6 +152,13 @@ namespace OutSmart.DAXon.Lib
                     props.SetProperty(kw, val);
                 }
 
+                // UTS #35: caseFirst orders the tertiary level; at primary or secondary strength case does not count at all.
+                string strength = props.GetProperty("strength");
+                if (strength == "primary" || strength == "secondary")
+                {
+                    props.Remove("case-order");
+                }
+
                 return Core.Version.platform.MakeCollation(config, props, uri);
             }
             else

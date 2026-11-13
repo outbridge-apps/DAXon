@@ -32,14 +32,8 @@ namespace OutSmart.DAXon.Expressions
 
         public override string ExpressionName => "axisStep";
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public Types.ItemType ContextItemType => staticInfo.GetItemType();
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override double Cost
         {
             get
@@ -62,24 +56,12 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override int IntrinsicDependencies => StaticProperty.DEPENDS_ON_CONTEXT_ITEM;
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public int Axis { get => axis; set => this.axis = value; }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override int ImplementationMethod => ITERATE_METHOD;
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override string StreamerName => "AxisExpression";
         public AxisExpression(int axis, NodeTest nodeTest)
         {
@@ -266,234 +248,208 @@ namespace OutSmart.DAXon.Expressions
             }
 
             int origin = contextType.PrimitiveType;
-            if (test != null)
+            if (test == null)
+            {
+                return this;
+            }
+
+            // If the content type of the context item is known, see whether the node test can select anything
+            if (contextType is DocumentNodeTest documentTest && kind.Equals(UType.ELEMENT))
+            {
+                Expression fromDocument = CheckFromDocumentNode(documentTest, visitor, contextInfo, warnings);
+                if (fromDocument != null)
+                {
+                    return fromDocument;
+                }
+            }
+
+            ISchemaType contentType = ((NodeTest)contextType).ContentType;
+            if (contentType == AnyType.INSTANCE)
             {
 
-                // If the content type of the context item is known, see whether the node test can select anything
-                if (contextType is DocumentNodeTest && kind.Equals(UType.ELEMENT))
-                {
-                    NodeTest elementTest = ((DocumentNodeTest)contextType).ElementTest;
-                    IntSet outermostElementNames = elementTest.RequiredNodeNames;
-                    if (outermostElementNames != null)
-                    {
-                        IntSet selectedElementNames = test.RequiredNodeNames;
-                        if (selectedElementNames != null)
-                        {
-                            if (axis == AxisInfo.CHILD)
-                            {
+                // fast exit in non-schema-aware case
+                return this;
+            }
 
-                                // check that the name appearing in the step is one of the names allowed by the nodetest
-                                if (selectedElementNames.Intersect(outermostElementNames).IsEmpty())
-                                {
-                                    if (warnings)
-                                    {
-                                        visitor.IssueWarning("Starting at a document node, the step is selecting an element whose name " + "is not among the names of child elements permitted for this document node type", DAXonErrorCode.SXWN9037, GetLocation());
-                                    }
-
-                                    return Literal.MakeEmptySequence();
-                                }
-
-                                if (env.GetPackageData().IsSchemaAware() && elementTest is ISchemaNodeTest && outermostElementNames.Count == 1)
-                                {
-                                    IIntIterator oeni = outermostElementNames.IIterator();
-                                    int outermostElementName = oeni.MoveNext() ? oeni.Current : -1;
-                                    ISchemaDeclaration decl = config.GetElementDeclaration(outermostElementName);
-                                    if (decl == null)
-                                    {
-                                        if (warnings)
-                                        {
-                                            visitor.IssueWarning("Element " + config.GetNamePool().GetEQName(outermostElementName) + " is not declared in the schema", DAXonErrorCode.SXWN9037, GetLocation());
-                                        }
-
-                                        itemType = elementTest;
-                                    }
-                                    else
-                                    {
-                                        itemType = new CombinedNodeTest(elementTest, Token.INTERSECT, new ContentTypeTest(Types.Type.ELEMENT, decl.GetType(), config, true));
-                                    }
-                                }
-                                else
-                                {
-                                    itemType = elementTest;
-                                }
-
-                                return this;
-                            }
-                            else if (axis == AxisInfo.DESCENDANT)
-                            {
-
-                                // check that the name appearing in the step is one of the names allowed by the nodetest
-                                bool canMatchOutermost = !selectedElementNames.Intersect(outermostElementNames).IsEmpty();
-                                if (!canMatchOutermost)
-                                {
-
-                                    // The expression /descendant.x starting at the document node doesn't match the outermost
-                                    // element, so replace it by child::*/descendant.x, and check that
-                                    Expression path = ExpressionTool.MakePathExpression(new AxisExpression(AxisInfo.CHILD, elementTest), new AxisExpression(AxisInfo.DESCENDANT, test));
-                                    ExpressionTool.CopyLocationInfo(this, path);
-                                    return path.TypeCheck(visitor, contextInfo);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                ISchemaType contentType = ((NodeTest)contextType).ContentType;
-                if (contentType == AnyType.INSTANCE)
-                {
-
-                    // fast exit in non-schema-aware case
-                    return this;
-                }
-
-                if (!env.GetPackageData().IsSchemaAware())
-                {
-                    ISchemaType ct = test.ContentType;
-                    if (!(ct == AnyType.INSTANCE || ct == Untyped.INSTANCE || ct == AnySimpleType.INSTANCE || ct == BuiltInAtomicType.ANY_ATOMIC || ct == BuiltInAtomicType.UNTYPED_ATOMIC || ct == BuiltInAtomicType.STRING))
-                    {
-                        if (warnings)
-                        {
-                            visitor.IssueWarning("The " + AxisInfo.axisName[axis] + " axis will never select any typed nodes, " + "because the expression is being compiled in an environment that is not schema-aware", DAXonErrorCode.SXWN9037, GetLocation());
-                        }
-
-                        return Literal.MakeEmptySequence();
-                    }
-                }
-
-                int targetfp = test.Fingerprint;
-                StructuredQName targetName = test.MatchingNodeName;
-                if (contentType.IsSimpleType())
+            if (!env.GetPackageData().IsSchemaAware())
+            {
+                ISchemaType ct = test.ContentType;
+                if (!(ct == AnyType.INSTANCE || ct == Untyped.INSTANCE || ct == AnySimpleType.INSTANCE || ct == BuiltInAtomicType.ANY_ATOMIC || ct == BuiltInAtomicType.UNTYPED_ATOMIC || ct == BuiltInAtomicType.STRING))
                 {
                     if (warnings)
                     {
-                        if ((axis == AxisInfo.CHILD || axis == AxisInfo.DESCENDANT || axis == AxisInfo.DESCENDANT_OR_SELF) && UType.PARENT_NODE_KINDS.Union(UType.ATTRIBUTE).Subsumes(kind))
-                        {
-                            visitor.IssueWarning("The " + AxisInfo.axisName[axis] + " axis will never select any " + kind + " nodes when starting at " + (origin == Types.Type.ATTRIBUTE ? "an attribute node" : GetStartingNodeDescription(contentType)), DAXonErrorCode.SXWN9037, GetLocation());
-                        }
-                        else if (axis == AxisInfo.CHILD && kind.Equals(UType.TEXT) && (ParentExpression is Atomizer))
-                        {
-                            visitor.IssueWarning("Selecting the text nodes of an element with simple content may give the " + "wrong answer in the presence of comments or processing instructions. It is usually " + "better to omit the '/text()' step", DAXonErrorCode.SXWN9037, GetLocation());
-                        }
-                        else if (axis == AxisInfo.ATTRIBUTE)
-                        {
-                            bool found = false;
-                            if (targetfp == -1)
-                            {
-                                foreach (ISchemaType extension in config.GetExtensionsOfType(contentType))
-                                {
-                                    if (((IComplexType)extension).AllowsAttributes())
-                                    {
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                foreach (ISchemaType extension in config.GetExtensionsOfType(contentType))
-                                {
-                                    try
-                                    {
-                                        if (((IComplexType)extension).GetAttributeUseType(targetName) != null)
-                                        {
-                                            found = true;
-                                            break;
-                                        }
-                                    }
-                                    catch (SchemaException)
-                                    {
-                                    }
-                                }
-                            }
-
-                            if (!found)
-                            {
-                                visitor.IssueWarning("The " + AxisInfo.axisName[axis] + " axis will never select " + (targetName == null ? "any attribute nodes" : "an attribute node named " + GetDiagnosticName(targetName, env)) + " when starting at " + GetStartingNodeDescription(contentType), DAXonErrorCode.SXWN9037, GetLocation()); // Despite the warning, leave the expression unchanged. This is because
-                                // we don't necessarily know about all extended types at compile time:
-                                // in particular, we don't seal the XML Schema namespace to block extensions
-                                // of built-in types
-                            }
-                        }
-                    }
-                }
-                else if (((IComplexType)contentType).IsSimpleContent() && (axis == AxisInfo.CHILD || axis == AxisInfo.DESCENDANT || axis == AxisInfo.DESCENDANT_OR_SELF) && UType.PARENT_NODE_KINDS.Subsumes(kind))
-                {
-
-                    // We don't need to consider extended types here, because a type with complex content
-                    // can never be defined as an extension of a type with simple content
-                    if (warnings)
-                    {
-                        visitor.IssueWarning("The " + AxisInfo.axisName[axis] + " axis will never select any " + kind + " nodes when starting at " + GetStartingNodeDescription(contentType) + ", as this type requires simple content", DAXonErrorCode.SXWN9037, GetLocation());
+                        visitor.IssueWarning("The " + AxisInfo.axisName[axis] + " axis will never select any typed nodes, " + "because the expression is being compiled in an environment that is not schema-aware", DAXonErrorCode.SXWN9037, GetLocation());
                     }
 
                     return Literal.MakeEmptySequence();
                 }
-                else if (((IComplexType)contentType).IsEmptyContent() && (axis == AxisInfo.CHILD || axis == AxisInfo.DESCENDANT || axis == AxisInfo.DESCENDANT_OR_SELF))
+            }
+
+            int targetfp = test.Fingerprint;
+            StructuredQName targetName = test.MatchingNodeName;
+            if (contentType.IsSimpleType())
+            {
+                if (warnings)
                 {
-                    foreach (ISchemaType extension in config.GetExtensionsOfType(contentType))
-                    {
-                        if (!((IComplexType)extension).IsEmptyContent())
-                        {
-                            return this;
-                        }
-                    }
-
-                    if (warnings)
-                    {
-                        visitor.IssueWarning("The " + AxisInfo.axisName[axis] + " axis will never select any" + " nodes when starting at " + GetStartingNodeDescription(contentType) + ", as this type requires empty content", DAXonErrorCode.SXWN9037, GetLocation());
-                    }
-
-                    return Literal.MakeEmptySequence();
+                    WarnOfSimpleType(contentType, kind, origin, targetfp, targetName, visitor);
                 }
-                else if (axis == AxisInfo.ATTRIBUTE)
+            }
+            else if (((IComplexType)contentType).IsSimpleContent() && (axis == AxisInfo.CHILD || axis == AxisInfo.DESCENDANT || axis == AxisInfo.DESCENDANT_OR_SELF) && UType.PARENT_NODE_KINDS.Subsumes(kind))
+            {
+
+                // We don't need to consider extended types here, because a type with complex content
+                // can never be defined as an extension of a type with simple content
+                if (warnings)
                 {
-                    if (targetfp == -1)
+                    visitor.IssueWarning("The " + AxisInfo.axisName[axis] + " axis will never select any " + kind + " nodes when starting at " + GetStartingNodeDescription(contentType) + ", as this type requires simple content", DAXonErrorCode.SXWN9037, GetLocation());
+                }
+
+                return Literal.MakeEmptySequence();
+            }
+            else if (((IComplexType)contentType).IsEmptyContent() && (axis == AxisInfo.CHILD || axis == AxisInfo.DESCENDANT || axis == AxisInfo.DESCENDANT_OR_SELF))
+            {
+                foreach (ISchemaType extension in config.GetExtensionsOfType(contentType))
+                {
+                    if (!((IComplexType)extension).IsEmptyContent())
                     {
-                        if (warnings)
-                        {
-                            if (!((IComplexType)contentType).AllowsAttributes())
-                            {
-                                visitor.IssueWarning("The complex type " + contentType.Description + " allows no attributes other than the standard attributes in the xsi namespace", DAXonErrorCode.SXWN9037, GetLocation());
-                            }
-                        }
+                        return this;
                     }
-                    else
+                }
+
+                if (warnings)
+                {
+                    visitor.IssueWarning("The " + AxisInfo.axisName[axis] + " axis will never select any" + " nodes when starting at " + GetStartingNodeDescription(contentType) + ", as this type requires empty content", DAXonErrorCode.SXWN9037, GetLocation());
+                }
+
+                return Literal.MakeEmptySequence();
+            }
+            else if (axis == AxisInfo.ATTRIBUTE)
+            {
+                return CheckAttributeOf(contentType, targetfp, targetName, visitor, warnings);
+            }
+            else if (axis == AxisInfo.CHILD && kind.Equals(UType.ELEMENT))
+            {
+                return CheckChildOf(contentType, targetfp, targetName, visitor, warnings);
+            }
+            else if (axis == AxisInfo.DESCENDANT && kind.Equals(UType.ELEMENT) && targetfp != -1)
+            {
+                return CheckDescendantOf(contentType, targetfp, targetName, visitor, contextInfo, warnings);
+            }
+
+            return this;
+        }
+
+        // Starting at a document node of a known element type: an empty sequence, this, a rewritten path, or null when the
+        // names of the step and of the type tell nothing.
+        private Expression CheckFromDocumentNode(DocumentNodeTest contextType, ExpressionVisitor visitor, ContextItemStaticInfo contextInfo, bool warnings)
+        {
+            IStaticContext env = visitor.StaticContext;
+            Configuration config = env.GetConfiguration();
+            NodeTest elementTest = ((DocumentNodeTest)contextType).ElementTest;
+            IntSet outermostElementNames = elementTest.RequiredNodeNames;
+            if (outermostElementNames != null)
+            {
+                IntSet selectedElementNames = test.RequiredNodeNames;
+                if (selectedElementNames != null)
+                {
+                    if (axis == AxisInfo.CHILD)
                     {
-                        try
+
+                        // check that the name appearing in the step is one of the names allowed by the nodetest
+                        if (selectedElementNames.Intersect(outermostElementNames).IsEmpty())
                         {
-                            ISchemaType schemaType;
-                            if (targetfp == StandardNames.XSI_TYPE)
+                            if (warnings)
                             {
-                                schemaType = BuiltInAtomicType.QNAME;
-                            }
-                            else if (targetfp == StandardNames.XSI_SCHEMA_LOCATION)
-                            {
-                                schemaType = (ISchemaType)BuiltInListType.ANY_URIS;
-                            }
-                            else if (targetfp == StandardNames.XSI_NO_NAMESPACE_SCHEMA_LOCATION)
-                            {
-                                schemaType = BuiltInAtomicType.ANY_URI;
-                            }
-                            else if (targetfp == StandardNames.XSI_NIL)
-                            {
-                                schemaType = BuiltInAtomicType.BOOLEAN;
-                            }
-                            else
-                            {
-                                schemaType = ((IComplexType)contentType).GetAttributeUseType(targetName);
+                                visitor.IssueWarning("Starting at a document node, the step is selecting an element whose name " + "is not among the names of child elements permitted for this document node type", DAXonErrorCode.SXWN9037, GetLocation());
                             }
 
-                            if (schemaType == null)
+                            return Literal.MakeEmptySequence();
+                        }
+
+                        if (env.GetPackageData().IsSchemaAware() && elementTest is ISchemaNodeTest && outermostElementNames.Count == 1)
+                        {
+                            IIntIterator oeni = outermostElementNames.IIterator();
+                            int outermostElementName = oeni.MoveNext() ? oeni.Current : -1;
+                            ISchemaDeclaration decl = config.GetElementDeclaration(outermostElementName);
+                            if (decl == null)
                             {
                                 if (warnings)
                                 {
-                                    visitor.IssueWarning("The complex type " + contentType.Description + " does not allow an attribute named " + GetDiagnosticName(targetName, env), DAXonErrorCode.SXWN9037, GetLocation());
-                                    return Literal.MakeEmptySequence();
+                                    visitor.IssueWarning("Element " + config.GetNamePool().GetEQName(outermostElementName) + " is not declared in the schema", DAXonErrorCode.SXWN9037, GetLocation());
                                 }
+
+                                itemType = elementTest;
                             }
                             else
                             {
-                                itemType = new CombinedNodeTest(test, Token.INTERSECT, new ContentTypeTest(Types.Type.ATTRIBUTE, schemaType, config, false));
+                                itemType = new CombinedNodeTest(elementTest, Token.INTERSECT, new ContentTypeTest(Types.Type.ELEMENT, decl.GetType(), config, true));
+                            }
+                        }
+                        else
+                        {
+                            itemType = elementTest;
+                        }
+
+                        return this;
+                    }
+                    else if (axis == AxisInfo.DESCENDANT)
+                    {
+
+                        // check that the name appearing in the step is one of the names allowed by the nodetest
+                        bool canMatchOutermost = !selectedElementNames.Intersect(outermostElementNames).IsEmpty();
+                        if (!canMatchOutermost)
+                        {
+
+                            // The expression /descendant.x starting at the document node doesn't match the outermost
+                            // element, so replace it by child::*/descendant.x, and check that
+                            Expression path = ExpressionTool.MakePathExpression(new AxisExpression(AxisInfo.CHILD, elementTest), new AxisExpression(AxisInfo.DESCENDANT, test));
+                            ExpressionTool.CopyLocationInfo(this, path);
+                            return path.TypeCheck(visitor, contextInfo);
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        // The warnings for a step that starts at a node of simple type (it is left as it is).
+        private void WarnOfSimpleType(ISchemaType contentType, UType kind, int origin, int targetfp, StructuredQName targetName, ExpressionVisitor visitor)
+        {
+            IStaticContext env = visitor.StaticContext;
+            Configuration config = env.GetConfiguration();
+            if ((axis == AxisInfo.CHILD || axis == AxisInfo.DESCENDANT || axis == AxisInfo.DESCENDANT_OR_SELF) && UType.PARENT_NODE_KINDS.Union(UType.ATTRIBUTE).Subsumes(kind))
+            {
+                visitor.IssueWarning("The " + AxisInfo.axisName[axis] + " axis will never select any " + kind + " nodes when starting at " + (origin == Types.Type.ATTRIBUTE ? "an attribute node" : GetStartingNodeDescription(contentType)), DAXonErrorCode.SXWN9037, GetLocation());
+            }
+            else if (axis == AxisInfo.CHILD && kind.Equals(UType.TEXT) && (ParentExpression is Atomizer))
+            {
+                visitor.IssueWarning("Selecting the text nodes of an element with simple content may give the " + "wrong answer in the presence of comments or processing instructions. It is usually " + "better to omit the '/text()' step", DAXonErrorCode.SXWN9037, GetLocation());
+            }
+            else if (axis == AxisInfo.ATTRIBUTE)
+            {
+                bool found = false;
+                if (targetfp == -1)
+                {
+                    foreach (ISchemaType extension in config.GetExtensionsOfType(contentType))
+                    {
+                        if (((IComplexType)extension).AllowsAttributes())
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (ISchemaType extension in config.GetExtensionsOfType(contentType))
+                    {
+                        try
+                        {
+                            if (((IComplexType)extension).GetAttributeUseType(targetName) != null)
+                            {
+                                found = true;
+                                break;
                             }
                         }
                         catch (SchemaException)
@@ -501,209 +457,284 @@ namespace OutSmart.DAXon.Expressions
                         }
                     }
                 }
-                else if (axis == AxisInfo.CHILD && kind.Equals(UType.ELEMENT))
+
+                if (!found)
                 {
-                    try
+                    visitor.IssueWarning("The " + AxisInfo.axisName[axis] + " axis will never select " + (targetName == null ? "any attribute nodes" : "an attribute node named " + GetDiagnosticName(targetName, env)) + " when starting at " + GetStartingNodeDescription(contentType), DAXonErrorCode.SXWN9037, GetLocation()); // Despite the warning, leave the expression unchanged. This is because
+                    // we don't necessarily know about all extended types at compile time:
+                    // in particular, we don't seal the XML Schema namespace to block extensions
+                    // of built-in types
+                }
+            }
+        }
+
+        // The attribute axis from an element of a complex type.
+        private Expression CheckAttributeOf(ISchemaType contentType, int targetfp, StructuredQName targetName, ExpressionVisitor visitor, bool warnings)
+        {
+            IStaticContext env = visitor.StaticContext;
+            Configuration config = env.GetConfiguration();
+            if (targetfp == -1)
+            {
+                if (warnings)
+                {
+                    if (!((IComplexType)contentType).AllowsAttributes())
                     {
-                        int childfp = targetfp;
-                        if (targetName == null)
-                        {
-
-                            // select="child::*"
-                            if (((IComplexType)contentType).ContainsElementWildcard())
-                            {
-                                return this;
-                            }
-
-                            IntHashSet children = new IntHashSet();
-                            ((IComplexType)contentType).GatherAllPermittedChildren(children, false);
-                            if (children.IsEmpty())
-                            {
-                                if (warnings)
-                                {
-                                    visitor.IssueWarning("The complex type " + contentType.Description + " does not allow children", DAXonErrorCode.SXWN9037, GetLocation());
-                                }
-
-                                return Literal.MakeEmptySequence();
-                            }
-
-
-                            //                            if (children.contains(-1)) {
-                            //                                return this;
-                            //                            }
-                            if (children.Count == 1)
-                            {
-                                IIntIterator iter = children.IIterator();
-                                if (iter.MoveNext())
-                                {
-                                    childfp = iter.Current;
-                                }
-                            }
-                            else
-                            {
-                                return this;
-                            }
-                        }
-
-                        ISchemaType schemaType = ((IComplexType)contentType).GetElementParticleType(childfp, true);
-                        if (schemaType == null)
-                        {
-                            if (warnings)
-                            {
-                                StructuredQName childElement = GetConfiguration().GetNamePool().GetStructuredQName(childfp);
-                                string message = "The complex type " + contentType.Description + " does not allow a child element named " + GetDiagnosticName(childElement, env);
-                                IntHashSet permitted = new IntHashSet();
-                                ((IComplexType)contentType).GatherAllPermittedChildren(permitted, false);
-                                if (!permitted.Contains(-1))
-                                {
-                                    IIntIterator kids = permitted.IIterator();
-                                    while (kids.MoveNext())
-                                    {
-                                        int kid = kids.Current;
-                                        StructuredQName sq = GetConfiguration().GetNamePool().GetStructuredQName(kid);
-                                        if (sq.GetLocalPart().Equals(childElement.GetLocalPart()) && kid != childfp)
-                                        {
-                                            message += ". Perhaps the namespace is " + (childElement.HasURI(NamespaceUri.NULL) ? "missing" : "wrong") + ", and " + sq.EQName + " was intended?";
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                visitor.IssueWarning(message, DAXonErrorCode.SXWN9037, GetLocation());
-                            }
-
-                            return Literal.MakeEmptySequence();
-                        }
-                        else
-                        {
-                            itemType = new CombinedNodeTest(test, Token.INTERSECT, new ContentTypeTest(Types.Type.ELEMENT, schemaType, config, true));
-                            int computedCardinality = ((IComplexType)contentType).GetElementParticleCardinality(childfp, true);
-                            ExpressionTool.ResetStaticProperties(this);
-                            if (computedCardinality == StaticProperty.ALLOWS_ZERO)
-                            {
-
-                                // this shouldn't happen, because we've already checked for this a different way.
-                                // but it's worth being safe (there was a bug involving an incorrect inference here)
-                                StructuredQName childElement = GetConfiguration().GetNamePool().GetStructuredQName(childfp);
-                                visitor.IssueWarning("The complex type " + contentType.Description + " appears not to allow a child element named " + GetDiagnosticName(childElement, env), DAXonErrorCode.SXWN9037, GetLocation());
-                                return Literal.MakeEmptySequence();
-                            }
-
-                            if (!Cardinality.AllowsMany(computedCardinality) && !(ParentExpression is FirstItemExpression) && !visitor.IsOptimizeForPatternMatching())
-                            {
-
-                                // if there can be at most one child of this name, create a FirstItemExpression
-                                // to stop the search after the first one is found
-                                return FirstItemExpression.MakeFirstItemExpression(this);
-                            }
-                        }
-                    }
-                    catch (SchemaException)
-                    {
+                        visitor.IssueWarning("The complex type " + contentType.Description + " allows no attributes other than the standard attributes in the xsi namespace", DAXonErrorCode.SXWN9037, GetLocation());
                     }
                 }
-                else if (axis == AxisInfo.DESCENDANT && kind.Equals(UType.ELEMENT) && targetfp != -1)
+            }
+            else
+            {
+                try
                 {
-
-                    // when searching for a specific element on the descendant axis, try to produce a more
-                    // specific path that avoids searching branches of the tree where the element cannot occur
-                    try
+                    ISchemaType schemaType;
+                    if (targetfp == StandardNames.XSI_TYPE)
                     {
-                        IntHashSet descendants = new IntHashSet();
-                        ((IComplexType)contentType).GatherAllPermittedDescendants(descendants);
-                        if (descendants.Contains(-1))
+                        schemaType = BuiltInAtomicType.QNAME;
+                    }
+                    else if (targetfp == StandardNames.XSI_SCHEMA_LOCATION)
+                    {
+                        schemaType = (ISchemaType)BuiltInListType.ANY_URIS;
+                    }
+                    else if (targetfp == StandardNames.XSI_NO_NAMESPACE_SCHEMA_LOCATION)
+                    {
+                        schemaType = BuiltInAtomicType.ANY_URI;
+                    }
+                    else if (targetfp == StandardNames.XSI_NIL)
+                    {
+                        schemaType = BuiltInAtomicType.BOOLEAN;
+                    }
+                    else
+                    {
+                        schemaType = ((IComplexType)contentType).GetAttributeUseType(targetName);
+                    }
+
+                    if (schemaType == null)
+                    {
+                        if (warnings)
                         {
-                            return this;
-                        }
-
-                        if (descendants.Contains(targetfp))
-                        {
-                            IntHashSet children = new IntHashSet();
-                            ((IComplexType)contentType).GatherAllPermittedChildren(children, false);
-                            IntHashSet usefulChildren = new IntHashSet();
-                            bool considerSelf = false;
-                            bool considerDescendants = false;
-                            IIntIterator kids = children.IIterator();
-                            while (kids.MoveNext())
-                            {
-                                int c = kids.Current;
-                                if (c == targetfp)
-                                {
-                                    usefulChildren.Add(c);
-                                    considerSelf = true;
-                                }
-
-                                ISchemaType st = ((IComplexType)contentType).GetElementParticleType(c, true);
-                                if (st == null)
-                                {
-                                    throw new InvalidOperationException("Can't find type for child element " + c);
-                                }
-
-                                if (st is IComplexType)
-                                {
-                                    IntHashSet subDescendants = new IntHashSet();
-                                    ((IComplexType)st).GatherAllPermittedDescendants(subDescendants);
-                                    if (subDescendants.Contains(targetfp))
-                                    {
-                                        usefulChildren.Add(c);
-                                        considerDescendants = true;
-                                    }
-                                }
-                            }
-
-                            itemType = test;
-                            if (considerDescendants)
-                            {
-                                ISchemaType st = ((IComplexType)contentType).GetDescendantElementType(targetfp);
-                                if (st != AnyType.INSTANCE)
-                                {
-                                    itemType = new CombinedNodeTest(test, Token.INTERSECT, new ContentTypeTest(Types.Type.ELEMENT, st, config, true));
-                                } //return this;
-                            }
-
-                            if (usefulChildren.Count < children.Count)
-                            {
-                                NodeTest childTest = MakeUnionNodeTest(usefulChildren, config.GetNamePool());
-                                AxisExpression first = new AxisExpression(AxisInfo.CHILD, childTest);
-                                ExpressionTool.CopyLocationInfo(this, first);
-                                int nextAxis;
-                                if (considerSelf)
-                                {
-                                    nextAxis = considerDescendants ? AxisInfo.DESCENDANT_OR_SELF : AxisInfo.SELF;
-                                }
-                                else
-                                {
-                                    nextAxis = AxisInfo.DESCENDANT;
-                                }
-
-                                AxisExpression next = new AxisExpression(nextAxis, (NodeTest)itemType);
-                                ExpressionTool.CopyLocationInfo(this, next);
-                                Expression path = ExpressionTool.MakePathExpression(first, next);
-                                ExpressionTool.CopyLocationInfo(this, path);
-                                return path.TypeCheck(visitor, contextInfo);
-                            }
-                        }
-                        else
-                        {
-                            if (warnings)
-                            {
-                                visitor.IssueWarning("The complex type " + contentType.Description + " does not allow a descendant element named " + GetDiagnosticName(targetName, env), DAXonErrorCode.SXWN9037, GetLocation());
-                            }
+                            visitor.IssueWarning("The complex type " + contentType.Description + " does not allow an attribute named " + GetDiagnosticName(targetName, env), DAXonErrorCode.SXWN9037, GetLocation());
+                            return Literal.MakeEmptySequence();
                         }
                     }
-                    catch (SchemaException e)
+                    else
                     {
-                        throw new InvalidOperationException(e.Message, e);
+                        itemType = new CombinedNodeTest(test, Token.INTERSECT, new ContentTypeTest(Types.Type.ATTRIBUTE, schemaType, config, false));
                     }
+                }
+                catch (SchemaException)
+                {
                 }
             }
 
             return this;
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
+        // The child axis selecting elements, from an element of a complex type.
+        private Expression CheckChildOf(ISchemaType contentType, int targetfp, StructuredQName targetName, ExpressionVisitor visitor, bool warnings)
+        {
+            IStaticContext env = visitor.StaticContext;
+            Configuration config = env.GetConfiguration();
+            try
+            {
+                int childfp = targetfp;
+                if (targetName == null)
+                {
+
+                    // select="child::*"
+                    if (((IComplexType)contentType).ContainsElementWildcard())
+                    {
+                        return this;
+                    }
+
+                    IntHashSet children = new IntHashSet();
+                    ((IComplexType)contentType).GatherAllPermittedChildren(children, false);
+                    if (children.IsEmpty())
+                    {
+                        if (warnings)
+                        {
+                            visitor.IssueWarning("The complex type " + contentType.Description + " does not allow children", DAXonErrorCode.SXWN9037, GetLocation());
+                        }
+
+                        return Literal.MakeEmptySequence();
+                    }
+
+
+                    if (children.Count == 1)
+                    {
+                        IIntIterator iter = children.IIterator();
+                        if (iter.MoveNext())
+                        {
+                            childfp = iter.Current;
+                        }
+                    }
+                    else
+                    {
+                        return this;
+                    }
+                }
+
+                ISchemaType schemaType = ((IComplexType)contentType).GetElementParticleType(childfp, true);
+                if (schemaType == null)
+                {
+                    if (warnings)
+                    {
+                        StructuredQName childElement = GetConfiguration().GetNamePool().GetStructuredQName(childfp);
+                        string message = "The complex type " + contentType.Description + " does not allow a child element named " + GetDiagnosticName(childElement, env);
+                        IntHashSet permitted = new IntHashSet();
+                        ((IComplexType)contentType).GatherAllPermittedChildren(permitted, false);
+                        if (!permitted.Contains(-1))
+                        {
+                            IIntIterator kids = permitted.IIterator();
+                            while (kids.MoveNext())
+                            {
+                                int kid = kids.Current;
+                                StructuredQName sq = GetConfiguration().GetNamePool().GetStructuredQName(kid);
+                                if (sq.GetLocalPart().Equals(childElement.GetLocalPart()) && kid != childfp)
+                                {
+                                    message += ". Perhaps the namespace is " + (childElement.HasURI(NamespaceUri.NULL) ? "missing" : "wrong") + ", and " + sq.EQName + " was intended?";
+                                    break;
+                                }
+                            }
+                        }
+
+                        visitor.IssueWarning(message, DAXonErrorCode.SXWN9037, GetLocation());
+                    }
+
+                    return Literal.MakeEmptySequence();
+                }
+                else
+                {
+                    itemType = new CombinedNodeTest(test, Token.INTERSECT, new ContentTypeTest(Types.Type.ELEMENT, schemaType, config, true));
+                    int computedCardinality = ((IComplexType)contentType).GetElementParticleCardinality(childfp, true);
+                    ExpressionTool.ResetStaticProperties(this);
+                    if (computedCardinality == StaticProperty.ALLOWS_ZERO)
+                    {
+
+                        // this shouldn't happen, because we've already checked for this a different way.
+                        // but it's worth being safe (there was a bug involving an incorrect inference here)
+                        StructuredQName childElement = GetConfiguration().GetNamePool().GetStructuredQName(childfp);
+                        visitor.IssueWarning("The complex type " + contentType.Description + " appears not to allow a child element named " + GetDiagnosticName(childElement, env), DAXonErrorCode.SXWN9037, GetLocation());
+                        return Literal.MakeEmptySequence();
+                    }
+
+                    if (!Cardinality.AllowsMany(computedCardinality) && !(ParentExpression is FirstItemExpression) && !visitor.IsOptimizeForPatternMatching())
+                    {
+
+                        // if there can be at most one child of this name, create a FirstItemExpression
+                        // to stop the search after the first one is found
+                        return FirstItemExpression.MakeFirstItemExpression(this);
+                    }
+                }
+            }
+            catch (SchemaException)
+            {
+            }
+
+            return this;
+        }
+
+        // The descendant axis selecting elements of one name, from an element of a complex type: a path that avoids the
+        // branches where the element cannot occur, when the type tells which those are.
+        private Expression CheckDescendantOf(ISchemaType contentType, int targetfp, StructuredQName targetName, ExpressionVisitor visitor, ContextItemStaticInfo contextInfo, bool warnings)
+        {
+            IStaticContext env = visitor.StaticContext;
+            Configuration config = env.GetConfiguration();
+
+            // when searching for a specific element on the descendant axis, try to produce a more
+            // specific path that avoids searching branches of the tree where the element cannot occur
+            try
+            {
+                IntHashSet descendants = new IntHashSet();
+                ((IComplexType)contentType).GatherAllPermittedDescendants(descendants);
+                if (descendants.Contains(-1))
+                {
+                    return this;
+                }
+
+                if (descendants.Contains(targetfp))
+                {
+                    IntHashSet children = new IntHashSet();
+                    ((IComplexType)contentType).GatherAllPermittedChildren(children, false);
+                    IntHashSet usefulChildren = new IntHashSet();
+                    bool considerSelf = false;
+                    bool considerDescendants = false;
+                    IIntIterator kids = children.IIterator();
+                    while (kids.MoveNext())
+                    {
+                        int c = kids.Current;
+                        if (c == targetfp)
+                        {
+                            usefulChildren.Add(c);
+                            considerSelf = true;
+                        }
+
+                        ISchemaType st = ((IComplexType)contentType).GetElementParticleType(c, true);
+                        if (st == null)
+                        {
+                            throw new InvalidOperationException("Can't find type for child element " + c);
+                        }
+
+                        if (st is IComplexType)
+                        {
+                            IntHashSet subDescendants = new IntHashSet();
+                            ((IComplexType)st).GatherAllPermittedDescendants(subDescendants);
+                            if (subDescendants.Contains(targetfp))
+                            {
+                                usefulChildren.Add(c);
+                                considerDescendants = true;
+                            }
+                        }
+                    }
+
+                    itemType = test;
+                    if (considerDescendants)
+                    {
+                        ISchemaType st = ((IComplexType)contentType).GetDescendantElementType(targetfp);
+                        if (st != AnyType.INSTANCE)
+                        {
+                            itemType = new CombinedNodeTest(test, Token.INTERSECT, new ContentTypeTest(Types.Type.ELEMENT, st, config, true));
+                        } //return this;
+                    }
+
+                    if (usefulChildren.Count < children.Count)
+                    {
+                        NodeTest childTest = MakeUnionNodeTest(usefulChildren, config.GetNamePool());
+                        AxisExpression first = new AxisExpression(AxisInfo.CHILD, childTest);
+                        ExpressionTool.CopyLocationInfo(this, first);
+                        int nextAxis;
+                        if (considerSelf)
+                        {
+                            nextAxis = considerDescendants ? AxisInfo.DESCENDANT_OR_SELF : AxisInfo.SELF;
+                        }
+                        else
+                        {
+                            nextAxis = AxisInfo.DESCENDANT;
+                        }
+
+                        AxisExpression next = new AxisExpression(nextAxis, (NodeTest)itemType);
+                        ExpressionTool.CopyLocationInfo(this, next);
+                        Expression path = ExpressionTool.MakePathExpression(first, next);
+                        ExpressionTool.CopyLocationInfo(this, path);
+                        return path.TypeCheck(visitor, contextInfo);
+                    }
+                }
+                else
+                {
+                    if (warnings)
+                    {
+                        visitor.IssueWarning("The complex type " + contentType.Description + " does not allow a descendant element named " + GetDiagnosticName(targetName, env), DAXonErrorCode.SXWN9037, GetLocation());
+                    }
+                }
+            }
+            catch (SchemaException e)
+            {
+                throw new InvalidOperationException(e.Message, e);
+            }
+
+            return this;
+        }
+
         private static string GetDiagnosticName(StructuredQName name, IStaticContext env)
         {
             NamespaceUri uri = name.GetNamespaceUri();
@@ -735,9 +766,6 @@ namespace OutSmart.DAXon.Expressions
             return "Q{" + uri + "}" + name.GetLocalPart();
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         private static string GetStartingNodeDescription(ISchemaType type)
         {
             string s = type.Description;
@@ -755,9 +783,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         private NodeTest MakeUnionNodeTest(IntHashSet elements, NamePool pool)
         {
             NodeTest test = null;
@@ -779,9 +804,6 @@ namespace OutSmart.DAXon.Expressions
             return test;
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override Expression Optimize(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             doneOptimize = true; // This ensures no more warnings about empty axes, because (a) we've probably output the
@@ -792,9 +814,6 @@ namespace OutSmart.DAXon.Expressions
             return this;
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         /// <summary>
         /// Is this expression the same as another expression?
         /// </summary>
@@ -803,9 +822,6 @@ namespace OutSmart.DAXon.Expressions
             return other is AxisExpression && axis == ((AxisExpression)other).axis && object.Equals(test, ((AxisExpression)other).test);
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         protected override int ComputeHashCode()
         {
 
@@ -820,9 +836,6 @@ namespace OutSmart.DAXon.Expressions
             return h;
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override Expression Copy(RebindingMap rebindings)
         {
             AxisExpression a2 = new AxisExpression(axis, test);
@@ -834,17 +847,11 @@ namespace OutSmart.DAXon.Expressions
             return a2;
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         protected override int ComputeSpecialProperties()
         {
             return StaticProperty.CONTEXT_DOCUMENT_NODESET | StaticProperty.SINGLE_DOCUMENT_NODESET | StaticProperty.NO_NODES_NEWLY_CREATED | (AxisInfo.isForwards[axis] ? StaticProperty.ORDERED_NODESET : StaticProperty.REVERSE_DOCUMENT_ORDER) | (AxisInfo.isPeerAxis[axis] || IsPeerNodeTest(test) ? StaticProperty.PEER_NODESET : 0) | (AxisInfo.isSubtreeAxis[axis] ? StaticProperty.SUBTREE_NODESET : 0) | (axis == AxisInfo.ATTRIBUTE || axis == AxisInfo.NAMESPACE ? StaticProperty.ATTRIBUTE_NS_NODESET : 0);
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         private static bool IsPeerNodeTest(NodeTest test)
         {
             if (test == null)
@@ -871,9 +878,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override Types.ItemType GetItemType()
         {
             if (itemType != null)
@@ -899,9 +903,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override UType GetStaticUType(UType contextItemType)
         {
 
@@ -917,9 +918,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         protected override int ComputeCardinality()
         {
             NodeTest originNodeType;
@@ -1006,48 +1004,21 @@ namespace OutSmart.DAXon.Expressions
             } // the parent axis isn't handled by this class
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override bool IsSubtreeExpression()
         {
             return AxisInfo.isSubtreeAxis[axis];
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public NodeTest GetNodeTest()
         {
             return test;
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            if (pathMapNodeSet == null)
-            {
-                ContextItemExpression cie = new ContextItemExpression();
-
-                pathMapNodeSet = new PathMap.PathMapNodeSet(pathMap.MakeNewRoot(cie));
-            }
-
-            return pathMapNodeSet.CreateArc(axis, test == null ? AnyNodeTest.GetInstance() : test);
-        }
-
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public bool IsContextPossiblyUndefined()
         {
             return staticInfo.IsPossiblyAbsent();
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override Patterns.Pattern ToPattern(Configuration config)
         {
             NodeTest test = GetNodeTest();
@@ -1125,9 +1096,6 @@ namespace OutSmart.DAXon.Expressions
             return pat;
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override ISequenceIterator Iterate(IXPathContext context)
         {
             IItem item = context.GetContextItem();
@@ -1169,9 +1137,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public IAxisIterator Iterate(NodeInfo origin)
         {
             if (test == null)
@@ -1184,9 +1149,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override void Export(ExpressionPresenter destination)
         {
             destination.StartElement("axis", this);
@@ -1195,9 +1157,6 @@ namespace OutSmart.DAXon.Expressions
             destination.EndElement();
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override string ToString()
         {
             StringBuilder fsb = new StringBuilder(16);
@@ -1207,9 +1166,6 @@ namespace OutSmart.DAXon.Expressions
             return fsb.ToString();
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
         public override string ToShortString()
         {
             StringBuilder fsb = new StringBuilder(16);
@@ -1249,25 +1205,11 @@ namespace OutSmart.DAXon.Expressions
             return fsb.ToString();
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
-        /*Expression args[] = new Expression[1];
-        args[0] = this.copy();
-        pre.add(SystemFunctionCall.makeSystemFunction(
-                "exists", args));*/
         public override Elaborator GetElaborator()
         {
             return new AxisExpressionElaborator();
         }
 
-        /*
-     * Get a string representation of a name to use in diagnostics
-     */
-        /*Expression args[] = new Expression[1];
-        args[0] = this.copy();
-        pre.add(SystemFunctionCall.makeSystemFunction(
-                "exists", args));*/
         /// <summary>
         /// Elaborator for an AxisExpression
         /// </summary>

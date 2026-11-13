@@ -54,7 +54,7 @@ namespace OutSmart.DAXon.Lib
             return publicIds.Resolve(this, baseUri, relativeUri, (r, b, rel) => r.BaseResolveUri(b, rel));
         }
 
-        private Uri BaseResolveUri(Uri baseUri, string relativeUri) => base.ResolveUri(baseUri, relativeUri);
+        private Uri BaseResolveUri(Uri baseUri, string relativeUri) => OutSmart.DAXon.Internal.Net.FileUris.Resolving(baseUri, relativeUri) ?? base.ResolveUri(baseUri, OutSmart.DAXon.Internal.Net.BidiUri.In(relativeUri));
 
         // The document the parser opens by system id, resolved only under a restricted policy, the only one that asks:
         // the host asked for it or it passed the gate as a document, so it is no external entity.
@@ -80,7 +80,7 @@ namespace OutSmart.DAXon.Lib
         {
             if (absoluteUri != null && absoluteUri.IsFile && OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config) && !absoluteUri.Equals(principal))
             {
-                string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, absoluteUri.AbsoluteUri, OutSmart.DAXon.Api.ResourceKind.ExternalEntity);
+                string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, OutSmart.DAXon.Internal.Net.BidiUri.Out(absoluteUri.AbsoluteUri), OutSmart.DAXon.Api.ResourceKind.ExternalEntity);
                 if (denied != null)
                 {
                     throw new IOException(denied);
@@ -127,9 +127,9 @@ namespace OutSmart.DAXon.Lib
 
                 // The document itself is opened even when it is not there, so the failure says why (missing, a
                 // directory) instead of "Cannot resolve"; an entity is probed, as System.Xml tries a PUBLIC id first.
-                if (absoluteUri != null && absoluteUri.IsFile && (isPrincipal || File.Exists(absoluteUri.LocalPath)))
+                if (absoluteUri != null && absoluteUri.IsFile && (isPrincipal || OutSmart.DAXon.Internal.Streams.FileNames.IsFile(OutSmart.DAXon.Internal.Net.BidiUri.Out(OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(absoluteUri)))))
                 {
-                    Stream file = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(absoluteUri.LocalPath);
+                    Stream file = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(OutSmart.DAXon.Internal.Net.BidiUri.Out(OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(absoluteUri)));
 
                     // What the document pulls in - its external DTD, an external entity - is input under the same cap;
                     // the document itself is capped by GetEntity.

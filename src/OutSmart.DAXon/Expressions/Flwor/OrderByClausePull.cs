@@ -4,10 +4,12 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-using System;
 using System.Collections.Generic;
+using System;
 using OutSmart.DAXon.Expressions.Sorting;
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Transformation;
+
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     internal sealed class OrderByClausePull : TuplePull
@@ -34,6 +36,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override bool NextTuple(IXPathContext context)
         {
+            StackGuard.Probe();
             if (currentPosition < 0)
             {
                 currentPosition = 0;
@@ -50,8 +53,9 @@ namespace OutSmart.DAXon.Expressions.Flwor
                     }
                     itbs.originalPosition = ++position;
                     tupleArray.Add(itbs);
-                    if (tupleArray.Count == Core.MemoryLedger.BigCount)
+                    if (!held && (tupleArray.Count == Core.MemoryLedger.BigCount || Core.MemoryLedger.Weighs(tuple, ref weight)))
                     {
+                        held = true;
                         Core.MemoryLedger.Hold(tupleArray, TupleListSizer);   // summed as it grows
                     }
                 }
@@ -69,56 +73,34 @@ namespace OutSmart.DAXon.Expressions.Flwor
         internal static readonly Func<object, long> TupleListSizer = o =>
         {
             var tuples = (List<ObjectToBeSorted>)o;
-            return 24 + 8L * tuples.Capacity + 200L * tuples.Count;
+            int n = tuples.Count;
+            return n == 0 ? 0 : 24 + 8L * tuples.Capacity + (200 + Core.MemoryLedger.MemberBytes(tuples[n / 2].value)) * n;
         };
 
-        // Shared by the pull and push forms. List sorting wraps comparer exceptions in
-        // InvalidOperationException (same gotcha as fn:sort, R5): unwrap an inner XPathException as-is and
-        // turn an inner InvalidCastException (non-comparable sort keys) into XPTY0004, as upstream does for
-        // ClassCastException. Stability is guaranteed by the originalPosition tie-break in the comparator.
+        private long weight;   // of medium strings in the tuples (MemoryLedger.Weighs)
+        private bool held;
+
+        // Shared by the pull and push forms; the originalPosition tie-break makes the sort stable.
         internal static void SortTupleArray(List<ObjectToBeSorted> tupleArray, IAtomicComparer[] comparers)
         {
-            int comparisons = 0;
-            try
+            DeadlineSort.Sort(tupleArray, (a, b) =>
             {
-                tupleArray.Sort((a, b) =>
+                for (int i = 0; i < comparers.Length; i++)
                 {
-                    if ((++comparisons & 1023) == 0)
+                    int comp = comparers[i].CompareAtomicValues(a.sortKeyValues[i], b.sortKeyValues[i]);
+                    if (comp != 0)
                     {
-                        Core.Controller.CheckActiveTimeoutNow();   // as in SortedIterator: nothing else stops a List.Sort
+                        return comp;
                     }
+                }
 
-                    for (int i = 0; i < comparers.Length; i++)
-                    {
-                        int comp = comparers[i].CompareAtomicValues(a.sortKeyValues[i], b.sortKeyValues[i]);
-                        if (comp != 0)
-                        {
-                            return comp;
-                        }
-                    }
-                    return a.originalPosition - b.originalPosition;
-                });
-            }
-            catch (InvalidCastException e)
-            {
-                throw new XPathException("Non-comparable types found while sorting: " + e.Message, "XPTY0004").AsTypeError();
-            }
-            catch (InvalidOperationException e) when (e.InnerException != null)
-            {
-                if (e.InnerException is XPathException xe)
-                {
-                    throw xe;
-                }
-                if (e.InnerException is InvalidCastException ice)
-                {
-                    throw new XPathException("Non-comparable types found while sorting: " + ice.Message, "XPTY0004").AsTypeError();
-                }
-                throw;
-            }
+                return a.originalPosition - b.originalPosition;
+            });
         }
 
         public override void Dispose()
         {
+            StackGuard.Probe();
             @base.Dispose();
         }
     }

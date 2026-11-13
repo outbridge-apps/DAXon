@@ -300,17 +300,7 @@ namespace OutSmart.DAXon.Values
         public static IConversionResult StringToInteger(UnicodeString s)
         {
             int len = s.Length32();
-            byte[] b8 = null;
-            int off8 = 0;
-            if (s is Slice8 sl)
-            {
-                b8 = sl.ByteArray;
-                off8 = sl.Start;
-            }
-            else if (s is Twine8 tw)
-            {
-                b8 = tw.ByteArray;
-            }
+            Slice8.Latin1Span(s, out byte[] b8, out int off8, out _);
 
             int start = 0;
             int last = len - 1;
@@ -469,9 +459,10 @@ namespace OutSmart.DAXon.Values
             {
                 return Div(other);
             }
-            catch (XPathException err)
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(locator)))
             {
-                throw err.MaybeWithLocation(locator);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 
@@ -482,9 +473,10 @@ namespace OutSmart.DAXon.Values
             {
                 return Mod(other);
             }
-            catch (XPathException err)
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(locator)))
             {
-                throw err.MaybeWithLocation(locator);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 
@@ -495,9 +487,10 @@ namespace OutSmart.DAXon.Values
             {
                 return Idiv(other);
             }
-            catch (XPathException err)
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(locator)))
             {
-                throw err.MaybeWithLocation(locator);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 

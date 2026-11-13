@@ -46,6 +46,8 @@ namespace OutSmart.DAXon.Values.Arrays
             // Nested arrays recurse back through here, one level per member. The depth is the
             // input's, not the stylesheet's: ~8KB of attacker JSON atomized by a fixed sheet.
             StackGuard.Probe();
+            // A level may hold the one below twice: 60 levels are 2^60 atoms, under the clock and the memory limit.
+            Core.Controller.CheckActiveTimeout();
             IList<AtomicValue> list = new List<AtomicValue>(ArrayLength());
             foreach (IGroundedValue seq in Members())
             {
@@ -55,6 +57,7 @@ namespace OutSmart.DAXon.Values.Arrays
                     foreach (AtomicValue atom in atoms)
                     {
                         list.Add(atom);
+                        Core.MemoryLedger.Collected(list);
                     }
                 });
             }
@@ -86,37 +89,6 @@ namespace OutSmart.DAXon.Values.Arrays
         {
             IntegerValue subscript = (IntegerValue)args[0].Head();
             return Get(ArrayFunctionSet.CheckSubscript(subscript, ArrayLength()) - 1);
-        }
-
-        public override bool DeepEquals(IFunctionItem other, IXPathContext context, IAtomicComparer comparer, int flags)
-        {
-            if (other is ArrayItem)
-            {
-                ArrayItem that = (ArrayItem)other;
-                if (this.ArrayLength() != that.ArrayLength())
-                {
-                    return false;
-                }
-
-                for (int i = 0; i < this.ArrayLength(); i++)
-                {
-                    if ((i & 1023) == 1023)
-                    {
-                        Core.Controller.CheckActiveTimeout();
-                    }
-
-                    if (!DAXonDeepEqual.DeepEqual(this[i].Iterate(), that[i].Iterate(), comparer, context, flags))
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-            else
-            {
-                return false;
-            }
         }
 
         public override bool DeepEqual40(IFunctionItem other, IXPathContext context, DeepEqual.DeepEqualOptions options)
@@ -250,7 +222,7 @@ namespace OutSmart.DAXon.Values.Arrays
                 }
             }
 
-            return memberType; //        } catch (XPathException e) {
+            return memberType;
         }
     }
 }

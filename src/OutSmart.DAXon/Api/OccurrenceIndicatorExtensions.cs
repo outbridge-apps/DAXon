@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Api
                 case OccurrenceIndicator.ZERO_OR_MORE: return StaticProperty.ALLOWS_ZERO_OR_MORE;
                 case OccurrenceIndicator.ONE: return StaticProperty.ALLOWS_ONE;
                 case OccurrenceIndicator.ONE_OR_MORE: return StaticProperty.ALLOWS_ONE_OR_MORE;
-                default: return StaticProperty.EMPTY;
+                default: throw new System.ArgumentOutOfRangeException(nameof(ind), ind, "Not a value of OccurrenceIndicator");
             }
         }
 

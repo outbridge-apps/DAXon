@@ -6,6 +6,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Text;
 using System.Text;
+using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Expressions.Numbering
 {
     internal sealed class RegularGroupFormatter : NumericGroupFormatter
@@ -25,16 +26,20 @@ namespace OutSmart.DAXon.Expressions.Numbering
         {
             if (groupSize > 0 && groupSeparator.Length > 0)
             {
+                // Left to right, a separator before each digit that starts a group: an insert at the front per digit made
+                // grouping a 200 000-digit number quadratic (33 s under a 3 s limit).
                 UnicodeString valueEx = StringView.Tidy(value);
-                StringBuilder temp = new StringBuilder(16);
-                for (int i = valueEx.Length32() - 1, j = 0; i >= 0; i--, j++)
+                int n = valueEx.Length32();
+                StringBuilder temp = new StringBuilder(n + n / groupSize * groupSeparator.Length + 1);
+                for (int i = 0; i < n; i++)
                 {
-                    if (j != 0 && (j % groupSize) == 0)
+                    if (i != 0 && (n - i) % groupSize == 0)
                     {
-                        temp.Insert(0, groupSeparator);
+                        temp.Append(groupSeparator);
                     }
 
-                    StringTool.PrependWideChar(temp, valueEx.CodePointAt(i));
+                    temp.AppendCodePoint(valueEx.CodePointAt(i));
+                    Core.Controller.CheckActiveTimeoutEvery64K(i);
                 }
 
                 return temp.ToString();

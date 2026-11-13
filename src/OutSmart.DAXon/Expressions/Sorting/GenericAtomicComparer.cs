@@ -15,6 +15,23 @@ namespace OutSmart.DAXon.Expressions.Sorting
 {
     internal class GenericAtomicComparer : IAtomicComparer
     {
+        // The run-time types a generic comparison met first, and the function made for them.
+        private sealed class FirstTypes
+        {
+            internal FirstTypes(BuiltInAtomicType a, BuiltInAtomicType b, IAtomicComparisonFunction function)
+            {
+                A = a;
+                B = b;
+                Function = function;
+            }
+
+            internal BuiltInAtomicType A { get; }
+
+            internal BuiltInAtomicType B { get; }
+
+            internal IAtomicComparisonFunction Function { get; }
+        }
+
         private readonly IStringCollator collator;
         private readonly IXPathContext context;
 
@@ -232,36 +249,24 @@ namespace OutSmart.DAXon.Expressions.Sorting
             {
 
                 // Get a comparison function using the run-time types rather than the static types
-                // We remember the function used the first time through, and reuse it if the types are the same
-                BuiltInAtomicType[] firstTimeTypes = new BuiltInAtomicType[2];
-                IAtomicComparisonFunction[] firstTimeFunction = new IAtomicComparisonFunction[1];
+                // We remember the function used the first time through, and reuse it if the types are the same.
+                // Immutable, without Saxon's lock: it was held over every comparison, so the threads sharing the
+                // compiled expression compared one at a time.
+                FirstTypes first = null;
                 return (a, b, context) =>
                 {
                     BuiltInAtomicType at = a.PrimitiveType;
                     BuiltInAtomicType bt = b.PrimitiveType;
-                    lock (firstTimeFunction)
+                    FirstTypes f = first;
+                    if (f == null)
                     {
-                        if (firstTimeFunction[0] == null)
-                        {
-                            IAtomicComparisonFunction comparisonFunction = MakeAtomicComparisonFunction(at, bt, collator, @operator, false, version);
-                            firstTimeFunction[0] = comparisonFunction;
-                            firstTimeTypes[0] = at;
-                            firstTimeTypes[1] = bt;
-                            return comparisonFunction.Compare(a, b, context);
-                        }
-                        else
-                        {
-                            if (firstTimeTypes[0] == at && firstTimeTypes[1] == bt)
-                            {
-                                return firstTimeFunction[0].Compare(a, b, context);
-                            }
-                            else
-                            {
-                                IAtomicComparisonFunction comparisonFunction = MakeAtomicComparisonFunction(at, bt, collator, @operator, false, version);
-                                return comparisonFunction.Compare(a, b, context);
-                            }
-                        }
+                        f = new FirstTypes(at, bt, MakeAtomicComparisonFunction(at, bt, collator, @operator, false, version));
+                        first = f;
                     }
+
+                    return f.A == at && f.B == bt
+                        ? f.Function.Compare(a, b, context)
+                        : MakeAtomicComparisonFunction(at, bt, collator, @operator, false, version).Compare(a, b, context);
                 };
             }
             else

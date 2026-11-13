@@ -40,7 +40,6 @@ namespace OutSmart.DAXon.Lib
         {
         }
 
-        //}
         public override void ReportInvalidity(IInvalidity failure)
         {
         }
@@ -49,8 +48,6 @@ namespace OutSmart.DAXon.Lib
         {
         }
 
-        //}
-        // no action
         public override ISequence EndReporting()
         {
             return null;

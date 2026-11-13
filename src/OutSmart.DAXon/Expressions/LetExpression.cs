@@ -194,14 +194,14 @@ namespace OutSmart.DAXon.Expressions
             // is that we limit the time spent discovering the information, and we don't do the optimization unless
             // it is safe.
             // Typically on entry to optimize(), the typeCheck() method has already been called, and this has set up
-            // a list of references. First we examine this list of references and remove any that are "dead", that @is
+            // a list of references. First we examine this list of references and remove any that are "dead", that is
             // they no longer have this LetExpression as an ancestor in the expression tree. This function also checks
             // whether any of these references are known to be in a loop, and returns true if so.
             hasLoopingReference |= RemoveDeadReferences();
             if (!needsEagerEvaluation)
             {
 
-                // If there are less than two references, and none @is in a loop, then there is potential
+                // If there are less than two references, and none is in a loop, then there is potential
                 // for optimization. But we now need to be absolutely sure that we have an accurate list
                 // of references.
                 bool considerRemoval = ((references != null && references.Count < 2) || Sequence is VariableReference) && !indexedVariable && !hasLoopingReference && !needsEagerEvaluation;
@@ -364,7 +364,7 @@ namespace OutSmart.DAXon.Expressions
         {
 
             // Note that the list of references might include references that are no longer reachable on the tree.
-            // We therefore take no action if (a) the parent of the reference is null, or (b) the reference @is
+            // We therefore take no action if (a) the parent of the reference is null, or (b) the reference is
             // not found among the children of its parent.
             foreach (VariableReference @ref in references)
             {

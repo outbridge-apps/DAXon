@@ -31,7 +31,7 @@ namespace OutSmart.DAXon.Internal.Net
                 {
                     if (IsFile)
                     {
-                        return OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(_url.LocalPath);
+                        return OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(_url));
                     }
                     // Guarded: the deadline is cooperative, so a server that trickles bytes would
                     // otherwise hold this thread long past the run's time limit (round AW).

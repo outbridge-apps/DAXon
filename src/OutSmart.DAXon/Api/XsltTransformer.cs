@@ -15,16 +15,17 @@ using System;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Api
 {
-    public class XsltTransformer : AbstractXsltTransformer, IDestination
+    public class XsltTransformer : AbstractXsltTransformer, IDestination, IChainedDestination
     {
         private QName initialTemplateName;
         private GlobalParameterSet parameters;
         private IActiveSource initialSource;
         private IDestination destination;
+
+        IDestination IChainedDestination.Next => destination;
         private readonly DestinationHelper destinationHelper;
         private URI destinationBaseUri;
 
-        /*staticParameters*/
         public URI DestinationBaseURI
         {
             get => destinationBaseUri; set
@@ -33,7 +34,6 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        /*staticParameters*/
         public virtual QName InitialTemplate
         {
             get => initialTemplateName; set
@@ -42,7 +42,6 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        /*staticParameters*/
         public virtual XdmNode InitialContextNode
         {
             get
@@ -78,19 +77,14 @@ namespace OutSmart.DAXon.Api
                             controller.GlobalContextItem = value.UnderlyingNode.Root;
                         }
                     }
-                    catch (XPathException e)
+                    catch (Exception e) when (ApiErrors.IsEngineError(e))
                     {
-                        throw new DAXonApiUncheckedException(e);
-                    }
-                    catch (RecursionDepthError e)
-                    {
-                        throw new DAXonApiUncheckedException(e.ToXPathException());
+                        throw ApiErrors.WrapUnchecked(e);
                     }
                 }
             }
         }
 
-        /*staticParameters*/
         public virtual IDestination Destination
         {
             get => destination; set
@@ -104,39 +98,32 @@ namespace OutSmart.DAXon.Api
             destinationHelper = new DestinationHelper(this);
         }
 
-        /*staticParameters*/
         public virtual void OnClose(IAction listener)
         {
             destinationHelper.OnClose(listener);
         }
 
-        /*staticParameters*/
         public void CloseAndNotify()
         {
             destinationHelper.CloseAndNotify();
         }
 
-        /*staticParameters*/
         public virtual void SetParameter(QName name, XdmValue value)
         {
+            ArgumentCheck.NotNull(name, nameof(name));
             lock (syncLock)
             {
                 try
                 {
                     parameters.Put(name.GetStructuredQName(), value == null ? null : ((ISequence)value.UnderlyingValue).Materialize());
                 }
-                catch (XPathException e)
+                catch (Exception e) when (ApiErrors.IsEngineError(e))
                 {
-                    throw new DAXonApiUncheckedException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiUncheckedException(e.ToXPathException());
+                    throw ApiErrors.WrapUnchecked(e);
                 }
             }
         }
 
-        /*staticParameters*/
         public virtual void ClearParameters()
         {
             lock (syncLock)
@@ -145,9 +132,9 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        /*staticParameters*/
         public virtual XdmValue GetParameter(QName name)
         {
+            ArgumentCheck.NotNull(name, nameof(name));
             lock (syncLock)
             {
                 ISequence oval = parameters[name.GetStructuredQName()];
@@ -155,99 +142,76 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        /*staticParameters*/
         public virtual void Transform()
         {
             using RunResources run = RunResources.Enter();
             lock (syncLock)
             {
-                IActiveSource initialSelection = initialSource;
-                bool reset = false;
                 if (destination == null)
                 {
                     throw new InvalidOperationException("No destination has been supplied");
                 }
 
-                bool closed = false;
-                try
+                RestoreBaseOutputURI();
+                Run(destination, null, () =>
                 {
-                    // Arm the Processor-wide cooperative deadline relative to the start of this run.
-                    // BEFORE the source parse below: the parse loop honours the thread's active
-                    // deadline, so it must see this run's fresh budget, not a spent token left on
-                    // the thread by an earlier run.
-                    controller.SetTimeout(processor.TransformTimeout);
-                    IReceiver @out = GetDestinationReceiver(controller, destination);
-                    GlobalContextRequirement gcr = controller.GetExecutable().GlobalContextRequirement;
-                    if ((gcr == null || !gcr.IsAbsentFocus()) && initialSelection != null)
+                    IActiveSource initialSelection = initialSource;
+                    bool reset = false;
+                    try
                     {
-                        if (initialSelection is NodeInfo)
+                        // Arm the Processor-wide cooperative deadline relative to the start of this run.
+                        // BEFORE the source parse below: the parse loop honours the thread's active
+                        // deadline, so it must see this run's fresh budget, not a spent token left on
+                        // the thread by an earlier run.
+                        controller.SetTimeout(processor.TransformTimeout);
+                        IReceiver @out = GetDestinationReceiver(controller, destination);
+                        GlobalContextRequirement gcr = controller.GetExecutable().GlobalContextRequirement;
+                        if ((gcr == null || !gcr.IsAbsentFocus()) && initialSelection != null)
                         {
-                            reset = MaybeSetGlobalContextItem((NodeInfo)initialSelection);
+                            if (initialSelection is NodeInfo)
+                            {
+                                reset = MaybeSetGlobalContextItem((NodeInfo)initialSelection);
+                            }
+                            else
+                            {
+                                NodeInfo node = controller.MakeSourceTree(initialSelection, GetSchemaValidationMode().GetNumber());
+                                reset = MaybeSetGlobalContextItem(node);
+                                initialSelection = node;
+                            }
+                        }
+
+                        if (baseOutputUriWasSet)
+                        {
+                            @out.SetSystemId(GetBaseOutputURI());
+                        }
+
+                        controller.InitializeController(parameters);
+                        controller.ChargeRunInputs();   // installed after the limits were armed
+                        if (initialTemplateName != null)
+                        {
+                            controller.CallTemplate(initialTemplateName.GetStructuredQName(), @out);
+                        }
+                        else if (initialSelection != null)
+                        {
+                            ApplyTemplatesToSource(initialSelection, @out);
                         }
                         else
                         {
-                            NodeInfo node = controller.MakeSourceTree(initialSelection, GetSchemaValidationMode().GetNumber());
-                            reset = MaybeSetGlobalContextItem(node);
-                            initialSelection = node;
+                            QName entryPoint = new QName("xsl", NamespaceConstant.XSLT, "initial-template");
+                            controller.CallTemplate(entryPoint.GetStructuredQName(), @out);
                         }
                     }
-
-                    if (baseOutputUriWasSet)
+                    finally
                     {
-                        @out.SetSystemId(GetBaseOutputURI());
+                        if (reset)
+                        {
+                            controller.ClearGlobalContextItem();
+                        }
                     }
-
-                    controller.InitializeController(parameters);
-                    controller.ChargeRunInputs();   // installed after the limits were armed
-                    controller.OpenTraceEpisode();
-                    if (initialTemplateName != null)
-                    {
-                        controller.CallTemplate(initialTemplateName.GetStructuredQName(), @out);
-                    }
-                    else if (initialSelection != null)
-                    {
-                        ApplyTemplatesToSource(initialSelection, @out);
-                    }
-                    else
-                    {
-                        QName entryPoint = new QName("xsl", NamespaceConstant.XSLT, "initial-template");
-                        controller.CallTemplate(entryPoint.GetStructuredQName(), @out);
-                    }
-
-                    destination.CloseAndNotify();
-                    closed = true;
-                }
-                catch (XPathException e)
-                {
-                    if (!e.HasBeenReported())
-                    {
-                        GetErrorReporter().Report(new XmlProcessingException(e));
-                        e.SetHasBeenReported(true);
-                    }
-
-                    throw new DAXonApiException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiException(e.ToXPathException());
-                }
-                finally
-                {
-                    if (reset)
-                    {
-                        controller.ClearGlobalContextItem();
-                    }
-
-                    controller.CloseTraceEpisode();
-                    if (!closed)
-                    {
-                        DestinationHelper.ReleaseUnclosed(destination);
-                    }
-                }
+                });
             }
         }
 
-        /*staticParameters*/
         private bool MaybeSetGlobalContextItem(IItem item)
         {
             if (controller.GlobalContextItem == null)
@@ -265,9 +229,10 @@ namespace OutSmart.DAXon.Api
             }
         }
 
-        /*staticParameters*/
         public IReceiver GetReceiver(PipelineConfiguration pipe, SerializationProperties @params)
         {
+            ArgumentCheck.NotNull(pipe, nameof(pipe));
+            ArgumentCheck.NotNull(@params, nameof(@params));
             if (destination == null)
             {
                 throw new InvalidOperationException("No destination has been supplied");
@@ -279,7 +244,6 @@ namespace OutSmart.DAXon.Api
             return rt;
         }
 
-        /*staticParameters*/
         public void Close()
         {
         }

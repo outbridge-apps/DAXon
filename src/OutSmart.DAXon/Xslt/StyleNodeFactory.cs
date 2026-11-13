@@ -413,7 +413,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        //sic
         public virtual TextImpl MakeTextNode(NodeInfo parent, UnicodeString content)
         {
             if (parent is StyleElement && ((StyleElement)parent).IsExpandingText())
@@ -446,7 +445,6 @@ namespace OutSmart.DAXon.Xslt
             return false;
         }
 
-        //sic
         public virtual AccumulatorRegistry MakeAccumulatorManager()
         {
             return new AccumulatorRegistry();

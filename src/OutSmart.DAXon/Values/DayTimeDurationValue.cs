@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Values
                     sb.Append('-');
                 }
 
-                int days = Days;
+                long days = WholeDays;
                 int hours = Hours;
                 int minutes = Minutes;
                 int seconds = Seconds;
@@ -194,7 +194,8 @@ namespace OutSmart.DAXon.Values
         {
 
             // Fast path for simple cases
-            if (Math.Abs(factor) < 0x7fffffff && Math.Abs(_seconds) < 0x7fffffff && _nanoseconds == 0)
+            // Not Math.Abs(factor): it throws for -2^63.
+            if (factor > -0x7fffffff && factor < 0x7fffffff && Math.Abs(_seconds) < 0x7fffffff && _nanoseconds == 0)
             {
                 return new DayTimeDurationValue(0, 0, 0, _seconds * factor * (_negative ? -1 : 1), 0);
             }
@@ -265,7 +266,8 @@ namespace OutSmart.DAXon.Values
             }
 
             BigDecimal secs = TotalSeconds;
-            BigDecimal product = secs.Divide(BigDecimal.ValueOf(n));
+            // To the nanosecond, toward zero as FromSeconds truncates: the exact quotient threw for avg of PT1S, PT1S, PT2S.
+            BigDecimal product = secs.Divide(BigDecimal.ValueOf(n), 9, RoundingMode.DOWN);
             try
             {
                 return FromSeconds(product);
@@ -331,7 +333,7 @@ namespace OutSmart.DAXon.Values
                         BigDecimal v2 = other.TotalSeconds;
                         return FromSeconds(v1 + v2);
                     }
-                    catch (ArgumentException)
+                    catch (Exception e) when (e is ArgumentException || e is ArithmeticException)
                     {
                         throw new XPathException("Overflow when adding two durations", "FODT0002");
                     }
@@ -364,7 +366,7 @@ namespace OutSmart.DAXon.Values
                         BigDecimal v2 = other.TotalSeconds;
                         return FromSeconds(v1 - v2);
                     }
-                    catch (ArgumentException)
+                    catch (Exception e) when (e is ArgumentException || e is ArithmeticException)
                     {
                         throw new XPathException("Overflow when subtracting two durations", "FODT0002");
                     }

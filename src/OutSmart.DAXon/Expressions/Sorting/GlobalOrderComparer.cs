@@ -10,12 +10,8 @@ using OutSmart.DAXon.Model;
 
 namespace OutSmart.DAXon.Expressions.Sorting
 {
-    // I5 B4a (2026-06-12): implements System.Collections.Generic.IComparer<NodeInfo> (was the now-retired
-    // OutSmart.DAXon.Internal.Collections.Comparator<NodeInfo>) so DocumentSorter's stage-0-renamed
-    // `(IComparer<NodeInfo>)GlobalOrderComparer.GetInstance()` cast (DocumentSorter.cs:42/54) no longer throws.
-    // Faithful port of net.sf.saxon.expr.sort.GlobalOrderComparer (the real file is <Compile Remove>'d at
-    // csproj:545 because it calls OutSmart.DAXon.Internal.Long.Signum, which OutSmart.DAXon.Internal lacks): orders by document number
-    // first, then intra-document order. `d1 < d2 ? -1 : 1` == Long.signum(d1-d2) here (d1!=d2) and is overflow-safe.
+    // Orders nodes by document number, then by document order. `d1 < d2 ? -1 : 1` is Java's Long.signum(d1 - d2)
+    // for d1 != d2, without the overflow.
     internal sealed class GlobalOrderComparer : IComparer<NodeInfo>
     {
         private static readonly GlobalOrderComparer _instance = new GlobalOrderComparer();

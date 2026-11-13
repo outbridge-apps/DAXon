@@ -13,8 +13,12 @@ namespace OutSmart.DAXon.Api
     {
         // Public as it was in 1.3, for the hosts built against it; s9api has no such constructor.
         [Obsolete("A function item made this way holds no function, and any use of it fails: take one from an expression.")]
-        public XdmFunctionItem() : base(null) { }
-        public XdmFunctionItem(OutSmart.DAXon.Model.IItem function) : base(function) { }
+        public XdmFunctionItem() : base(null)
+        {
+            // Refused here rather than as a raw NullReferenceException at its first use.
+            throw new NotSupportedException("A function item made this way holds no function: take one from an expression.");
+        }
+        public XdmFunctionItem(OutSmart.DAXon.Model.IItem function) : base(ArgumentCheck.Checked(function, nameof(function))) { }
         public override bool IsAtomicValue() => false;
     }
 }

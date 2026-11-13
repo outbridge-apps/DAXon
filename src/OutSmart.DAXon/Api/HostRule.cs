@@ -76,6 +76,16 @@ namespace OutSmart.DAXon.Api
         // Only address ranges need DNS; the policy resolves a name only when one is present.
         internal virtual bool NeedsResolution => false;
 
+        // A rule reads the host of an absolute URI: a null one was a NullReferenceException, a relative one an InvalidOperationException.
+        private static void CheckUri(Uri uri)
+        {
+            ArgumentCheck.NotNull(uri, nameof(uri));
+            if (!uri.IsAbsoluteUri)
+            {
+                throw new ArgumentException("The URI must be absolute: " + uri, nameof(uri));
+            }
+        }
+
         internal static string CanonicalHost(Uri uri)
         {
             string host = uri.IdnHost;
@@ -163,6 +173,7 @@ namespace OutSmart.DAXon.Api
 
             public override bool Matches(Uri uri, IReadOnlyList<IPAddress> resolved)
             {
+                CheckUri(uri);
                 if (address != null)
                 {
                     IPAddress literal = LiteralAddress(uri);
@@ -202,6 +213,7 @@ namespace OutSmart.DAXon.Api
 
             public override bool Matches(Uri uri, IReadOnlyList<IPAddress> resolved)
             {
+                CheckUri(uri);
                 string host = CanonicalHost(uri);
                 return host.Length > suffix.Length && host.EndsWith(suffix, StringComparison.Ordinal);
             }
@@ -238,6 +250,7 @@ namespace OutSmart.DAXon.Api
 
             public override bool Matches(Uri uri, IReadOnlyList<IPAddress> resolved)
             {
+                CheckUri(uri);
                 return regex.IsMatch(CanonicalHost(uri));
             }
 
@@ -297,6 +310,7 @@ namespace OutSmart.DAXon.Api
 
             public override bool Matches(Uri uri, IReadOnlyList<IPAddress> resolved)
             {
+                CheckUri(uri);
                 IPAddress literal = LiteralAddress(uri);
                 if (literal != null)
                 {

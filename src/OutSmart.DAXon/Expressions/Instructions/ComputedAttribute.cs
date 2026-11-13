@@ -137,7 +137,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             if (Literal.IsAtomic(NameExp))
             {
 
-                // Check we have a valid lexical QName, whose prefix @is in scope where necessary
+                // Check we have a valid lexical QName, whose prefix is in scope where necessary
                 try
                 {
                     AtomicValue val = (AtomicValue)((Literal)NameExp).GroundedValue;
@@ -441,7 +441,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return new FingerprintedQName(prefix, uri, localName);
         }
 
-        // we force the attribute to go in the null @namespace
+        // we force the attribute to go in the null namespace
         public override IItem EvaluateItem(IXPathContext context)
         {
             IItem node = base.EvaluateItem(context);

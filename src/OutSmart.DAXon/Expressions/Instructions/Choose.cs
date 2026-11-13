@@ -150,9 +150,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
             conditionOps[i].SetChildExpression(condition);
         }
 
+        // The arrays themselves, never copied (Java's Arrays.asList): a copy per call made every walk up a chain of
+        // 2900 nested ifs copy the whole chain, and the compile took 16 s.
         public virtual IEnumerable<Operand> Conditions()
         {
-            return conditionOps.ToList();
+            return conditionOps;
         }
 
         public virtual Operand GetActionOperand(int i)
@@ -172,12 +174,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public virtual IEnumerable<Operand> Actions()
         {
-            return actionOps.ToList();
+            return actionOps;
         }
 
         public override IEnumerable<Operand> Operands()
         {
-            return conditionOps.ToList().Concat(actionOps.ToList());
+            return conditionOps.Concat(actionOps);
         }
 
         public override bool AllowExtractingCommonSubexpressions()
@@ -202,18 +204,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     SetAction(i, GetAction(i).Simplify());
                 }
-                catch (XPathException err)
+                catch (XPathException err) when (!err.IsTypeError() && !err.IsRunLimit())
                 {
-
-                    // mustn't throw the error unless the branch is actually selected, unless its a type error or a limit of the run
-                    if (err.IsTypeError() || err.IsRunLimit())
-                    {
-                        throw;
-                    }
-                    else
-                    {
-                        SetAction(i, new ErrorExpression(new XmlProcessingException(err)));
-                    }
+                    // mustn't throw the error unless the branch is actually selected, unless its a type error or a limit of the run.
+                    // Those pass in the filter: a rethrow from here cost a dispatch per nested conditional (XPathException.PassOn).
+                    SetAction(i, new ErrorExpression(new XmlProcessingException(err)));
                 }
             }
 
@@ -358,6 +353,20 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return this;
         }
 
+        // The filter of TypeCheck: whether an error type-checking action i stays in that branch, raised only if it is taken.
+        // A static error or a limit of the run never does, nor a type error, unless the branch is an "empty" else branch (the
+        // author may know it is never needed) or one never executed (a typeswitch testing the type). The others pass on with
+        // no handler run: a rethrow from it cost a dispatch per nested conditional (XPathException.PassOn).
+        private bool KeepsInBranch(XPathException e, int i)
+        {
+            if (e.IsStaticError() || e.IsRunLimit())
+            {
+                return false;
+            }
+
+            return !e.IsTypeError() || Literal.IsEmptySequence(GetAction(i)) || Literal.HasEffectiveBooleanValue(GetCondition(i), false);
+        }
+
         public override Expression TypeCheck(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             TypeHierarchy th = visitor.GetConfiguration().GetTypeHierarchy();
@@ -389,36 +398,9 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     actionOps[i].TypeCheck(visitor, contextInfo);
                 }
-                catch (XPathException err)
+                catch (XPathException err) when (KeepsInBranch(err.MaybeWithLocation(GetLocation()).MaybeWithFailingExpression(GetAction(i)), i))
                 {
-                    XPathException e2 = err.MaybeWithLocation(GetLocation()).MaybeWithFailingExpression(GetAction(i));
-
-                    // mustn't throw the error unless the branch is actually selected, unless its a static or type error or a limit of the run
-                    if (e2.IsStaticError() || e2.IsRunLimit())
-                    {
-                        throw e2;
-                    }
-                    else if (e2.IsTypeError())
-                    {
-
-                        // if this is an "empty" else branch, don't be draconian about the error handling. It might be
-                        // the user knows the otherwise branch isn't needed because one of the when branches will always
-                        // be satisfied.
-                        // Also, don't throw a type error if the branch will never be executed; this can happen with
-                        // a typeswitch where the purpose of the condition is to test the type.
-                        if (Literal.IsEmptySequence(GetAction(i)) || Literal.HasEffectiveBooleanValue(GetCondition(i), false))
-                        {
-                            SetAction(i, new ErrorExpression(new XmlProcessingException(e2)));
-                        }
-                        else
-                        {
-                            throw e2;
-                        }
-                    }
-                    else
-                    {
-                        SetAction(i, new ErrorExpression(new XmlProcessingException(e2)));
-                    }
+                    SetAction(i, new ErrorExpression(new XmlProcessingException(err)));
                 }
 
                 if (Literal.HasEffectiveBooleanValue(GetCondition(i), true))
@@ -457,13 +439,9 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     SetAction(i, tc.StaticTypeCheck(GetAction(i), req, roleSupplier, visitor));
                 }
-                catch (XPathException err)
+                catch (XPathException err) when (!err.IsStaticError() && !err.IsRunLimit())
                 {
-                    if (err.IsStaticError() || err.IsRunLimit())
-                    {
-                        throw;
-                    }
-
+                    // Static errors and limits pass in the filter (see KeepsInBranch).
                     ErrorExpression ee = new ErrorExpression(new XmlProcessingException(err));
                     ExpressionTool.CopyLocationInfo(GetAction(i), ee);
                     SetAction(i, ee);
@@ -533,24 +511,19 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     continue;
                 }
 
+                // Read here, as the handler would after the unwind: the filter runs before inner frames restore the visitor.
+                bool inlining = visitor.IsInliningFunctions();
                 try
                 {
                     actionOps[i].Optimize(visitor, contextItemType);
                 }
-                catch (XPathException err)
+                catch (XPathException err) when (!(err.IsTypeError() && !inlining) && !err.IsRunLimit())
                 {
-
-                    // mustn't throw the error unless the branch is actually selected, unless its a type error or a limit of the run
-                    if ((err.IsTypeError() && !visitor.IsInliningFunctions()) || err.IsRunLimit())
-                    {
-                        throw;
-                    }
-                    else
-                    {
-                        ErrorExpression ee = new ErrorExpression(new XmlProcessingException(err));
-                        ExpressionTool.CopyLocationInfo(actionOps[i].GetChildExpression(), ee);
-                        SetAction(i, ee);
-                    }
+                    // mustn't throw the error unless the branch is actually selected, unless its a type error or a limit of the run.
+                    // Those pass in the filter (see KeepsInBranch).
+                    ErrorExpression ee = new ErrorExpression(new XmlProcessingException(err));
+                    ExpressionTool.CopyLocationInfo(actionOps[i].GetChildExpression(), ee);
+                    SetAction(i, ee);
                 }
 
                 if (GetAction(i) is ErrorExpression && ((ErrorExpression)GetAction(i)).IsTypeError() && !Literal.IsConstantBoolean(GetCondition(i), false) && !Literal.IsConstantBoolean(GetCondition(i), true))
@@ -788,25 +761,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             {
                 action.GetChildExpression().CheckPermittedContents(parentType, whole);
             }
-        }
-
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-
-            // expressions used in a condition contribute paths, but these do not contribute to the result
-            foreach (Operand condition in Conditions())
-            {
-                condition.GetChildExpression().AddToPathMap(pathMap, pathMapNodeSet);
-            }
-
-            PathMap.PathMapNodeSet result = new PathMap.PathMapNodeSet();
-            foreach (Operand action in Actions())
-            {
-                PathMap.PathMapNodeSet temp = action.GetChildExpression().AddToPathMap(pathMap, pathMapNodeSet);
-                result.AddNodeSet(temp);
-            }
-
-            return result;
         }
 
         public override string ToString()

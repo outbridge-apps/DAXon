@@ -56,7 +56,6 @@ namespace OutSmart.DAXon.Lib
                 {
                     SerializerFactory factory = context.GetConfiguration().SerializerFactory;
                     PipelineConfiguration pipe = context.GetController().MakePipelineConfiguration();
-                    pipe.XPathContext = context;
                     @out = factory.GetReceiver(result, properties, pipe);
                 }
 

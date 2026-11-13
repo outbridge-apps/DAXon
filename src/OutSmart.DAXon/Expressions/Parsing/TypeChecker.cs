@@ -22,6 +22,141 @@ namespace OutSmart.DAXon.Expressions.Parsing
         {
         }
 
+        // Rule 1: the supplied value atomized, or FOTY0013 when its type cannot be.
+        private static Expression Atomized(Expression exp, ItemType suppliedItemType, Expression supplied, Func<RoleDiagnostic> roleSupplier, IStaticContext env, TypeHierarchy th)
+        {
+            bool atomizable = suppliedItemType.IsAtomizable(th);
+            if (atomizable && (exp.GetSpecialProperties() & StaticProperty.COMPUTED_FUNCTION) != 0)
+            {
+                atomizable = false; // in this case we know the function isn't going to be an array
+            }
+
+            if (!atomizable)
+            {
+                string shortItemType;
+                if (suppliedItemType is IRecordType)
+                {
+                    shortItemType = "a record type";
+                }
+                else if (suppliedItemType is MapType)
+                {
+                    shortItemType = "a map type";
+                }
+                else if (suppliedItemType is IFunctionItemType)
+                {
+                    shortItemType = "a function type";
+                }
+                else if (suppliedItemType is NodeTest)
+                {
+                    shortItemType = "an element type with element-only content";
+                }
+                else
+                {
+                    shortItemType = suppliedItemType.ToString();
+                }
+
+                RoleDiagnostic role = roleSupplier();
+                throw new XPathException("An atomic value is required for the " + role.GetMessage() + ", but the supplied type is " + shortItemType + ", which cannot be atomized").WithErrorCode("FOTY0013").WithLocation(supplied.GetLocation()).AsTypeError().WithFailingExpression(supplied);
+            }
+
+            if (exp.GetRetainedStaticContext() == null)
+            {
+                exp.SetRetainedStaticContextLocally(env.MakeRetainedStaticContext());
+            }
+
+            Expression cexp = Atomizer.MakeAtomizer(exp, roleSupplier);
+            ExpressionTool.CopyLocationInfo(exp, cexp);
+            exp = cexp;
+            cexp = exp.Simplify();
+            ExpressionTool.CopyLocationInfo(exp, cexp);
+            return cexp;
+        }
+
+        // Rule 2b: every supplied value is untypedAtomic: converted to the required type (a literal at once).
+        private static Expression ConvertedFromUntyped(Expression exp, ItemType reqItemType, Expression supplied, Func<RoleDiagnostic> roleSupplier, ExpressionVisitor visitor, Configuration config)
+        {
+            if (((IPlainType)reqItemType).IsNamespaceSensitive())
+            {
+
+                // See spec bug 11964
+                RoleDiagnostic role = roleSupplier();
+                throw new XPathException("An untyped atomic value cannot be converted to a QName or NOTATION as required for the " + role.GetMessage()).WithErrorCode("XPTY0117").WithLocation(supplied.GetLocation()).WithFailingExpression(supplied);
+            }
+
+            UntypedSequenceConverter cexp = UntypedSequenceConverter.MakeUntypedSequenceConverter(config, exp, (IPlainType)reqItemType);
+            cexp.SetRoleDiagnostic(roleSupplier);
+            ExpressionTool.CopyLocationInfo(exp, cexp);
+            try
+            {
+                if (exp is Literal)
+                {
+                    try
+                    {
+                        exp = Literal.MakeLiteral(SequenceTool.ToGroundedValue(cexp.Iterate(visitor.MakeDynamicContext())), exp);
+                        ExpressionTool.CopyLocationInfo(cexp, exp);
+                    }
+                    catch (UncheckedXPathException e)
+                    {
+                        throw e.GetXPathException();
+                    }
+                }
+                else
+                {
+                    exp = cexp;
+                }
+            }
+            catch (XPathException err)
+            {
+                throw err.MaybeWithLocation(exp.GetLocation()).WithFailingExpression(supplied).MaybeWithErrorCode(roleSupplier().ErrorCode).AsStaticError();
+            }
+
+            return exp;
+        }
+
+        // Rule 2c: some supplied values may be untypedAtomic: those are converted, the others are left to the check.
+        private static Expression ConvertedSomeUntyped(Expression exp, ItemType reqItemType, Expression supplied, Func<RoleDiagnostic> roleSupplier, ExpressionVisitor visitor, Configuration config)
+        {
+            Expression conversion;
+            if (((IPlainType)reqItemType).IsNamespaceSensitive())
+            {
+                conversion = UntypedSequenceConverter.MakeUntypedSequenceRejector(config, exp, (IPlainType)reqItemType);
+            }
+            else
+            {
+                UntypedSequenceConverter usc = UntypedSequenceConverter.MakeUntypedSequenceConverter(config, exp, (IPlainType)reqItemType);
+                usc.SetRoleDiagnostic(roleSupplier);
+                conversion = usc;
+            }
+
+            ExpressionTool.CopyLocationInfo(exp, conversion);
+            try
+            {
+                if (exp is Literal)
+                {
+                    try
+                    {
+                        exp = Literal.MakeLiteral(SequenceTool.ToGroundedValue(conversion.Iterate(visitor.MakeDynamicContext())), exp);
+                        ExpressionTool.CopyLocationInfo(supplied, exp);
+                    }
+                    catch (UncheckedXPathException e)
+                    {
+                        throw e.GetXPathException();
+                    }
+                }
+                else
+                {
+                    exp = conversion;
+                }
+            }
+            catch (XPathException err)
+            {
+                throw err.MaybeWithLocation(exp.GetLocation()).AsStaticError();
+            }
+
+            return exp;
+        }
+
+
         public virtual Expression StaticTypeCheck(Expression supplied, SequenceType req, Func<RoleDiagnostic> roleSupplier, ExpressionVisitor visitor)
         {
 
@@ -91,51 +226,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     // rule 1: Atomize
                     if (!suppliedItemType.IsPlainType() && !(suppliedCard == StaticProperty.EMPTY))
                     {
-                        bool atomizable = suppliedItemType.IsAtomizable(th);
-                        if (atomizable && (exp.GetSpecialProperties() & StaticProperty.COMPUTED_FUNCTION) != 0)
-                        {
-                            atomizable = false; // in this case we know the function isn't going to be an array
-                        }
-
-                        if (!atomizable)
-                        {
-                            string shortItemType;
-                            if (suppliedItemType is IRecordType)
-                            {
-                                shortItemType = "a record type";
-                            }
-                            else if (suppliedItemType is MapType)
-                            {
-                                shortItemType = "a map type";
-                            }
-                            else if (suppliedItemType is IFunctionItemType)
-                            {
-                                shortItemType = "a function type";
-                            }
-                            else if (suppliedItemType is NodeTest)
-                            {
-                                shortItemType = "an element type with element-only content";
-                            }
-                            else
-                            {
-                                shortItemType = suppliedItemType.ToString();
-                            }
-
-                            RoleDiagnostic role = roleSupplier();
-                            throw new XPathException("An atomic value is required for the " + role.GetMessage() + ", but the supplied type is " + shortItemType + ", which cannot be atomized").WithErrorCode("FOTY0013").WithLocation(supplied.GetLocation()).AsTypeError().WithFailingExpression(supplied);
-                        }
-
-                        if (exp.GetRetainedStaticContext() == null)
-                        {
-                            exp.SetRetainedStaticContextLocally(env.MakeRetainedStaticContext());
-                        }
-
-                        Expression cexp = Atomizer.MakeAtomizer(exp, roleSupplier);
-                        ExpressionTool.CopyLocationInfo(exp, cexp);
-                        exp = cexp;
-                        cexp = exp.Simplify();
-                        ExpressionTool.CopyLocationInfo(exp, cexp);
-                        exp = cexp;
+                        exp = Atomized(exp, suppliedItemType, supplied, roleSupplier, env, th);
                         suppliedItemType = exp.GetItemType();
                         suppliedCard = exp.GetCardinality();
                         cardOK = Cardinality.Subsumes(reqCard, suppliedCard);
@@ -199,40 +290,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     //   2b: all supplied values are untyped atomic. Convert if necessary, and we're finished.
                     if (suppliedItemType.Equals(BuiltInAtomicType.UNTYPED_ATOMIC) && !(reqItemType.Equals(BuiltInAtomicType.UNTYPED_ATOMIC) || reqItemType.Equals(BuiltInAtomicType.ANY_ATOMIC)))
                     {
-                        if (((IPlainType)reqItemType).IsNamespaceSensitive())
-                        {
-
-                            // See spec bug 11964
-                            RoleDiagnostic role = roleSupplier();
-                            throw new XPathException("An untyped atomic value cannot be converted to a QName or NOTATION as required for the " + role.GetMessage()).WithErrorCode("XPTY0117").WithLocation(supplied.GetLocation()).WithFailingExpression(supplied);
-                        }
-
-                        UntypedSequenceConverter cexp = UntypedSequenceConverter.MakeUntypedSequenceConverter(config, exp, (IPlainType)reqItemType);
-                        cexp.SetRoleDiagnostic(roleSupplier);
-                        ExpressionTool.CopyLocationInfo(exp, cexp);
-                        try
-                        {
-                            if (exp is Literal)
-                            {
-                                try
-                                {
-                                    exp = Literal.MakeLiteral(SequenceTool.ToGroundedValue(cexp.Iterate(visitor.MakeDynamicContext())), exp);
-                                    ExpressionTool.CopyLocationInfo(cexp, exp);
-                                }
-                                catch (UncheckedXPathException e)
-                                {
-                                    throw e.GetXPathException();
-                                }
-                            }
-                            else
-                            {
-                                exp = cexp;
-                            }
-                        }
-                        catch (XPathException err)
-                        {
-                            throw err.MaybeWithLocation(exp.GetLocation()).WithFailingExpression(supplied).MaybeWithErrorCode(roleSupplier().ErrorCode).AsStaticError();
-                        }
+                        exp = ConvertedFromUntyped(exp, reqItemType, supplied, roleSupplier, visitor, config);
 
                         itemTypeOK = true;
                         suppliedItemType = reqItemType;
@@ -243,44 +301,8 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     //   there may be other values in the sequence that won't convert and still need to be checked
                     if (suppliedItemType.Equals(BuiltInAtomicType.ANY_ATOMIC) && !(reqItemType.Equals(BuiltInAtomicType.UNTYPED_ATOMIC) || reqItemType.Equals(BuiltInAtomicType.ANY_ATOMIC)) && !exp.HasSpecialProperty(StaticProperty.NOT_UNTYPED_ATOMIC))
                     {
-                        Expression conversion;
-                        if (((IPlainType)reqItemType).IsNamespaceSensitive())
-                        {
-                            conversion = UntypedSequenceConverter.MakeUntypedSequenceRejector(config, exp, (IPlainType)reqItemType);
-                        }
-                        else
-                        {
-                            UntypedSequenceConverter usc = UntypedSequenceConverter.MakeUntypedSequenceConverter(config, exp, (IPlainType)reqItemType);
-                            usc.SetRoleDiagnostic(roleSupplier);
-                            conversion = usc;
-                        }
-
-                        ExpressionTool.CopyLocationInfo(exp, conversion);
-                        try
-                        {
-                            if (exp is Literal)
-                            {
-                                try
-                                {
-                                    exp = Literal.MakeLiteral(SequenceTool.ToGroundedValue(conversion.Iterate(visitor.MakeDynamicContext())), exp);
-                                    ExpressionTool.CopyLocationInfo(supplied, exp);
-                                }
-                                catch (UncheckedXPathException e)
-                                {
-                                    throw e.GetXPathException();
-                                }
-                            }
-                            else
-                            {
-                                exp = conversion;
-                            }
-
-                            suppliedItemType = exp.GetItemType();
-                        }
-                        catch (XPathException err)
-                        {
-                            throw err.MaybeWithLocation(exp.GetLocation()).AsStaticError();
-                        }
+                        exp = ConvertedSomeUntyped(exp, reqItemType, supplied, roleSupplier, visitor, config);
+                        suppliedItemType = exp.GetItemType();
                     }
                 }
 
@@ -342,7 +364,8 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 {
 
                     // adjust the required type of the Java extension function call
-                    // this does nothing unless supplied is an is JavaExtensionFunctionCall if (((FunctionCall)supplied).AdjustRequiredType((JavaExternalObjectType)reqItemType))
+                    // this does nothing unless supplied is a JavaExtensionFunctionCall
+                    if (((FunctionCall)supplied).AdjustRequiredType((JavaExternalObjectType)reqItemType))
                     {
                         itemTypeOK = true;
                         cardOK = true;

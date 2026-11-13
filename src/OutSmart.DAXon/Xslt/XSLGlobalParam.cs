@@ -86,7 +86,6 @@ namespace OutSmart.DAXon.Xslt
                 binding.SetImplicitlyRequiredParam(sourceBinding.HasProperty(SourceBinding.BindingProperty.IMPLICITLY_REQUIRED));
                 sourceBinding.FixupBinding(binding);
 
-                //compiledVariable = binding;
                 Component overridden = OverriddenComponent;
                 if (overridden != null)
                 {

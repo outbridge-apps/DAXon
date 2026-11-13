@@ -24,6 +24,7 @@ namespace OutSmart.DAXon.Expressions
         public override int ImplementationMethod => EVALUATE_METHOD;
 
         public override string ExpressionName => "first";
+        public override string ToShortString() => BaseExpression.ToShortString() + "[1]";
         private FirstItemExpression(Expression @base) : base(@base)
         {
         }

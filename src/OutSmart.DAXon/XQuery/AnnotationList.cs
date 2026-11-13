@@ -16,7 +16,7 @@ namespace OutSmart.DAXon.XQuery
     /// </summary>
     public class AnnotationList : IEnumerable<Annotation>
     {
-        public static AnnotationList EMPTY = new AnnotationList(new List<Annotation>());
+        public static readonly AnnotationList EMPTY = new AnnotationList(new List<Annotation>());
         private readonly IList<Annotation> list;
         public AnnotationList(IList<Annotation> list)
         {

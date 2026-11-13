@@ -32,10 +32,8 @@ namespace OutSmart.DAXon.Events
         private int depth;
         private string target = "unknown";
 
-        //
         public int Checksum => checksum;
 
-        //
         public string Digest => digest.Digest;
         public CheckSumFilter(IReceiver nextReceiver) : base(nextReceiver)
         {
@@ -176,7 +174,7 @@ namespace OutSmart.DAXon.Events
                 // are always ignored by the verifier.
                 string sigma2Hash = Digest; // the digest changes with subsequent hash calls, so fix it first
                 checksum ^= Hash(SIGMA2, 1);
-                checksum ^= Hash("", 1); // SIGMA2 @is in no namespace
+                checksum ^= Hash("", 1); // SIGMA2 is in no namespace
                 checksum ^= Hash(sigma2Hash, 1);
             }
 
@@ -184,7 +182,6 @@ namespace OutSmart.DAXon.Events
             base.EndElement();
         }
 
-        //
         public override void ProcessingInstruction(string target, UnicodeString data, ILocation locationId, int properties)
         {
             if (target.Equals(SIGMA))
@@ -223,7 +220,6 @@ namespace OutSmart.DAXon.Events
             base.ProcessingInstruction(target, data, locationId, properties);
         }
 
-        //
         public bool IsChecksumCorrect()
         {
             if (requireDigest && !digestCorrect)
@@ -234,7 +230,6 @@ namespace OutSmart.DAXon.Events
             return checksumCorrect || Environment.GetEnvironmentVariable("saxon-checksum") == "skip";
         }
 
-        //
         private int Hash(string s, int sequence)
         {
 
@@ -249,7 +244,6 @@ namespace OutSmart.DAXon.Events
             return h;
         }
 
-        //
         private int Hash(INodeName n, int sequence)
         {
             return Hash(n.GetLocalPart(), sequence) ^ Hash(n.GetNamespaceUri().ToString(), sequence);

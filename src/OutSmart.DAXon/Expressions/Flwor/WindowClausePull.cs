@@ -4,9 +4,10 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+using System.Collections.Generic;
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Values;
-using System.Collections.Generic;
 
 namespace OutSmart.DAXon.Expressions.Flwor
 {
@@ -26,6 +27,8 @@ namespace OutSmart.DAXon.Expressions.Flwor
         private IItem next;
         private int position = -1;
         private readonly List<WindowClause.Window> currentWindows = new List<WindowClause.Window>();
+        private long added;   // members added to open windows, for WindowClause.Added
+        private long visits;  // windows looked at, for WindowClause.Visited
 
         public WindowClausePull(TuplePull source, WindowClause windowClause)
         {
@@ -35,6 +38,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override bool NextTuple(IXPathContext context)
         {
+            StackGuard.Probe();
             // First see if there are any windows waiting to be delivered
             WindowClause.Window earliest = LookForEarliest();
             if (earliest != null)
@@ -79,6 +83,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                 position++;
                 if (position > 0)
                 {
+                    WindowClause.Visited(currentWindows, ref visits);
                     // See if we need to start a new window
                     if ((windowClause.IsSlidingWindow() || currentWindows.Count == 0 || autoClose) &&
                             windowClause.MatchesStart(previous, current, next, position, context))
@@ -88,22 +93,13 @@ namespace OutSmart.DAXon.Expressions.Flwor
                         {
                             // automatically end the previous window
                             WindowClause.Window w0 = currentWindows[0];
-                            w0.endItem = previous;
-                            w0.endPreviousItem = oldPrevious;
-                            w0.endNextItem = current;
-                            w0.endPosition = position - 1;
+                            w0.End(previous, position - 1, oldPrevious, current);
                             earliest = Despatch(w0);
                             currentWindows.Clear();
                         }
 
                         // Create the new window
-                        WindowClause.Window window = new WindowClause.Window();
-                        window.startPosition = position;
-                        window.startItem = current;
-                        window.startPreviousItem = previous;
-                        window.startNextItem = next;
-                        window.contents = new List<IItem>();
-                        currentWindows.Add(window);
+                        currentWindows.Add(new WindowClause.Window(current, position, previous, next));
                     }
 
                     // Add the current item to all active windows
@@ -112,6 +108,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                         if (!active.IsFinished())
                         {
                             active.contents.Add(current);
+                            WindowClause.Added(currentWindows, ref added);
                         }
                     }
 
@@ -127,10 +124,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                                     (implicitEndCondition ||
                                              windowClause.MatchesEnd(w, previous, current, next, position, context)))
                             {
-                                w.endItem = current;
-                                w.endPreviousItem = previous;
-                                w.endNextItem = next;
-                                w.endPosition = position;
+                                w.End(current, position, previous, next);
                                 if (earliest == null)
                                 {
                                     earliest = Despatch(w);
@@ -183,89 +177,24 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         private WindowClause.Window LookForEarliest()
         {
-            int earliestStart = int.MaxValue;
-            WindowClause.Window earliestWindow = null;
-            foreach (WindowClause.Window u in currentWindows)
+            WindowClause.Window w = WindowClause.EarliestFinished(currentWindows, ref visits);
+            if (w != null)
             {
-                if (u.startPosition < earliestStart && !u.IsDespatched())
-                {
-                    earliestStart = u.startPosition;
-                    earliestWindow = u;
-                }
+                w.despatched = true;
             }
 
-            if (earliestWindow == null || !earliestWindow.IsFinished())
-            {
-                // if the earliest window is unfinished, we can't do anything yet
-                return null;
-            }
-            else
-            {
-                earliestWindow.despatched = true;
-                return earliestWindow;
-            }
+            return w;
         }
 
         private void ProcessWindow(WindowClause.Window w, IXPathContext context)
         {
-            WindowClause clause = windowClause;
-            LocalVariableBinding binding;
-            binding = clause.GetVariableBinding(WindowClause.WINDOW_VAR);
-            context.SetLocalVariable(binding.LocalSlotNumber, SequenceExtent.MakeSequenceExtent(w.contents));
-
-            binding = clause.GetVariableBinding(WindowClause.START_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(w.startItem));
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.START_ITEM_POSITION);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, new Int64Value(w.startPosition));
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.START_NEXT_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(w.startNextItem));
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.START_PREVIOUS_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(w.startPreviousItem));
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.END_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(w.endItem));
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.END_ITEM_POSITION);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, new Int64Value(w.endPosition));
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.END_NEXT_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(w.endNextItem));
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.END_PREVIOUS_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, WindowClause.MakeValue(w.endPreviousItem));
-            }
-
+            windowClause.BindWindow(w, context);
             w.despatched = true;
         }
 
         public override void Dispose()
         {
+            StackGuard.Probe();
             baseIterator?.Dispose();
             source.Dispose();
         }

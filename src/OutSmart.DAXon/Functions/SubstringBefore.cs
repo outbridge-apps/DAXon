@@ -79,9 +79,10 @@ namespace OutSmart.DAXon.Functions
                     ISubstringMatcher m = (ISubstringMatcher)fn.StringCollator;
                     return new StringValue(before ? m.SubstringBefore(s0, s1) : m.SubstringAfter(s0, s1));
                 }
-                catch (XPathException e)
+                catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                 {
-                    throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                    // Decorated in the filter, never handled (XPathException.PassOn).
+                    throw;
                 }
             };
         }

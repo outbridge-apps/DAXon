@@ -251,9 +251,7 @@ namespace OutSmart.DAXon.Serialization
             props.SetProperty("method", nodeOutputMethod);
             props.SetProperty("indent", "no");
             props.SetProperty("omit-xml-declaration", "yes");
-            // Serialize the node with the json-node-output-method (default xml) via the SerializerFactory
-            // receiver chain; QueryResult.Serialize is a hollow stub (Result hierarchy gone) so a node in
-            // JSON output came out empty.
+            // Serialize the node with the json-node-output-method (default xml) through the SerializerFactory receiver chain.
             PipelineConfiguration p = GetPipelineConfiguration();
             OutSmart.DAXon.Text.UnicodeBuilder ub = new OutSmart.DAXon.Text.UnicodeBuilder();
             UnicodeWriterResult uwr = new UnicodeWriterResult(ub, null);

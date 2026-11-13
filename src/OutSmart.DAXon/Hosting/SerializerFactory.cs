@@ -148,8 +148,8 @@ namespace OutSmart.DAXon.Lib
             {
 
                 // The "target" is the start of the output pipeline, the IReceiver that
-                // instructions will actually write to (except that other things like a
-                // NamespaceReducer may get added in front of it). The "emitter" is the
+                // instructions will actually write to (except that other filters may
+                // get added in front of it). The "emitter" is the
                 // last thing in the output pipeline, the IReceiver that actually generates
                 // characters or bytes that are written to the StreamResult.
                 SequenceReceiver target;
@@ -587,7 +587,6 @@ namespace OutSmart.DAXon.Lib
 
         public virtual IReceiver AddHtml5Component(IReceiver target, Properties outputProperties)
         {
-            target = new NamespaceReducer(target);
             target = new XHTMLPrefixRemover(target);
             return target;
         }
@@ -1045,7 +1044,7 @@ namespace OutSmart.DAXon.Lib
         {
             if (!NameChecker.IsValidNmtoken(StringView.Of(value)))
             {
-                throw new XPathException("Invalid value for normalization-form: " + "must be NFC, NFD, NFKC, NFKD, fully-normalized, or none", "SEPM0016");
+                throw new XPathException("Invalid value for normalization-form: " + "must be NFC, NFD, NFKC, NFKD, fully-normalized, or none", "SESU0011");
             }
         }
 
@@ -1100,7 +1099,7 @@ namespace OutSmart.DAXon.Lib
 
         protected static string CheckListOfEQNames(string key, string value)
         {
-            Whitespace.Tokenizer tokenizer = new Whitespace.Tokenizer(StringView.Of(value).Tidy());
+            Whitespace.Tokenizer tokenizer = new Whitespace.Tokenizer(StringView.Of(value));
             StringBuilder builder = new StringBuilder();
             StringValue tok;
             while ((tok = tokenizer.Next()) != null)
@@ -1134,7 +1133,7 @@ namespace OutSmart.DAXon.Lib
 
         protected static string CheckListOfEQNamesAllowingStar(string key, string value)
         {
-            Whitespace.Tokenizer tokenizer = new Whitespace.Tokenizer(StringView.Of(value).Tidy());
+            Whitespace.Tokenizer tokenizer = new Whitespace.Tokenizer(StringView.Of(value));
             StringBuilder builder = new StringBuilder();
             StringValue tok;
             while ((tok = tokenizer.Next()) != null)

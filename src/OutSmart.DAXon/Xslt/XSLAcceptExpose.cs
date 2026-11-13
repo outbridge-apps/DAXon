@@ -190,7 +190,7 @@ namespace OutSmart.DAXon.Xslt
                 }
                 else if (tok.StartsWith("Q{", StringComparison.Ordinal) && tok.EndsWith("}*", StringComparison.Ordinal))
                 {
-                    string uri = tok.Substring(2, tok.Length - 4) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+                    string uri = tok.Substring(2, tok.Length - 4);
                     test = new NamespaceTest(GetNamePool(), Types.Type.ELEMENT, NamespaceUri.Of(uri));
                     wildcardComponentTests.Add(new ComponentTest(componentTypeCode, test, -1));
                 }

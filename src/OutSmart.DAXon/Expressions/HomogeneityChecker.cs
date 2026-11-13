@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Expressions
                 //                ExpressionTool.copyLocationInfo(this, se);
                 //                return se;
                 //            } else {
-                return BaseExpression; //            }
+                return BaseExpression;
             }
             else if (rel == Affinity.SAME_TYPE || rel == Affinity.SUBSUMED_BY)
             {

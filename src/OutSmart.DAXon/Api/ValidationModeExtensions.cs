@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Api
                 case ValidationMode.PRESERVE: return Validation.PRESERVE;
                 case ValidationMode.STRIP: return Validation.STRIP;
                 case ValidationMode.DEFAULT: return Validation.DEFAULT;
-                default: return Validation.DEFAULT;
+                default: throw new System.ArgumentOutOfRangeException(nameof(mode), mode, "Not a value of ValidationMode");
             }
         }
 

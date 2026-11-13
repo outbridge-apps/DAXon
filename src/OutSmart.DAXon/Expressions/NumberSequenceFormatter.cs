@@ -71,10 +71,8 @@ namespace OutSmart.DAXon.Expressions
             }
 
 
-            //if (startAt != null) {
             startAtOp = new Operand(this, startAt, OperandRole.SINGLE_ATOMIC);
 
-            //}
             if (lang != null)
             {
                 langOp = new Operand(this, lang, OperandRole.SINGLE_ATOMIC);
@@ -89,7 +87,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //}
         public override Expression Simplify()
         {
             if (valueOp != null && !valueOp.GetChildExpression().GetItemType().IsPlainType())
@@ -127,7 +124,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //}
         public override IEnumerable<Operand> Operands()
         {
             return OperandSparseList(valueOp, formatOp, groupSizeOp, groupSeparatorOp, letterValueOp, ordinalOp, startAtOp, langOp);
@@ -189,7 +185,7 @@ namespace OutSmart.DAXon.Expressions
             return StaticProperty.EXACTLY_ONE;
         }
 
-        public override IItem EvaluateItem(IXPathContext context) /*Java covariant StringValue widened (C# 7.3)*/
+        public override IItem EvaluateItem(IXPathContext context)
         {
             UnicodeString s = MakeElaborator().ElaborateForUnicodeString(true).Eval(context);
             return new StringValue(s);
@@ -198,7 +194,8 @@ namespace OutSmart.DAXon.Expressions
         public IList<int> ParseStartAtValue(string value)
         {
             IList<int> list = new List<int>();
-            string[] tokens = value.SplitRegex("\\s+");
+            // A whitespace-separated list: a leading or trailing space made an empty token, refused (Java the same).
+            string[] tokens = Values.Whitespace.Trim(value).SplitRegex("\\s+");
             foreach (string tok in tokens)
             {
                 try

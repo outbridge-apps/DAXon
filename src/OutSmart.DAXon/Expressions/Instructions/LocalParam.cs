@@ -210,7 +210,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
 
 
-            //        p2.conversionEvaluator = conversionEvaluator;
             p2.properties = properties;
             if (selectOp != null)
             {
@@ -222,7 +221,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             p2.slotNumber = slotNumber;
             p2.referenceCount = referenceCount;
 
-            //        p2.evaluator = evaluator;
             return p2;
         }
 

@@ -241,7 +241,7 @@ namespace OutSmart.DAXon.Types
                 }
 
                 started = true;
-                sb.Append(component.ToString());
+                sb.Append(component.Display());
             }
 
             return sb.ToString();

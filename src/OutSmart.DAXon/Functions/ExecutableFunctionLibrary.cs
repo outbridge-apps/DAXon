@@ -68,6 +68,5 @@ namespace OutSmart.DAXon.Functions
             return efl;
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
     }
 }

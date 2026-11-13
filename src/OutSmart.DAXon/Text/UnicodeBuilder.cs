@@ -29,7 +29,7 @@ namespace OutSmart.DAXon.Text
                 {
 
                     // use 24-bit codes
-                    return new Twine24(codepoints, used);
+                    return new Slice24(codepoints, used);
                 }
                 else if ((bits & 0xff00) != 0)
                 {
@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Text
                         chars[i] = (char)(codepoints[i] & 0xffff);
                     }
 
-                    return new Twine16(chars);
+                    return new BMPString(new string(chars));
                 }
                 else
                 {
@@ -93,18 +93,6 @@ namespace OutSmart.DAXon.Text
         public UnicodeBuilder AppendLatin(string str)
         {
             return Append(new BMPString(str));
-        }
-
-        public UnicodeBuilder AppendAll(ISequenceIterator iter)
-        {
-
-            // Note: used from bytecode
-            for (IItem item; (item = iter.Next()) != null;)
-            {
-                Append(item.UnicodeStringValue);
-            }
-
-            return this;
         }
 
         public UnicodeBuilder Append(string str)
@@ -212,89 +200,6 @@ namespace OutSmart.DAXon.Text
             bits = 0;
         }
 
-        public static byte[] Expand1to2(byte[] @in, int start, int used, int allocate)
-        {
-            byte[] result = new byte[allocate * 2];
-            for (int i = start, j = 0; i < used;)
-            {
-                result[j++] = 0;
-                result[j++] = @in[i++];
-            }
-
-            return result;
-        }
-
-        public static char[] ExpandBytesToChars(byte[] @in, int start, int end)
-        {
-            char[] result = new char[end - start];
-            for (int i = start, j = 0; i < end;)
-            {
-                result[j++] = (char)@in[i++];
-            }
-
-            return result;
-        }
-
-        public static byte[] Expand1to3(byte[] @in, int start, int used, int allocate)
-        {
-            byte[] result = new byte[allocate * 3];
-            for (int i = start, j = 0; i < used;)
-            {
-                result[j++] = 0;
-                result[j++] = 0;
-                result[j++] = @in[i++];
-            }
-
-            return result;
-        }
-
-        public static byte[] Expand2to3(byte[] @in, int start, int used, int allocate)
-        {
-            byte[] result = new byte[allocate * 3];
-            for (int i = start, j = 0; i < used;)
-            {
-                result[j++] = 0;
-                result[j++] = @in[i++];
-                result[j++] = @in[i++];
-            }
-
-            return result;
-        }
-
-        public static byte[] Expand(byte[] @in, int start, int end, int oldWidth, int newWidth, int allocate)
-        {
-            if (allocate <= (end - start) / oldWidth)
-            {
-                allocate = (end - start) / oldWidth;
-            }
-
-            if (newWidth <= oldWidth)
-            {
-
-                // leave the width unchanged; we don't narrow it
-                byte[] @out = new byte[allocate * newWidth];
-                Array.Copy(@in, start, @out, 0, end * oldWidth);
-                return @out;
-            }
-
-            if (oldWidth == 1 && newWidth == 2)
-            {
-                return Expand1to2(@in, start, end, allocate);
-            }
-
-            if (oldWidth == 1 && newWidth == 3)
-            {
-                return Expand1to3(@in, start, end, allocate);
-            }
-
-            if (oldWidth == 2 && newWidth == 3)
-            {
-                return Expand2to3(@in, start, end, allocate);
-            }
-
-            throw new ArgumentException();
-        }
-
         public UnicodeBuilder Accept(UnicodeString chars)
         {
             return Append(chars);
@@ -315,13 +220,6 @@ namespace OutSmart.DAXon.Text
             Append(chars);
         }
 
-        public void TrimToSize()
-        {
-
-            // used from bytecode
-            Array.Resize(ref codepoints, used);
-        }
-
         public void Dispose()
         {
         }
@@ -331,7 +229,6 @@ namespace OutSmart.DAXon.Text
         }
         IUniStringConsumer IUniStringConsumer.Accept(UnicodeString arg0) => Append(arg0);
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public void Open() { }
         public void WriteCodePoint(int codepoint) { Append(codepoint); }
         public void WriteRepeatedAscii(byte asciiChar, int count)

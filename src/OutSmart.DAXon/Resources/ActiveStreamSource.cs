@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Resources
         }
 
         // StringReader keeps its length to itself, and it is how hosts pass a document they hold as text
-        // (the D365 one does). Both runtimes name its fields _s and _pos; without them, no length.
+        // (many do). Both runtimes name its fields _s and _pos; without them, no length.
         private static readonly System.Reflection.FieldInfo StringReaderText = typeof(StringReader).GetField("_s", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
         private static readonly System.Reflection.FieldInfo StringReaderPosition = typeof(StringReader).GetField("_pos", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 

@@ -49,11 +49,6 @@ using System.IO;
 
 namespace OutSmart.DAXon.Core
 {
-    //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
-    //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
-    //                + "    }"
-    //})
     public class Configuration : INotationSet, Configuration.IApiProvider
     {
         internal readonly object syncLock = new object();
@@ -193,6 +188,7 @@ namespace OutSmart.DAXon.Core
             get => xsdVersion; set
             {
                 xsdVersion = value;
+                theConversionRules = null;   // as the XSD_VERSION feature: casts made under the other version's rules
             }
         }
 
@@ -375,19 +371,6 @@ namespace OutSmart.DAXon.Core
             get => defaultParseOptions.GetSchemaValidationMode(); set
             {
 
-                //                break;
-                //            case Validation.LAX:
-                //                if (!isLicensedFeature(LicenseFeature.SCHEMA_VALIDATION)) {
-                //                    // if schema processing isn't supported, then there's never a schema, so lax validation is a no-op.
-                //                    validationMode = Validation.STRIP;
-                //                }
-                //                break;
-                //            case Validation.STRICT:
-                //                checkLicensedFeature(LicenseFeature.SCHEMA_VALIDATION, "strict validation", -1);
-                //                break;
-                //            default:
-                //                throw new ArgumentException("Unsupported validation mode " + validationMode);
-                //        }
                 defaultParseOptions = defaultParseOptions.WithSchemaValidationMode(value);
             }
         }
@@ -511,16 +494,6 @@ namespace OutSmart.DAXon.Core
             return (Configuration)Activator.CreateInstance(theClass);
         }
 
-        public static bool IsAssertionsEnabled()
-        {
-
-            // Highly devious logic here. If assertions are enabled, the assertion is false, and a deliberate side-effect
-            // of evaluating the assertion is that assertsEnabled is set to true. If assertions are not enabled, the assert
-            // statement is not executed, so assertsEnabled is left as false.
-            bool assertsEnabled = false;
-            return assertsEnabled;
-        }
-
         protected virtual Configuration ReadConfigurationFile(ResolvedResource source)
         {
             return MakeConfigurationReader().MakeConfiguration(source);
@@ -549,7 +522,6 @@ namespace OutSmart.DAXon.Core
             commonResolver = new CatalogResourceResolver();
             defaultXsltCompilerInfo = MakeCompilerInfo();
 
-            //systemURIResolver = new StandardURIResolver(this);
             standardModuleURIResolver = Version.platform.MakeStandardModuleURIResolver(this);
             serializerFactory = new SerializerFactory(this);
             unparsedTextURIResolver = new StandardUnparsedTextResolver();
@@ -648,7 +620,8 @@ namespace OutSmart.DAXon.Core
                 message += ". You are using Saxon-" + Version.softwareEdition + " software, but the Configuration is an instance of " + GetType() + "; to use this feature you need to create an instance of " + (feature == LicenseFeature.PROFESSIONAL_EDITION ? packageNs + ".ProfessionalConfiguration" : packageNs + ".EnterpriseConfiguration");
             }
 
-            throw new LicenseException(message);
+            // A coded error the API reports as any other: the internal LicenseException left it raw.
+            throw new XPathException(message, DAXonErrorCode.SXED0001);
         }
 
         public virtual void DisableLicensing()
@@ -672,7 +645,7 @@ namespace OutSmart.DAXon.Core
         {
             if (!IsLicensedFeature(LicenseFeature.PROFESSIONAL_EDITION))
             {
-                throw new LicenseException("Use of " + featureName + " requires a license key for Saxon-PE or Saxon-EE");
+                throw new XPathException("Use of " + featureName + " requires a license key for Saxon-PE or Saxon-EE", DAXonErrorCode.SXED0001);
             }
         }
 
@@ -1178,7 +1151,7 @@ namespace OutSmart.DAXon.Core
             }
             catch (URISyntaxException)
             {
-                throw new XPathException("Collation name is not a valid URI: " + collationURI + " (@base = " + baseURI + ")", "FOCH0002");
+                throw new XPathException("Collation name is not a valid URI: " + collationURI + " (base = " + baseURI + ")", "FOCH0002");
             }
         }
 
@@ -1207,7 +1180,7 @@ namespace OutSmart.DAXon.Core
             }
             catch (URISyntaxException)
             {
-                throw new XPathException("Collation name is not a valid URI: " + collationURI + " (@base = " + baseURI + ")", errorCode);
+                throw new XPathException("Collation name is not a valid URI: " + collationURI + " (base = " + baseURI + ")", errorCode);
             }
         }
 
@@ -1254,7 +1227,7 @@ namespace OutSmart.DAXon.Core
 
         public virtual void SetDefaultLanguage(string language)
         {
-            ValidationFailure vf = StringConverter.StringToLanguage.INSTANCE.Validate(StringView.Of(language).Tidy());
+            ValidationFailure vf = StringConverter.StringToLanguage.INSTANCE.Validate(StringView.Of(language));
             if (vf != null)
             {
                 throw new ArgumentException("The default language must be a valid language code");
@@ -1305,7 +1278,7 @@ namespace OutSmart.DAXon.Core
                     System.Globalization.DateTimeFormatInfo names = culture == null ? null : Numberer_bcl.GregorianNames(culture);
                     if (names != null)
                     {
-                        Numberer_bcl bcl = new Numberer_bcl(names, language);
+                        Numberer_bcl bcl = new Numberer_bcl(names, culture.TextInfo, language);
                         if (country != null)
                         {
                             bcl.Country = country;
@@ -1457,16 +1430,6 @@ namespace OutSmart.DAXon.Core
             defaultParseOptions = defaultParseOptions.WithDTDValidationMode(validation ? Validation.STRICT : Validation.STRIP);
         }
 
-        public virtual IFilterFactory MakeDocumentProjector(PathMap.PathMapRoot map)
-        {
-            throw new NotSupportedException("Document projection requires Saxon-EE");
-        }
-
-        public virtual IFilterFactory MakeDocumentProjector(XQueryExpression exp)
-        {
-            throw new NotSupportedException("Document projection requires Saxon-EE");
-        }
-
         public virtual void SetValidationWarnings(bool warn)
         {
             defaultParseOptions = defaultParseOptions.WithContinueAfterValidationErrors(warn);
@@ -1544,6 +1507,96 @@ namespace OutSmart.DAXon.Core
         public virtual bool IsCompatible(Configuration other)
         {
             return namePool == other.namePool && documentNumberAllocator == other.documentNumberAllocator;
+        }
+
+        /// <summary>
+        /// Whether a value handed in holds a node of a configuration this one is not compatible with, among its items or in
+        /// the members of its maps and arrays at any depth: such a node's names are another name pool's, so a path over it
+        /// answers wrong instead of failing.
+        /// </summary>
+        internal bool HoldsForeignNode(ISequence value)
+        {
+            if (value is NodeInfo single)
+            {
+                return IsForeign(single);
+            }
+
+            if (value == null || value is AtomicValue)
+            {
+                return false;
+            }
+
+            Stack<ISequence> pending = null;
+            int seen = 0;
+            for (ISequence next = value; next != null; next = pending?.Count > 0 ? pending.Pop() : null)
+            {
+                using (ISequenceIterator iter = next.Iterate())
+                {
+                    for (IItem item; (item = iter.Next()) != null;)
+                    {
+                        if (item is NodeInfo node)
+                        {
+                            if (IsForeign(node))
+                            {
+                                return true;
+                            }
+                        }
+                        else if (item is ArrayItem array)
+                        {
+                            foreach (IGroundedValue member in array.Members())
+                            {
+                                if (Holds(member, ref seen, ref pending))
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+                        else if (item is MapItem map)
+                        {
+                            foreach (var pair in map.KeyValuePairs())
+                            {
+                                if (Holds(pair.value, ref seen, ref pending))
+                                {
+                                    return true;
+                                }
+                            }
+                        }
+
+                        if ((++seen & 1023) == 0)
+                        {
+                            Controller.CheckActiveTimeoutNow();   // a value handed in can run to millions of items
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        // A member of a map or an array: a node is looked at now, an atomic value passed over, anything else walked later.
+        private bool Holds(IGroundedValue member, ref int seen, ref Stack<ISequence> pending)
+        {
+            if ((++seen & 1023) == 0)
+            {
+                Controller.CheckActiveTimeoutNow();
+            }
+
+            if (member is NodeInfo node)
+            {
+                return IsForeign(node);
+            }
+
+            if (!(member is AtomicValue) && member != null)
+            {
+                (pending ??= new Stack<ISequence>()).Push(member);
+            }
+
+            return false;
+        }
+
+        private bool IsForeign(NodeInfo node)
+        {
+            return !(node.GetConfiguration() is Configuration own && IsCompatible(own));
         }
 
         public virtual bool IsStripsAllWhiteSpace()
@@ -1742,11 +1795,6 @@ namespace OutSmart.DAXon.Core
             {
                 return debugger.MakeSlotManager();
             }
-        }
-
-        public virtual IReceiver MakeStreamingTransformer(Mode mode, ParameterSet ordinaryParams, ParameterSet tunnelParams, Outputter output, IXPathContext context)
-        {
-            throw new XPathException("Streaming is only available in Saxon-EE");
         }
 
         public virtual Expression MakeStreamInstruction(Expression hrefExp, Expression body, bool streaming, ParseOptions options, PackageData packageData, ILocation location, RetainedStaticContext rsc)
@@ -3001,11 +3049,6 @@ namespace OutSmart.DAXon.Core
             throw new ArgumentException("Unknown configuration property ");
         }
 
-        public virtual bool IsJITEnabled()
-        {
-            return false;
-        }
-
         public virtual void Dispose()
         {
             if (traceOutput != null)
@@ -3014,9 +3057,10 @@ namespace OutSmart.DAXon.Core
             }
         }
 
+        // Null: this edition loads no compiled package (SEF), which Saxon-PE and -EE do; the callers say so with an error.
         public virtual IIPackageLoader MakePackageLoader()
         {
-            return (IIPackageLoader)new PackageLoaderHE();
+            return null;
         }
 
         public virtual InvalidityReportGenerator CreateValidityReporter()

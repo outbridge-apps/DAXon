@@ -84,8 +84,8 @@ namespace OutSmart.DAXon.Expressions.Elaboration
                 return false;
             }
 
-            int c = n + 1;
-            if (c >= tree.numberOfNodes || tree.depth[c] != tree.depth[n] + 1)
+            int c = TinyText.FirstChild(tree, n);
+            if (c < 0)
             {
                 return true;   // no children
             }
@@ -199,14 +199,8 @@ namespace OutSmart.DAXon.Expressions.Elaboration
                 }
                 else if (k == Types.Type.ELEMENT && IsLeafElement(tree, start.nodeNr))
                 {
-                    child = FirstChild(start.nodeNr);
+                    child = TinyText.FirstChild(tree, start.nodeNr);
                 }
-            }
-
-            private int FirstChild(int n)
-            {
-                int c = n + 1;
-                return c < tree.numberOfNodes && tree.depth[c] == tree.depth[n] + 1 ? c : -1;
             }
 
             public IItem Next()
@@ -263,7 +257,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
                     }
                     else if (k == Types.Type.ELEMENT && IsLeafElement(t, n))
                     {
-                        child = FirstChild(n);
+                        child = TinyText.FirstChild(t, n);
                     }
                 }
             }
@@ -292,7 +286,7 @@ namespace OutSmart.DAXon.Expressions.Elaboration
                     }
                     else if (k == Types.Type.ELEMENT && IsLeafElement(t, n))
                     {
-                        c += CountChainTexts(FirstChild(n));
+                        c += CountChainTexts(TinyText.FirstChild(t, n));
                     }
                 }
 

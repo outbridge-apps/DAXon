@@ -590,7 +590,7 @@ namespace OutSmart.DAXon.Expressions
 
             if (@operator == Token.UNION)
             {
-                return new UnionPattern(GetLhsExpression().ToPattern(config), GetRhsExpression().ToPattern(config));
+                return UnionOfAlternatives(config);
             }
             else
             {
@@ -614,6 +614,48 @@ namespace OutSmart.DAXon.Expressions
 
                 return new GeneralNodePattern(this, (NodeTest)GetItemType());
             }
+        }
+
+        // The alternatives of a union chain, left to right, as a balanced tree of UnionPattern: the parser builds the chain
+        // left-deep, one level per alternative, and what a pattern does at run time (matching, its item type, its
+        // dependencies) recurses through it - 2999 alternatives of xsl:number count killed a 256 KB thread. Balanced,
+        // that is log2 deep, and the alternatives keep their order.
+        private Patterns.Pattern UnionOfAlternatives(Configuration config)
+        {
+            var alternatives = new List<Patterns.Pattern>();
+            var todo = new Stack<Expression>();
+            todo.Push(this);
+            while (todo.Count > 0)
+            {
+                Expression e = todo.Pop();
+                if (e is VennExpression v && v.@operator == Token.UNION)
+                {
+                    if (IsPredicatePattern(v.GetLhsExpression()) || IsPredicatePattern(v.GetRhsExpression()))
+                    {
+                        throw new XPathException("Cannot use a predicate pattern as an operand of a union, intersect, or except operator", "XTSE0340");
+                    }
+
+                    todo.Push(v.GetRhsExpression());
+                    todo.Push(v.GetLhsExpression());
+                }
+                else
+                {
+                    alternatives.Add(e.ToPattern(config));
+                }
+            }
+
+            return Balanced(alternatives, 0, alternatives.Count);
+        }
+
+        private static Patterns.Pattern Balanced(List<Patterns.Pattern> alternatives, int from, int to)
+        {
+            if (to - from == 1)
+            {
+                return alternatives[from];
+            }
+
+            int middle = (from + to) / 2;
+            return new UnionPattern(Balanced(alternatives, from, middle), Balanced(alternatives, middle, to));
         }
 
         private bool IndependentOfContextItem(Expression exp)

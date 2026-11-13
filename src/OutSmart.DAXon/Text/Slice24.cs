@@ -7,7 +7,7 @@
 //
 // Faithful port of net.sf.saxon.str.Slice24 (was a hollow stub that dropped astral
 // content: Length()=>0, CodePoints() threw). Fixes str1-007 (a\u{1F600}b -> string-length 3).
-// Mirrors sibling Slice8.cs / Twine24.cs for the C# UnicodeString API.
+// It stands for Saxon's Twine24 too: a whole array is the slice from 0 to its end.
 using OutSmart.DAXon.Serialization.CharCodes;
 using OutSmart.DAXon.Collections;
 using OutSmart.DAXon.Internal;
@@ -43,6 +43,33 @@ namespace OutSmart.DAXon.Text
             this.end = end;
         }
 
+        // A new array of three bytes a character, entered in the memory ledger when it is big.
+        public Slice24(byte[] bytes) : this(bytes, 0, bytes.Length / 3)
+        {
+            Held();
+        }
+
+        public Slice24(int[] codePoints, int used) : this(new byte[used * 3], 0, used)
+        {
+            for (int i = 0, j = 0; i < used; i++, j += 3)
+            {
+                int c = codePoints[i];
+                bytes[j] = (byte)((c >> 16) & 0xff);
+                bytes[j + 1] = (byte)((c >> 8) & 0xff);
+                bytes[j + 2] = (byte)(c & 0xff);
+            }
+
+            Held();
+        }
+
+        private void Held()
+        {
+            if (bytes.Length >= 3 * OutSmart.DAXon.Core.MemoryLedger.BigChars)
+            {
+                OutSmart.DAXon.Core.MemoryLedger.HoldText(bytes);
+            }
+        }
+
         public override long Length()
         {
             return end - start;
@@ -50,6 +77,11 @@ namespace OutSmart.DAXon.Text
 
         public override long IndexOf(int codePoint, long from)
         {
+            if (codePoint < 0 || codePoint > 0xffffff)
+            {
+                return -1;
+            }
+
             byte b0 = (byte)((codePoint >> 16) & 0xff);
             byte b1 = (byte)((codePoint >> 8) & 0xff);
             byte b2 = (byte)(codePoint & 0xff);
@@ -105,6 +137,10 @@ namespace OutSmart.DAXon.Text
             {
                 return EmptyUnicodeString.GetInstance();
             }
+            else if (start == 0 && end == Length())
+            {
+                return this;
+            }
             else
             {
                 return new Slice24(bytes, RequireInt(start) + this.start, RequireInt(end) + this.start);
@@ -150,6 +186,54 @@ namespace OutSmart.DAXon.Text
             }
 
             return cachedHash = h;
+        }
+
+        public override bool Equals(object o)
+        {
+            if (o is Slice24 s)
+            {
+                int n = (end - start) * 3;
+                if (n != (s.end - s.start) * 3 || GetHashCode() != s.GetHashCode())
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < n; i++)
+                {
+                    if (bytes[start * 3 + i] != s.bytes[s.start * 3 + i])
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            return base.Equals(o);
+        }
+
+        // Three big-endian bytes a character: byte order is codepoint order.
+        public override int CompareTo(UnicodeString other)
+        {
+            if (other is Slice24 s)
+            {
+                int i = start * 3;
+                int j = s.start * 3;
+                int ie = end * 3;
+                int je = s.end * 3;
+                while (i < ie && j < je)
+                {
+                    int diff = bytes[i++] - s.bytes[j++];
+                    if (diff != 0)
+                    {
+                        return diff;
+                    }
+                }
+
+                return (end - start).CompareTo(s.end - s.start);
+            }
+
+            return base.CompareTo(other);
         }
 
         /// <summary>

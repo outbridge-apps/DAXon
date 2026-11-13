@@ -323,6 +323,81 @@ namespace OutSmart.DAXon.Model
             return false;
         }
 
+        // Many changes to a map at once: one sort at the end, where each Put copied the whole map (50 000 xmlns:p on one
+        // start tag took 53 s, 20 000 prolog namespaces 6-16 s). The same map as the calls made one by one, in order.
+        internal sealed class Builder
+        {
+            private readonly NamespaceMap start;
+            private readonly Dictionary<string, NamespaceUri> bound;
+
+            internal Builder(NamespaceMap start)
+            {
+                this.start = start;
+                bound = new Dictionary<string, NamespaceUri>(start.prefixes.Length + 16, StringComparer.Ordinal);
+                for (int i = 0; i < start.prefixes.Length; i++)
+                {
+                    bound[start.prefixes[i]] = start.uris[i];
+                }
+            }
+
+            internal void Put(string prefix, NamespaceUri uri)
+            {
+                uri ??= NamespaceUri.NULL;
+                if (start.IsPointlessMapping(prefix, uri))
+                {
+                    return;
+                }
+
+                if (uri == NamespaceUri.NULL && bound.ContainsKey(prefix))
+                {
+                    bound.Remove(prefix);
+                }
+                else
+                {
+                    bound[prefix] = uri;
+                }
+            }
+
+            internal void Bind(string prefix, NamespaceUri uri)
+            {
+                if (uri == NamespaceUri.NULL)
+                {
+                    bound.Remove(prefix);
+                }
+                else
+                {
+                    Put(prefix, uri);
+                }
+            }
+
+            internal void Remove(string prefix)
+            {
+                bound.Remove(prefix);
+            }
+
+            internal NamespaceMap ToMap()
+            {
+                if (bound.Count == 0 && start.IsEmpty())
+                {
+                    return start;   // the shared empty map, as the calls left it
+                }
+
+                var p = new string[bound.Count];
+                bound.Keys.CopyTo(p, 0);
+                Array.Sort(p, string.CompareOrdinal);
+                var u = new NamespaceUri[p.Length];
+                for (int i = 0; i < p.Length; i++)
+                {
+                    u[i] = bound[p[i]];
+                }
+
+                NamespaceMap map = start.MakeNamespaceMap();
+                map.prefixes = p;
+                map.uris = u;
+                return map;
+            }
+        }
+
         public virtual NamespaceMap Bind(string prefix, NamespaceUri uri)
         {
             if (uri == NamespaceUri.NULL)
@@ -479,7 +554,6 @@ namespace OutSmart.DAXon.Model
             return CreateNewNamespaceMap(p3, u3, lengthSum, writePos);
         }
 
-        // c == 0
         private NamespaceMap CreateNewNamespaceMap(string[] p3, NamespaceUri[] u3, int lengthSum, int writePos)
         {
             NamespaceMap n2 = new NamespaceMap();
@@ -503,104 +577,6 @@ namespace OutSmart.DAXon.Model
                 }
 
                 return map;
-            }
-        }
-
-        public virtual NamespaceMap ApplyDifferences(NamespaceDeltaMap delta)
-        {
-            if (delta.IsEmpty())
-            {
-                return this;
-            }
-            else
-            {
-
-                // If every entry in delta is already in this map, return this map unchanged
-                bool foundDifferences = false;
-                foreach (string prefix in delta.prefixes)
-                {
-                    NamespaceUri newUri = delta.GetNamespaceUri(prefix);
-                    NamespaceUri existingUri = GetNamespaceUri(prefix);
-                    if (newUri != existingUri)
-                    {
-                        foundDifferences = true;
-                        break;
-                    }
-                }
-
-                if (!foundDifferences)
-                {
-                    return this;
-                }
-
-
-                // Merge of two sorted arrays to produce a sorted array
-                string[] p1 = prefixes;
-                NamespaceUri[] u1 = uris;
-                string[] p2 = delta.prefixes;
-                NamespaceUri[] u2 = delta.uris;
-                IList<string> prefixList = new List<string>(p1.Length + p2.Length);
-                IList<NamespaceUri> uriList = new List<NamespaceUri>(p1.Length + p2.Length);
-                int i1 = 0;
-                int i2 = 0;
-                while (i1 < p1.Length && i2 < p2.Length)
-                {
-                    int c = string.CompareOrdinal(p1[i1], p2[i2]);
-                    if (c < 0)
-                    {
-                        prefixList.Add(p1[i1]);
-                        uriList.Add(u1[i1]);
-                        i1++;
-                    }
-                    else if (c > 0)
-                    {
-                        if (u2[i2] != NamespaceUri.NULL)
-                        {
-                            prefixList.Add(p2[i2]);
-                            uriList.Add(u2[i2]);
-                        }
-
-                        i2++;
-                    } // c == 0
-                    else
-                    {
-
-                        // c == 0
-                        // Same prefix. Retain the second URI, unless the new URI is empty,
-                        // in which case drop both the old and the new bindings. Bug 6866
-                        if (u2[i2] != NamespaceUri.NULL)
-                        {
-                            prefixList.Add(p2[i2]);
-                            uriList.Add(u2[i2]);
-                        }
-
-                        i1++;
-                        i2++;
-                    }
-                }
-
-                while (i1 < p1.Length)
-                {
-                    prefixList.Add(p1[i1]);
-                    uriList.Add(u1[i1]);
-                    i1++;
-                }
-
-                while (i2 < p2.Length)
-                {
-                    if (u2[i2] != NamespaceUri.NULL)
-                    {
-                        prefixList.Add(p2[i2]);
-                        uriList.Add(u2[i2]);
-                    }
-
-                    i2++;
-                }
-
-                NamespaceMap n2 = new NamespaceMap();
-                n2.prefixes = prefixList.ToArray();
-                n2.uris = uriList.ToArray();
-                return n2;
             }
         }
 

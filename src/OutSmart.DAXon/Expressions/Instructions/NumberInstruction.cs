@@ -21,7 +21,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public const int MULTI = 1;
         public const int ANY = 2;
         public const int SIMPLE = 3;
-        public static readonly string[] LEVEL_NAMES = new string[]
+        internal static readonly string[] LEVEL_NAMES = new string[]
         {
             "single",
             "multi",

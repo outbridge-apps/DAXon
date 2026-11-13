@@ -9,16 +9,12 @@ using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
+using OutSmart.DAXon.Tracing;
 using OutSmart.DAXon.Values;
 using System;
 using OutSmart.DAXon.Lib;
 namespace OutSmart.DAXon.XQuery
 {
-    //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
-    //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
-    //                + "    }"
-    //})
     public class DynamicQueryContext
     {
         private IItem contextItem;
@@ -50,12 +46,9 @@ namespace OutSmart.DAXon.XQuery
                     throw new NullReferenceException("Context item cannot be null");
                 }
 
-                if (value is NodeInfo)
+                if (config.HoldsForeignNode(value))   // a node, or a map or an array holding one
                 {
-                    if (!((NodeInfo)value).GetConfiguration().IsCompatible(config))
-                    {
-                        throw new ArgumentException("Supplied node must be built using the same or a compatible Configuration");
-                    }
+                    throw new ArgumentException("Supplied node must be built using the same or a compatible Configuration");
                 }
 
                 contextItem = value; //parameters.put(StandardNames.SAXON_CONTEXT_ITEM, item);
@@ -184,15 +177,28 @@ namespace OutSmart.DAXon.XQuery
             return config;
         }
 
+        private ITraceListener installedListener;   // what InitializeController last added to a controller
+
         public virtual void InitializeController(Controller controller)
         {
             controller.ResourceResolver = ResourceResolver;
             controller.ErrorReporter = ErrorReporter;
-            controller.AddTraceListener(GetTraceListener());
-            if (unparsedTextURIResolver != null)
+            // A controller reused across XQueryEvaluator.CallFunction calls is initialized again for each: the listener
+            // this context put there before goes (it was never taken off: switching to B, or to none, kept A), and the
+            // resolver is the context's or else the configuration's.
+            ITraceListener listener = GetTraceListener();
+            if (installedListener != null && installedListener != listener)
             {
-                controller.UnparsedTextURIResolver = unparsedTextURIResolver;
+                controller.SetTraceListener(TraceEventMulticaster.Remove(controller.GetTraceListener(), installedListener));
             }
+
+            if (!TraceEventMulticaster.Contains(controller.GetTraceListener(), listener))
+            {
+                controller.AddTraceListener(listener);
+            }
+
+            installedListener = listener;
+            controller.UnparsedTextURIResolver = unparsedTextURIResolver ?? config.UnparsedTextURIResolver;
 
             controller.TraceFunctionDestination = TraceFunctionDestination;
             controller.SchemaValidationMode = SchemaValidationMode;

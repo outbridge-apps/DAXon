@@ -38,7 +38,9 @@ namespace OutSmart.DAXon.Functions
         {
             StringValue @in = (StringValue)arguments[0].Head();
             IStringCollator collator = StringCollator;
-            return GetCollationKey(@in.UnicodeStringValue, collator);
+            Base64BinaryValue key = GetCollationKey(@in.UnicodeStringValue, collator);
+            // A plain xs:base64Binary: as a map key it must hash as one made from the same octets does.
+            return key is CollationKeyBytes ? new Base64BinaryValue(key.BinaryValue) : key;
         }
     }
 }

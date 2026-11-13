@@ -25,12 +25,15 @@ namespace OutSmart.DAXon.Serialization
     public class AdaptiveEmitter : SequenceWriter, IReceiverWithOutputProperties
     {
 
-        static readonly ARegularExpression QUOTES = ARegularExpression.Compile("\"", "");
+        // Compiled on first use, not in the type initializer: see FormatDate.componentPattern.
+        static ARegularExpression quotesLazy;
+        static ARegularExpression QUOTES => quotesLazy ??= ARegularExpression.Compile("\"", "");
         private readonly IUnicodeWriter writer;
         private CharacterMap characterMap;
         private Properties outputProperties;
         private string itemSeparator = "\n";
         private bool started;
+        private bool written;
         private bool mustClose = true;
         public AdaptiveEmitter(PipelineConfiguration pipe, IUnicodeWriter writer) : base(pipe)
         {
@@ -66,13 +69,19 @@ namespace OutSmart.DAXon.Serialization
             return outputProperties;
         }
 
+        private static bool IsUtf8(string encoding)
+        {
+            return encoding == null || encoding.Equals("UTF-8", System.StringComparison.OrdinalIgnoreCase) || encoding.Equals("utf8", System.StringComparison.OrdinalIgnoreCase);
+        }
+
         private void Emit(string s)
         {
+            written = true;
             try
             {
                 writer.Write(s);
             }
-            catch (IOException e)
+            catch (System.Exception e) when (Emitter.IsWriteFailure(e))
             {
                 throw Emitter.WriteFailure(e, null);
             }
@@ -225,6 +234,14 @@ namespace OutSmart.DAXon.Serialization
                     }
 
                     props.SetProperty(DAXonOutputKeys.UNFAILING, "yes");
+                    // The node is part of the output, not an output of its own: the mark, if any, is the stream's,
+                    // written once before everything (a second U+FEFF here is content). UTF-8's stream writes none:
+                    // a node that opens the output writes it, as upstream.
+                    if (written || !IsUtf8(props.GetProperty(DAXonOutputKeys.ENCODING)))
+                    {
+                        props.SetProperty(DAXonOutputKeys.BYTE_ORDER_MARK, "no");
+                    }
+
                     CharacterMapIndex cmi = null;
                     if (characterMap != null)
                     {
@@ -237,9 +254,7 @@ namespace OutSmart.DAXon.Serialization
                     }
 
                     SerializationProperties sProps = new SerializationProperties(props, cmi);
-                    // Serialize the node with method=xml via the SerializerFactory receiver chain (the proven
-                    // path fn:serialize uses); QueryResult.Serialize is a hollow stub (the Result hierarchy is
-                    // gone from this port) so adaptive output of a node came out empty.
+                    // Serialize the node with method=xml through the SerializerFactory receiver chain, as fn:serialize does.
                     PipelineConfiguration p = GetPipelineConfiguration();
                     OutSmart.DAXon.Text.UnicodeBuilder ub = new OutSmart.DAXon.Text.UnicodeBuilder();
                     UnicodeWriterResult uwr = new UnicodeWriterResult(ub, null);
@@ -382,7 +397,7 @@ namespace OutSmart.DAXon.Serialization
                         writer.Flush();
                     }
                 }
-                catch (IOException e)
+                catch (System.Exception e) when (Emitter.IsWriteFailure(e))
                 {
                     throw Emitter.WriteFailure(e, null);
                 }

@@ -17,7 +17,6 @@ namespace OutSmart.DAXon.Functions
     internal sealed class Remove : SystemFunction
     {
 
-        //
         public override string StreamerName => "Remove";
         public override Expression MakeFunctionCall(Expression[] arguments)
         {
@@ -47,14 +46,13 @@ namespace OutSmart.DAXon.Functions
             return base.MakeFunctionCall(arguments);
         }
 
-        //
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
             IntSet removePositions;
             if (arguments[1] is AtomicValue)
             {
-                NumericValue n = (NumericValue)arguments[1].Head();
-                int pos = (int)n.LongValue();
+                // AsSubscript, not (int)LongValue(): a position past int named a low one (4294967297 removed the first)
+                int pos = ((NumericValue)arguments[1].Head()).AsSubscript();
                 if (pos < 1)
                 {
                     return arguments[0];
@@ -69,7 +67,7 @@ namespace OutSmart.DAXon.Functions
                 ISequenceIterator iter = arguments[1].Iterate();
                 while ((n = (NumericValue)iter.Next()) != null)
                 {
-                    int pos = (int)n.LongValue();
+                    int pos = n.AsSubscript();
                     if (pos >= 1)
                     {
                         positions.Add(pos);
@@ -87,7 +85,6 @@ namespace OutSmart.DAXon.Functions
             return SequenceTool.ToLazySequence(new RemoveIterator(arguments[0].Iterate(), removePositions));
         }
 
-        //
         internal sealed class RemoveIterator : ISequenceIterator, ILastPositionFinder
         {
             readonly ISequenceIterator @base;

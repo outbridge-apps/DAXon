@@ -5,6 +5,7 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Core;
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.XQuery;
 using OutSmart.DAXon.Api;
 using OutSmart.DAXon.Tracing;
@@ -284,7 +285,9 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     }
                 }
 
-                if (select != null)
+                // Not the default of an external variable (a port deviation: Saxon 12.9 copies it, so that
+                // $p/descendant::x over a supplied (b, a) came back unsorted); the value supplied can be any nodes.
+                if (select != null && !(this is GlobalParam))
                 {
                     properties = select.GetSpecialProperties();
                 }
@@ -363,6 +366,16 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public virtual void LookForCycles(IndexedStack<object> referees, XQueryFunctionLibrary globalFunctionLibrary)
         {
+            LookForCycles(referees, globalFunctionLibrary, new HashSet<object>());
+        }
+
+        // Depth first, a variable or function whose search came back clean marked cleared and not searched again: diamonds
+        // of variables were searched once per path, exponential in their depth (22 levels: 104 s). Clean means no skip
+        // of a function already on the stack (recursion is allowed) anywhere below: such a skip can hide a variable's
+        // cycle that its own root finds ($v calls f, which uses $v). The result is the lowest stack index a skip below
+        // reached, above the searched node.
+        internal int LookForCycles(IndexedStack<object> referees, XQueryFunctionLibrary globalFunctionLibrary, HashSet<object> cleared)
+        {
             if (referees.Contains(this))
             {
                 int s = referees.IndexOf(this);
@@ -408,6 +421,13 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 throw new XPathException(message, errorCode).AsStaticError().WithLocation(GetLocation());
             }
 
+            if (cleared.Contains(this))
+            {
+                return int.MaxValue;
+            }
+
+            int low = int.MaxValue;
+            int me = referees.Count;
             Expression select = GetBody();
             if (select != null)
             {
@@ -418,7 +438,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     if (b is GlobalVariable)
                     {
-                        ((GlobalVariable)b).LookForCycles(referees, globalFunctionLibrary);
+                        low = Math.Min(low, ((GlobalVariable)b).LookForCycles(referees, globalFunctionLibrary, cleared));
                     }
                 }
 
@@ -429,19 +449,41 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     XQueryFunction f = globalFunctionLibrary.GetDeclarationByKey(s);
                     if (!referees.Contains(f))
                     {
-
+                        low = Math.Min(low, LookForFunctionCycles(f, referees, globalFunctionLibrary, cleared));
+                    }
+                    else
+                    {
                         // recursive function calls are allowed
-                        LookForFunctionCycles(f, referees, globalFunctionLibrary);
+                        low = Math.Min(low, referees.IndexOf(f));
                     }
                 }
 
                 referees.Pop();
             }
+
+            return Searched(this, low, me, cleared);
         }
 
-        private static void LookForFunctionCycles(XQueryFunction f, IndexedStack<object> referees, XQueryFunctionLibrary globalFunctionLibrary)
+        private static int Searched(object searched, int low, int me, HashSet<object> cleared)
+        {
+            if (low == int.MaxValue)
+            {
+                cleared.Add(searched);
+            }
+
+            return low < me ? low : int.MaxValue;
+        }
+
+        private static int LookForFunctionCycles(XQueryFunction f, IndexedStack<object> referees, XQueryFunctionLibrary globalFunctionLibrary, HashSet<object> cleared)
         {
             ExpressionTool.ProbeTreeDepth();
+            if (cleared.Contains(f))
+            {
+                return int.MaxValue;
+            }
+
+            int low = int.MaxValue;
+            int me = referees.Count;
             Expression body = f.Body;
             referees.IPush(f);
             IList<IBinding> list = new List<IBinding>(10);
@@ -450,7 +492,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             {
                 if (b is GlobalVariable)
                 {
-                    ((GlobalVariable)b).LookForCycles(referees, globalFunctionLibrary);
+                    low = Math.Min(low, ((GlobalVariable)b).LookForCycles(referees, globalFunctionLibrary, cleared));
                 }
             }
 
@@ -461,13 +503,17 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 XQueryFunction qf = globalFunctionLibrary.GetDeclarationByKey(s);
                 if (!referees.Contains(qf))
                 {
-
+                    low = Math.Min(low, LookForFunctionCycles(qf, referees, globalFunctionLibrary, cleared));
+                }
+                else
+                {
                     // recursive function calls are allowed
-                    LookForFunctionCycles(qf, referees, globalFunctionLibrary);
+                    low = Math.Min(low, referees.IndexOf(qf));
                 }
             }
 
             referees.Pop();
+            return Searched(f, low, me, cleared);
         }
 
         public virtual IGroundedValue GetSelectValue(IXPathContext context, Component target)
@@ -485,6 +531,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
             else
             {
+                XPathException unwrapped;
                 try
                 {
                     Controller controller = context.GetController();
@@ -537,18 +584,27 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         xe.SetIsGlobalError(true);
                     }
 
-                    throw xe;
+                    unwrapped = xe;   // thrown below: see SingletonClosure.Iterate
                 }
-                catch (XPathException e)
+                catch (XPathException e) when (XPathException.PassOn(MarkedGlobal(e)))
                 {
-                    if (!GetVariableQName().HasURI(NamespaceUri.SAXON_GENERATED_VARIABLE))
-                    {
-                        e.SetIsGlobalError(true);
-                    }
-
                     throw;
                 }
+
+                throw unwrapped;
             }
+        }
+
+        // Marks an error of this variable's value as a global one (so the xsl:try around the reference does not take
+        // it), from the exception filter: a rethrow from a handler cost a dispatch per nested global.
+        private XPathException MarkedGlobal(XPathException e)
+        {
+            if (!GetVariableQName().HasURI(NamespaceUri.SAXON_GENERATED_VARIABLE))
+            {
+                e.SetIsGlobalError(true);
+            }
+
+            return e;
         }
 
         public virtual IGroundedValue EvaluateVariable(IXPathContext context)
@@ -601,6 +657,9 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         protected virtual IGroundedValue ActuallyEvaluate(IXPathContext context, Component target)
         {
+            // Globals that read globals nest one evaluation in the next: 500 such XQuery declarations killed a
+            // 256 KB thread. XSLT reached the same limit through its instructions' probes.
+            StackGuard.ProbeNesting(GetLocation());
             Controller controller = context.GetController();
             Bindery b = controller.GetBindery(GetPackageData());
             try
@@ -638,23 +697,17 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
                 return value;
             }
-            catch (XPathException err)
+            catch (XPathException err) when (err is XPathException.Circularity)
             {
-                if (err is XPathException.Circularity)
-                {
-                    err.SetErrorCode(GetPackageData().IsXSLT() ? "XTDE0640" : "XQDY0054");
-                    err.XPathContext = context;
-                    err.SetIsGlobalError(true);
+                // Other errors pass without a handler: a rethrow from here cost a dispatch per nested global.
+                err.SetErrorCode(GetPackageData().IsXSLT() ? "XTDE0640" : "XQDY0054");
+                err.XPathContext = context;
+                err.SetIsGlobalError(true);
 
-                    // Detect it more quickly the next time (in a pattern, the error is recoverable)
-                    b.SetGlobalVariable(this, new FailureValue(err));
-                    err.SetLocation(GetLocation());
-                    throw;
-                }
-                else
-                {
-                    throw;
-                }
+                // Detect it more quickly the next time (in a pattern, the error is recoverable)
+                b.SetGlobalVariable(this, new FailureValue(err));
+                err.SetLocation(GetLocation());
+                throw;
             }
             catch (OutSmart.DAXon.Types.Circularity circ)
             {
@@ -722,7 +775,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         {
         }
 
-        public override void Export(ExpressionPresenter presenter)
+        public virtual void Export(ExpressionPresenter presenter)
         {
             bool asParam = this is GlobalParam && !IsStatic(); // bug 4035: export static params as variables
             presenter.StartElement(asParam ? "globalParam" : "globalVariable");

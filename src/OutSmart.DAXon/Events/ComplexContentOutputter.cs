@@ -32,6 +32,7 @@ namespace OutSmart.DAXon.Events
         private int level = -1;
         private bool[] currentLevelIsDocument = new bool[20];
         private readonly IList<AttributeInfo> pendingAttributes = new List<AttributeInfo>();
+        private Dictionary<StructuredQName, int> pendingByName;   // past 16 pending attributes: a duplicate found by name
         private NamespaceMap pendingNSMap;
         private readonly Stack<NamespaceMap> inheritedNamespaces = new Stack<NamespaceMap>();
         private ISchemaType currentSimpleType; // any other value means we are currently writing an
@@ -61,8 +62,6 @@ namespace OutSmart.DAXon.Events
 
         public IReceiver Receiver { get => nextReceiver; set => this.nextReceiver = value; }
 
-        /**/
-        /**/
         private string ErrorCodeForDecomposingFunctionItems => GetPipelineConfiguration().IsXSLT() ? "XTDE0450" : "XQTY0105";
         public ComplexContentOutputter(IReceiver next)
         {
@@ -205,6 +204,7 @@ namespace OutSmart.DAXon.Events
             startElementProperties = properties;
             startElementLocationId = location.SaveLocation();
             pendingAttributes.Clear();
+            pendingByName = null;
             pendingNSMap = NamespaceMap.EmptyMap();
             pendingStartTag = elemName;
             currentSimpleType = typeCode;
@@ -237,12 +237,12 @@ namespace OutSmart.DAXon.Events
 
 
                 // It is an error to output a namespace node for the default namespace if the element
-                // itself @is in the null @namespace, as the resulting element could not be serialized
+                // itself is in the null namespace, as the resulting element could not be serialized
                 if ((prefix.Length == 0) && !namespaceUri.IsEmpty())
                 {
                     if (pendingStartTag.HasURI(NamespaceUri.NULL))
                     {
-                        throw new XPathException("Cannot output a namespace node for the default namespace (" + namespaceUri + ") when the element @is in no namespace").WithErrorCode(hostLanguage == HostLanguage.XSLT ? "XTDE0440" : "XQDY0102");
+                        throw new XPathException("Cannot output a namespace node for the default namespace (" + namespaceUri + ") when the element is in no namespace").WithErrorCode(hostLanguage == HostLanguage.XSLT ? "XTDE0440" : "XQDY0102");
                     }
                 }
 
@@ -292,7 +292,7 @@ namespace OutSmart.DAXon.Events
             if (level >= 0 && state != START_TAG)
             {
 
-                // The complexity here @is in identifying the right error message and error code
+                // The complexity here is in identifying the right error message and error code
                 XPathException err = NoOpenStartTagException.MakeNoOpenStartTagException(Types.Type.ATTRIBUTE, attName.DisplayName, (int)hostLanguage, currentLevelIsDocument[level], startElementLocationId);
                 err.SetLocator(locationId);
                 throw err;
@@ -306,26 +306,24 @@ namespace OutSmart.DAXon.Events
             AttributeInfo attInfo = new SingletonAttributeMap(attName, typeCode, value, locationId, properties);
             if (level >= 0 && !ReceiverOption.Contains(properties, ReceiverOption.NOT_A_DUPLICATE))
             {
-                for (int a = 0; a < pendingAttributes.Count; a++)
+                int a = IndexOfPending(attName);
+                if (a >= 0)
                 {
-                    if (pendingAttributes[a].GetNodeName().Equals(attName))
+                    if (hostLanguage == HostLanguage.XSLT)
                     {
-                        if (hostLanguage == HostLanguage.XSLT)
-                        {
-                            pendingAttributes[a] = attInfo;
-                            return;
-                        }
-                        else
-                        {
-                            throw new XPathException("Cannot create an element having two attributes with the same name: " + Err.Wrap(attName.DisplayName, Err.ATTRIBUTE)).WithErrorCode("XQDY0025");
-                        }
+                        pendingAttributes[a] = attInfo;
+                        return;
+                    }
+                    else
+                    {
+                        throw new XPathException("Cannot create an element having two attributes with the same name: " + Err.Wrap(attName.DisplayName, Err.ATTRIBUTE)).WithErrorCode("XQDY0025");
                     }
                 }
             }
 
 
             // for top-level attributes (attributes whose parent element is not being copied),
-            // check that the type annotation is not @namespace-sensitive (because the namespace context might
+            // check that the type annotation is not namespace-sensitive (because the namespace context might
             // be different, and we don't do namespace fixup for prefixes in content: see bug 4151
             if (level == 0 && !typeCode.Equals(BuiltInAtomicType.UNTYPED_ATOMIC) && currentLevelIsDocument[0])
             {
@@ -334,7 +332,7 @@ namespace OutSmart.DAXon.Events
                 // reverted 2011-07-27 to pass tests in qischema family
                 if (typeCode.IsNamespaceSensitive())
                 {
-                    throw new XPathException("Cannot copy attributes whose type is @namespace-sensitive (QName or NOTATION): " + Err.Wrap(attName.DisplayName, Err.ATTRIBUTE)).WithErrorCode(hostLanguage == HostLanguage.XSLT ? "XTTE0950" : "XQTY0086");
+                    throw new XPathException("Cannot copy attributes whose type is namespace-sensitive (QName or NOTATION): " + Err.Wrap(attName.DisplayName, Err.ATTRIBUTE)).WithErrorCode(hostLanguage == HostLanguage.XSLT ? "XTTE0950" : "XQTY0086");
                 }
             }
 
@@ -353,12 +351,65 @@ namespace OutSmart.DAXon.Events
 
 
             // otherwise, add this one to the list
+            if (pendingByName != null)
+            {
+                pendingByName[attName.GetStructuredQName()] = pendingAttributes.Count;
+            }
+            else if (pendingAttributes.Count == 16)
+            {
+                pendingByName = new Dictionary<StructuredQName, int>();
+                for (int i = 0; i < pendingAttributes.Count; i++)
+                {
+                    pendingByName[pendingAttributes[i].GetNodeName().GetStructuredQName()] = i;
+                }
+
+                pendingByName[attName.GetStructuredQName()] = pendingAttributes.Count;
+            }
+
             pendingAttributes.Add(attInfo);
+            if (pendingAttributes.Count == Core.MemoryLedger.BigCount)
+            {
+                Core.MemoryLedger.HoldOnce(pendingAttributes, -1, PendingSizer);
+            }
+
             previousAtomic = false;
         }
 
-        /**/
-        /**/
+        // The attributes of a start tag not yet written, each with its name, value and entry by name: a million of them held
+        // some 300 MB under a 100 MB limit while only their names were counted.
+        private static readonly Func<object, long> PendingSizer = o =>
+        {
+            var pending = (IList<AttributeInfo>)o;
+            int n = pending.Count;
+            long values = 0;
+            int taken = 0;
+            for (int i = 0; i < n && taken < Core.MemoryLedger.Probes; i += Math.Max(1, n / Core.MemoryLedger.Probes), taken++)
+            {
+                values += 2L * (pending[i].Value?.Length ?? 0);
+            }
+
+            return 24 + n * 200L + (taken == 0 ? 0 : values * n / taken);
+        };
+
+        // A scan per attribute made copying 30 000 attributes quadratic (34 s under a 2 s limit): past 16 they are indexed.
+        private int IndexOfPending(INodeName attName)
+        {
+            if (pendingByName != null)
+            {
+                return pendingByName.TryGetValue(attName.GetStructuredQName(), out int a) ? a : -1;
+            }
+
+            for (int a = 0; a < pendingAttributes.Count; a++)
+            {
+                if (pendingAttributes[a].GetNodeName().Equals(attName))
+                {
+                    return a;
+                }
+            }
+
+            return -1;
+        }
+
         public override void StartElement(INodeName elemName, ISchemaType type, IAttributeMap attributes, NamespaceMap namespaces, ILocation location, int properties)
         {
 
@@ -412,8 +463,6 @@ namespace OutSmart.DAXon.Events
             state = CONTENT;
         }
 
-        /**/
-        /**/
         private INodeName CheckProposedPrefix(INodeName nodeName, int seq)
         {
             string nodePrefix = nodeName.GetPrefix();
@@ -451,8 +500,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        /**/
-        /**/
         private string GetSubstitutePrefix(string prefix, NamespaceUri uri, int seq)
         {
             if (uri.Equals(NamespaceUri.XML))
@@ -463,8 +510,6 @@ namespace OutSmart.DAXon.Events
             return prefix + '_' + seq;
         }
 
-        /**/
-        /**/
         /// <summary>
         /// Output an element end tag.
         /// </summary>
@@ -478,7 +523,6 @@ namespace OutSmart.DAXon.Events
             else
             {
 
-                //pendingStartTagDepth = -2;
                 pendingStartTag = null;
             }
 
@@ -491,8 +535,6 @@ namespace OutSmart.DAXon.Events
             inheritedNamespaces.Pop();
         }
 
-        /**/
-        /**/
         /// <summary>
         /// Write a comment
         /// </summary>
@@ -511,8 +553,6 @@ namespace OutSmart.DAXon.Events
             nextReceiver.Comment(comment, locationId, properties);
         }
 
-        /**/
-        /**/
         public override void ProcessingInstruction(string target, UnicodeString data, ILocation locationId, int properties)
         {
             if (level >= 0)
@@ -528,8 +568,6 @@ namespace OutSmart.DAXon.Events
             nextReceiver.ProcessingInstruction(target, data, locationId, properties);
         }
 
-        /**/
-        /**/
         public override void Append(IItem item, ILocation locationId, int copyNamespaces)
         {
 
@@ -546,8 +584,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        /**/
-        /**/
         public override IUniStringConsumer GetStringReceiver(bool asTextNode, ILocation loc)
         {
             if (level >= 0)
@@ -573,8 +609,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        /**/
-        /**/
         /// <summary>
         /// Close the output
         /// </summary>
@@ -591,8 +625,6 @@ namespace OutSmart.DAXon.Events
             nextReceiver?.Dispose();
         }
 
-        /**/
-        /**/
         public override void StartContent()
         {
             if (state != START_TAG)
@@ -690,31 +722,28 @@ namespace OutSmart.DAXon.Events
             FinishStartContent(inherited);
         }
 
-        /**/
-        /**/
         private void FinishStartContent(NamespaceMap inherited)
         {
             bool inherit = !ReceiverOption.Contains(startElementProperties, ReceiverOption.DISINHERIT_NAMESPACES);
             inheritedNamespaces.Push(inherit ? pendingNSMap : inherited);
             pendingAttributes.Clear();
+            pendingByName = null;
             pendingNSMap = NamespaceMap.EmptyMap();
             previousAtomic = false;
             state = CONTENT;
         }
 
-        /**/
-        /**/
         public override bool UsesTypeAnnotations()
         {
             return nextReceiver.UsesTypeAnnotations();
         }
 
-        /**/
-        /**/
         private void Flatten(ArrayItem array, ILocation locationId, int copyNamespaces)
         {
             // Each nested array is a level of recursion: deep JSON in content must stop with SXLM0001.
             StackGuard.Probe();
+            // A level may hold the one below twice (60 levels, 2^60 members): the clock decides.
+            Core.Controller.CheckActiveTimeout();
             try
             {
                 foreach (ISequence member in array.Members())
@@ -728,8 +757,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        /**/
-        /**/
         private void Decompose(IItem item, ILocation locationId, int copyNamespaces)
         {
             if (item != null)
@@ -777,8 +804,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        /**/
-        /**/
         private void DecomposeNodeOrDefault(IItem item, ILocation locationId, int copyNamespaces)
         {
             NodeInfo node = (NodeInfo)item;
@@ -796,7 +821,7 @@ namespace OutSmart.DAXon.Events
                 case Types.Type.ATTRIBUTE:
                     if (((ISimpleType)node.GetSchemaType()).IsNamespaceSensitive())
                     {
-                        throw new XPathException("Cannot copy attributes whose type is @namespace-sensitive (QName or NOTATION): " + Err.Wrap(node.DisplayName, Err.ATTRIBUTE)).WithErrorCode(GetPipelineConfiguration().IsXSLT() ? "XTTE0950" : "XQTY0086");
+                        throw new XPathException("Cannot copy attributes whose type is namespace-sensitive (QName or NOTATION): " + Err.Wrap(node.DisplayName, Err.ATTRIBUTE)).WithErrorCode(GetPipelineConfiguration().IsXSLT() ? "XTTE0950" : "XQTY0086");
                     }
 
                     Attribute(NameOfNode.MakeName(node), (ISimpleType)node.GetSchemaType(), node.GetStringValue(), locationId, ReceiverOption.NONE);
@@ -827,8 +852,6 @@ namespace OutSmart.DAXon.Events
             previousAtomic = false;
         }
 
-        /**/
-        /**/
         private sealed class UnicodeStringReceiver : IUniStringConsumer
         {
             private readonly ComplexContentOutputter cco;

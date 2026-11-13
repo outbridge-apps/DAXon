@@ -175,14 +175,7 @@ namespace OutSmart.DAXon.Xslt
 
         public override void CompileDeclaration(Compilation compilation, ComponentDeclaration decl)
         {
-
-            // Commented out: Can't eliminate unused variables at this stage because they might be xsl:expose'd as public
-            //        boolean unused = sourceBinding.getReferences().isEmpty() && !isAssignable() &&
-            //                getVisibility() == Visibility.PRIVATE;
-            //            redundant = true;
-            //            // Remove the global variable from the package (otherwise a failure can occur
-            //            // when pre-evaluating global variables)
-            //        }
+            // Unused variables are not dropped here: xsl:expose may still make them public.
             if (!redundant)
             {
                 sourceBinding.HandleSequenceConstructor(compilation, decl);

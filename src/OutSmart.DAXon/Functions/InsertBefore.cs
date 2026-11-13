@@ -20,8 +20,13 @@ namespace OutSmart.DAXon.Functions
         public override string StreamerName => "InsertBefore";
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
+            // A position past int appends and one below 1 inserts first; (int)LongValue() wrapped 4294967297 to 1.
             NumericValue n = (NumericValue)arguments[1].Head();
-            int pos = (int)n.LongValue();
+            int pos = n.AsSubscript();
+            if (pos < 0)
+            {
+                pos = n.Signum() > 0 ? int.MaxValue : 1;
+            }
             return SequenceTool.ToLazySequence(new InsertIterator(arguments[0].Iterate(), arguments[2].Iterate(), pos));
         }
 

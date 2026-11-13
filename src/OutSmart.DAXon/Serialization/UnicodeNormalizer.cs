@@ -76,7 +76,8 @@ namespace OutSmart.DAXon.Serialization
                 return @in;
             }
 
-            UnicodeString t = @in.Tidy();
+            UnicodeString t = @in;
+            NormalizeUnicode.RequireTables(@in.ToString(), "SESU0011");
             if (containsNullMarkers)
             {
                 StringBuilder @out = new StringBuilder(t.Length32());
@@ -89,7 +90,7 @@ namespace OutSmart.DAXon.Serialization
                     @out.Append((char)0);
                     start = nextNull + 1;
                     nextNull = s.IndexOf((char)0, start);
-                    @out.Append(s.Substring(start, nextNull - start) /*Java substring(begin,END) -> C# (start,LENGTH)*/);
+                    @out.Append(s.Substring(start, nextNull - start));
                     @out.Append((char)0);
                     start = nextNull + 1;
                     nextNull = s.IndexOf((char)0, start);

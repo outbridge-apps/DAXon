@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Values.Arrays
         public SimpleArrayItem(IList<IGroundedValue> members)
         {
             this._members = members;
-            if (members.Count >= MemoryLedger.BigCount)
+            if (members.Count >= MemoryLedger.BigCount || Heavy(members))
             {
                 HoldMembers(members);
             }
@@ -45,6 +45,26 @@ namespace OutSmart.DAXon.Values.Arrays
         }
 
         // A large member list, entered once in the ledger of the call making it; also for one still being filled.
+        // Whether the medium strings among a few members pass MemoryLedger.Big bytes (MemoryLedger.Weighs).
+        private static bool Heavy(IList<IGroundedValue> members)
+        {
+            if (MemoryLedger.Active == null)
+            {
+                return false;
+            }
+
+            long weight = 0;
+            foreach (IGroundedValue member in members)
+            {
+                if (MemoryLedger.Weighs(member, ref weight))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         internal static void HoldMembers(IList<IGroundedValue> members)
         {
             MemoryLedger.HoldOnce(members, -1, MembersSizer);

@@ -369,12 +369,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public override void AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet varPath = Sequence.AddToPathMap(pathMap, pathMapNodeSet);
-            pathMap.RegisterPathForVariable(rangeVariable, varPath);
-        }
-
         public override void Explain(ExpressionPresenter @out)
         {
             @out.StartElement(ClauseKey.ToString().ToLowerInvariant());

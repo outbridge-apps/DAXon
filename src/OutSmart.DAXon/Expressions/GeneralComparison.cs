@@ -36,8 +36,6 @@ namespace OutSmart.DAXon.Expressions
 
         public int SingletonOperator => singletonOperator;
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         public override int IntrinsicDependencies
         {
             get
@@ -57,8 +55,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         protected virtual GeneralComparison InverseComparison
         {
             get
@@ -69,8 +65,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         public override string StreamerName => "GeneralComparison";
         public GeneralComparison(Expression p0, int op, Expression p1) : base(p0, op, p1)
         {
@@ -232,8 +226,7 @@ namespace OutSmart.DAXon.Expressions
                     else if (NumericType.IsNumericType(t1))
                     {
                         SetAtomicComparer(new UntypedNumericComparer());
-                        return this; //                    Expression vun = makeCompareUntypedToNumeric(getLhsExpression(), getRhsExpression(), singletonOperator);
-                        //                    return vun.typeCheck(visitor, contextInfo);
+                        return this;
                     }
                     else
                     {
@@ -246,10 +239,7 @@ namespace OutSmart.DAXon.Expressions
                     if (NumericType.IsNumericType(t0))
                     {
                         SetAtomicComparer(new UntypedNumericComparer());
-                        return this; //                    e1 = new CastExpression(getRhsExpression(), BuiltInAtomicType.DOUBLE, false);
-                        //                    adoptChildExpression(e1);
-                        //                    Expression vun = makeCompareUntypedToNumeric(getRhsExpression(), getLhsExpression(), Token.inverse(singletonOperator));
-                        //                    return vun.typeCheck(visitor, contextInfo);
+                        return this;
                     }
                     else
                     {
@@ -285,8 +275,6 @@ namespace OutSmart.DAXon.Expressions
             return this;
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         private static Expression MakeMinOrMax(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo, Expression exp, string function)
         {
             if (Cardinality.AllowsMany(exp.GetCardinality()))
@@ -301,14 +289,18 @@ namespace OutSmart.DAXon.Expressions
 
                 return x;
             }
-            else
+
+            // A singleton goes to the value comparison as it is: an untyped one there met an integer and gave XPTY0004,
+            // where the general comparison casts it to xs:double (as min and max do the other side's).
+            TypeHierarchy th = visitor.GetConfiguration().GetTypeHierarchy();
+            if (th.Relationship(exp.GetItemType(), BuiltInAtomicType.UNTYPED_ATOMIC) != Affinity.DISJOINT)
             {
-                return exp;
+                return UntypedSequenceConverter.MakeUntypedSequenceConverter(visitor.GetConfiguration(), exp, BuiltInAtomicType.DOUBLE);
             }
+
+            return exp;
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         private bool MayInvolveCastToQName(TypeHierarchy th, Expression e1, Expression e2)
         {
             // Guard the atomized item type: it may be AnyItemType (e.g. an untyped node atomizes to a
@@ -319,22 +311,16 @@ namespace OutSmart.DAXon.Expressions
             return nsSensitive && th.Relationship(e2.GetItemType().GetAtomizedItemType(), BuiltInAtomicType.UNTYPED_ATOMIC) != Affinity.DISJOINT && (e2.GetSpecialProperties() & StaticProperty.NOT_UNTYPED_ATOMIC) == 0;
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         public override bool Equals(object other)
         {
             return other is GeneralComparison && base.Equals(other) && comparer.Equals(((GeneralComparison)other).comparer);
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         protected override int ComputeHashCode()
         {
             return base.ComputeHashCode();
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         public override Expression Optimize(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             IStaticContext env = visitor.StaticContext;
@@ -494,8 +480,6 @@ namespace OutSmart.DAXon.Expressions
             return visitor.ObtainOptimizer().OptimizeGeneralComparison(visitor, this, false, contextInfo);
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         private bool ManyOperandIsLiftable()
         {
             if (ParentExpression is IContextSwitchingExpression && ((IContextSwitchingExpression)ParentExpression).GetActionExpression() == this)
@@ -517,8 +501,6 @@ namespace OutSmart.DAXon.Expressions
             return false;
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         private bool ManyOperandIsRangeExpression()
         {
             foreach (Operand o in Operands())
@@ -533,22 +515,28 @@ namespace OutSmart.DAXon.Expressions
             return false; // shouldn't reach here.
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         public override IItem EvaluateItem(IXPathContext context)
         {
             return BooleanValue.Get(MakeElaborator().ElaborateForBoolean().Eval(context));
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         public override bool EffectiveBooleanValue(IXPathContext context)
         {
             return MakeElaborator().ElaborateForBoolean().Eval(context);
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
+        // An item read for the many-to-many comparison, kept for the other side; a long list enters the memory ledger.
+        private static void Keep(List<AtomicValue> list, AtomicValue item)
+        {
+            list.Add(item);
+            if (list.Count == MemoryLedger.BigCount)
+            {
+                MemoryLedger.Hold(list, KeptSizer);   // summed as it grows
+            }
+        }
+
+        private static readonly Func<object, long> KeptSizer = o => MemoryLedger.ListBytes((List<AtomicValue>)o);
+
         public static bool Compare(AtomicValue a0, int @operator, AtomicValue a1, IAtomicComparer comparer, bool checkTypes, IXPathContext context, INamespaceResolver nsResolver)
         {
             bool u0 = a0.IsUntypedAtomic();
@@ -611,22 +599,16 @@ namespace OutSmart.DAXon.Expressions
             return ValueComparison.Compare(a0, @operator, a1, comparer, checkTypes);
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         public override Types.ItemType GetItemType()
         {
             return BuiltInAtomicType.BOOLEAN;
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         public override UType GetStaticUType(UType contextItemType)
         {
             return UType.BOOLEAN;
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         public static int GetCorrespondingSingletonOperator(int op)
         {
             switch (op)
@@ -648,15 +630,11 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         protected override string Tag()
         {
             return "gc";
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         protected override void ExplainExtraAttributes(ExpressionPresenter @out)
         {
             string cc = "";
@@ -677,8 +655,6 @@ namespace OutSmart.DAXon.Expressions
             @out.EmitAttribute("comp", comparer.Save());
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         public override Elaborator GetElaborator()
         {
             return new GeneralComparisonElaborator();
@@ -690,8 +666,6 @@ namespace OutSmart.DAXon.Expressions
             MANY_TO_MANY
         }
 
-        /*c0 == StaticProperty.EXACTLY_ONE*/
-        /*c1 == StaticProperty.EXACTLY_ONE */
         /// <summary>
         /// Elaborator for a general comparison expression such as (A = B).
         /// </summary>
@@ -762,26 +736,12 @@ namespace OutSmart.DAXon.Expressions
                             {
                                 Text.UnicodeString target = cmp.UnicodeStringValue;
                                 Trees.Tiny.TinyTree tree = tiny.tree;
-                                int p = tiny.nodeNr;
-                                int child = p + 1;
-                                if (child < tree.numberOfNodes && tree.depth[child] == tree.depth[p] + 1)
+                                int n = Trees.Tiny.TinyText.FirstChild(tree, tiny.nodeNr);
+                                for (int cur; (cur = Trees.Tiny.TinyText.NextChildNamed(tree, childFp, ref n)) >= 0;)
                                 {
-                                    byte[] kinds = tree.nodeKind;
-                                    int[] nextArr = tree.next;
-                                    int[] nameCodes = tree.nameCode;
-                                    int n = child;
-                                    while (n >= 0)
+                                    if (Trees.Tiny.TinyParentNodeImpl.GetStringValue(tree, cur).Equals(target))
                                     {
-                                        int cur = n;
-                                        int n2 = nextArr[cur];
-                                        n = n2 > cur ? n2 : -1;
-                                        int k = kinds[cur];
-                                        if ((k == Types.Type.ELEMENT || k == Types.Type.TEXTUAL_ELEMENT)
-                                            && (nameCodes[cur] & NamePool.FP_MASK) == childFp
-                                            && Trees.Tiny.TinyParentNodeImpl.GetStringValue(tree, cur).Equals(target))
-                                        {
-                                            return true;
-                                        }
+                                        return true;
                                     }
                                 }
 
@@ -793,7 +753,114 @@ namespace OutSmart.DAXon.Expressions
                     }
                 }
 
-                return BuildGenericBoolean(exp, cardinality, needsRunTimeCheck, comparer, staticContext, singletonOperator);
+                return TryNodesAgainstNumber(exp, comparer, needsRunTimeCheck, staticContext, singletonOperator)
+                    ?? BuildGenericBoolean(exp, cardinality, needsRunTimeCheck, comparer, staticContext, singletonOperator);
+            }
+
+            // `. > 100`, `amount >= 5.5`: the atomized nodes against a numeric literal. A node of an untyped tree whose text
+            // is a plain number compares as the double the comparison casts it to, with no untypedAtomic value made for it;
+            // any other node or value compares the generic way, one atomized value at a time.
+            private IBooleanEvaluator TryNodesAgainstNumber(GeneralComparison exp, IAtomicComparer comparer, bool needsRunTimeCheck, RetainedStaticContext staticContext, int op)
+            {
+                Expression nodes = NodesOf(exp.GetLhsExpression());
+                Expression other = exp.GetRhsExpression();
+                if (nodes == null)
+                {
+                    nodes = NodesOf(exp.GetRhsExpression());
+                    other = exp.GetLhsExpression();
+                    op = Token.Inverse(op);
+                }
+
+                if (nodes == null || !(other is Literal lit) || !(lit.GroundedValue is NumericValue number) || number.IsNaN())
+                {
+                    return null;
+                }
+
+                double target = number.GetDoubleValue();
+                IPullEvaluator pull = nodes.MakeElaborator().ElaborateForPull();
+                return (context) =>
+                {
+                    ISequenceIterator iter = pull.Iterate(context);
+                    IAtomicComparer bound = null;
+                    for (IItem item; (item = iter.Next()) != null;)
+                    {
+                        bool hit = false;
+                        // A zero on either side compares the general way.
+                        if (target != 0 && Trees.Tiny.TinyText.TryNodeDouble(item, out double d) && d != 0)
+                        {
+                            hit = CompareDoubles(op, d, target);
+                        }
+                        else
+                        {
+                            bound = bound ?? comparer.ProvideContext(context);
+                            // Most nodes have one value: no iterator for it.
+                            IAtomicSequence atomized = item.Atomize();
+                            ISequenceIterator values = atomized is AtomicValue ? null : atomized.Iterate();
+                            AtomicValue first = atomized as AtomicValue;
+                            for (IItem v = first; !hit && (v != null || (values != null && (v = values.Next()) != null)); v = null)
+                            {
+                                try
+                                {
+                                    hit = Compare((AtomicValue)v, op, number, bound, needsRunTimeCheck, context, staticContext);
+                                }
+                                catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(exp.GetLocation()).MaybeWithContext(context)))
+                                {
+                                    // Decorated in the filter, never handled (XPathException.PassOn).
+                                    throw;
+                                }
+                            }
+                        }
+
+                        if (hit)
+                        {
+                            iter.Dispose();
+                            return true;
+                        }
+                    }
+
+                    return false;
+                };
+            }
+
+            // Two non-NaN, non-zero doubles, by a general comparison operator.
+            private static bool CompareDoubles(int op, double d, double target)
+            {
+                switch (op)
+                {
+                    case Token.FEQ:
+                        return d == target;
+                    case Token.FNE:
+                        return d != target;
+                    case Token.FLT:
+                        return d < target;
+                    case Token.FLE:
+                        return d <= target;
+                    case Token.FGT:
+                        return d > target;
+                    case Token.FGE:
+                        return d >= target;
+                    default:
+                        throw new InvalidOperationException("Unknown comparison operator " + op);
+                }
+            }
+
+            // The node expression an operand atomizes, when the comparison may iterate it: data(NODES), or the
+            // atomized singleton of an expression that cannot hold more than one node and may be empty (one that must not
+            // be empty raises XPTY0004, which the generic path keeps).
+            private static Expression NodesOf(Expression operand)
+            {
+                if (operand is Atomizer a && a.BaseExpression.GetItemType() is Patterns.NodeTest)
+                {
+                    return a.BaseExpression;
+                }
+
+                if (operand is SingletonAtomizer s && s.AllowsEmpty && s.BaseExpression.GetItemType() is Patterns.NodeTest
+                    && !Cardinality.AllowsMany(s.BaseExpression.GetCardinality()))
+                {
+                    return s.BaseExpression;
+                }
+
+                return null;
             }
 
             private IBooleanEvaluator BuildGenericBoolean(GeneralComparison exp, ComparisonCardinality cardinality, bool needsRunTimeCheck, IAtomicComparer comparer, RetainedStaticContext staticContext, int singletonOperator)
@@ -841,30 +908,48 @@ namespace OutSmart.DAXon.Expressions
                 }
             }
 
-            // `exists x in range: x op value`, decided from the range bounds (bounds access does not
-            // consume the iterator). Extracted from the EvaluateManyToOne fast path so the
-            // many-to-many route can reuse it; untyped conversion mirrors the original code.
-            private static bool RangeOpValue(RangeIterator ri, int singletonOperator, AtomicValue value)
+            // The number a range's bounds can be compared with: a number, or an untyped value cast to xs:double as a
+            // general comparison casts it; null for any other type, which takes the generic route (XPTY0004).
+            private static NumericValue RangeOperand(AtomicValue value, IXPathContext context)
             {
+                if (value is NumericValue number)
+                {
+                    return number;
+                }
+
                 if (value.IsUntypedAtomic())
                 {
-                    value = StringConverter.StringToInteger.INSTANCE.ConvertString(value.UnicodeStringValue).AsAtomic();
+                    StringConverter toDouble = BuiltInAtomicType.DOUBLE.GetStringConverter(context.GetConfiguration().GetConversionRules());
+                    return (NumericValue)toDouble.ConvertString(value.UnicodeStringValue).AsAtomic();
+                }
+
+                return null;
+            }
+
+            // `exists x in range: x op value`, decided from the range bounds (bounds access does not
+            // consume the iterator). Extracted from the EvaluateManyToOne fast path so the
+            // many-to-many route can reuse it.
+            private static bool RangeOpValue(RangeIterator ri, int singletonOperator, NumericValue value)
+            {
+                if (value.IsNaN())
+                {
+                    return singletonOperator == Token.FNE;
                 }
 
                 switch (singletonOperator)
                 {
                     case Token.FEQ:
-                        return ri.ContainsEq((NumericValue)value);
+                        return ri.ContainsEq(value);
                     case Token.FNE:
-                        return ri.First.CompareTo(ri.GetLast()) != 0 || ri.First.CompareTo(((NumericValue)value)) != 0;
+                        return ri.First.CompareTo(ri.GetLast()) != 0 || ri.First.CompareTo(value) != 0;
                     case Token.FLE:
-                        return ri.GetMin().CompareTo(((NumericValue)value)) <= 0;
+                        return ri.GetMin().CompareTo(value) <= 0;
                     case Token.FLT:
-                        return ri.GetMin().CompareTo(((NumericValue)value)) < 0;
+                        return ri.GetMin().CompareTo(value) < 0;
                     case Token.FGE:
-                        return ri.GetMax().CompareTo(((NumericValue)value)) >= 0;
+                        return ri.GetMax().CompareTo(value) >= 0;
                     case Token.FGT:
-                        return ri.GetMax().CompareTo(((NumericValue)value)) > 0;
+                        return ri.GetMax().CompareTo(value) > 0;
                     default:
                         throw new InvalidOperationException();
                 }
@@ -917,9 +1002,9 @@ namespace OutSmart.DAXon.Expressions
                         return false;
                     }
 
-                    if (iter0 is RangeIterator)
+                    if (iter0 is RangeIterator && RangeOperand(value1, context) is NumericValue bound)
                     {
-                        return RangeOpValue((RangeIterator)iter0, singletonOperator, value1);
+                        return RangeOpValue((RangeIterator)iter0, singletonOperator, bound);
                     }
 
                     AtomicValue item0;
@@ -935,9 +1020,10 @@ namespace OutSmart.DAXon.Expressions
 
                     return false;
                 }
-                catch (XPathException e)
+                catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(loc).MaybeWithContext(context)))
                 {
-                    throw e.MaybeWithLocation(loc).MaybeWithContext(context);
+                    // Decorated in the filter, never handled (XPathException.PassOn).
+                    throw;
                 }
             }
 
@@ -975,7 +1061,7 @@ namespace OutSmart.DAXon.Expressions
 
                             if (item is NumericValue || item.IsUntypedAtomic())
                             {
-                                hit = RangeOpValue(range, rangeOp, item);
+                                hit = RangeOpValue(range, rangeOp, RangeOperand(item, context));
                             }
                             else
                             {
@@ -1000,19 +1086,21 @@ namespace OutSmart.DAXon.Expressions
 
                     bool exhausted0 = false;
                     bool exhausted1 = false;
-                    IList<AtomicValue> value0 = new List<AtomicValue>();
-                    IList<AtomicValue> value1 = new List<AtomicValue>();
+                    List<AtomicValue> value0 = new List<AtomicValue>();
+                    List<AtomicValue> value1 = new List<AtomicValue>();
                     IAtomicComparer boundComparer = comparer.ProvideContext(context);
 
                     // Read items from the two sequences alternately, in each case comparing the item to
                     // all items that have previously been read from the other sequence. In the worst case
                     // the number of comparisons is N*M, and the memory usage is (max(N,M)*2) where N and M
                     // are the number of items in the two sequences. In practice, either M or N is often 1,
-                    // meaning that in this case neither list will ever hold more than one item.
+                    // meaning that in this case neither list will ever hold more than one item. Each read looks at the
+                    // clock (it costs a pass over the other list), and a long list enters the memory ledger.
                     while (true)
                     {
                         if (!exhausted0)
                         {
+                            Controller.CheckActiveTimeout();
                             AtomicValue item0 = (AtomicValue)iter0.Next();
                             if (item0 == null)
                             {
@@ -1037,13 +1125,14 @@ namespace OutSmart.DAXon.Expressions
 
                                 if (!exhausted1)
                                 {
-                                    value0.Add(item0);
+                                    Keep(value0, item0);
                                 }
                             }
                         }
 
                         if (!exhausted1)
                         {
+                            Controller.CheckActiveTimeout();
                             AtomicValue item1 = (AtomicValue)iter1.Next();
                             if (item1 == null)
                             {
@@ -1068,15 +1157,16 @@ namespace OutSmart.DAXon.Expressions
 
                                 if (!exhausted0)
                                 {
-                                    value1.Add(item1);
+                                    Keep(value1, item1);
                                 }
                             }
                         }
                     }
                 }
-                catch (XPathException e)
+                catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(loc).MaybeWithContext(context)))
                 {
-                    throw e.MaybeWithLocation(loc).MaybeWithContext(context);
+                    // Decorated in the filter, never handled (XPathException.PassOn).
+                    throw;
                 }
             }
         }

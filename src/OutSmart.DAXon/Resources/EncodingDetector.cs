@@ -20,7 +20,13 @@ namespace OutSmart.DAXon.Resources
         // Names are ones .NET resolves: upstream's "UTF-16" means big-endian to Java, little-endian here.
         public static string InferEncoding(byte[] start, int read, string defaultEncoding)
         {
-            read = Math.Min(read, Math.Min(start.Length, Peek));
+            return InferEncoding(start, read, defaultEncoding, Peek);
+        }
+
+        // The same within the first peek bytes.
+        public static string InferEncoding(byte[] start, int read, string defaultEncoding, int peek)
+        {
+            read = Math.Min(read, Math.Min(start.Length, peek));
             if (read >= 2)
             {
                 if (start[0] == 0xFE && start[1] == 0xFF)
@@ -80,14 +86,28 @@ namespace OutSmart.DAXon.Resources
         {
             try
             {
-                return strict
-                    ? Encoding.GetEncoding(name, EncoderFallback.ExceptionFallback, DecoderFallback.ExceptionFallback)
-                    : Encoding.GetEncoding(name);
+                Encoding known = OutSmart.DAXon.Internal.PlatformEncodings.GetForReading(name);
+                if (!strict)
+                {
+                    return known;
+                }
+
+                Encoding refusing = (Encoding)known.Clone();
+                refusing.EncoderFallback = EncoderFallback.ExceptionFallback;
+                refusing.DecoderFallback = DecoderFallback.ExceptionFallback;
+                return refusing;
             }
             catch (ArgumentException)
             {
                 throw new XPathException("Unsupported encoding " + name, "FODC0002");
             }
+        }
+
+        // The encoding for these bytes: a little-endian mark wins over the label UTF-16, which alone means big-endian.
+        public static Encoding Lookup(string name, bool strict, byte[] bytes, int offset, int len)
+        {
+            bool littleEndian = name.Equals("UTF-16", StringComparison.OrdinalIgnoreCase) && len >= 2 && bytes[offset] == 0xFF && bytes[offset + 1] == 0xFE;
+            return Lookup(littleEndian ? "UTF-16LE" : name, strict);
         }
 
         // A byte order mark is not content, as for unparsed-text(); Java's decoders keep a UTF-8 one.

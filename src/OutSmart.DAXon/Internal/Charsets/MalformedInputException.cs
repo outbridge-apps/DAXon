@@ -9,5 +9,13 @@ namespace OutSmart.DAXon.Internal.Charsets
 {
     internal sealed class MalformedInputException : CharacterCodingException
     {
+        public MalformedInputException()
+        {
+        }
+
+        // Bytes a strict decoder refused (StandardUnparsedTextResolver.Strict).
+        public MalformedInputException(System.Text.DecoderFallbackException cause) : base("The text cannot be decoded: " + cause.Message, cause)
+        {
+        }
     }
 }

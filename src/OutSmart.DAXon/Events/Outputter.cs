@@ -141,7 +141,6 @@ namespace OutSmart.DAXon.Events
             return false;
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual bool HandlesAppend() => false; // upstream Receiver default: callers must decompose items
 
         private sealed class AnonymousAbstractUniStringConsumer : AbstractUniStringConsumer

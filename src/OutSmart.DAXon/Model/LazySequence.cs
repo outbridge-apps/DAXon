@@ -48,17 +48,11 @@ namespace OutSmart.DAXon.Model
             return Materialize();
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
+        // As upstream: through SequenceTool, whose list is in the memory ledger while it grows (a plain list here was entered
+        // only when complete, and map:entry('a', 5 000 000 strings) held 745 MB under a 50 MB limit).
         public IGroundedValue Materialize()
         {
-            var __it = Iterate();
-            var __l = new List<IItem>();
-            for (IItem __x; (__x = __it.Next()) != null;)
-            {
-                __l.Add(__x);
-            }
-
-            return SequenceExtent.MakeSequenceExtent(__l);
+            return SequenceTool.ToGroundedValue(Iterate());
         }
     }
 }

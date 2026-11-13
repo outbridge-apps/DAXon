@@ -101,7 +101,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
 
 
-            // If value is @fixed, test whether there are any special characters that might need to be
+            // If value is fixed, test whether there are any special characters that might need to be
             // escaped when the time comes for serialization
             if (Select is StringLiteral)
             {
@@ -178,9 +178,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 // When select is a SimpleContentConstructor, this does nothing
                 Select.CheckPermittedContents(type, true);
             }
-            catch (XPathException e)
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation())))
             {
-                throw e.MaybeWithLocation(GetLocation());
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 

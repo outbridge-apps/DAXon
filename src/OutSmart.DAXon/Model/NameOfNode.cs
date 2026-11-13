@@ -142,7 +142,6 @@ namespace OutSmart.DAXon.Model
             return GetHashCode() ^ GetPrefix().GetHashCode();
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public string GetURI() => GetNamespaceUri().ToString(); // NodeImpl/Orphan.GetURI() route through this
     }
 }

@@ -18,8 +18,8 @@ namespace OutSmart.DAXon.Values.Maps
 {
     public class RecordTest : AnyFunctionType, IRecordType
     {
-        public static RecordTest VALUE_RECORD = NonExtensible(new Field("value", SequenceType.ANY_SEQUENCE, false));
-        public static RecordTest KEY_VALUE_RECORD = NonExtensible(new Field("key", SequenceType.ATOMIC_SEQUENCE, false), new Field("value", SequenceType.ANY_SEQUENCE, false));
+        public static readonly RecordTest VALUE_RECORD = NonExtensible(new Field("value", SequenceType.ANY_SEQUENCE, false));
+        public static readonly RecordTest KEY_VALUE_RECORD = NonExtensible(new Field("key", SequenceType.ATOMIC_SEQUENCE, false), new Field("value", SequenceType.ANY_SEQUENCE, false));
         private readonly Dictionary<string, SequenceType> fieldTypes = new Dictionary<string, SequenceType>();
         private readonly HashSet<string> optionalFields = new HashSet<string>();
         private bool _extensible;
@@ -316,9 +316,9 @@ namespace OutSmart.DAXon.Values.Maps
             }
             else
             {
-                Affinity rel;
-                rel = new SpecificFunctionType(ArgumentTypes, ResultType).Relationship(other, th);
-                return rel;
+                // As for map types: a non-map function type is never subsumed by a record type.
+                Affinity rel = new SpecificFunctionType(ArgumentTypes, ResultType).Relationship(other, th);
+                return rel == Affinity.SUBSUMES ? Affinity.OVERLAPS : rel == Affinity.SAME_TYPE ? Affinity.SUBSUMED_BY : rel;
             }
         }
 

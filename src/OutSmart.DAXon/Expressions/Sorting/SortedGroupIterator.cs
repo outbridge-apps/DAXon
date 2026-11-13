@@ -4,7 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.stream.ManualGroupIterator;
 using OutSmart.DAXon.Api;
 using System;
 using OutSmart.DAXon.Model;
@@ -19,8 +18,9 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
         protected override void BuildArray()
         {
+            // No GetLength: a grouping iterator answers it by grouping the population a second time.
             ISequenceIterator @base = BaseIterator;
-            int allocated = SequenceTool.SupportsGetLength(@base) ? SequenceTool.GetLength(@base) : 100;
+            int allocated = 100;
             values = new ObjectToBeSorted[allocated];
             count = 0;
             XPathContextMajor c2 = context.NewContext();
@@ -32,6 +32,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
             IItem item;
             while ((item = @base.Next()) != null)
             {
+                Core.Controller.CheckActiveTimeout();
                 if (count == allocated)
                 {
                     allocated *= 2;
@@ -47,6 +48,11 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 }
 
                 gtbs.originalPosition = count++;
+                if (count == Core.MemoryLedger.BigCount)
+                {
+                    Core.MemoryLedger.Hold(this, Sizer);   // summed as it grows, as the plain sort
+                }
+
                 gtbs.currentGroupingKey = groupIter.GetCurrentGroupingKey();
                 gtbs.currentGroup = groupIter.CurrentGroup();
             }

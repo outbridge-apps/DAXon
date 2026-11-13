@@ -57,7 +57,6 @@ namespace OutSmart.DAXon.Xslt
             CompilerInfo compilerInfo = sourceElement.GetCompilation().GetCompilerInfo();
             stylesheetPackage.TargetEdition = compilerInfo.TargetEdition;
             stylesheetPackage.SetRelocatable(compilerInfo.IsRelocatable());
-            stylesheetPackage.SetJustInTimeCompilation(compilerInfo.IsJustInTimeCompilation());
             stylesheetPackage.SetImplicitPackage(!sourceElement.GetLocalPart().Equals("package"));
             keyManager = stylesheetPackage.GetKeyManager();
             decimalFormatManager = stylesheetPackage.GetDecimalFormatManager();
@@ -169,58 +168,26 @@ namespace OutSmart.DAXon.Xslt
 
         public virtual void Preprocess(Compilation compilation)
         {
-            Timer timer = compilation.timer;
-
             // process any xsl:use-package, xsl:include and xsl:import elements
             SpliceUsePackages((XSLPackage)RootElement, RootElement.GetCompilation());
-            if (Compilation.TIMING)
-            {
-                timer.Report("spliceIncludes");
-            }
-
 
             // import schema documents
             ImportSchemata();
-            if (Compilation.TIMING)
-            {
-                timer.Report("importSchemata");
-            }
-
 
             // process type aliases
             GetTypeAliasManager().ProcessAllDeclarations(topLevel);
 
             // build indexes for selected top-level elements
             BuildIndexes();
-            if (Compilation.TIMING)
-            {
-                timer.Report("buildIndexes");
-            }
-
 
             // check for use of schema-aware constructs
             CheckForSchemaAwareness();
-            if (Compilation.TIMING)
-            {
-                timer.Report("checkForSchemaAwareness");
-            }
-
 
             // process the attributes of every node in the tree
             ProcessAllAttributes();
-            if (Compilation.TIMING)
-            {
-                timer.Report("processAllAttributes");
-            }
-
 
             // collect any namespace aliases
             CollectNamespaceAliases();
-            if (Compilation.TIMING)
-            {
-                timer.Report("collectNamespaceAliases");
-            }
-
 
             // fix up references from XPath expressions to variables and functions, for static typing
             foreach (ComponentDeclaration topLevelDecl in topLevel)
@@ -233,12 +200,6 @@ namespace OutSmart.DAXon.Xslt
                 }
             }
 
-            if (Compilation.TIMING)
-            {
-                timer.Report("fixupReferences");
-            }
-
-
             // Validate the whole package (i.e. with included and imported stylesheet modules)
             XSLPackage top = (XSLPackage)StylesheetElement;
             if (!top.IsActionCompleted(StyleElement.ACTION_VALIDATE))
@@ -250,12 +211,6 @@ namespace OutSmart.DAXon.Xslt
                     d.SourceElement.ValidateSubtree(d, false);
                 }
             }
-
-            if (Compilation.TIMING)
-            {
-                timer.Report("validate");
-            }
-
 
             // Gather the output properties
             Properties props = GatherOutputProperties(null);
@@ -295,12 +250,6 @@ namespace OutSmart.DAXon.Xslt
                 }
             }
 
-            if (Compilation.TIMING)
-            {
-                timer.Report("Register output formats");
-            }
-
-
             // Index the character maps
             foreach (ComponentDeclaration d in topLevel)
             {
@@ -309,19 +258,11 @@ namespace OutSmart.DAXon.Xslt
                 {
                     XSLCharacterMap xcm = (XSLCharacterMap)inst;
                     StructuredQName qn = xcm.CharacterMapName;
-                    IntHashMap<string> map = new IntHashMap<string>();
-                    xcm.Assemble(map);
-                    characterMapIndex.PutCharacterMap(xcm.CharacterMapName, new CharacterMap(qn, map));
+                    characterMapIndex.PutCharacterMap(xcm.CharacterMapName, new CharacterMap(qn, xcm.Assemble()));
                 }
-            }
-
-            if (Compilation.TIMING)
-            {
-                timer.Report("Index character maps");
             }
         }
 
-        //}
         protected virtual void SpliceUsePackages(XSLPackage xslpackage, Compilation compilation)
         {
 
@@ -358,7 +299,6 @@ namespace OutSmart.DAXon.Xslt
             SpliceIncludes();
         }
 
-        //}
         private static void GatherUsePackageDeclarations(Compilation compilation, StyleElement wrapper, IList<XSLUsePackage> declarations)
         {
             foreach (NodeInfo use in wrapper.Children())
@@ -377,8 +317,11 @@ namespace OutSmart.DAXon.Xslt
                         throw new XPathException("Internal problem: the included stylesheet module '" + href + "' should be in the compiler's module store, but was not found");
                     }
 
-                    StyleElement incWrapper = (StyleElement)((DocumentImpl)includedTree.GetRootNode()).DocumentElement;
-                    GatherUsePackageDeclarations(compilation, incWrapper, declarations);
+                    // No element behind an href with a fragment ("lib.xsl#x"): the include reports it (XTSE0165).
+                    if (((DocumentImpl)includedTree.GetRootNode()).DocumentElement is StyleElement incWrapper)
+                    {
+                        GatherUsePackageDeclarations(compilation, incWrapper, declarations);
+                    }
                 }
             }
         }
@@ -403,11 +346,10 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        //}
         private void BuildIndexes()
         {
 
-            // Scan the declarations in reverse order, that @is, highest precedence first
+            // Scan the declarations in reverse order, that is, highest precedence first
             for (int i = topLevel.Count - 1; i >= 0; i--)
             {
                 ComponentDeclaration decl = topLevel[i];
@@ -415,7 +357,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        //}
         public virtual void ProcessAllAttributes()
         {
             RootElement.ProcessDefaultCollationAttribute();
@@ -538,7 +479,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        //}
         private static string ShowArityRanges(UserFunction fn1, UserFunction fn2)
         {
             return "(" + ShowArityRange(fn1) + "; " + ShowArityRange(fn2) + ")";
@@ -617,7 +557,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        //}
         public virtual SourceBinding GetGlobalVariableBinding(StructuredQName qName)
         {
             ComponentDeclaration decl = globalVariableIndex.GetOrDefault(qName);
@@ -822,20 +761,37 @@ namespace OutSmart.DAXon.Xslt
         {
         }
 
+        // Every attribute set of each name, in declaration order. Indexed once per state of topLevel: a scan of all the
+        // declarations per use-attribute-sets reference was quadratic in the number of sets.
+        private Dictionary<StructuredQName, List<ComponentDeclaration>> attributeSetIndex;
+        private int attributeSetIndexed = -1;   // topLevel.Count when attributeSetIndex was built
+
         public virtual void GetAttributeSets(StructuredQName name, IList<ComponentDeclaration> list)
         {
-
-            // search for the named attribute set, using all of them if there are several with the
-            // same name
-            foreach (ComponentDeclaration decl in topLevel)
+            if (attributeSetIndexed != topLevel.Count)
             {
-                if (decl.SourceElement is XSLAttributeSet)
+                attributeSetIndex = new Dictionary<StructuredQName, List<ComponentDeclaration>>();
+                foreach (ComponentDeclaration decl in topLevel)
                 {
-                    XSLAttributeSet t = (XSLAttributeSet)decl.SourceElement;
-                    if (t.AttributeSetName.Equals(name))
+                    if (decl.SourceElement is XSLAttributeSet t)
                     {
-                        list.Add(decl);
+                        if (!attributeSetIndex.TryGetValue(t.AttributeSetName, out List<ComponentDeclaration> named))
+                        {
+                            attributeSetIndex[t.AttributeSetName] = named = new List<ComponentDeclaration>();
+                        }
+
+                        named.Add(decl);
                     }
+                }
+
+                attributeSetIndexed = topLevel.Count;
+            }
+
+            if (attributeSetIndex.TryGetValue(name, out List<ComponentDeclaration> found))
+            {
+                foreach (ComponentDeclaration decl in found)
+                {
+                    list.Add(decl);
                 }
             }
         }
@@ -960,7 +916,7 @@ namespace OutSmart.DAXon.Xslt
             int currentPrecedence = -1;
 
             // Note that we are processing the list in reverse stylesheet order,
-            // that @is, highest precedence first.
+            // that is, highest precedence first.
             for (int i = 0; i < numberOfAliases; i++)
             {
                 ComponentDeclaration decl = namespaceAliasList[i];
@@ -1034,11 +990,6 @@ namespace OutSmart.DAXon.Xslt
         {
             try
             {
-                Timer timer = compilation.timer;
-
-                //PreparedStylesheet pss = getPreparedStylesheet();
-                Configuration config = GetConfiguration();
-
                 // If any XQuery functions were imported, fix up all function calls
                 // registered against these functions.
                 XQueryFunctionLibrary queryFunctions = stylesheetPackage.GetXQueryFunctionLibrary();
@@ -1047,269 +998,33 @@ namespace OutSmart.DAXon.Xslt
                     f.FixupReferences();
                 }
 
-                if (Compilation.TIMING)
-                {
-                    timer.Report("fixup Query functions");
-                }
-
-
-                // Register all modes with the rule manager
-                bool allowImplicit = !GetStylesheetPackage().IsDeclaredModes();
-                foreach (ComponentDeclaration decl in topLevel)
-                {
-                    StyleElement snode = decl.SourceElement;
-                    if (snode is XSLMode)
-                    {
-                        GetRuleManager().ObtainMode(snode.GetObjectName(), true);
-                    }
-
-                    if (allowImplicit)
-                    {
-                        RegisterImplicitModes(snode, GetRuleManager());
-                    }
-                }
-
-                GetRuleManager().CheckConsistency();
-
-                // Register template rules with the rule manager
-                foreach (ComponentDeclaration decl in topLevel)
-                {
-                    StyleElement snode = decl.SourceElement;
-                    if (snode is XSLTemplate)
-                    {
-                        ((XSLTemplate)snode).Register(decl);
-                    }
-
-                    if (snode is XSLMode)
-                    {
-
-                        // XSLT 4.0 enclosing modes
-                        foreach (NodeInfo n in snode.Children())
-                        {
-                            if (n is XSLTemplate)
-                            {
-                                ((XSLTemplate)n).Register(decl);
-                            }
-                        }
-                    }
-                }
-
-                if (Compilation.TIMING)
-                {
-                    timer.Report("register templates");
-                }
-
+                RegisterModesAndTemplates();
 
                 // Adjust the visibility of components based on xsl:expose declarations
                 AdjustExposedVisibility();
-                if (Compilation.TIMING)
-                {
-                    timer.Report("adjust exposed visibility");
-                }
-
-
-                // Call compile method for each top-level object in the stylesheet
-                // Note, some declarations (templates) need to be compiled repeatedly if the module
-                // is imported repeatedly; others (variables, functions) do not
-                foreach (ComponentDeclaration decl in topLevel)
-                {
-                    StyleElement snode = decl.SourceElement;
-                    if (!snode.IsActionCompleted(StyleElement.ACTION_COMPILE))
-                    {
-                        snode.SetActionCompleted(StyleElement.ACTION_COMPILE);
-                        snode.CompileDeclaration(compilation, decl);
-                    }
-                }
-
-                if (Compilation.TIMING)
-                {
-                    timer.Report("compile top-level objects (" + topLevel.Count + ")");
-                }
-
-
-                // Call type-check method for each user-defined function in the stylesheet. This is no longer
-                // done during the optimize step, to avoid functions being inlined before they are type-checked.
-                foreach (ComponentDeclaration decl in functionIndex.Values)
-                {
-                    StyleElement node = decl.SourceElement;
-                    if (!node.IsActionCompleted(StyleElement.ACTION_TYPECHECK))
-                    {
-                        node.SetActionCompleted(StyleElement.ACTION_TYPECHECK);
-                        if (node.GetVisibility() != Visibility.ABSTRACT)
-                        {
-                            ((XSLFunction)node).GetCompiledFunction().TypeCheck(node.MakeExpressionVisitor());
-                        }
-                    }
-                }
-
-                if (Compilation.TIMING)
-                {
-                    timer.Report("typeCheck functions (" + functionIndex.Count + ")");
-                }
-
+                CompileDeclarations(compilation);
                 if (compilation.ErrorCount > 0)
                 {
-
                     // not much point carrying on
                     return;
                 }
 
-
-                // Call optimize() method for each top-level declaration
                 OptimizeTopLevel();
-                if (Compilation.TIMING)
-                {
-                    timer.Report("optimize top level");
-                }
+                OptimizeFunctions();
 
-
-                // optimize functions that aren't overridden
-                foreach (ComponentDeclaration decl in functionIndex.Values)
-                {
-                    StyleElement node = decl.SourceElement;
-                    if (!node.IsActionCompleted(StyleElement.ACTION_OPTIMIZE))
-                    {
-                        node.SetActionCompleted(StyleElement.ACTION_OPTIMIZE);
-                        ((IStylesheetComponent)node).Optimize(decl);
-                    }
-                }
-
-                if (Compilation.TIMING)
-                {
-                    timer.Report("optimize functions");
-                }
-
-
-                // Check consistency of decimal formats
+                // Check consistency of decimal formats and modes
                 GetDecimalFormatManager().CheckConsistency();
-                if (Compilation.TIMING)
-                {
-                    timer.Report("check decimal formats");
-                }
-
-
-                // Check consistency of modes
                 RuleManager ruleManager = GetRuleManager();
-
-                //ruleManager.checkConsistency();   Now done earlier
                 ruleManager.ComputeRankings();
-                if (!compilation.IsFallbackToNonStreaming())
-                {
-                    ruleManager.InvertStreamableTemplates();
-                }
-
-                if (config.ObtainOptimizer().IsOptionSet(OptimizerOptions.RULE_SET))
+                if (GetConfiguration().ObtainOptimizer().IsOptionSet(OptimizerOptions.RULE_SET))
                 {
                     ruleManager.OptimizeRules();
                 }
 
-                if (Compilation.TIMING)
-                {
-                    timer.Report("build template rule tables");
-                }
-
-
-                // Build a run-time function library. This supports the use of function-available()
-                // with a dynamic argument, and extensions such as saxon:evaluate(). The run-time
-                // function library differs from the compile-time function library in that both
-                // the StylesheetFunctionLibrary's on the library list are replaced by equivalent
-                // ExecutableFunctionLibrary's. This is to prevent the retaining of run-time links
-                // to the stylesheet document tree.
-                ExecutableFunctionLibrary overriding = new ExecutableFunctionLibrary(config);
-                ExecutableFunctionLibrary underriding = new ExecutableFunctionLibrary(config);
-                foreach (Component decl in stylesheetPackage.ComponentIndex.Values)
-                {
-                    if (decl.GetActor() is UserFunction)
-                    {
-                        UserFunction f = (UserFunction)decl.GetActor();
-                        if (f.IsOverrideExtensionFunction())
-                        {
-                            overriding.AddFunction(f);
-                        }
-                        else
-                        {
-                            underriding.AddFunction(f);
-                        }
-                    }
-                }
-
-                GetStylesheetPackage().SetFunctionLibraryDetails(null, overriding, underriding);
-                if (Compilation.TIMING)
-                {
-                    timer.Report("build runtime function tables");
-                }
-
-
-                // Allocate binding slots to named templates
-                foreach (ComponentDeclaration decl in topLevel)
-                {
-                    StyleElement inst = decl.SourceElement;
-                    if (inst is XSLTemplate)
-                    {
-                        NamedTemplate proc = ((XSLTemplate)inst).GetActor();
-                        if (proc != null && proc.TemplateName == null)
-                        {
-                            proc.AllocateAllBindingSlots(stylesheetPackage);
-                        }
-                    }
-                }
-
-                if (Compilation.TIMING)
-                {
-                    timer.Report("allocate binding slots to named templates");
-                }
-
-
-                // Allocate binding slots to component reference expressions
-                Dictionary<SymbolicName, Component> componentIndex = stylesheetPackage.ComponentIndex;
-                foreach (Component decl in componentIndex.Values)
-                {
-                    Actor proc = decl.GetActor();
-                    if (proc != null)
-                    {
-                        proc.AllocateAllBindingSlots(stylesheetPackage);
-                    }
-                }
-
-                if (Compilation.TIMING)
-                {
-                    timer.Report("allocate binding slots to component references");
-                }
-
-
-                // Allocate binding slots in key definitions
-                KeyManager keyMan = GetKeyManager();
-                foreach (KeyDefinitionSet keySet in keyMan.AllKeyDefinitionSets)
-                {
-                    foreach (KeyDefinition keyDef in keySet.KeyDefinitions)
-                    {
-                        keyDef.MakeDeclaringComponent(Visibility.PRIVATE, GetStylesheetPackage());
-                        keyDef.AllocateAllBindingSlots(stylesheetPackage);
-                    }
-                }
-
-                if (Compilation.TIMING)
-                {
-                    timer.Report("allocate binding slots to key definitions");
-                }
-
-
-                // Allocate binding slots in accumulators
-                AccumulatorRegistry accMan = GetAccumulatorManager();
-                if (accMan != null)
-                {
-                    foreach (Accumulator acc in accMan.AllAccumulators)
-                    {
-                        acc.AllocateAllBindingSlots(stylesheetPackage);
-                    }
-                }
-
-                if (Compilation.TIMING)
-                {
-                    timer.Report("allocate binding slots to accumulators");
-                }
+                BuildRuntimeFunctionLibrary();
+                AllocateBindingSlots();
             }
-            catch (Exception)
+            catch (Exception e) when (!(e is XPathException limit && limit.IsRunLimit()) && !(e is OutOfMemoryException) && !(e is Internal.RecursionDepthError))
             {
 
                 // if syntax errors were reported earlier, then exceptions may occur during this phase
@@ -1320,6 +1035,167 @@ namespace OutSmart.DAXon.Xslt
 
                     // rethrow the exception (bare throw preserves the original stack -- Java rethrow semantics)
                     throw;
+                }
+            }
+        }
+
+        // Registers all modes with the rule manager, then the template rules.
+        private void RegisterModesAndTemplates()
+        {
+            bool allowImplicit = !GetStylesheetPackage().IsDeclaredModes();
+            foreach (ComponentDeclaration decl in topLevel)
+            {
+                StyleElement snode = decl.SourceElement;
+                if (snode is XSLMode)
+                {
+                    GetRuleManager().ObtainMode(snode.GetObjectName(), true);
+                }
+
+                if (allowImplicit)
+                {
+                    RegisterImplicitModes(snode, GetRuleManager());
+                }
+            }
+
+            GetRuleManager().CheckConsistency();
+            foreach (ComponentDeclaration decl in topLevel)
+            {
+                StyleElement snode = decl.SourceElement;
+                if (snode is XSLTemplate)
+                {
+                    ((XSLTemplate)snode).Register(decl);
+                }
+
+                if (snode is XSLMode)
+                {
+
+                    // XSLT 4.0 enclosing modes
+                    foreach (NodeInfo n in snode.Children())
+                    {
+                        if (n is XSLTemplate)
+                        {
+                            ((XSLTemplate)n).Register(decl);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Compiles each top-level declaration, then type-checks each user-defined function. Some declarations
+        // (templates) need to be compiled again when their module is imported again; others (variables, functions) do
+        // not. Functions are no longer type-checked during the optimize step, so that none is inlined before its check.
+        private void CompileDeclarations(Compilation compilation)
+        {
+            foreach (ComponentDeclaration decl in topLevel)
+            {
+                StyleElement snode = decl.SourceElement;
+                if (!snode.IsActionCompleted(StyleElement.ACTION_COMPILE))
+                {
+                    snode.SetActionCompleted(StyleElement.ACTION_COMPILE);
+                    snode.CompileDeclaration(compilation, decl);
+                }
+            }
+
+            foreach (ComponentDeclaration decl in functionIndex.Values)
+            {
+                StyleElement node = decl.SourceElement;
+                if (!node.IsActionCompleted(StyleElement.ACTION_TYPECHECK))
+                {
+                    node.SetActionCompleted(StyleElement.ACTION_TYPECHECK);
+                    if (node.GetVisibility() != Visibility.ABSTRACT)
+                    {
+                        ((XSLFunction)node).GetCompiledFunction().TypeCheck(node.MakeExpressionVisitor());
+                    }
+                }
+            }
+        }
+
+        // Optimizes the functions that are not overridden.
+        private void OptimizeFunctions()
+        {
+            foreach (ComponentDeclaration decl in functionIndex.Values)
+            {
+                StyleElement node = decl.SourceElement;
+                if (!node.IsActionCompleted(StyleElement.ACTION_OPTIMIZE))
+                {
+                    node.SetActionCompleted(StyleElement.ACTION_OPTIMIZE);
+                    ((IStylesheetComponent)node).Optimize(decl);
+                }
+            }
+        }
+
+        // Builds a run-time function library. This supports the use of function-available()
+        // with a dynamic argument, and extensions such as saxon:evaluate(). The run-time
+        // function library differs from the compile-time function library in that both
+        // the StylesheetFunctionLibrary's on the library list are replaced by equivalent
+        // ExecutableFunctionLibrary's. This is to prevent the retaining of run-time links
+        // to the stylesheet document tree.
+        private void BuildRuntimeFunctionLibrary()
+        {
+            Configuration config = GetConfiguration();
+            ExecutableFunctionLibrary overriding = new ExecutableFunctionLibrary(config);
+            ExecutableFunctionLibrary underriding = new ExecutableFunctionLibrary(config);
+            foreach (Component decl in stylesheetPackage.ComponentIndex.Values)
+            {
+                if (decl.GetActor() is UserFunction)
+                {
+                    UserFunction f = (UserFunction)decl.GetActor();
+                    if (f.IsOverrideExtensionFunction())
+                    {
+                        overriding.AddFunction(f);
+                    }
+                    else
+                    {
+                        underriding.AddFunction(f);
+                    }
+                }
+            }
+
+            GetStylesheetPackage().SetFunctionLibraryDetails(null, overriding, underriding);
+        }
+
+        // Allocates binding slots to named templates, component references, key definitions and accumulators.
+        private void AllocateBindingSlots()
+        {
+            foreach (ComponentDeclaration decl in topLevel)
+            {
+                StyleElement inst = decl.SourceElement;
+                if (inst is XSLTemplate)
+                {
+                    NamedTemplate proc = ((XSLTemplate)inst).GetActor();
+                    if (proc != null && proc.TemplateName == null)
+                    {
+                        proc.AllocateAllBindingSlots(stylesheetPackage);
+                    }
+                }
+            }
+
+            Dictionary<SymbolicName, Component> componentIndex = stylesheetPackage.ComponentIndex;
+            foreach (Component decl in componentIndex.Values)
+            {
+                Actor proc = decl.GetActor();
+                if (proc != null)
+                {
+                    proc.AllocateAllBindingSlots(stylesheetPackage);
+                }
+            }
+
+            KeyManager keyMan = GetKeyManager();
+            foreach (KeyDefinitionSet keySet in keyMan.AllKeyDefinitionSets)
+            {
+                foreach (KeyDefinition keyDef in keySet.KeyDefinitions)
+                {
+                    keyDef.MakeDeclaringComponent(Visibility.PRIVATE, GetStylesheetPackage());
+                    keyDef.AllocateAllBindingSlots(stylesheetPackage);
+                }
+            }
+
+            AccumulatorRegistry accMan = GetAccumulatorManager();
+            if (accMan != null)
+            {
+                foreach (Accumulator acc in accMan.AllAccumulators)
+                {
+                    acc.AllocateAllBindingSlots(stylesheetPackage);
                 }
             }
         }
@@ -1398,22 +1274,28 @@ namespace OutSmart.DAXon.Xslt
             stylesheetPackage.SchemaNamespaces.Add(targetNamespace);
         }
 
+        // The last character map of each name, indexed once per state of topLevel as the attribute sets are: a scan of all
+        // the declarations per reference took a chain of 10000 maps 34 s to compile.
+        private Dictionary<StructuredQName, ComponentDeclaration> characterMapDecls;
+        private int characterMapDeclsIndexed = -1;   // topLevel.Count when characterMapDecls was built
+
         public virtual ComponentDeclaration GetCharacterMap(StructuredQName name)
         {
-            for (int i = topLevel.Count - 1; i >= 0; i--)
+            if (characterMapDeclsIndexed != topLevel.Count)
             {
-                ComponentDeclaration decl = topLevel[i];
-                if (decl.SourceElement is XSLCharacterMap)
+                characterMapDecls = new Dictionary<StructuredQName, ComponentDeclaration>();
+                foreach (ComponentDeclaration decl in topLevel)
                 {
-                    XSLCharacterMap t = (XSLCharacterMap)decl.SourceElement;
-                    if (t.CharacterMapName.Equals(name))
+                    if (decl.SourceElement is XSLCharacterMap t && t.CharacterMapName != null)
                     {
-                        return decl;
+                        characterMapDecls[t.CharacterMapName] = decl;
                     }
                 }
+
+                characterMapDeclsIndexed = topLevel.Count;
             }
 
-            return null;
+            return name != null && characterMapDecls.TryGetValue(name, out ComponentDeclaration found) ? found : null;
         }
 
         public virtual void AdjustExposedVisibility()
@@ -1464,44 +1346,23 @@ namespace OutSmart.DAXon.Xslt
 
                 if (!matched && component.GetVisibilityProvenance() == VisibilityProvenance.DEFAULTED)
                 {
-                    matched = LookForMatchingWildcard(exposeDeclarations, component, matched);
-                    if (!matched)
+                    if (!ExposeByWildcard(exposeDeclarations, component, true))
                     {
-                        LookForAnyWildcard(exposeDeclarations, component);
+                        ExposeByWildcard(exposeDeclarations, component, false);
                     }
                 }
             }
         }
 
-        private void LookForAnyWildcard(IList<XSLExpose> exposeDeclarations, Component component)
+        // The first wildcard of the xsl:expose declarations (latest first) that matches the component sets its
+        // visibility; partialOnly looks at the partial wildcards (prefix:*, *:name) alone.
+        private bool ExposeByWildcard(IList<XSLExpose> exposeDeclarations, Component component, bool partialOnly)
         {
             foreach (XSLExpose exposure in exposeDeclarations)
             {
                 foreach (ComponentTest test in exposure.WildcardComponentTests)
                 {
-                    if (test.Matches(component.GetActor()))
-                    {
-                        if (exposure.GetVisibility() == Visibility.ABSTRACT && component.GetVisibility() != Visibility.ABSTRACT)
-                        {
-                            throw new XPathException("The non-abstract component " + component.GetActor().GetSymbolicName() + " cannot be made abstract by means of xsl:expose", "XTSE3025").WithLocation(exposure);
-                        }
-
-                        component.SetVisibility(exposure.GetVisibility(), VisibilityProvenance.EXPOSED);
-                        return;
-                    }
-                }
-            }
-        }
-
-        private bool LookForMatchingWildcard(IList<XSLExpose> exposeDeclarations, Component component, bool matched)
-        {
-
-            // Look for a matching wildcard
-            foreach (XSLExpose exposure in exposeDeclarations)
-            {
-                foreach (ComponentTest test in exposure.WildcardComponentTests)
-                {
-                    if (test.IsPartialWildcard() && test.Matches(component.GetActor()))
+                    if ((!partialOnly || test.IsPartialWildcard()) && test.Matches(component.GetActor()))
                     {
                         if (exposure.GetVisibility() == Visibility.ABSTRACT && component.GetVisibility() != Visibility.ABSTRACT)
                         {
@@ -1514,7 +1375,7 @@ namespace OutSmart.DAXon.Xslt
                 }
             }
 
-            return matched;
+            return false;
         }
 
         public virtual void CompileError(string message, string errorCode)

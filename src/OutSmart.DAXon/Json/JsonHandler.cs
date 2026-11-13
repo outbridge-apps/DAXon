@@ -71,6 +71,16 @@ namespace OutSmart.DAXon.Json
         {
         }
 
+        // False when WriteNumeric ignores asString: the parser may then pass null and skip cutting the token.
+        public virtual bool NeedsNumberText => true;
+
+        // A key or string value that is a range of the input with no escape or control character. Key returns the
+        // key as SetKey should receive it (unescaped = re-escaped), WriteString writes the value; null / false
+        // send it down the general path.
+        public virtual string Key(string input, int start, int length) => null;
+
+        public virtual bool WriteString(string input, int start, int length) => false;
+
         public virtual void WriteString(string val)
         {
         }
@@ -136,21 +146,21 @@ namespace OutSmart.DAXon.Json
                 {
                     if (i + 1 >= buffer.Length || !UTF16CharacterSet.IsLowSurrogate(buffer[i + 1]))
                     {
-                        Substitute(buffer, i, 1, context);
+                        i += Substitute(buffer, i, 1, context) - 1;
                     }
                 }
                 else if (UTF16CharacterSet.IsLowSurrogate(ch))
                 {
                     if (i == 0 || !UTF16CharacterSet.IsHighSurrogate(buffer[i - 1]))
                     {
-                        Substitute(buffer, i, 1, context);
+                        i += Substitute(buffer, i, 1, context) - 1;
                     }
                     else
                     {
                         int pair = UTF16CharacterSet.CombinePair(buffer[i - 1], ch);
                         if (!charChecker.Test(pair))
                         {
-                            Substitute(buffer, i - 1, 2, context);
+                            i += Substitute(buffer, i - 1, 2, context) - 2;
                         }
                     }
                 }
@@ -158,7 +168,7 @@ namespace OutSmart.DAXon.Json
                 {
                     if (!charChecker.Test(ch))
                     {
-                        Substitute(buffer, i, 1, context);
+                        i += Substitute(buffer, i, 1, context) - 1;
                     }
                 }
             } //}
@@ -168,7 +178,9 @@ namespace OutSmart.DAXon.Json
         {
         }
 
-        private void Substitute(StringBuilder buffer, int offset, int count, IXPathContext context)
+        // Returns the replacement's length, where the scan goes on: a shorter fallback result skipped the character after
+        // it, and a two-character removal took the wrong second one.
+        private int Substitute(StringBuilder buffer, int offset, int count, IXPathContext context)
         {
             StringBuilder escaped = new StringBuilder(count * 6);
             for (int j = 0; j < count; j++)
@@ -193,16 +205,11 @@ namespace OutSmart.DAXon.Json
             }
             else
             {
-                for (int j = 0; j < count; j++)
-                {
-                    buffer.Remove(offset + j, 1);
-                }
-
-                for (int j = 0; j < replacement.Length; j++)
-                {
-                    buffer.Insert(offset + j, replacement[j]);
-                }
+                buffer.Remove(offset, count);
+                buffer.Insert(offset, replacement);
             }
+
+            return replacement.Length;
         }
 
         private string Replace(string s, IXPathContext context)

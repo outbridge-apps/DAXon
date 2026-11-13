@@ -18,11 +18,6 @@ using OutSmart.DAXon.Internal.Streams;
 using System.IO;
 namespace OutSmart.DAXon.Api
 {
-    //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(Action<OutSmart.DAXon.Api.IXmlProcessingError> reporter) {"
-    //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
-    //                + "    }"
-    //})
     public class XQueryCompiler
     {
         private readonly Processor processor;
@@ -42,6 +37,7 @@ namespace OutSmart.DAXon.Api
         public virtual StaticQueryContext UnderlyingStaticContext => staticQueryContext;
         public XQueryCompiler(Processor processor)
         {
+            ArgumentCheck.NotNull(processor, nameof(processor));
             this.processor = processor;
             this.staticQueryContext = processor.UnderlyingConfiguration.NewStaticQueryContext();
         }
@@ -87,7 +83,8 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetErrorReporter(IErrorReporter reporter)
         {
-            staticQueryContext.ErrorReporter = reporter;
+            // null clears it (HOSTING, "A null argument"): back to the default, which static errors are reported to.
+            staticQueryContext.ErrorReporter = reporter ?? processor.UnderlyingConfiguration.MakeErrorReporter();
         }
 
         public virtual IErrorReporter GetErrorReporter()
@@ -170,19 +167,30 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetLanguageVersion(string version)
         {
+            int level;
             switch (version)
             {
                 case "3.1":
-                    languageVersion = 31;
+                    level = 31;
                     break;
                 case "4.0":
-                    languageVersion = 40;
+                    level = 40;
                     break;
                 default:
                     throw new ArgumentException("XQuery version must be 3.1 or 4.0 (not " + version + ")");
             }
 
-            staticQueryContext.LanguageVersion = languageVersion;
+            try
+            {
+                staticQueryContext.LanguageVersion = level;
+            }
+            catch (XPathException e)
+            {
+                // XQuery 4.0 is Saxon-PE's; the version stays as it was
+                throw new NotSupportedException(e.Message, e);
+            }
+
+            languageVersion = level;
         }
 
         public virtual string GetLanguageVersion()
@@ -192,6 +200,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void DeclareNamespace(string prefix, string uri)
         {
+            ArgumentCheck.NotNull(prefix, nameof(prefix));
             staticQueryContext.DeclareNamespace(prefix, NamespaceUri.Of(uri));
         }
 
@@ -202,11 +211,13 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetUnprefixedElementMatchingPolicy(UnprefixedElementMatchingPolicy unprefixedElementMatchingPolicy)
         {
+            ArgumentCheck.Defined(unprefixedElementMatchingPolicy, nameof(unprefixedElementMatchingPolicy));
             staticQueryContext.SetUnprefixedElementMatchingPolicy(unprefixedElementMatchingPolicy);
         }
 
         public virtual void DeclareDefaultCollation(string uri)
         {
+            ArgumentCheck.NotNull(uri, nameof(uri));
             staticQueryContext.DeclareDefaultCollation(uri);
         }
 
@@ -217,6 +228,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetRequiredContextItemType(ItemType type)
         {
+            ArgumentCheck.NotNull(type, nameof(type));
             requiredContextItemType = type;
             staticQueryContext.RequiredContextItemType = type.UnderlyingItemType;
         }
@@ -249,21 +261,9 @@ namespace OutSmart.DAXon.Api
             {
                 staticQueryContext.CompileLibrary(query);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (UncheckedXPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (XmlProcessingAbort e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -275,25 +275,13 @@ namespace OutSmart.DAXon.Api
             {
                 staticQueryContext.CompileLibrary(query);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
+                throw ApiErrors.Wrap(e);
             }
             catch (IOException e)
             {
                 throw new DAXonApiException(e);
-            }
-            catch (UncheckedXPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (XmlProcessingAbort e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
             }
         }
 
@@ -303,49 +291,26 @@ namespace OutSmart.DAXon.Api
             {
                 staticQueryContext.CompileLibrary(query, encoding);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
+                throw ApiErrors.Wrap(e);
             }
             catch (IOException e)
             {
                 throw new DAXonApiException(e);
             }
-            catch (UncheckedXPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (XmlProcessingAbort e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
         }
 
         public virtual XQueryExecutable Compile(string query)
         {
+            ArgumentCheck.NotNull(query, nameof(query));
             try
             {
                 return new XQueryExecutable(processor, staticQueryContext.CompileQuery(query));
             }
-            catch (UncheckedXPathException e)
+            catch (Exception e) when (ApiErrors.IsInputError(e))
             {
-                throw new DAXonApiException(e.GetXPathException());
-            }
-            catch (XPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (XmlProcessingAbort e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e, staticQueryContext.BaseURI ?? "urn:query");   // and an input that failed to read, as XsltCompiler
             }
         }
 
@@ -353,58 +318,36 @@ namespace OutSmart.DAXon.Api
 
         public virtual XQueryExecutable Compile(System.IO.Stream query)
         {
+            ArgumentCheck.NotNull(query, nameof(query));
             try
             {
                 // A query the host passes is input like a stylesheet: capped as XsltCompiler caps one (round B1 missed it).
                 query = InputSizeLimit.Apply(query, InputSizeLimit.MaxFor(processor.UnderlyingConfiguration), staticQueryContext.BaseURI ?? "urn:query", "FODC0002");
                 return new XQueryExecutable(processor, staticQueryContext.CompileQuery(query, encoding));
             }
-            catch (UncheckedXPathException e)
+            catch (Exception e) when (ApiErrors.IsInputError(e))
             {
-                throw new DAXonApiException(e.GetXPathException());
-            }
-            catch (XPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (XmlProcessingAbort e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e, staticQueryContext.BaseURI ?? "urn:query");   // and an input that failed to read, as XsltCompiler
             }
         }
 
         public virtual XQueryExecutable Compile(TextReader query)
         {
+            ArgumentCheck.NotNull(query, nameof(query));
             try
             {
                 query = InputSizeLimit.Apply(query, InputSizeLimit.MaxFor(processor.UnderlyingConfiguration), staticQueryContext.BaseURI ?? "urn:query", "FODC0002");
                 return new XQueryExecutable(processor, staticQueryContext.CompileQuery(query));
             }
-            catch (UncheckedXPathException e)
+            catch (Exception e) when (ApiErrors.IsInputError(e))
             {
-                throw new DAXonApiException(e.GetXPathException());
-            }
-            catch (XPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (XmlProcessingAbort e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e, staticQueryContext.BaseURI ?? "urn:query");   // and an input that failed to read, as XsltCompiler
             }
         }
 
         public virtual void SetErrorList(IList<IXmlProcessingError> errorList)
         {
-            SetErrorReporter(new DelegateErrorReporter(err => errorList.Add(err)));
+            SetErrorReporter(errorList == null ? null : new DelegateErrorReporter(err => errorList.Add(err)));
         }
     }
 }

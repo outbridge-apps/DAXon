@@ -254,39 +254,24 @@ namespace OutSmart.DAXon.Functions
                     }
 
                     TinyTree tree = tiny.tree;
-                    int p = tiny.nodeNr;
-                    int firstChild = p + 1;
-                    bool hasChildren = firstChild < tree.numberOfNodes && tree.depth[firstChild] == tree.depth[p] + 1;
+                    int firstChild = TinyText.FirstChild(tree, tiny.nodeNr);
                     UniStringCollector coll = new UniStringCollector();
                     bool first = true;
-                    if (hasChildren)
+                    foreach (int fp in fps)
                     {
-                        byte[] kinds = tree.nodeKind;
-                        int[] nextArr = tree.next;
-                        int[] nameCodes = tree.nameCode;
-                        foreach (int fp in fps)
+                        int n = firstChild;
+                        for (int cur; (cur = TinyText.NextChildNamed(tree, fp, ref n)) >= 0;)
                         {
-                            int n = firstChild;
-                            while (n >= 0)
+                            if (first)
                             {
-                                int cur = n;
-                                int n2 = nextArr[cur];
-                                n = n2 > cur ? n2 : -1;
-                                int k = kinds[cur];
-                                if ((k == Types.Type.ELEMENT || k == Types.Type.TEXTUAL_ELEMENT) && (nameCodes[cur] & NamePool.FP_MASK) == fp)
-                                {
-                                    if (first)
-                                    {
-                                        first = false;
-                                    }
-                                    else
-                                    {
-                                        coll.Accept(separator);
-                                    }
-
-                                    coll.Accept(TinyParentNodeImpl.GetStringValue(tree, cur));
-                                }
+                                first = false;
                             }
+                            else
+                            {
+                                coll.Accept(separator);
+                            }
+
+                            coll.Accept(TinyParentNodeImpl.GetStringValue(tree, cur));
                         }
                     }
 

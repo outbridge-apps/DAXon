@@ -55,10 +55,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
         {
         }
 
-        public override void AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-        }
-
         public override void Explain(ExpressionPresenter @out)
         {
             @out.StartElement("count");

@@ -38,7 +38,7 @@ namespace OutSmart.DAXon.Transformation
 
         public virtual string ModuleUri => GetLocation().GetSystemId();
 
-        public virtual string InstructionName => ((NodeInfo)locator).DisplayName;
+        public virtual string InstructionName => (locator as NodeInfo)?.DisplayName;   // most locations are not a node of the stylesheet
         public XmlProcessingIncident(string message, string errorCode, ILocation location)
         {
             if (message == null)

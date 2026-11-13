@@ -25,7 +25,7 @@ namespace OutSmart.DAXon.Trees.Tiny
     internal abstract class TinyNodeImpl : NodeInfo
     {
 
-        public static readonly char[] NODE_LETTER = new[]
+        internal static readonly char[] NODE_LETTER = new[]
         {
             'x',
             'e',
@@ -647,27 +647,33 @@ namespace OutSmart.DAXon.Trees.Tiny
             // The algorithm depends on the following assertion: if A is before D in document order, then
             // either A is an ancestor of D, or some ancestor-or-self of A has a following-sibling that
             // is before-or-equal to D in document order.
+            // The steps climbed count towards the clock across calls: a climb per call made innermost(//*) quadratic in the
+            // depth, each call too short to look at it alone.
             int n = nodeNr;
+            long steps = 0;
+            bool ancestor;
             while (true)
             {
                 int nextSib = tree.next[n];
-                if (nextSib < 0 || nextSib > dn)
+                if (nextSib < 0 || nextSib > dn || tree.depth[nextSib] == 0)
                 {
-                    return true;
-                }
-                else if (tree.depth[nextSib] == 0)
-                {
-                    return true;
+                    ancestor = true;
+                    break;
                 }
                 else if (nextSib < n)
                 {
                     n = nextSib; // continue
+                    steps++;
                 }
                 else
                 {
-                    return false;
+                    ancestor = false;
+                    break;
                 }
             }
+
+            Controller.CheckActiveTimeoutAfterWork(ref Controller.climbed, steps);
+            return ancestor;
         }
 
         public virtual bool IsId()
@@ -698,7 +704,7 @@ namespace OutSmart.DAXon.Trees.Tiny
         // A node is a singleton grounded value: item 0 is the node itself, every other index is absent.
         // (Was a hollow NIE stub; SubscriptExpression on e.g. `$node/self::x[1000]` hit it.)
         public virtual IItem ItemAt(int arg0) => arg0 == 0 ? this : null;
-        public virtual IGroundedValue Subsequence(int arg0, int arg1) => (arg0 <= 0 && (long)arg0 + arg1 > 0) ? (IGroundedValue)this : OutSmart.DAXon.Values.EmptySequence.GetInstance();
+        public virtual IGroundedValue Subsequence(int arg0, int arg1) => GroundedValueDefaults.Subsequence(this, arg0, arg1);
         public virtual int GetLength() => 1;
         public virtual string GetStringValue() => UnicodeStringValue.ToString(); // upstream NodeInfo default method
         public virtual string GetPublicId() => null;
@@ -706,7 +712,6 @@ namespace OutSmart.DAXon.Trees.Tiny
         IItem IItem.Head() => this;
         SingletonIterator IItem.Iterate() => new SingletonIterator(this);
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual string GetURI() => GetNamespaceUri() == null ? "" : GetNamespaceUri().ToString();
         public virtual IEnumerable<NodeInfo> Children()
         {
@@ -741,36 +746,13 @@ namespace OutSmart.DAXon.Trees.Tiny
         }
         public virtual void Copy(IReceiver @out, int copyOptions, ILocation locationId) => Navigator.Copy(this, @out, copyOptions, locationId); // upstream NodeInfo default
         public virtual IActiveSource AsActiveSource() => new NodeSource(this); // upstream NodeInfo default method
-        public virtual string ToShortString()
-        {
-            // upstream NodeInfo default toShortString()
-            switch (GetNodeKind())
-            {
-                case OutSmart.DAXon.Types.Type.DOCUMENT: return "document-node()";
-                case OutSmart.DAXon.Types.Type.ELEMENT: return "<" + DisplayName + "/>";
-                case OutSmart.DAXon.Types.Type.ATTRIBUTE: return "@" + DisplayName;
-                case OutSmart.DAXon.Types.Type.TEXT: return "text(\"" + OutSmart.DAXon.Transformation.Err.Truncate30(UnicodeStringValue) + "\")";
-                case OutSmart.DAXon.Types.Type.COMMENT: return "<!--" + OutSmart.DAXon.Transformation.Err.Truncate30(UnicodeStringValue) + "-->";
-                case OutSmart.DAXon.Types.Type.PROCESSING_INSTRUCTION: return "<?" + DisplayName + "?>";
-                case OutSmart.DAXon.Types.Type.NAMESPACE:
-                    string __prefix = GetLocalPart();
-                    return "xmlns" + (__prefix.Length == 0 ? "" : ":" + __prefix) + "=\"" + UnicodeStringValue + "\"";
-                default: return "";
-            }
-        }
+        public virtual string ToShortString() => Navigator.ToShortString(this);
         public virtual IGroundedValue Reduce() => this; // upstream GroundedValue default method
-        public virtual bool EffectiveBooleanValue() => ExpressionTool.EffectiveBooleanValue(Iterate()); // upstream GroundedValue default method
+        public virtual bool EffectiveBooleanValue() => true; // a single node
         public virtual IGroundedValue Materialize() => this;
         public virtual IEnumerable<IItem> AsIterable() => new IItem[] { this }; // singleton grounded value (upstream GroundedValue default for an Item)
-        public virtual bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public virtual bool ContainsNode(NodeInfo sought) => GroundedValueDefaults.ContainsNode(this, sought);
+        public virtual IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         public virtual ISequence MakeRepeatable() => this;
     }
 }

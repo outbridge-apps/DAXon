@@ -191,11 +191,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return new TupleComparisonKey(t.GetMembers(), comparers);
         }
 
-        public override void AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            throw new NotSupportedException("Cannot use document projection with group-by");
-        }
-
         internal sealed class ObjectToBeGrouped
         {
             public Tuple groupingValues;
@@ -214,7 +209,22 @@ namespace OutSmart.DAXon.Expressions.Flwor
                 this.comparers = comparers;
             }
 
+            // Asked for twice a tuple (look up, then add), and a collation's key is costly to make: made once.
+            private int hash;
+            private bool hashed;
+
             public override int GetHashCode()
+            {
+                if (!hashed)
+                {
+                    hash = Hash();
+                    hashed = true;
+                }
+
+                return hash;
+            }
+
+            private int Hash()
             {
                 int h = 0x77557755 ^ groupingValues.Length;
                 for (int i = 0; i < groupingValues.Length; i++)
@@ -259,7 +269,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                 {
                     try
                     {
-                        if (!DAXonDeepEqual.DeepEqual(groupingValues[i].Iterate(), ((TupleComparisonKey)other).groupingValues[i].Iterate(), comparers[i], comparers[i].Context, 0))
+                        if (!KeysEqual(groupingValues[i].Iterate(), ((TupleComparisonKey)other).groupingValues[i].Iterate(), comparers[i]))
                         {
                             return false;
                         }
@@ -268,9 +278,36 @@ namespace OutSmart.DAXon.Expressions.Flwor
                     {
                         return false;
                     }
+                    catch (UncheckedXPathException)
+                    {
+                        return false;
+                    }
+                    catch (InvalidCastException)
+                    {
+                        return false;
+                    }
                 }
 
                 return true;
+            }
+
+            // deep-equal of two atomized keys: NaN equals NaN, values that cannot be compared differ.
+            private static bool KeysEqual(ISequenceIterator a, ISequenceIterator b, GenericAtomicComparer comparer)
+            {
+                while (true)
+                {
+                    AtomicValue x = (AtomicValue)a.Next();
+                    AtomicValue y = (AtomicValue)b.Next();
+                    if (x == null || y == null)
+                    {
+                        return x == y;
+                    }
+
+                    if (!(x.IsNaN() && y.IsNaN()) && !comparer.ComparesEqual(x, y))
+                    {
+                        return false;
+                    }
+                }
             }
         }
     }

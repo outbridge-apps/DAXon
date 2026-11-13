@@ -17,6 +17,10 @@ namespace OutSmart.DAXon.Regex
         protected const int MATCHES_ZLS_NEVER = 1024;
         public virtual int MatchLength => -1;
 
+        // Lengths past int are not fixed and minimums saturate: a huge quantifier must not wrap into a false bound.
+        internal static int Fixed(long length) => length > int.MaxValue ? -1 : (int)length;
+        internal static int Least(long length) => length > int.MaxValue ? int.MaxValue : (int)length;
+
         public virtual int MinimumMatchLength
         {
             get

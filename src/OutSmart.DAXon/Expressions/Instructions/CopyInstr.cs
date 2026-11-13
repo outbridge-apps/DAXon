@@ -455,14 +455,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
                                 // output the element end tag (which will fail if validation fails)
                                 output.EndElement();
                             }
-                            catch (XPathException e) when (!(e is XPathException.StackOverflow))
+                            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                             {
-                                // Filtered, not caught: xsl:copy nests once per level of the input
-                                // tree, and a catch that rethrows re-enters exception dispatch from
-                                // the deep point at ~20KB of stack per level. Decorating a
-                                // stack-guard abort that way costs more stack than the descent did,
-                                // so SXLM0001 must fly through untouched.
-                                throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                                // Decorated in the filter, never handled: xsl:copy nests once per level of the input
+                                // tree, and a rethrow from here cost a dispatch per level (XPathException.PassOn).
+                                throw;
                             }
 
                             return null;

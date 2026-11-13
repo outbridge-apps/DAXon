@@ -44,7 +44,7 @@ namespace OutSmart.DAXon.Functions
             map.keyManager = keyManager;
             map.keySet = keyManager.GetKeyDefinitionSet(StandardNames.GetStructuredQName(StandardNames.XS_IDREFS));
             ISequenceIterator allValues = new Expressions.MappingIterator(arguments[0].Iterate(), map);
-            ISequenceIterator result = new DocumentOrderIterator(allValues, LocalOrderComparer.GetInstance());
+            ISequenceIterator result = DocumentOrderIterator.Of(allValues, LocalOrderComparer.GetInstance());
             return SequenceTool.ToLazySequence(result);
         }
 

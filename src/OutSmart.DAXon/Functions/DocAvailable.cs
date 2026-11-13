@@ -8,6 +8,7 @@ using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Values;
 using System;
 using OutSmart.DAXon.Model;
+using OutSmart.DAXon.Transformation;
 namespace OutSmart.DAXon.Functions
 {
     /// <summary>
@@ -61,6 +62,16 @@ namespace OutSmart.DAXon.Functions
                     pool.MarkUnavailable(documentKey);
                     return false;
                 }
+            }
+            catch (Exception e) when (XPathException.RunLimitIn(e) is XPathException limit)
+            {
+                // A limit the host set is no document that cannot be had: the run stops.
+                if (limit == e)
+                {
+                    throw;
+                }
+
+                throw limit;
             }
             catch (Exception)
             {

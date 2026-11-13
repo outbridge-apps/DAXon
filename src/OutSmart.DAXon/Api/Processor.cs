@@ -152,20 +152,25 @@ namespace OutSmart.DAXon.Api
             {
                 core = options.TakeCore();
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
 
             config = core ?? Configuration.NewLicensedConfiguration();
 
             // A core already serving a Processor keeps that one's options, so a nested fn:transform or xsl:evaluate
-            // cannot widen them.
-            Options = config.ProcessorOptions ?? options;
+            // cannot widen them. Options that ask for less than those would be dropped unseen: refused.
+            ProcessorOptions kept = config.ProcessorOptions;
+            string dropped = kept == null || ReferenceEquals(kept, options) ? null : options.DroppedBy(kept);
+            if (dropped != null)
+            {
+                throw new InvalidOperationException("The engine core already serves a Processor, whose options it keeps: "
+                    + dropped + " given here asks for less than those allow and would be ignored. Give it to the Processor "
+                    + "that made the core, or use a core of its own.");
+            }
+
+            Options = kept ?? options;
             TransformTimeout = Options.TransformTimeout ?? DefaultTransformTimeout;
 
             // Make the Processor discoverable from its Configuration (so config.GetProcessor()
@@ -271,26 +276,47 @@ namespace OutSmart.DAXon.Api
 
         public virtual IPush NewPush(IDestination destination)
         {
+            ArgumentCheck.NotNull(destination, nameof(destination));
             PipelineConfiguration pipe = UnderlyingConfiguration.MakePipelineConfiguration();
             SerializationProperties props = new SerializationProperties();
             try
             {
-                return new PushToReceiver(destination.GetReceiver(pipe, props), destination);
+                Core.Controller.DeadlineToken limitsBefore = Core.Controller.ActiveLimits;
+                IReceiver receiver = destination.GetReceiver(pipe, props);
+                // A transformer or query destination arms its run on this thread. The host's own work between pushed
+                // events is not that run's: the run's limits go on the thread only for each event (PushToReceiver.Send).
+                Core.Controller.DeadlineToken runLimits = Core.Controller.ActiveLimits;
+                if (runLimits != null && runLimits != limitsBefore)
+                {
+                    Core.Controller.RestoreThreadDeadline(limitsBefore);
+                    runLimits.Pause();
+                }
+                else
+                {
+                    runLimits = null;
+                }
+
+                return new PushToReceiver(receiver, destination, runLimits);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
+                throw ApiErrors.Wrap(e);
             }
         }
 
         public virtual void RegisterExtensionFunction(IExtensionFunction function)
         {
+            ArgumentCheck.NotNull(function, nameof(function));
+            // Checked once here: a definition without them failed later inside a compile, as a raw NullReferenceException.
+            ArgumentCheck.NoNulls(function.ArgumentTypes, nameof(function.ArgumentTypes));
+            ArgumentCheck.NotNull(function.ResultType, nameof(function.ResultType));
             ExtensionFunctionDefinitionWrapper wrapper = new ExtensionFunctionDefinitionWrapper(function);
             RegisterExtensionFunction(wrapper);
         }
 
         public virtual void RegisterExtensionFunction(ExtensionFunctionDefinition function)
         {
+            ArgumentCheck.NotNull(function, nameof(function));
             try
             {
                 config.RegisterExtensionFunction(function);
@@ -313,9 +339,10 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetConfigurationProperty(string name, object value)
         {
+            ArgumentCheck.NotNull(name, nameof(name));
             if (name.Equals(FeatureKeys.CONFIGURATION))
             {
-                config = (Configuration)(object)value;
+                ReplaceConfiguration(value);
             }
             else
             {
@@ -325,14 +352,16 @@ namespace OutSmart.DAXon.Api
 
         public virtual object GetConfigurationProperty(string name)
         {
+            ArgumentCheck.NotNull(name, nameof(name));
             return config.GetConfigurationProperty(name);
         }
 
         public virtual void SetConfigurationProperty<T>(Feature<T> feature, T value)
         {
+            ArgumentCheck.NotNull(feature, nameof(feature));
             if ((object)feature == (object)Feature<Configuration>.CONFIGURATION)
             {
-                config = (Configuration)(object)value;
+                ReplaceConfiguration(value);
             }
             else
             {
@@ -340,13 +369,37 @@ namespace OutSmart.DAXon.Api
             }
         }
 
+        // The engine reads the options through its core: a core swapped in bare left every limit and the resource policy
+        // behind. A free core takes this Processor; one serving a Processor with other options is refused.
+        private void ReplaceConfiguration(object value)
+        {
+            if (!(value is Configuration core))
+            {
+                throw value == null ? new ArgumentNullException(nameof(value)) : new ArgumentException("The value of CONFIGURATION must be a Configuration", nameof(value));
+            }
+
+            if (core.GetProcessor() == null)
+            {
+                core.SetProcessor(this);
+            }
+            else if (!ReferenceEquals(core.ProcessorOptions, Options))
+            {
+                throw new InvalidOperationException("This Configuration serves a Processor with other options; build a Processor over it with ProcessorOptions.Configuration");
+            }
+
+            config = core;
+        }
+
         public virtual T GetConfigurationProperty<T>(Feature<T> feature)
         {
+            ArgumentCheck.NotNull(feature, nameof(feature));
             return config.GetConfigurationProperty(feature);
         }
 
         public virtual void DeclareCollation(string uri, IComparer<string> collation)
         {
+            ArgumentCheck.NotNull(uri, nameof(uri));
+            ArgumentCheck.NotNull(collation, nameof(collation));
             if (uri.Equals(NamespaceConstant.CODEPOINT_COLLATION_URI))
             {
                 throw new ArgumentException("Cannot redeclare the Unicode codepoint collation URI");
@@ -375,6 +428,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void RegisterCollection(string collectionURI, IResourceCollection collection)
         {
+            ArgumentCheck.NotNull(collectionURI, nameof(collectionURI));
             config.RegisterCollection(collectionURI, collection);
         }
 
@@ -387,19 +441,17 @@ namespace OutSmart.DAXon.Api
 
         public virtual void WriteXdmValue(XdmValue value, IDestination destination)
         {
-            if (value == null)
-                throw new NullReferenceException();
-            if (destination == null)
-                throw new NullReferenceException();
-            bool closed = false;
+            ArgumentCheck.NotNull(value, nameof(value));
+            ArgumentCheck.NotNull(destination, nameof(destination));
+            if (destination is Serializer)
+            {
+                ((Serializer)destination).SerializeXdmValue(value);
+                return;
+            }
+
             try
             {
-                if (destination is Serializer)
-                {
-                    ((Serializer)destination).SerializeXdmValue(value);
-                    closed = true;
-                }
-                else
+                DestinationHelper.RunTo(destination, () =>
                 {
                     IReceiver @out = destination.GetReceiver(config.MakePipelineConfiguration(), config.ObtainDefaultSerializationProperties());
                     // using = abort-path release (a failed write frees the destination's file); Close inside = success path.
@@ -415,25 +467,11 @@ namespace OutSmart.DAXon.Api
                         tree.EndDocument();
                         tree.Close();
                     }
-
-                    destination.CloseAndNotify();
-                    closed = true;
-                }
+                });
             }
-            catch (XPathException err)
+            catch (Exception err) when (ApiErrors.IsEngineError(err))
             {
-                throw new DAXonApiException(err);
-            }
-            catch (RecursionDepthError err)
-            {
-                throw new DAXonApiException(err.ToXPathException());
-            }
-            finally
-            {
-                if (!closed)
-                {
-                    DestinationHelper.ReleaseUnclosed(destination);
-                }
+                throw ApiErrors.Wrap(err);
             }
         }
 

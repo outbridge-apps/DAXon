@@ -104,7 +104,6 @@ namespace OutSmart.DAXon.Model
             return GetHashCode() ^ GetPrefix().GetHashCode();
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public string GetURI() => ""; // no-namespace name
     }
 }

@@ -43,6 +43,9 @@ namespace OutSmart.DAXon.ConformanceTests
         static readonly XNamespace C = "http://www.w3.org/2010/09/qt-fots-catalog";
 
         static int _pass, _fail, _skip;
+
+        // Why the set file did not load, or null: such a set ran no case and is no pass.
+        static string _setLoadFailure;
         static readonly List<string> _failures = new List<string>();
         // Per-test verdict dump (QT3_VERDICTDUMP=file): every case records "<id>\t{PASS|FAIL|SKIP}" so a
         // full-catalog run can be diffed test-by-test against another engine (Java-HE batch driver).
@@ -130,6 +133,18 @@ namespace OutSmart.DAXon.ConformanceTests
         // feature=xpath-1.0-compatibility: wrap the test in a version="1.0" stylesheet, which puts
         // the engine's XPath evaluation in backwards-compatible mode (first-item, number() coercion).
         static bool _bcMode;
+        // dependency xsd-version 1.0: the case runs in the engine's XSD 1.0 mode, as the XSLT runner's do. Switched only
+        // when it changes (the set's Processor starts at 1.1): a switch drops the cached conversion rules.
+        static bool _xsd10Case, _xsd10Set;
+
+        static void UseXsd10(bool on)
+        {
+            if (on != _xsd10Set)
+            {
+                _proc.UnderlyingConfiguration.XsdVersion = on ? OutSmart.DAXon.Core.Configuration.XSD10 : OutSmart.DAXon.Core.Configuration.XSD11;
+                _xsd10Set = on;
+            }
+        }
         // The compiled query of the current XQuery-mode case, kept so serialization assertions
         // (serialization-matches / assert-xml) can re-run it into a Serializer — that path honours the
         // query's OWN prolog output declarations (declare option output:method "json" etc.), which the
@@ -307,11 +322,12 @@ namespace OutSmart.DAXon.ConformanceTests
             // (reorder codes, alternate weighting — needs real ICU) stays: Java-HE fails 21/31 on it too.
             // olson-timezone is NOT here: NamedTimeZone is BCL TimeZoneInfo-backed (IANA ids + [ZN] names),
             // which is what the feature asks for — the IKVM Saxon-HE reference passes those 8 cases too.
-            "remote_http", "collection-stability", "directory-as-collection-uri",
+            // non_unicode_codepoint_collation and directory-as-collection-uri are NOT here: the engine has both.
+            "remote_http", "collection-stability",
             // xpath-1.0-compatibility is NOT here: cases carrying that feature run in a
             // version="1.0" wrapper (_bcMode), which flips the engine's XPath BC mode — the same
             // path the xslt30 xpath-compat/xslt-compat sets prove green.
-            "advanced-uca-fallback", "non_unicode_codepoint_collation",
+            "advanced-uca-fallback",
 
             // CLDR spell-out rules for format-integer ('Zwanzigste') ship only with real ICU (Saxon-PE);
             // both this port and Saxon-HE-Java produce English words for non-English languages.
@@ -511,6 +527,11 @@ namespace OutSmart.DAXon.ConformanceTests
         {
             var sb = new StringBuilder();
             sb.Append("SETRESULT\t").Append(_pass).Append('\t').Append(_fail).Append('\t').Append(_skip).Append('\n');
+            if (_setLoadFailure != null)
+            {
+                sb.Append("SETLOADFAIL\t").Append(_setLoadFailure.Replace('\t', ' ').Replace('\r', ' ').Replace('\n', ' ')).Append('\n');
+            }
+
             foreach (var kv in _skipReasons)
             {
                 sb.Append("SKIPR\t").Append(kv.Value).Append('\t').Append(kv.Key).Append('\n');
@@ -537,6 +558,7 @@ namespace OutSmart.DAXon.ConformanceTests
         static void ResetForSet()
         {
             _pass = _fail = _skip = 0;
+            _setLoadFailure = null;
             _failures.Clear();
             _verdicts.Clear();
             _skipReasons.Clear();
@@ -600,9 +622,24 @@ namespace OutSmart.DAXon.ConformanceTests
             catch { }
         }
 
+        // The memory limit of the runner's processors: the default, which no test holds - the suites passing under it check
+        // that the limit counts what a run holds, not what it allocates; QT3_MAXMEM=<MB> sets another, 0 none.
+        internal static long? MaxMemory()
+        {
+            string mb = Environment.GetEnvironmentVariable("QT3_MAXMEM");
+            if (string.IsNullOrEmpty(mb))
+            {
+                return S.Processor.DefaultMaxMemoryBytes;
+            }
+
+            long n = long.Parse(mb);
+            return n == 0 ? (long?)null : n << 20;
+        }
+
         static int RealMain(string[] args)
         {
-            _proc = new S.Processor(new S.ProcessorOptions { TransformTimeout = TimeSpan.Zero });  // conformance measures correctness, not wall-clock
+            _proc = new S.Processor(new S.ProcessorOptions { TransformTimeout = TimeSpan.Zero, MaxMemoryBytes = MaxMemory() });  // conformance measures correctness, not wall-clock: no time limit
+            _xsd10Set = false;
             _proc.UnderlyingConfiguration.SetResourceResolver(new QtResourceResolver());
             _proc.UnderlyingConfiguration.UnparsedTextURIResolver=new QtTextResolver(_proc.UnderlyingConfiguration.UnparsedTextURIResolver);
             InstallFotsEnv(_proc);
@@ -785,6 +822,7 @@ namespace OutSmart.DAXon.ConformanceTests
             // (name, path, root, childFlag): each set remembers its corpus so the combined pool can spawn
             // the right child mode (--set for qt3tests ns, --xset for xslt-test-catalog ns).
             var matching = new List<(string name, string path, string root, string childFlag)>();
+            var missingSets = new List<string>();   // a set the catalog names whose file is not there ran no case
             foreach (string root in roots)
             {
                 string catalogPath = Path.Combine(root, "catalog.xml");
@@ -794,12 +832,14 @@ namespace OutSmart.DAXon.ConformanceTests
                 bool isXslt = catalog.Root.Name.Namespace == X;
                 XNamespace catNs = isXslt ? X : C;
                 string childFlag = isXslt ? "--xset" : "--set";
-                matching.AddRange(catalog.Root.Elements(catNs + "test-set")
+                var named = catalog.Root.Elements(catNs + "test-set")
                     .Select(ts => (name: (string)ts.Attribute("name") ?? "",
                                    path: Path.Combine(root, ((string)ts.Attribute("file") ?? "").Replace('/', Path.DirectorySeparatorChar)),
                                    root: root, childFlag: childFlag))
                     .Where(x => filters.Count == 0 || filters.Any(f => x.name.IndexOf(f, StringComparison.OrdinalIgnoreCase) >= 0 || x.path.IndexOf(f, StringComparison.OrdinalIgnoreCase) >= 0))
-                    .Where(x => File.Exists(x.path)));
+                    .ToList();
+                matching.AddRange(named.Where(x => File.Exists(x.path)));
+                missingSets.AddRange(named.Where(x => !File.Exists(x.path)).Select(x => x.name));
                 Console.WriteLine($"corpus: {root}  ({(isXslt ? "xslt30" : "qt3")})");
             }
             Console.WriteLine(filters.Count > 0 ? "filters: " + string.Join(",", filters) : "(ALL test-sets)");
@@ -980,8 +1020,30 @@ namespace OutSmart.DAXon.ConformanceTests
                         catch { status = "CRASH start-failed"; }
                     }
 
+                    lock (sbOut)
+                    {
+                        if (status == "ok" && sbOut.ToString().Contains("SETLOADFAIL"))
+                        {
+                            status = "CRASH set-file";
+                        }
+                    }
+
                     lock (agg)
                     {
+                        // A hung or crashed set has no verdicts: it goes into the fail dump as one line of its own,
+                        // so a gate that compares failing ids sees it (its cases were absent, and the gate said IDENTICAL).
+                        if ((status == "HANG" || status.StartsWith("CRASH")) && partFiles[oi] != null)
+                        {
+                            try { File.AppendAllLines(partFiles[oi], new[] { "SET " + jobName + " :: " + status }, new UTF8Encoding(false)); } catch { }
+                        }
+
+                        // Nor are the verdicts it wrote before it was stopped, or after the limit, a pass: the verdict dump
+                        // says what became of the set instead (a load-hung set's 627 cases were read as PASS).
+                        if ((status == "HANG" || status.StartsWith("CRASH")) && vpartFiles[oi] != null)
+                        {
+                            try { File.WriteAllLines(vpartFiles[oi], new[] { "SET " + jobName + "\t" + status }, new UTF8Encoding(false)); } catch { }
+                        }
+
                         if (status == "HANG") hung.Add(jobName);
                         else if (status.StartsWith("CRASH"))
                         {
@@ -1045,6 +1107,7 @@ namespace OutSmart.DAXon.ConformanceTests
                 }
             }
 
+            crashed.AddRange(missingSets.Select(name => name + " (no set file)"));
             long ranN = tPass + tFail;
             Console.WriteLine();
             Console.WriteLine("================================================================");
@@ -1064,7 +1127,7 @@ namespace OutSmart.DAXon.ConformanceTests
             foreach (var kv in _skipReasons.OrderByDescending(k => k.Value).Take(50)) Console.WriteLine($"  {kv.Value,6}  {kv.Key}");
             Console.WriteLine($"HUNG test-sets ({hung.Count}): " + string.Join(", ", hung));
             Console.WriteLine($"CRASHED test-sets ({crashed.Count}): " + string.Join(", ", crashed));
-            return 0;
+            return hung.Count + crashed.Count > 0 ? 2 : 0;   // a set that did not finish is no pass to a gate reading the exit code
         }
 
         static void RunTestSet(string tsPath, Dictionary<string, XElement> globalEnvs)
@@ -1076,7 +1139,7 @@ namespace OutSmart.DAXon.ConformanceTests
             // (.Value=="") -> spurious assert-string-value mismatch. Mixed/non-whitespace .Value and
             // container .Elements() are identical either way, so only pure-whitespace leaves change.
             try { doc = XDocument.Load(tsPath, System.Xml.Linq.LoadOptions.PreserveWhitespace); }
-            catch { return; }
+            catch (Exception e) { _setLoadFailure = e.GetType().Name + ": " + e.Message; return; }
             var setEl = doc.Root;
             string setName = (string)setEl.Attribute("name") ?? Path.GetFileName(tsPath);
             _curSetName = setName;
@@ -1086,7 +1149,8 @@ namespace OutSmart.DAXon.ConformanceTests
             // Fresh Processor per test-set: shares the (cheap) parse across the set's cases, but resets the
             // Configuration's document pool / caches between sets so a 32k-case run doesn't accumulate memory
             // and slow to a crawl (what made the first "optimized" full run degrade over ~40 min).
-            _proc = new S.Processor(new S.ProcessorOptions { TransformTimeout = TimeSpan.Zero });  // conformance measures correctness, not wall-clock
+            _proc = new S.Processor(new S.ProcessorOptions { TransformTimeout = TimeSpan.Zero, MaxMemoryBytes = MaxMemory() });  // conformance measures correctness, not wall-clock: no time limit
+            _xsd10Set = false;
             _proc.UnderlyingConfiguration.SetResourceResolver(new QtResourceResolver());
             _proc.UnderlyingConfiguration.UnparsedTextURIResolver=new QtTextResolver(_proc.UnderlyingConfiguration.UnparsedTextURIResolver);
             InstallFotsEnv(_proc);
@@ -1128,14 +1192,19 @@ namespace OutSmart.DAXon.ConformanceTests
         }
         static bool SliceSkip() => _sliceMod > 1 && (_sliceCounter++ % _sliceMod) != _sliceIdx;
 
-        // Stress cases whose runtime is inherently degenerate BY UPSTREAM DESIGN: Saxon's numeric map-key hash
-        // (BigDecimalValue.hashCode, matched byte-for-byte by the port) truncates fractional keys toward zero,
-        // so e.g. 20 000 keys that are all fractions in (-1,1) land in ONE hash bucket -> O(n^2) merge. They
-        // exceed the 45 s per-set child timeout and the kill would lose the WHOLE set's results, so skip just
-        // these with an explicit reason.
+        // unicode-version cases whose expected results changed after their Unicode release (normalization data of 5.2-6.2).
+        static readonly HashSet<string> UnicodeLockedCases = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "fn-normalize-unicode/fn-normalize-unicode-11", "fn-normalize-unicode/fn-normalize-unicode-11-6-0",
+            "fn-normalize-unicode/fn-normalize-unicode-11-6-2",
+        };
+
+        // A runtime degenerate by upstream design: Saxon's numeric map-key hash (BigDecimalValue.hashCode, which the port
+        // matches) truncates fractions toward zero, so 20 000 keys in (-1,1) share one bucket. Passes, in about 395 s against
+        // Java's 60; past the limit of a set, whose results a kill would lose. same-key-023 has string keys and takes seconds.
         static readonly HashSet<string> KnownStressCases = new HashSet<string>(StringComparer.Ordinal)
         {
-            "op-same-key/same-key-023", "op-same-key/same-key-025",
+            "op-same-key/same-key-025",
         };
 
         // language-dependency cases that need number SPELL-OUT in that language ('Erster'), not date
@@ -1149,9 +1218,9 @@ namespace OutSmart.DAXon.ConformanceTests
         };
 
         // Cases whose QUERY uses `validate lax {...}` — the XQuery Validation Feature, schema-aware
-        // only (XQST0075 on any non-schema-aware processor, Java HE included) — but whose catalog
+        // only (a static error on a non-schema-aware processor; Java-HE says XQST0009) — but whose catalog
         // entry declares no schemaValidation dependency. Same policy as declared schema-aware tests:
-        // skip as a non-HE feature rather than counting a guaranteed XQST0075 as a failure.
+        // skip as a non-HE feature rather than counting a guaranteed error as a failure.
         static readonly HashSet<string> KnownValidationCases = new HashSet<string>(StringComparer.Ordinal)
         {
             "app-spec-examples/fo-test-fn-element-with-id-001", "app-spec-examples/fo-test-fn-element-with-id-002",
@@ -1168,15 +1237,14 @@ namespace OutSmart.DAXon.ConformanceTests
             if (KnownSpellOutCases.Contains(id)) { Skip("languages_for_numbering: spell-out is PE-only (HE prints English words)"); return; }
             if (KnownValidationCases.Contains(id)) { Skip("feature: schemaValidation (validate expression, undeclared dependency)"); return; }
             // Verified against upstream Saxon-HE-Java: it also fails these, so they are a shared HE limitation
-            // not a gap of this port. K-SeqDeepEqualFunc-3: the 4-arg deep-equal exists in Saxon (returns a
-            // value, not the XPST0017 the older-spec test wants). typeswitch-in-xpath: Saxon-HE also evaluates
-            // it rather than raising XPST0003.
+            // not a gap of this port. K-SeqDeepEqualFunc-3: the 4-arg deep-equal exists in Saxon, so both say
+            // XPTY0004 for its last argument, not the XPST0017 the older-spec test wants.
             // fn-load-xquery-module-003/004: F&O demands FOQM0002 for an unresolvable module URI, but
             // Saxon-HE's resolver raises XQST0059 and load-xquery-module's maybeSetErrorCode never
             // overrides it (verified live on Java-HE 12.5 s9api: code=err:XQST0059) — Java fails these
             // two as well. The port mirrors upstream (XQST0059), which is what the XSLT30 twin test
             // load-xquery-module-001 expects.
-            if (id.EndsWith("/K-SeqDeepEqualFunc-3", StringComparison.Ordinal) || id.EndsWith("/typeswitch-in-xpath", StringComparison.Ordinal)
+            if (id.EndsWith("/K-SeqDeepEqualFunc-3", StringComparison.Ordinal)
                 || id.EndsWith("/fn-load-xquery-module-003", StringComparison.Ordinal) || id.EndsWith("/fn-load-xquery-module-004", StringComparison.Ordinal))
             {
                 Skip("Saxon-HE parity: feature/diagnostic absent in Saxon-HE too");
@@ -1185,11 +1253,17 @@ namespace OutSmart.DAXon.ConformanceTests
             _xqMode = false;
             _xqError = null;
             _bcMode = false;
-            foreach (var dep in setDeps.Concat(tc.Elements(C + "dependency")))
+            _xsd10Case = false;
+            // A case's own spec replaces its set's: typeswitch-in-xpath is XP20+ in a set of XQ10+.
+            var caseDeps = tc.Elements(C + "dependency").ToList();
+            bool ownSpec = caseDeps.Any(d => (string)d.Attribute("type") == "spec");
+            foreach (var dep in setDeps.Where(d => !ownSpec || (string)d.Attribute("type") != "spec").Concat(caseDeps))
             {
                 string reason = DepSkipReason(dep);
                 if (reason != null) { Skip(reason); return; }
             }
+
+            UseXsd10(_xsd10Case);
 
             XElement env = null;
             var envRef = tc.Element(C + "environment");
@@ -1362,7 +1436,12 @@ namespace OutSmart.DAXon.ConformanceTests
             var proc = _proc;
             S.XdmNode ctx;
             try { ctx = ContextDoc(env, baseDir, proc, out string envSkip); if (envSkip != null) { Skip(envSkip); return; } }
-            catch (Exception ex) { Skip("environment: " + Trim(ex.Message)); return; }
+            catch (Exception ex)
+            {
+                // The engine failing to build the test's source is the engine's failure, not the environment's.
+                FailCase("environment: " + Trim(ex.Message));
+                return;
+            }
 
             // XQuery path: run the test ONCE through XQueryCompiler; the result value is bound as the external
             // parameter $result (the existing _svParams machinery declares an <xsl:param> for it), and every
@@ -1378,15 +1457,13 @@ namespace OutSmart.DAXon.ConformanceTests
 
             var verdict = EvalResult(resultEl.Elements().First(), proc, rExpr, ctx);
 
-            // Error-detection fallback: an XPath test that calls an XSLT-only function (document(),
-            // system-property(), key(), …) runs clean through the XSLT wrapper — those functions exist there —
-            // masking the XPST0017 that a pure XPath/XQuery processor must raise. When a pure-<error> test fails
-            // on the XSLT path, retry on the XQuery executor (a superset of XPath 3.1) and take that verdict if
-            // it passes. Fallback-only: a test already satisfied via XSLT is never re-run → zero regression risk.
+            // Error-detection fallback: through the XSLT wrapper an XSLT-only function (document(), system-property(),
+            // key(), …) exists, masking the XPST0017 of pure XPath, and count((E)) may leave E unevaluated (XPath 3.1
+            // 2.3.4). When a pure-<error> test fails on that path, it gets the XPath compiler, which is what it is a test of.
             if (verdict.kind != V.Pass && !_xqMode && IsPureErrorResult(resultEl)
                 && !(test.Contains("declare ") || test.Contains("import ")))
             {
-                RunTestAsXQuery(proc, env, test, ctx);
+                RunTestAsXPath(proc, env, test, ctx);
                 if (_xqError != null)
                 {
                     var v2 = EvalResult(resultEl.Elements().First(), proc, "$result", ctx);
@@ -1402,8 +1479,32 @@ namespace OutSmart.DAXon.ConformanceTests
             }
         }
 
+        // Compile+run the test through the XPath compiler, binding the result as $result (or the error code
+        // into _xqError). The pure-<error> fallback of an XPath test.
+        static void RunTestAsXPath(S.Processor proc, XElement env, string test, S.XdmNode ctx)
+        {
+            try
+            {
+                var xpc = proc.NewXPathCompiler();
+                try { xpc.BaseURI = new OutSmart.DAXon.Internal.Net.URI(_baseUri); } catch { }
+                if (_defaultCollation != null) { try { xpc.DeclareDefaultCollation(_defaultCollation); } catch { } }
+                foreach (var (pfx, uri) in _envNs)
+                {
+                    try { xpc.DeclareNamespace(pfx, uri); } catch { }
+                }
+                foreach (string name in _svParams.Keys) xpc.DeclareVariable(SvQName(name));
+                var selector = xpc.Compile(test).Load();
+                foreach (var kv in _svParams) selector.SetVariable(SvQName(kv.Key), kv.Value);
+                var ctxItem = ContextItemFromEnv(env, proc);
+                if (ctxItem != null) selector.SetContextItem(ctxItem);
+                else if (!ReferenceEquals(ctx, _dummy) && ctx != null) selector.SetContextItem(ctx);
+                _svParams["result"] = selector.Evaluate();
+            }
+            catch (Exception ex) { _xqError = ErrCode(ex); }
+        }
+
         // Compile+run the test through the XQuery executor, binding the result as external $result (or the
-        // error code into _xqError). Shared by XQuery-spec tests and the pure-<error> XSLT-masking fallback.
+        // error code into _xqError). The way of XQuery-spec tests.
         static void RunTestAsXQuery(S.Processor proc, XElement env, string test, S.XdmNode ctx)
         {
             try
@@ -2240,16 +2341,14 @@ namespace OutSmart.DAXon.ConformanceTests
                     var tokens = value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     if (tokens.Any(SpecProfile.Contains)) return null;
                     if (tokens.Any(XqProfile.Contains)) { _xqMode = true; return null; }
-                    if (value.Contains("XQ")) return $"spec: XQuery-only ({value})";
                     return $"spec: older-version-only ({value})";
                 case "feature":
                     if (value == "xpath-1.0-compatibility") { _bcMode = true; return null; }
                     // NOSKIP head-to-head: run advanced-uca-fallback (CompareInfo approximation satisfies the
                     // lenient third; IKVM passes 10/31 the same way), typedData (hof tests labelled typed but
-                    // passing untyped — reference passes them so), remote_http and non-unicode collation too.
+                    // passing untyped — reference passes them so), remote_http too.
                     // The schema-* family stays gated even here: those fail en masse everywhere.
-                    if (_noskip && (value == "advanced-uca-fallback" || value == "typedData"
-                        || value == "remote_http" || value == "non_unicode_codepoint_collation")) return null;
+                    if (_noskip && (value == "advanced-uca-fallback" || value == "typedData" || value == "remote_http")) return null;
                     return UnsupportedFeatures.Contains(value) ? $"feature: {value}" : null;
                 case "xml-version":
                     // The port implements XML 1.0 5th-edition / XML 1.1 Name productions (matching upstream
@@ -2259,14 +2358,11 @@ namespace OutSmart.DAXon.ConformanceTests
                     if (_noskip) return null;   // execute xml-version 1.1 too (System.Xml wall -> genuine FAIL)
                     return value.StartsWith("1.0") ? null : $"xml-version: {value}";
                 case "xsd-version":
-                    // The engine implements XSD 1.1 datatypes without schema awareness (xs:error,
-                    // xs:dateTimeStamp, year-zero date rules), like upstream Saxon-HE — the IKVM
-                    // Saxon-HE 12.9 build runs the whole xs-error set green. Tests PINNED to 1.0
-                    // assume semantics a 1.1 processor deliberately violates (e.g. XSD 1.0 hyphen
-                    // rules, bug 30029) — not valid data points, keep skipping those in normal runs;
-                    // NOSKIP executes them (several don't actually diverge and the reference passes them).
-                    if (_noskip) return null;
-                    return value.Trim() == "1.1" ? null : $"xsd-version: {value} (1.0-pinned)";
+                    // The engine implements XSD 1.1 datatypes by default and XSD 1.0 on request, like upstream
+                    // Saxon-HE: a case pinned to 1.0 runs in the 1.0 mode (RunCase switches it), as Java passes all
+                    // 23 of them that way.
+                    _xsd10Case = value.Trim() != "1.1";
+                    return null;
                 case "language":
                     // Date names for any OS-known tag come from Numberer_bcl; spell-out cases are gated
                     // by KnownSpellOutCases. Unknown tags (xib) run and expect the English fallback.
@@ -2275,15 +2371,22 @@ namespace OutSmart.DAXon.ConformanceTests
                 case "calendar": return _noskip ? null : $"calendar: {value}";
                 case "collation": return (!_noskip && value.Contains("UCA")) ? $"collation: {value}" : null;
                 case "unicode-version":
-                    // Version-locked: the assert bakes in the exact character database (case maps, block
-                    // ranges, normalization tables) of one frozen Unicode release. No shipping runtime is
-                    // pinned to an old version, so neither we nor Saxon-HE-Java can match it — parity skip.
-                    return _noskip ? null : $"unicode-version: {value} (version-locked data-table)";
+                    // The assert bakes in one Unicode release's tables, but most results did not change since: those
+                    // run. Only the cases whose data did change are skipped, Saxon-HE-Java failing them too (a
+                    // blanket skip hid the rest).
+                    return (!_noskip && UnicodeLockedCases.Contains(_curId)) ? $"unicode-version: {value} (version-locked data-table)" : null;
                 default: return null;
             }
         }
 
         // ---------- helpers ----------
+        static void FailCase(string reason)
+        {
+            _fail++;
+            _failures.Add($"{_curId} :: {reason}");
+            if (_vdump && _curId != null) _verdicts.Add(_curId + "\tFAIL");
+        }
+
         static void Skip(string reason)
         {
             _skip++;

@@ -124,32 +124,6 @@ namespace OutSmart.DAXon.Expressions
             return actor;
         }
 
-        public virtual void Export(ExpressionPresenter @out, Dictionary<Component, int> componentIdMap, Dictionary<StylesheetPackage, int> packageIdMap)
-        {
-            @out.StartElement("co");
-            int id = ObtainComponentId(this, componentIdMap);
-            @out.EmitAttribute("id", "" + id);
-            if (provenance != VisibilityProvenance.DEFAULTED)
-            {
-                @out.EmitAttribute("vis", GetVisibility().ToString());
-            }
-
-            string refs = ListComponentReferences(componentIdMap);
-            @out.EmitAttribute("binds", refs);
-            if (baseComponent != null && GetActor() == baseComponent.GetActor())
-            {
-                int baseId = ObtainComponentId(baseComponent, componentIdMap);
-                @out.EmitAttribute("base", "" + baseId);
-                @out.EmitAttribute("dpack", packageIdMap.GetOrDefault(declaringPackage) + "");
-            }
-            else
-            {
-                actor.Export(@out);
-            }
-
-            @out.EndElement();
-        }
-
         public virtual string ListComponentReferences(Dictionary<Component, int> componentIdMap)
         {
             StringBuilder fsb = new StringBuilder(128);

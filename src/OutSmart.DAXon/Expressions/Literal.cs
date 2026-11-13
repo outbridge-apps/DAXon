@@ -66,40 +66,8 @@ namespace OutSmart.DAXon.Expressions
 
         public override int ImplementationMethod => ITERATE_METHOD | PROCESS_METHOD | EVALUATE_METHOD;
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public override string ExpressionName => "literal";
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public override string StreamerName => "Literal";
         public Literal(IGroundedValue value)
         {
@@ -256,11 +224,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            return pathMapNodeSet;
-        }
-
         public override ISequenceIterator Iterate(IXPathContext context)
         {
             return value.Iterate();
@@ -288,22 +251,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public override UnicodeString EvaluateAsString(IXPathContext context)
         {
             AtomicValue value = (AtomicValue)EvaluateItem(context);
@@ -315,43 +262,11 @@ namespace OutSmart.DAXon.Expressions
             return value.UnicodeStringValue;
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public override bool EffectiveBooleanValue(IXPathContext context)
         {
             return value.EffectiveBooleanValue();
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public override bool Equals(object obj)
         {
             if (!(obj is Literal))
@@ -426,22 +341,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         protected override int ComputeHashCode()
         {
             if (value is IAtomicSequence)
@@ -454,64 +353,16 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public override string ToString()
         {
             return value.ToString();
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public override void Export(ExpressionPresenter @out)
         {
             ExportValue(value, @out);
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public static void ExportValue(ISequence value, ExpressionPresenter @out)
         {
             if (value.Head() == null)
@@ -632,29 +483,8 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public static void ExportAtomicValue(AtomicValue value, ExpressionPresenter @out)
         {
-            if (@out.GetOptions().target == "JS")
-            {
-                value.CheckValidInJavascript();
-            }
-
             IAtomicType type = value.GetItemType();
             string val = value.GetStringValue();
             if (type.Equals(BuiltInAtomicType.STRING))
@@ -708,22 +538,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public override string ToShortString()
         {
             if (value.GetLength() == 0)
@@ -744,64 +558,16 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public static bool IsAtomic(Expression exp)
         {
             return exp is Literal && ((Literal)exp).GroundedValue is AtomicValue;
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public static bool IsEmptySequence(Expression exp)
         {
             return exp is Literal && ((Literal)exp).GroundedValue.GetLength() == 0;
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public static bool IsConstantBoolean(Expression exp, bool value)
         {
             if (exp is Literal)
@@ -813,22 +579,6 @@ namespace OutSmart.DAXon.Expressions
             return false;
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public static bool HasEffectiveBooleanValue(Expression exp, bool value)
         {
             if (exp is Literal)
@@ -846,22 +596,6 @@ namespace OutSmart.DAXon.Expressions
             return false;
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public static bool IsConstantOne(Expression exp)
         {
             if (exp is Literal)
@@ -873,22 +607,6 @@ namespace OutSmart.DAXon.Expressions
             return false;
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public static bool IsConstantZero(Expression exp)
         {
             if (exp is Literal)
@@ -900,64 +618,16 @@ namespace OutSmart.DAXon.Expressions
             return false;
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public override bool IsSubtreeExpression()
         {
             return true;
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public static Literal MakeEmptySequence()
         {
             return new Literal(EmptySequence.GetInstance());
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public static Literal MakeLiteral(IGroundedValue value)
         {
             value = value.Reduce();
@@ -975,22 +645,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public static Literal MakeLiteral(IGroundedValue value, Expression origin)
         {
             Literal lit = MakeLiteral(value);
@@ -999,43 +653,11 @@ namespace OutSmart.DAXon.Expressions
             return lit;
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         public override Elaborator GetElaborator()
         {
             return new LiteralElaborator();
         }
 
-        /*
-      * Evaluate an expression as a String. This function must only be called in contexts
-      * where it is known that the expression will return a single string (or where an empty sequence
-      * is to be treated as a zero-length string). Implementations should not attempt to convert
-      * the result to a string, other than converting () to "". This method is used mainly to
-      * evaluate expressions produced by compiling an attribute value template.
-      *
-      * @exception OutSmart.DAXon.Transformation.XPathException if any dynamic error occurs evaluating the
-      *     expression
-      * @exception InvalidCastException if the result type of the
-      *     expression is not xs:string?
-      * @param context The context in which the expression is to be evaluated
-      * @return the value of the expression, evaluated in the current context.
-      *     The expression must return a string or (); if the value of the
-      *     expression is (), this method returns "".
-      */
         internal sealed class LiteralElaborator : PullElaborator
         {
             public override ISequenceEvaluator Eagerly()

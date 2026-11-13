@@ -265,7 +265,6 @@ namespace OutSmart.DAXon.Patterns
             else if (allowXPath40Syntax && t.currentToken == Token.KEYWORD_LBRA && (t.currentTokenValue.Equals("record") || t.currentTokenValue.Equals("type") || t.currentTokenValue.Equals("map") || t.currentTokenValue.Equals("array")))
             {
 
-                //ItemType type = parserExtension.parseExtendedItemType(this);
                 ItemType type = ParseItemType();
                 Expression expr = new ItemTypePattern(type);
                 expr.SetRetainedStaticContext(env.MakeRetainedStaticContext());
@@ -309,7 +308,16 @@ namespace OutSmart.DAXon.Patterns
             }
             else
             {
-                return ParseBinaryExpression(ParsePathExpression(), 10);
+                // A pattern in parentheses comes back here, not through ParseExprSingle: the same depth and stack guard.
+                EnterNested();
+                try
+                {
+                    return ParseBinaryExpression(ParsePathExpression(), 10);
+                }
+                finally
+                {
+                    ExitNested();
+                }
             }
         }
 

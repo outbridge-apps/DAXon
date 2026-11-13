@@ -71,7 +71,7 @@ namespace OutSmart.DAXon.Api
             return UnderlyingValue is AtomicValue;
         }
 
-        public int Size()
+        public new int Size()
         {
             return 1;
         }
@@ -83,6 +83,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual bool Matches(ItemType type)
         {
+            ArgumentCheck.NotNull(type, nameof(type));
             return type.Matches(this);
         }
     }

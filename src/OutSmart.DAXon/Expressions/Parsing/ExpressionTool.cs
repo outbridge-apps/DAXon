@@ -50,7 +50,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
                     dir = dir + '/';
                 }
 
-                URI currentDirectoryURL = new Uri(Path.GetFullPath(dir)).AbsoluteUri;
+                URI currentDirectoryURL = OutSmart.DAXon.Internal.Net.FileUris.Of(Path.GetFullPath(dir));
                 return currentDirectoryURL.ToString();
             }
         }
@@ -281,6 +281,13 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
         public static bool IsLoopingReference(VariableReference reference, IBinding binding)
         {
+            // No expression binds a global variable, so the walk would climb to the root and answer true: each
+            // reference to one walked all its ancestors (a chain of 2900 nested ifs over $x walked n^2 levels).
+            if (binding.IsGlobal())
+            {
+                return true;
+            }
+
             Expression child = reference;
             Expression parent = child.ParentExpression;
             while (true)
@@ -550,10 +557,6 @@ namespace OutSmart.DAXon.Expressions.Parsing
             if (exp is Patterns.Pattern)
             {
                 nextFree = ((Patterns.Pattern)exp).AllocateSlots(frame, nextFree);
-            }
-            else if (exp is IScopedBindingElement)
-            {
-                nextFree = ((IScopedBindingElement)exp).AllocateSlots(frame, nextFree);
             }
             else
             {
@@ -844,7 +847,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
                 if (opt.IsOptionSet(OptimizerOptions.LOOP_LIFTING))
                 {
-                    body = LoopLifter.Process(body);
+                    body = LoopLifter.Process(body, visitor, cisi);
                 }
             }
             else
@@ -856,8 +859,6 @@ namespace OutSmart.DAXon.Expressions.Parsing
             {
                 body = opt.EliminateCommonSubexpressions(body);
             }
-
-            opt.PrepareForStreaming(body);
 
             body.RestoreParentPointers();
             return body;

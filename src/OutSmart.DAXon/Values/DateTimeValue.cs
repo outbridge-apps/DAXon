@@ -245,28 +245,30 @@ namespace OutSmart.DAXon.Values
         {
 
             // input must have format [-]yyyy-mm-ddThh:mm:ss[.fff*][([+|-]hh:mm | Z)]
-            // Positional lexer instead of the java-style StringTokenizer: the tokenizer materialized
-            // the trimmed input (ToString) plus a substring for every token - ~10 allocations per
-            // dateTime on the hot cast path. Token boundaries, checks and messages are unchanged.
             MutableDateTimeValue dt = new MutableDateTimeValue();
             dt.hasNoYearZero = !rules.IsAllowYearZero();
             DateTimeLex tok = new DateTimeLex(Whitespace.Trim(s));
-            IConversionResult dateError = ParseDateFields(ref tok, dt, rules, s);
-            if (dateError != null)
+            string wrong = tok.ReadDate(rules.IsAllowYearZero(), out dt.year, out dt.month, out dt.day, out bool yearRange);
+            if (wrong != null)
             {
-                return dateError;
+                return BadDate(wrong, s, yearRange ? "FODT0001" : "FORG0001");
             }
 
-            IConversionResult timeError = ParseTimeFields(ref tok, dt, s);
-            if (timeError != null)
+            if (!tok.HasMoreTokens())
             {
-                return timeError;
+                return BadDate("Too short", s);
             }
 
-            IConversionResult tzError = ParseTimezoneTail(ref tok, dt, s);
-            if (tzError != null)
+            tok.NextToken();
+            if (!tok.TokenIs('T'))
             {
-                return tzError;
+                return BadDate("Wrong delimiter after day", s);
+            }
+
+            wrong = tok.ReadClock(out dt.hour, out dt.minute, out dt.second) ?? tok.ReadTail(true, dt.hour == 24, out dt.nanosecond, out dt.tzMinutes);
+            if (wrong != null)
+            {
+                return BadDate(wrong, s);
             }
 
             bool midnight = false;
@@ -297,565 +299,6 @@ namespace OutSmart.DAXon.Values
             return FromMutableCopy(dt);
         }
 
-        // Parse the [-]yyyy-mm-dd date fields into dt. Returns a BadDate result on error, null on success.
-        private static IConversionResult ParseDateFields(ref DateTimeLex tok, MutableDateTimeValue dt, ConversionRules rules, UnicodeString s)
-        {
-            if (!tok.HasMoreTokens())
-            {
-                return BadDate("too short", s);
-            }
-
-            tok.NextToken();
-            int era = +1;
-            if (tok.TokenIs('+'))
-            {
-                return BadDate("Date must not start with '+' sign", s);
-            }
-            else if (tok.TokenIs('-'))
-            {
-                era = -1;
-                if (!tok.HasMoreTokens())
-                {
-                    return BadDate("No year after '-'", s);
-                }
-
-                tok.NextToken();
-            }
-
-            int value = tok.TokenValue();
-            if (value < 0)
-            {
-                if (value == -1)
-                {
-                    return BadDate("Non-numeric year component", s);
-                }
-                else
-                {
-                    return BadDate("Year is outside the range that Saxon can handle", s, "FODT0001");
-                }
-            }
-
-            dt.year = value * era;
-            if (tok.TokenLength() < 4)
-            {
-                return BadDate("Year is less than four digits", s);
-            }
-
-            if (tok.TokenLength() > 4 && tok.TokenChar0() == '0')
-            {
-                return BadDate("When year exceeds 4 digits, leading zeroes are not allowed", s);
-            }
-
-            if (dt.year == 0 && !rules.IsAllowYearZero())
-            {
-                return BadDate("Year zero is not allowed", s);
-            }
-
-            if (era < 0 && !rules.IsAllowYearZero())
-            {
-                dt.year++; // if year zero not allowed, -0001 is the year before +0001, represented as 0 internally.
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadDate("Too short", s);
-            }
-
-            tok.NextToken();
-            if (!tok.TokenIs('-'))
-            {
-                return BadDate("Wrong delimiter after year", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadDate("Too short", s);
-            }
-
-            tok.NextToken();
-            if (tok.TokenLength() != 2)
-            {
-                return BadDate("Month must be two digits", s);
-            }
-
-            value = tok.TokenValue();
-            if (value < 0)
-            {
-                return BadDate("Non-numeric month component", s);
-            }
-
-            dt.month = (byte)value;
-            if (dt.month < 1 || dt.month > 12)
-            {
-                return BadDate("Month is out of range", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadDate("Too short", s);
-            }
-
-            tok.NextToken();
-            if (!tok.TokenIs('-'))
-            {
-                return BadDate("Wrong delimiter after month", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadDate("Too short", s);
-            }
-
-            tok.NextToken();
-            if (tok.TokenLength() != 2)
-            {
-                return BadDate("Day must be two digits", s);
-            }
-
-            value = tok.TokenValue();
-            if (value < 0)
-            {
-                return BadDate("Non-numeric day component", s);
-            }
-
-            dt.day = (byte)value;
-            if (dt.day < 1 || dt.day > 31)
-            {
-                return BadDate("Day is out of range", s);
-            }
-
-            return null;
-        }
-
-        // Parse the Thh:mm:ss time fields into dt (24:00:00 checks included). Returns BadDate or null.
-        private static IConversionResult ParseTimeFields(ref DateTimeLex tok, MutableDateTimeValue dt, UnicodeString s)
-        {
-            int value;
-            if (!tok.HasMoreTokens())
-            {
-                return BadDate("Too short", s);
-            }
-
-            tok.NextToken();
-            if (!tok.TokenIs('T'))
-            {
-                return BadDate("Wrong delimiter after day", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadDate("Too short", s);
-            }
-
-            tok.NextToken();
-            if (tok.TokenLength() != 2)
-            {
-                return BadDate("Hour must be two digits", s);
-            }
-
-            value = tok.TokenValue();
-            if (value < 0)
-            {
-                return BadDate("Non-numeric hour component", s);
-            }
-
-            dt.hour = (byte)value;
-            if (dt.hour > 24)
-            {
-                return BadDate("Hour is out of range", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadDate("Too short", s);
-            }
-
-            tok.NextToken();
-            if (!tok.TokenIs(':'))
-            {
-                return BadDate("Wrong delimiter after hour", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadDate("Too short", s);
-            }
-
-            tok.NextToken();
-            if (tok.TokenLength() != 2)
-            {
-                return BadDate("Minute must be two digits", s);
-            }
-
-            value = tok.TokenValue();
-            if (value < 0)
-            {
-                return BadDate("Non-numeric minute component", s);
-            }
-
-            dt.minute = (byte)value;
-            if (dt.minute > 59)
-            {
-                return BadDate("Minute is out of range", s);
-            }
-
-            if (dt.hour == 24 && dt.minute != 0)
-            {
-                return BadDate("If hour is 24, minute must be 00", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadDate("Too short", s);
-            }
-
-            tok.NextToken();
-            if (!tok.TokenIs(':'))
-            {
-                return BadDate("Wrong delimiter after minute", s);
-            }
-
-            if (!tok.HasMoreTokens())
-            {
-                return BadDate("Too short", s);
-            }
-
-            tok.NextToken();
-            if (tok.TokenLength() != 2)
-            {
-                return BadDate("Second must be two digits", s);
-            }
-
-            value = tok.TokenValue();
-            if (value < 0)
-            {
-                return BadDate("Non-numeric second component", s);
-            }
-
-            dt.second = (byte)value;
-            if (dt.second > 59)
-            {
-                return BadDate("Second is out of range", s);
-            }
-
-            if (dt.hour == 24 && dt.second != 0)
-            {
-                return BadDate("If hour is 24, second must be 00", s);
-            }
-
-            return null;
-        }
-
-        // Parse the optional fractional-seconds and timezone tail (state machine over the remaining
-        // tokens). Returns BadDate on error, null on success.
-        private static IConversionResult ParseTimezoneTail(ref DateTimeLex tok, MutableDateTimeValue dt, UnicodeString s)
-        {
-            int value;
-            int tz = 0;
-            bool negativeTz = false;
-            int state = 0;
-            while (tok.HasMoreTokens())
-            {
-                if (state == 9)
-                {
-                    return BadDate("Characters after the end", s);
-                }
-
-                tok.NextToken();
-                if (tok.TokenIs('.'))
-                {
-                    if (state != 0)
-                    {
-                        return BadDate("Decimal separator occurs twice", s);
-                    }
-
-                    if (!tok.HasMoreTokens())
-                    {
-                        return BadDate("Decimal point must be followed by digits", s);
-                    }
-
-                    tok.NextToken();
-                    int effLen = tok.TokenLength() > 9 && tok.TokenAllDigits() ? 9 : tok.TokenLength();
-                    value = tok.TokenValuePrefix(effLen);
-                    if (value < 0)
-                    {
-                        return BadDate("Non-numeric fractional seconds component", s);
-                    }
-
-                    double fractionalSeconds = double.Parse('.' + tok.TokenString(effLen), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
-                    int nanoSeconds = (int)JavaMath.Round(fractionalSeconds * 1000000000);
-                    if (nanoSeconds == 1000000000)
-                    {
-                        nanoSeconds--; // truncate fractional seconds to .999_999_999 if nanoseconds rounds to 1_000_000_000
-                    }
-
-                    dt.nanosecond = nanoSeconds;
-                    if (dt.hour == 24 && dt.nanosecond != 0)
-                    {
-                        return BadDate("If hour is 24, fractional seconds must be 0", s);
-                    }
-
-                    state = 1;
-                }
-                else if (tok.TokenIs('Z'))
-                {
-                    if (state > 1)
-                    {
-                        return BadDate("Z cannot occur here", s);
-                    }
-
-                    tz = 0;
-                    state = 9; // we've finished
-                    dt.tzMinutes = 0;
-                }
-                else if (tok.TokenIs('+') || tok.TokenIs('-'))
-                {
-                    bool minus = tok.TokenIs('-');
-                    if (state > 1)
-                    {
-                        return BadDate((minus ? "-" : "+") + " cannot occur here", s);
-                    }
-
-                    state = 2;
-                    if (!tok.HasMoreTokens())
-                    {
-                        return BadDate("Missing timezone", s);
-                    }
-
-                    tok.NextToken();
-                    if (tok.TokenLength() != 2)
-                    {
-                        return BadDate("Timezone hour must be two digits", s);
-                    }
-
-                    value = tok.TokenValue();
-                    if (value < 0)
-                    {
-                        return BadDate("Non-numeric timezone hour component", s);
-                    }
-
-                    tz = value;
-                    if (tz > 14)
-                    {
-                        return BadDate("Timezone is out of range (-14:00 to +14:00)", s);
-                    }
-
-                    tz *= 60;
-                    if (minus)
-                    {
-                        negativeTz = true;
-                    }
-                }
-                else if (tok.TokenIs(':'))
-                {
-                    if (state != 2)
-                    {
-                        return BadDate("Misplaced ':'", s);
-                    }
-
-                    state = 9;
-                    if (!tok.HasMoreTokens())
-                    {
-                        // Upstream lets StringTokenizer throw here and the crash escapes the cast
-                        // (Java HE 12.5, DateTimeValue.java:598); a dangling ':' is a lexical error.
-                        return BadDate("No minutes in timezone", s);
-                    }
-
-                    tok.NextToken();
-                    value = tok.TokenValue();
-                    if (value < 0)
-                    {
-                        return BadDate("Non-numeric timezone minute component", s);
-                    }
-
-                    int tzminute = value;
-                    if (tok.TokenLength() != 2)
-                    {
-                        return BadDate("Timezone minute must be two digits", s);
-                    }
-
-                    if (tzminute > 59)
-                    {
-                        return BadDate("Timezone minute is out of range", s);
-                    }
-
-                    if (Math.Abs(tz) == 14 * 60 && tzminute != 0)
-                    {
-                        return BadDate("Timezone is out of range (-14:00 to +14:00)", s);
-                    }
-
-                    tz += tzminute;
-                    if (negativeTz)
-                    {
-                        tz = -tz;
-                    }
-
-                    dt.tzMinutes = tz;
-                }
-                else
-                {
-                    return BadDate("Timezone format is incorrect", s);
-                }
-            }
-
-            if (state == 2 || state == 3)
-            {
-                return BadDate("Timezone incomplete", s);
-            }
-
-            return null;
-        }
-
-
-        // The StringTokenizer's token stream ("-:.+TZ" delimiter, or a maximal run of other
-        // characters) read positionally off the trimmed string, with the Latin1 byte fast path for
-        // Slice8/Twine8 (byte == codepoint; everything the parser inspects is ASCII).
-        private struct DateTimeLex
-        {
-            private readonly UnicodeString str;
-            private readonly byte[] b8;
-            private readonly int off8;
-            private readonly int len;
-            private int pos;
-            private int delim;      // the current token's character when it is a delimiter, else -1
-            private int runStart;
-            private int runLen;
-
-            public DateTimeLex(UnicodeString trimmed)
-            {
-                str = trimmed;
-                len = trimmed.Length32();
-                b8 = null;
-                off8 = 0;
-                if (trimmed is Slice8 sl)
-                {
-                    b8 = sl.ByteArray;
-                    off8 = sl.Start;
-                }
-                else if (trimmed is Twine8 tw)
-                {
-                    b8 = tw.ByteArray;
-                }
-
-                pos = 0;
-                delim = -1;
-                runStart = 0;
-                runLen = 0;
-            }
-
-            private int CharAt(int i)
-            {
-                return b8 != null ? b8[off8 + i] & 0xff : str.CodePointAt(i);
-            }
-
-            private static bool IsDelim(int c)
-            {
-                return c == '-' || c == ':' || c == '.' || c == '+' || c == 'T' || c == 'Z';
-            }
-
-            public bool HasMoreTokens()
-            {
-                return pos < len;
-            }
-
-            public void NextToken()
-            {
-                if (pos >= len)
-                {
-                    // StringTokenizer's exhaustion contract; every parser call site is now guarded.
-                    throw new InvalidOperationException("No more tokens");
-                }
-
-                int c = CharAt(pos);
-                if (IsDelim(c))
-                {
-                    delim = c;
-                    pos++;
-                    return;
-                }
-
-                delim = -1;
-                runStart = pos;
-                do
-                {
-                    pos++;
-                }
-                while (pos < len && !IsDelim(CharAt(pos)));
-                runLen = pos - runStart;
-            }
-
-            public bool TokenIs(char c)
-            {
-                return delim == c;
-            }
-
-            public int TokenLength()
-            {
-                return delim >= 0 ? 1 : runLen;
-            }
-
-            public char TokenChar0()
-            {
-                return delim >= 0 ? (char)delim : (char)CharAt(runStart);
-            }
-
-            // DurationValue.SimpleInteger over the token: -1 for a delimiter/non-digit, -2 on overflow.
-            public int TokenValue()
-            {
-                return delim >= 0 ? -1 : SpanValue(runStart, runLen);
-            }
-
-            public int TokenValuePrefix(int count)
-            {
-                return delim >= 0 ? -1 : SpanValue(runStart, count);
-            }
-
-            private int SpanValue(int start, int count)
-            {
-                long result = 0;
-                for (int i = start; i < start + count; i++)
-                {
-                    int c = CharAt(i);
-                    if (c < '0' || c > '9')
-                    {
-                        return -1;
-                    }
-
-                    result = result * 10 + (c - '0');
-                    if (result > int.MaxValue)
-                    {
-                        return -2;
-                    }
-                }
-
-                return (int)result;
-            }
-
-            public bool TokenAllDigits()
-            {
-                if (delim >= 0)
-                {
-                    return false;
-                }
-
-                for (int i = runStart; i < runStart + runLen; i++)
-                {
-                    int c = CharAt(i);
-                    if (c < '0' || c > '9')
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            public string TokenString(int count)
-            {
-                return delim >= 0 ? ((char)delim).ToString() : str.Substring(runStart, runStart + (long)count).ToString();
-            }
-        }
-
         private static ValidationFailure BadDate(string msg, UnicodeString value)
         {
             ValidationFailure err = new ValidationFailure("Invalid dateTime value " + Err.Wrap(value, Err.VALUE) + " (" + msg + ")");
@@ -880,14 +323,6 @@ namespace OutSmart.DAXon.Values
             return hasNoYearZero;
         }
 
-        public override void CheckValidInJavascript()
-        {
-            if (year <= 0 || year > 9999)
-            {
-                throw new XPathException("Year out of range for SaxonJS", "FODT0001");
-            }
-        }
-
         public DateTimeValue AdjustToUTC(int implicitTimezone)
         {
             if (HasTimezone())
@@ -909,8 +344,7 @@ namespace OutSmart.DAXon.Values
 
         public BigDecimal ToJulianInstant()
         {
-            int julianDay = DateValue.GetJulianDayNumber(year, month, day);
-            long julianSecond = (long)julianDay * 24 * 60 * 60;
+            long julianSecond = DateValue.JulianDay(year, month, day) * 24 * 60 * 60;   // long: past ~5.88 M years the int day wrapped
             julianSecond += ((hour * 60 + minute) * 60) + second;
             BigDecimal j = BigDecimal.ValueOf(julianSecond);
             if (nanosecond == 0)
@@ -925,12 +359,25 @@ namespace OutSmart.DAXon.Values
 
         public static DateTimeValue FromJulianInstant(BigDecimal instant)
         {
+            // Floored and range-checked: (int) and LongValue() wrapped a dateTime pushed 10^10 days on, and an instant before
+            // 4713 BC took its day, time and nanoseconds from negative remainders.
             BigInteger julianSecond = instant.ToBigInteger();
             BigDecimal nanoseconds = (instant - new BigDecimal(julianSecond)) * BigDecimalValue.BIG_DECIMAL_ONE_BILLION;
-            long js = julianSecond.LongValue();
-            long jd = js / (24 * 60 * 60);
-            DateValue date = DateValue.DateFromJulianDayNumber((int)jd);
-            js = js % (24 * 60 * 60);
+            if (nanoseconds.Sign < 0)
+            {
+                julianSecond -= BigInteger.One;
+                nanoseconds += BigDecimalValue.BIG_DECIMAL_ONE_BILLION;
+            }
+
+            if (BigInteger.Abs(julianSecond) > new BigInteger(DateValue.MaxJulianDayNumber * 24 * 60 * 60))
+            {
+                DateValue.CheckedJulian(long.MaxValue);
+            }
+
+            long js = (long)julianSecond;
+            long jd = js >= 0 ? js / (24 * 60 * 60) : -((-js + 24 * 60 * 60 - 1) / (24 * 60 * 60));
+            DateValue date = DateValue.DateFromJulianDayNumber(DateValue.CheckedJulian(jd));
+            js -= jd * (24 * 60 * 60);
             byte hour = (byte)(js / (60 * 60));
             js = js % (60 * 60);
             byte minute = (byte)(js / 60);
@@ -1005,10 +452,10 @@ namespace OutSmart.DAXon.Values
                 dt = new DateTimeValue(t.Year, t.Month, t.Day, (byte)h, (byte)mi, second, nanosecond, hasNoYearZero, timezone, BuiltInAtomicType.DATE_TIME);
             }
 
-            if (h > 23)
+            while (h > 23)   // from -14:00 to +14:00 is up to 28 hours: an if left 23:00 as 27:00 of the next day
             {
                 h -= 24;
-                DateValue t = DateValue.Tomorrow(year, month, day);
+                DateValue t = DateValue.Tomorrow(dt.Year, dt.Month, dt.Day);
                 dt = new DateTimeValue(t.Year, t.Month, t.Day, (byte)h, (byte)mi, second, nanosecond, hasNoYearZero, timezone, BuiltInAtomicType.DATE_TIME);
             }
 
@@ -1029,17 +476,20 @@ namespace OutSmart.DAXon.Values
             }
             else if (duration is YearMonthDurationValue)
             {
+                // In long, and refused past the years the type holds: in int the year wrapped (2147483647-12-31 + P1Y
+                // gave -3648-12-31).
                 int months = ((YearMonthDurationValue)duration).LengthInMonths;
-                int m = (month - 1) + months;
-                int y = year + m / 12;
-                m = m % 12;
-                if (m < 0)
+                long lm = (month - 1) + (long)months;
+                long ly = year + lm / 12;
+                lm = lm % 12;
+                if (lm < 0)
                 {
-                    m += 12;
-                    y -= 1;
+                    lm += 12;
+                    ly -= 1;
                 }
 
-                m++;
+                int y = DateValue.CheckedYear(ly);
+                int m = (int)lm + 1;
                 int d = day;
                 while (!DateValue.IsValidDate(y, m, d))
                 {
@@ -1096,10 +546,8 @@ namespace OutSmart.DAXon.Values
                 case AccessorFn.Component.MINUTES:
                     return Int64Value.MakeIntegerValue(minute);
                 case AccessorFn.Component.SECONDS:
-                    BigDecimal d = BigDecimal.ValueOf(nanosecond);
-                    d = d.Divide(BigDecimalValue.BIG_DECIMAL_ONE_BILLION, 6, RoundingMode.HALF_UP);
-                    d = d + BigDecimal.ValueOf(second);
-                    return new BigDecimalValue(d);
+                    // All nine digits: to six, half up, 59.9999995 became 60 and the 7th-9th were lost (Saxon the same).
+                    return new BigDecimalValue(new BigDecimal(new System.Numerics.BigInteger(second * 1000000000L + nanosecond), 9).StripTrailingZeros());
                 case AccessorFn.Component.WHOLE_SECONDS:
                     return Int64Value.MakeIntegerValue(second);
                 case AccessorFn.Component.MICROSECONDS:
@@ -1139,7 +587,7 @@ namespace OutSmart.DAXon.Values
                 // both values are in the same timezone (explicitly or implicitly)
                 if (year != v2.year)
                 {
-                    return IntegerValue.Signum(year - v2.year);
+                    return year.CompareTo(v2.year);   // not year - v2.year: it overflowed across +-2^31 and compared the wrong way
                 }
 
                 if (month != v2.month)

@@ -21,9 +21,9 @@ namespace OutSmart.DAXon.Regex
 
         public virtual Operation RepeatedOperation => op;
 
-        public override int MatchLength => min == max && op.MatchLength >= 0 ? min * op.MatchLength : -1;
+        public override int MatchLength => min == max && op.MatchLength >= 0 ? Fixed((long)min * op.MatchLength) : -1;
 
-        public override int MinimumMatchLength => min * op.MinimumMatchLength;
+        public override int MinimumMatchLength => Least((long)min * op.MinimumMatchLength);
 
         public override int MaxLoopingDepth
         {
@@ -55,9 +55,17 @@ namespace OutSmart.DAXon.Regex
             return op.MatchesEmptyString();
         }
 
+        // Memoized: REProgram computes it at compile, matching only reads it.
+        private int containsCaptures = -1;
+
         public override bool ContainsCapturingExpressions()
         {
-            return op is OpCapture || op.ContainsCapturingExpressions();
+            if (containsCaptures < 0)
+            {
+                containsCaptures = op is OpCapture || op.ContainsCapturingExpressions() ? 1 : 0;
+            }
+
+            return containsCaptures == 1;
         }
 
         public override ICharacterClass GetInitialCharacterClass(bool caseBlind)
@@ -78,8 +86,25 @@ namespace OutSmart.DAXon.Regex
             return this;
         }
 
+        // An iterator per repetition: over a long subject the stack holds millions. The clock is read every 4096 and, past
+        // BigCount, the stack is entered in the memory ledger.
+        private static void Primed(Stack<IIntIterator> iterators)
+        {
+            if (iterators.Count == OutSmart.DAXon.Core.MemoryLedger.BigCount)
+            {
+                OutSmart.DAXon.Core.MemoryLedger.Hold(iterators, PrimedSizer);
+            }
+
+            OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+        }
+
+        private static readonly Func<object, long> PrimedSizer = o => 32 + 64L * ((Stack<IIntIterator>)o).Count;
+
         public override IIntIterator IterateMatches(REMatcher matcher, int position)
         {
+            // Nested quantifiers and choices recurse here per level of the pattern: the guard of OpCapture, so a pattern
+            // compiled on a large stack and cached cannot overflow a smaller thread that matches it.
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             Stack<IIntIterator> iterators = new Stack<IIntIterator>();
             Stack<int> positions = new Stack<int>();
             int bound = Math.Min(max, matcher.search.Length32() - position + 1);
@@ -104,6 +129,10 @@ namespace OutSmart.DAXon.Regex
                         p = it.Current;
                         iterators.Push(it);
                         positions.Push(p);
+                        if ((iterators.Count & 0xFFF) == 0)
+                        {
+                            Primed(iterators);
+                        }
                     }
                     else if (iterators.Count == 0)
                     {

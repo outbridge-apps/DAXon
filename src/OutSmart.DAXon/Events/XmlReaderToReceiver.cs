@@ -18,6 +18,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Xml;
 using System.Xml.Schema;
 
@@ -130,7 +131,15 @@ namespace OutSmart.DAXon.Events
         /// </summary>
         public static void Send(XmlReader reader, IReceiver receiver)
         {
-            new XmlReaderToReceiver(reader, receiver).Parse();
+            try
+            {
+                new XmlReaderToReceiver(reader, receiver).Parse();
+            }
+            catch (XmlException e) when (XPathException.RunLimitIn(e) is XPathException limit)
+            {
+                // The deadline met in an entity's stream comes back wrapped as a malformed document: it is the run's limit.
+                throw limit;
+            }
         }
 
         /// <summary>
@@ -230,6 +239,12 @@ namespace OutSmart.DAXon.Events
                         charStream = PeekProlog(charStream, settings, dtd == DtdUse.Whitespace, out mayHaveDoctype);
                         EntitiesOf(settings, entities);
                     }
+#if !NET
+                    else
+                    {
+                        EntitiesOf(settings, entities);
+                    }
+#endif
 
                     return Tracked(XmlReader.Create(charStream, UseDtd(settings, mayHaveDoctype, ref use), baseUri), use.Events);
                 }
@@ -244,9 +259,9 @@ namespace OutSmart.DAXon.Events
             {
                 try
                 {
-                    byteStream = PeekHead(byteStream, settings, dtd == DtdUse.Whitespace, out mayHaveDoctype);
+                    byteStream = PeekHead(byteStream, settings, dtd == DtdUse.Whitespace, true, true, out mayHaveDoctype, out Encoding own);
                     EntitiesOf(settings, entities);
-                    return Tracked(XmlReader.Create(byteStream, UseDtd(settings, mayHaveDoctype, ref use), baseUri), use.Events);
+                    return Tracked(FromBytes(byteStream, own, UseDtd(settings, mayHaveDoctype, ref use), baseUri), use.Events);
                 }
                 catch
                 {
@@ -271,9 +286,9 @@ namespace OutSmart.DAXon.Events
 
                 try
                 {
-                    principal = PeekHead(principal, settings, dtd == DtdUse.Whitespace, out mayHaveDoctype);
+                    principal = PeekHead(principal, settings, dtd == DtdUse.Whitespace, true, true, out mayHaveDoctype, out Encoding own);
                     EntitiesOf(settings, entities);
-                    return Tracked(XmlReader.Create(principal, UseDtd(settings, mayHaveDoctype, ref use), uri.ToString()), use.Events);
+                    return Tracked(FromBytes(principal, own, UseDtd(settings, mayHaveDoctype, ref use), OutSmart.DAXon.Internal.Net.BidiUri.Out(uri.ToString())), use.Events);
                 }
                 catch
                 {
@@ -285,24 +300,177 @@ namespace OutSmart.DAXon.Events
             throw new XPathException("ActiveStreamSource supplies neither a stream nor a system identifier");
         }
 
+        // Whether an XML declaration names an encoding that does not begin UTF, or names UTF-7: nearly every document says
+        // UTF-8 or nothing, and pays no text for the question.
+        private static bool NamesOtherThanUtf(byte[] head, int start, int n)
+        {
+            if (!IsDeclarationStart(head, start, n))
+            {
+                return false;
+            }
+
+            const string Word = "encoding";
+            for (int i = start + 2; i + Word.Length < n && head[i] != '>'; i++)
+            {
+                int matched = 0;
+                while (matched < Word.Length && head[i + matched] == Word[matched])
+                {
+                    matched++;
+                }
+
+                if (matched == Word.Length)
+                {
+                    int at = i + matched;
+                    while (at < n && head[at] != '"' && head[at] != '\'')
+                    {
+                        at++;
+                    }
+
+                    if (at + 3 >= n)
+                    {
+                        return false;
+                    }
+
+                    return !((head[at + 1] | 0x20) == 'u' && (head[at + 2] | 0x20) == 't' && (head[at + 3] | 0x20) == 'f') || NamesUtf7(head, at + 4, n);
+                }
+            }
+
+            return false;
+        }
+
+        // "<?xml" and a space: an XML declaration, not a processing instruction such as xml-stylesheet.
+        private static bool IsDeclarationStart(byte[] head, int start, int n)
+        {
+            if (n - start < 6 || head[start] != '<' || head[start + 1] != '?' || head[start + 2] != 'x' || head[start + 3] != 'm'
+                || head[start + 4] != 'l')
+            {
+                return false;
+            }
+
+            byte b = head[start + 5];
+            return b == ' ' || b == '\t' || b == '\r' || b == '\n';
+        }
+
+        // Whether the head holds the start of an XML declaration and not its end.
+        private static bool DeclarationOpen(byte[] head, int start, int n)
+        {
+            if (!IsDeclarationStart(head, start, n))
+            {
+                return false;
+            }
+
+            for (int i = start + 6; i < n; i++)
+            {
+                if (head[i] == '>')
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // "utf-7", "utf_7" or "utf7" after the "utf" of a declared name: the engine refuses it, so it is looked up.
+        private static bool NamesUtf7(byte[] head, int at, int n)
+        {
+            if (at < n && (head[at] == '-' || head[at] == '_'))
+            {
+                at++;
+            }
+
+            return at < n && head[at] == '7';
+        }
+
+        // own: the encoding to read the bytes with here, when the parser would not get them right (see PlatformEncodings).
+        // The parser takes no notice of the name in the declaration of characters.
+        private static XmlReader FromBytes(Stream bytes, Encoding own, XmlReaderSettings settings, string baseUri)
+        {
+            return own == null
+                ? XmlReader.Create(bytes, settings, baseUri)
+                : XmlReader.Create(new DeclaredTextReader(bytes, own), settings, baseUri);
+        }
+
+        // A byte the encoding the document names leaves undefined reads as U+FFFD, as Java's parser reads it (unparsed-text
+        // refuses it, FOUT1190, as there); ASCII past 7 bits is an error, as Java's own ASCII reader makes it. A UTF-32
+        // mark's own decoding stays strict: that failure is the parser's kind.
+        private sealed class DeclaredTextReader : TextReader
+        {
+            private readonly OutSmart.DAXon.Internal.Streams.StrictTextReader text;
+            private readonly string name;
+
+            public DeclaredTextReader(Stream bytes, Encoding encoding)
+            {
+                Encoding replacing = Replacing.GetValue(encoding, MakeReplacing);
+                text = new OutSmart.DAXon.Internal.Streams.StrictTextReader(bytes, replacing, OutSmart.DAXon.Internal.Streams.StrictTextReader.Marks.Declared);
+                name = encoding.WebName;
+            }
+
+            // One replacing copy of each encoding, not one a document: the encodings the engine decodes with live as long.
+            private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Encoding, Encoding> Replacing =
+                new System.Runtime.CompilerServices.ConditionalWeakTable<Encoding, Encoding>();
+
+            private static Encoding MakeReplacing(Encoding encoding)
+            {
+                var replacing = (Encoding)encoding.Clone();
+                if (encoding.CodePage != OutSmart.DAXon.Internal.PlatformEncodings.AsciiPage)
+                {
+                    replacing.DecoderFallback = new DecoderReplacementFallback("�");
+                }
+
+                return replacing;
+            }
+
+            public override int Read(char[] buffer, int index, int count)
+            {
+                try
+                {
+                    return text.Read(buffer, index, count);
+                }
+                catch (DecoderFallbackException e)
+                {
+                    throw new XmlException("Invalid byte in a document labelled " + name + ": " + e.Message, e);
+                }
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing)
+                {
+                    text.Dispose();
+                }
+
+                base.Dispose(disposing);
+            }
+        }
+
         // A document labelled XML 1.1 (the peek has switched the check of character references off for it) may pull
         // in a DTD and entities labelled 1.1 themselves; one labelled 1.0 may not, and the parser goes on refusing them.
+        // On .NET Framework the head of every entity is read too: System.Xml there decodes one declared UTF-7.
         private static void EntitiesOf(XmlReaderSettings settings, XmlResolver entities)
         {
             if (!settings.CheckCharacters)
             {
-                settings.XmlResolver = new Xml11Entities(entities);
+                settings.XmlResolver = new Xml11Entities(entities, true);
             }
+#if !NET
+            else if (entities != null)
+            {
+                settings.XmlResolver = new Xml11Entities(entities, false);
+            }
+#endif
         }
 
-        // Serves what the resolver serves, the XML 1.1 label of its text declaration read as the document's own was.
+        // Serves what the resolver serves, its text declaration read as the document's own was: its XML 1.1 label
+        // taken off when relabelled, its encoding refused where the document's would be.
         private sealed class Xml11Entities : XmlResolver
         {
             private readonly XmlResolver served;
+            private readonly bool relabel;
 
-            public Xml11Entities(XmlResolver served)
+            public Xml11Entities(XmlResolver served, bool relabel)
             {
                 this.served = served;
+                this.relabel = relabel;
             }
 
             public override System.Net.ICredentials Credentials
@@ -325,7 +493,10 @@ namespace OutSmart.DAXon.Events
                 object entity = served.GetEntity(absoluteUri, role, ofObjectToReturn);
                 try
                 {
-                    return entity is Stream bytes ? PeekHead(bytes, new XmlReaderSettings(), false, out _)
+                    // Only the encoding is looked at, at every reference: System.Xml opens the entity at each, and a resolver may
+                    // serve other bytes then. The head is read and handed on before the rest, the stream never sought: one that
+                    // says it can seek need not, and 1.4.0 never asked.
+                    return entity is Stream bytes ? PeekHead(bytes, new XmlReaderSettings(), false, false, relabel, out _, out _)
                         : entity is TextReader characters ? PeekProlog(characters, new XmlReaderSettings(), false, out _)
                         : entity;
                 }
@@ -387,22 +558,88 @@ namespace OutSmart.DAXon.Events
             return reader;
         }
 
+        // Whether big-endian UTF-32 says nothing else of itself: no label, or UTF-32 or UTF-32BE. Any other label contradicts
+        // the bytes, and the parser refuses the document (XML 1.0 4.3.3), as before the engine read this order itself.
+        private static bool LabelledUtf32BigEndian(byte[] head, int n)
+        {
+            string text = new UTF32Encoding(true, false).GetString(head, 0, n - (n % 4));
+            int declaration = text.IndexOf("<?xml", StringComparison.Ordinal);
+            if (declaration < 0 || declaration > 1)
+            {
+                return true;
+            }
+
+            int end = text.IndexOf("?>", declaration, StringComparison.Ordinal);
+            int at = text.IndexOf("encoding", declaration, StringComparison.Ordinal);
+            if (at < 0 || (end >= 0 && at > end))
+            {
+                return true;
+            }
+
+            int open = text.IndexOfAny(new[] { '"', '\'' }, at);
+            int close = open < 0 ? -1 : text.IndexOf(text[open], open + 1);
+            if (close < 0)
+            {
+                return true;   // the parser says what is wrong with the declaration
+            }
+
+            string label = text.Substring(open + 1, close - open - 1);
+            return OutSmart.DAXon.Internal.PlatformEncodings.IsUtf32(label) || label.Equals("UTF-32BE", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // The encoding the declaration names, past a mark of mark bytes.
+        private static string DeclaredEncoding(byte[] head, int mark, int n)
+        {
+            if (mark == 0)
+            {
+                return OutSmart.DAXon.Resources.EncodingDetector.InferEncoding(head, n, null, n);
+            }
+
+            var declaration = new byte[n - mark];
+            Array.Copy(head, mark, declaration, 0, declaration.Length);
+            return OutSmart.DAXon.Resources.EncodingDetector.InferEncoding(declaration, declaration.Length, null, declaration.Length);
+        }
+
         // A prolog longer than this is not read through: the reader then tells whitespace apart whether or not a
-        // DOCTYPE follows, which is right either way and only slower.
+        // DOCTYPE follows, which is right either way and only slower. A declaration not closed within it is refused.
         private const int MaxPrologPeek = 64 * 1024;
 
-        // Reads the head of the stream: for the label of a document that says it is XML 1.1, which it takes off,
-        // and for whether the prolog has a DOCTYPE. What was read is served again.
-        private static Stream PeekHead(Stream input, XmlReaderSettings settings, bool findDoctype, out bool mayHaveDoctype)
+        // Where the stream stands, or -1 when it cannot go back. CanSeek is not a promise: the position is read and put back
+        // before anything is read, and a stream that fails either is read through.
+        private static long SeekableStart(Stream input)
         {
+            long start = -1;
+            if (input.CanSeek)
+            {
+                try
+                {
+                    long at = input.Position;
+                    input.Position = at;
+                    start = at;
+                }
+                catch (Exception e) when (e is NotSupportedException || e is IOException)
+                {
+                    start = -1;
+                }
+            }
+
+            return start;
+        }
+
+        // Reads the head of the stream: for the label of a document that says it is XML 1.1, which it takes off,
+        // and for whether the prolog has a DOCTYPE. What was read is served again. A document's stream is put back where
+        // it stood when it can go back; an entity's is read through, unbuffered as the resolver served it.
+        private static Stream PeekHead(Stream input, XmlReaderSettings settings, bool findDoctype, bool document, bool relabel, out bool mayHaveDoctype, out Encoding own)
+        {
+            long start = document ? SeekableStart(input) : -1;
             // XmlReader refills its internal buffer in small chunks, so an unbuffered input
             // (File.OpenRead's 4KB default, raw network streams) pays a syscall per refill —
             // measured ~15ms on a 7.5MB file. 64KB stays under the LOH threshold; a seekable
             // stream caps the buffer at its length so small documents don't pay for it.
-            if (!(input is MemoryStream))
+            if (document && !(input is MemoryStream))
             {
                 int bufSize = 64 * 1024;
-                if (input.CanSeek)
+                if (start >= 0)
                 {
                     bufSize = (int)Math.Min(bufSize, Math.Max(XmlDeclPeekBytes, input.Length));
                 }
@@ -410,7 +647,6 @@ namespace OutSmart.DAXon.Events
                 input = new BufferedStream(input, bufSize);
             }
 
-            long start = input.CanSeek ? input.Position : -1;
             byte[] head = new byte[XmlDeclPeekBytes];
             int n = 0, r;
             while (n < XmlDeclPeekBytes && (r = input.Read(head, n, XmlDeclPeekBytes - n)) > 0)
@@ -418,8 +654,30 @@ namespace OutSmart.DAXon.Events
                 n += r;
             }
 
+            // Big-endian UTF-32 with the label UTF-32: System.Xml sees the order, and then takes the label for little-endian.
+            // A UTF-8 mark before a declaration of another encoding: the declaration wins, as with Java and System.Xml on .NET 8.
+            int mark = n >= 3 && head[0] == 0xEF && head[1] == 0xBB && head[2] == 0xBF ? 3 : 0;
+            // A declaration longer than the peek is read through, for its encoding to be seen as the parser will see it.
+            while (n == head.Length && DeclarationOpen(head, mark, n))
+            {
+                if (head.Length >= MaxPrologPeek)
+                {
+                    throw new XmlException("The XML declaration is not closed within " + MaxPrologPeek + " bytes.");
+                }
+
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+                Array.Resize(ref head, head.Length * 16);
+                while (n < head.Length && (r = input.Read(head, n, head.Length - n)) > 0)
+                {
+                    n += r;
+                }
+            }
+
+            own =n >= 4 && head[0] == 0 && head[1] == 0 && ((head[2] == 0 && head[3] == '<') || (head[2] == 0xFE && head[3] == 0xFF))
+                ? (LabelledUtf32BigEndian(head, n) ? new UTF32Encoding(true, false) : null)
+                : NamesOtherThanUtf(head, mark, n) ? OutSmart.DAXon.Internal.PlatformEncodings.ForDeclaration(DeclaredEncoding(head, mark, n)) : null;
             ByteUnits units = UnitsOf(head, n);
-            int digit = Xml11Label(units, true);
+            int digit = relabel ? Xml11Label(units, true) : -1;
             if (digit >= 0)
             {
                 settings.CheckCharacters = false;
@@ -450,10 +708,74 @@ namespace OutSmart.DAXon.Events
                 // Nothing was rewritten and the stream can go back: the parser reads it from where it stood, and
                 // sizes its buffers by its length - some 10 KB less for a small document.
                 input.Position = start;
+                if (document && mark == 0 && own != null && own.CodePage == OutSmart.DAXon.Internal.PlatformEncodings.AsciiPage)
+                {
+                    // ASCII of 7 bits is what System.Xml reads it as: the bytes go to it, checked, and spare the text reader's buffers.
+                    own = null;
+                    return new AsciiBytes(input);
+                }
+
                 return input;
             }
 
             return new PrefixedStream(head, n, input);
+        }
+
+        // The bytes of a document labelled US-ASCII, as they are; one past 7 bits stops the parse, as Java's ASCII reader does.
+        private sealed class AsciiBytes : Stream
+        {
+            private readonly Stream bytes;
+            private long read;
+
+            public AsciiBytes(Stream bytes)
+            {
+                this.bytes = bytes;
+            }
+
+            public override bool CanRead => true;
+            public override bool CanSeek => bytes.CanSeek;
+            public override bool CanWrite => false;
+            public override long Length => bytes.Length;
+
+            public override long Position
+            {
+                get => bytes.Position;
+                set => throw new NotSupportedException();
+            }
+
+            public override int Read(byte[] buffer, int offset, int count)
+            {
+                int got = bytes.Read(buffer, offset, count);
+                for (int i = 0; i < got; i++)
+                {
+                    if (buffer[offset + i] > 0x7F)
+                    {
+                        throw new XmlException("Invalid byte in a document labelled us-ascii: byte [" + buffer[offset + i].ToString("X2")
+                            + "] at index " + (read + i) + " is past 7 bits.");
+                    }
+                }
+
+                read += got;
+                return got;
+            }
+
+            public override void Flush()
+            {
+            }
+
+            public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+            public override void SetLength(long value) => throw new NotSupportedException();
+            public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+            protected override void Dispose(bool disposing)
+            {
+                if (disposing)
+                {
+                    bytes.Dispose();
+                }
+
+                base.Dispose(disposing);
+            }
         }
 
         // Whether a document held as text may have a DOCTYPE: a caller that holds it can ask for the plain reader
@@ -967,9 +1289,11 @@ namespace OutSmart.DAXon.Events
                 string elem = decl.Groups[1].Value;
                 // Each attribute def is `name type default`. Anchoring on the default token that follows the
                 // type (#REQUIRED/#IMPLIED/#FIXED or a quoted value) avoids matching a type keyword that
-                // appears inside an enumeration or a default value earlier in the same ATTLIST.
+                // appears inside an enumeration or a default value earlier in the same ATTLIST. The name starts a token
+                // and is taken whole (atomic): retried from every position of a long token, with every length, it was
+                // quadratic and beyond any time limit (a 40 000-character name: 163 s).
                 foreach (System.Text.RegularExpressions.Match att in System.Text.RegularExpressions.Regex.Matches(decl.Groups[2].Value,
-                    "([^\\s>]+)\\s+(ID|IDREF|IDREFS|NMTOKEN|NMTOKENS|ENTITY|ENTITIES)\\s+(?:#(?:REQUIRED|IMPLIED|FIXED)|\"|')"))
+                    "(?<!\\S)((?>[^\\s>]+))\\s+(ID|IDREF|IDREFS|NMTOKEN|NMTOKENS|ENTITY|ENTITIES)\\s+(?:#(?:REQUIRED|IMPLIED|FIXED)|\"|')"))
                 {
                     if (dtdAttTypes == null)
                     {
@@ -1074,9 +1398,9 @@ namespace OutSmart.DAXon.Events
                         return;
                     }
 
-                    if (abs.IsFile && System.IO.File.Exists(abs.LocalPath))
+                    if (abs.IsFile && OutSmart.DAXon.Internal.Streams.FileNames.IsFile(OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(abs)))
                     {
-                        using (var dtd = new StreamReader(OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(abs.LocalPath)))
+                        using (var dtd = new StreamReader(OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(abs))))
                         {
                             text = dtd.ReadToEnd();
                         }
@@ -1102,6 +1426,8 @@ namespace OutSmart.DAXon.Events
             string qName = dtdAttTypes != null ? reader.Name : null;
 
             NamespaceMap nsMap = namespaceStack.Peek();
+            NamespaceMap.Builder manyDeclared = null;   // past 16 declarations on one tag, bound at once
+            int declared = 0;
             IList<AttributeInfo> attributes = null;
 
             if (reader.MoveToFirstAttribute())
@@ -1122,7 +1448,15 @@ namespace OutSmart.DAXon.Events
                         string prefix = aPrefix.Length == 0 ? string.Empty : aLocal;
                         if (!prefix.Equals("xmlns"))
                         {
-                            nsMap = nsMap.Bind(prefix, NamespaceUri.Of(reader.Value));
+                            if (++declared <= 16)
+                            {
+                                nsMap = nsMap.Bind(prefix, NamespaceUri.Of(reader.Value));
+                            }
+                            else
+                            {
+                                manyDeclared ??= new NamespaceMap.Builder(nsMap);
+                                manyDeclared.Bind(prefix, NamespaceUri.Of(reader.Value));
+                            }
                         }
                     }
                     else
@@ -1157,6 +1491,10 @@ namespace OutSmart.DAXon.Events
                 }
                 while (reader.MoveToNextAttribute());
                 reader.MoveToElement();
+                if (manyDeclared != null)
+                {
+                    nsMap = manyDeclared.ToMap();
+                }
             }
 
             INodeName elementName = GetNodeName(uri, elemPrefix, localName);
@@ -1217,7 +1555,7 @@ namespace OutSmart.DAXon.Events
             {
                 if (buffer.Length - charsUsed < 256)
                 {
-                    Array.Resize(ref buffer, buffer.Length * 2);
+                    Grow((long)charsUsed + 256);
                 }
 
                 read = reader.ReadValueChunk(buffer, charsUsed, buffer.Length - charsUsed);
@@ -1225,6 +1563,26 @@ namespace OutSmart.DAXon.Events
             }
             while (read > 0);
         }
+
+        // The text of one node collects in buffer, refused past what a .NET string can hold (doubling past 2^30 characters
+        // overflowed int). Not in the memory ledger: it is gone with the node, which the tree holds.
+        private void Grow(long needed)
+        {
+            if (needed > MaxTextChars)
+            {
+                throw new XPathException("A text node is longer than " + MaxTextChars + " characters", DAXonErrorCode.SXLM0003);
+            }
+
+            long size = buffer.Length;
+            while (size < needed)
+            {
+                size *= 2;
+            }
+
+            Array.Resize(ref buffer, (int)Math.Min(size, MaxTextChars));
+        }
+
+        private const int MaxTextChars = 0x3FFFFFDF;
 
         private void AppendChars(string s)
         {
@@ -1234,9 +1592,9 @@ namespace OutSmart.DAXon.Events
                 return;
             }
 
-            while (charsUsed + length > buffer.Length)
+            if ((long)charsUsed + length > buffer.Length)
             {
-                Array.Resize(ref buffer, buffer.Length * 2);
+                Grow((long)charsUsed + length);
             }
 
             s.CopyTo(0, buffer, charsUsed, length);
@@ -1575,7 +1933,7 @@ namespace OutSmart.DAXon.Events
                 return publicIds.Resolve(this, baseUri, relativeUri, (r, b, rel) => r.BaseResolveUri(b, rel));
             }
 
-            private Uri BaseResolveUri(Uri baseUri, string relativeUri) => base.ResolveUri(baseUri, relativeUri);
+            private Uri BaseResolveUri(Uri baseUri, string relativeUri) => OutSmart.DAXon.Internal.Net.FileUris.Resolving(baseUri, relativeUri) ?? base.ResolveUri(baseUri, OutSmart.DAXon.Internal.Net.BidiUri.In(relativeUri));
 
             public override object GetEntity(Uri absoluteUri, string role, System.Type ofObjectToReturn)
             {
@@ -1606,7 +1964,7 @@ namespace OutSmart.DAXon.Events
 
                     // Opened as System.Xml opens it, by the engine: a name that is no file's is refused first.
                     object entity = ofObjectToReturn == null || ofObjectToReturn == typeof(Stream) || ofObjectToReturn == typeof(object)
-                        ? OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(absoluteUri.LocalPath, 1)
+                        ? OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(OutSmart.DAXon.Internal.Net.BidiUri.Out(OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(absoluteUri)), 1)
                         : base.GetEntity(absoluteUri, role, ofObjectToReturn);
                     if (principalPending)
                     {

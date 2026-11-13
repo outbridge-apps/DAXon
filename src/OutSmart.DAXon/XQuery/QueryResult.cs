@@ -13,8 +13,8 @@
 // Ported: serialize(node, result, props) + serializeSequence(iter, config, result, props)
 // using the proven inline sequence-copy (Open -> Append(item) -> Dispose), same pattern as
 // functions/Serialize.cs (the real SequenceCopier needs a newer 0-arg Append this IReceiver
-// lacks). NOT ported: wrap()/sendWrappedSequence (RESULT_NS diagnostic wrapper — only the
-// DAXonDeepEqual debug-logging path uses it) and rewriteToDisk (XQuery Update).
+// lacks). NOT ported: wrap()/sendWrappedSequence (a diagnostic wrapper) and rewriteToDisk
+// (XQuery Update).
 
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Lib;
@@ -57,10 +57,5 @@ namespace OutSmart.DAXon.XQuery
             }
             tr.Close();
         }
-
-        // Legacy no-op shapes for the DAXonDeepEqual "undocumented diagnostic option" debug path,
-        // whose input is the still-hollow Wrap(). Typed calls above always win overload resolution.
-        public static void Serialize(object node, object destination, object props) { }
-        public static object Wrap(object iterator, object config) => null;
     }
 }

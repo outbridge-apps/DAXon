@@ -63,7 +63,32 @@ namespace OutSmart.DAXon.Expressions
 
         public virtual IAtomicSequence Cast(AtomicValue value, IXPathContext context)
         {
-            ConversionRules rules = context.GetConfiguration().GetConversionRules();
+            return Cast(value, targetType, resolver, context.GetConfiguration().GetConversionRules());
+        }
+
+        public override ISequence Call(IXPathContext context, ISequence[] args)
+        {
+            AtomicValue val = (AtomicValue)args[0].Head();
+            if (val == null)
+            {
+                if (allowEmpty)
+                {
+                    return EmptyAtomicSequence.GetInstance();
+                }
+                else
+                {
+                    XPathException e = new XPathException("Cast expression does not allow an empty sequence to be supplied", "XPTY0004");
+                    e.SetIsTypeError(true);
+                    throw e;
+                }
+            }
+
+            return Cast(val, context);
+        }
+
+        public static IAtomicSequence Cast(AtomicValue value, IUnionType targetType, INamespaceResolver resolver, ConversionRules rules)
+        {
+            // Shared by the constructor function and ConstructorFunctionLibrary; a second copy had lost 3b, the facet check.
             if (value == null)
             {
                 throw new NullReferenceException();
@@ -86,7 +111,7 @@ namespace OutSmart.DAXon.Expressions
 
             // 2. If the value is an instance of a type in the transitive membership of the union, return it unchanged
             IAtomicType label = value.GetItemType();
-            IEnumerable<IPlainType> memberTypes = ((IUnionType)targetType).PlainMemberTypes;
+            IEnumerable<IPlainType> memberTypes = targetType.PlainMemberTypes;
 
             // 2a. Is the type annotation itself a member type of the union, and of the union type itself?
             if (targetType.IsPlainType())
@@ -144,102 +169,6 @@ namespace OutSmart.DAXon.Expressions
                             {
                                 return (AtomicValue)result;
                             }
-                        }
-                    }
-                }
-            }
-
-            throw new XPathException("Cannot convert the supplied value to " + targetType.Description, "FORG0001");
-        }
-
-        public override ISequence Call(IXPathContext context, ISequence[] args)
-        {
-            AtomicValue val = (AtomicValue)args[0].Head();
-            if (val == null)
-            {
-                if (allowEmpty)
-                {
-                    return EmptyAtomicSequence.GetInstance();
-                }
-                else
-                {
-                    XPathException e = new XPathException("Cast expression does not allow an empty sequence to be supplied", "XPTY0004");
-                    e.SetIsTypeError(true);
-                    throw e;
-                }
-            }
-
-            return Cast(val, context);
-        }
-
-        public static IAtomicSequence Cast(AtomicValue value, IUnionType targetType, INamespaceResolver nsResolver, ConversionRules rules)
-        {
-
-            if (value == null)
-            {
-                throw new NullReferenceException();
-            }
-
-
-            // 1. If the value is a string or untypedAtomic, try casting to each of the member types
-            if (value is StringValue && !(value is AnyURIValue))
-            {
-                try
-                {
-                    return targetType.GetTypedValue(value.UnicodeStringValue, nsResolver, rules);
-                }
-                catch (ValidationException e)
-                {
-                    e.SetErrorCode("FORG0001");
-                    throw;
-                }
-            }
-
-
-            // 2. If the value is an instance of a type in the transitive membership of the union, return it unchanged
-            IAtomicType label = value.GetItemType();
-            IEnumerable<IPlainType> memberTypes = targetType.PlainMemberTypes;
-
-            // 2a. Is the type annotation itself a member type of the union?
-            foreach (IPlainType member in memberTypes)
-            {
-                if (label.Equals(member))
-                {
-                    return value;
-                }
-            }
-
-
-            // 2b. Failing that, is some supertype of the type annotation a member type of the union?
-            foreach (IPlainType member in memberTypes)
-            {
-                IAtomicType t = label;
-                while (t != null)
-                {
-                    if (t.Equals(member))
-                    {
-                        return value;
-                    }
-                    else
-                    {
-                        t = t.BaseType is IAtomicType ? (IAtomicType)t.BaseType : null;
-                    }
-                }
-            }
-
-
-            // 3. if the value can be cast to any of the member types, return the result of that cast
-            foreach (IPlainType type in memberTypes)
-            {
-                if (type is IAtomicType)
-                {
-                    Converter c = rules.GetConverter(value.GetItemType(), (IAtomicType)type);
-                    if (c != null)
-                    {
-                        IConversionResult result = c.Convert(value);
-                        if (result is AtomicValue)
-                        {
-                            return (AtomicValue)result;
                         }
                     }
                 }

@@ -23,7 +23,6 @@ namespace OutSmart.DAXon.Serialization
 {
     public class JSONEmitter
     {
-        //private final ExpandedStreamResult result;
         private readonly Configuration config;
         private readonly IUnicodeWriter writer;
         private bool normalize;
@@ -176,12 +175,7 @@ namespace OutSmart.DAXon.Serialization
                     double abs = Math.Abs(val);
 
                     // Avoid exponential notation except in extremis
-                    Emit(FloatingPointConverter.ConvertDouble(val, abs >= 1E+18 || abs < 1E-18)); //                if (num.isWholeNumber() && abs < 1e18) {
-                    //                    emit(num.longValue() + "");
-                    //                } else if (abs < 1e18 && abs > 1e-18) {
-                    //                    // Avoid exponential notation except in extremis
-                    //                } else {
-                    //                }
+                    Emit(FloatingPointConverter.ConvertDouble(val, abs >= 1E+18 || abs < 1E-18));
                 }
             }
             else if (item is BooleanValue)
@@ -209,21 +203,7 @@ namespace OutSmart.DAXon.Serialization
                 return false;
             }
 
-            byte[] b;
-            int s, e;
-            if (us is Slice8 s8)
-            {
-                b = s8.ByteArray;
-                s = s8.Start;
-                e = s8.End;
-            }
-            else if (us is Twine8 t8)
-            {
-                b = t8.ByteArray;
-                s = 0;
-                e = b.Length;
-            }
-            else if (us is BMPSlice sl)
+            if (us is BMPSlice sl)
             {
                 // zero-copy token view over its line: scan the char window in place
                 string str = sl.Backing;
@@ -242,7 +222,8 @@ namespace OutSmart.DAXon.Serialization
                 Emit(us);
                 return true;
             }
-            else
+
+            if (!Slice8.Latin1Span(us, out byte[] b, out int s, out int e))
             {
                 return false;
             }
@@ -368,7 +349,7 @@ namespace OutSmart.DAXon.Serialization
             else if (actuallyIndenting && !afterKey)
             {
                 Emit('\n');
-                for (int i = 0; i < indentSpaces * level; i++)
+                for (int i = 0; i < indentSpaces * Math.Min(level, IndentWhitespace.MaxLevels); i++)
                 {
                     Emit(' ');
                 }
@@ -380,7 +361,7 @@ namespace OutSmart.DAXon.Serialization
         private void Indent(int level)
         {
             Emit('\n');
-            for (int i = 0; i < indentSpaces * level; i++)
+            for (int i = 0; i < indentSpaces * Math.Min(level, IndentWhitespace.MaxLevels); i++)
             {
                 Emit(' ');
             }
@@ -416,7 +397,7 @@ namespace OutSmart.DAXon.Serialization
         // The character map applied: its replacements as they are, the rest escaped.
         private string EscapeMapped(string cs)
         {
-            UnicodeString text = StringView.Of(cs).Tidy();
+            UnicodeString text = StringView.Of(cs);
             UnicodeString mapped = characterMap.IMap(text, true);
             if (mapped == text)
             {
@@ -446,6 +427,7 @@ namespace OutSmart.DAXon.Serialization
         {
             if (normalize)
             {
+                NormalizeUnicode.RequireTables(cs, "SESU0011");
                 cs = NormalizeUnicode.Normalize(cs, normalizationForm);
             }
 
@@ -481,7 +463,7 @@ namespace OutSmart.DAXon.Serialization
             {
                 writer.Write(s);
             }
-            catch (IOException e)
+            catch (Exception e) when (Emitter.IsWriteFailure(e))
             {
                 throw Emitter.WriteFailure(e, null);
             }
@@ -493,7 +475,7 @@ namespace OutSmart.DAXon.Serialization
             {
                 writer.Write(s);
             }
-            catch (IOException e)
+            catch (Exception e) when (Emitter.IsWriteFailure(e))
             {
                 throw Emitter.WriteFailure(e, null);
             }
@@ -505,7 +487,7 @@ namespace OutSmart.DAXon.Serialization
             {
                 writer.WriteCodePoint(c);
             }
-            catch (IOException e)
+            catch (Exception e) when (Emitter.IsWriteFailure(e))
             {
                 throw Emitter.WriteFailure(e, null);
             }
@@ -531,7 +513,7 @@ namespace OutSmart.DAXon.Serialization
                         writer.Flush();
                     }
                 }
-                catch (IOException e)
+                catch (Exception e) when (Emitter.IsWriteFailure(e))
                 {
                     throw Emitter.WriteFailure(e, null);
                 }

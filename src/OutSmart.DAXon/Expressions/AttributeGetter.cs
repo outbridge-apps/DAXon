@@ -24,9 +24,21 @@ namespace OutSmart.DAXon.Expressions
         public override int IntrinsicDependencies => StaticProperty.DEPENDS_ON_CONTEXT_ITEM;
         public AttributeGetter(object name) { attributeName = name as FingerprintedQName; }
         public override Expression Copy(RebindingMap r) => new AttributeGetter(attributeName);
-        public override void Export(ExpressionPresenter @out) { }
+        public override string ExpressionName => "attGetter";
+        public override string ToShortString() => "@" + attributeName.DisplayName;
+        public override string ToString() => "data(@" + attributeName.DisplayName + ")";
+        public override bool Equals(object obj) => obj is AttributeGetter other && other.attributeName.Equals(attributeName);
+        protected override int ComputeHashCode() => 83571 ^ attributeName.GetHashCode();
+        public override void Export(ExpressionPresenter @out)
+        {
+            @out.StartElement("attVal", this);
+            @out.EmitAttribute("name", attributeName.GetStructuredQName());
+            @out.EndElement();
+        }
         public override ItemType GetItemType() => BuiltInAtomicType.UNTYPED_ATOMIC;
         protected override int ComputeCardinality() => StaticProperty.ALLOWS_ZERO_OR_ONE;
+        // It reads an existing attribute, so it can be lifted out of a loop or shared like any other path.
+        protected override int ComputeSpecialProperties() => StaticProperty.NO_NODES_NEWLY_CREATED;
         public override IItem EvaluateItem(IXPathContext context)
         {
             IItem item = context.GetContextItem();

@@ -83,7 +83,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
             this.characterMapIndex = characterMapIndex;
 
-            //this.nsResolver = nsResolver;
             foreach (Expression e in serializationAttributes.Values)
             {
                 AdoptChildExpression(e);
@@ -164,9 +163,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 {
                     DocumentInstr.CheckContentSequence(visitor.StaticContext, contentOp, validationOptions);
                 }
-                catch (XPathException err)
+                catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(GetLocation())))
                 {
-                    throw err.MaybeWithLocation(GetLocation());
+                    // Decorated in the filter, never handled (XPathException.PassOn).
+                    throw;
                 }
             }
 
@@ -230,13 +230,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
             list.AddRange(serializationAttributes.Values);
             return list;
-        }
-
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet result = base.AddToPathMap(pathMap, pathMapNodeSet);
-            result.SetReturnable(false);
-            return new PathMap.PathMapNodeSet(pathMap.MakeNewRoot(this));
         }
 
         public virtual void Process(IPushEvaluator content, IXPathContext context)
@@ -305,14 +298,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             // which can then be injected at an appropriate point into the output pipeline
             if (validationOptions != null && validationOptions.GetSchemaValidationMode() != Validation.PRESERVE)
             {
-                serParams.ValidationFactory = (output) =>
-                {
-
-                    // Validation can add redundant namespace declarations so we
-                    // need to follow it with a namespace reducer
-                    NamespaceReducer reducer = new NamespaceReducer(output);
-                    return config.GetDocumentValidator(reducer, output.GetSystemId(), validationOptions, GetLocation());
-                };
+                serParams.ValidationFactory = (output) => config.GetDocumentValidator(output, output.GetSystemId(), validationOptions, GetLocation());
             }
 
             IReceiver @out = null;
@@ -347,16 +333,16 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     @out = MakeReceiver(hrefValue, StaticBaseURIString, context, resolver, serParams, resolveAgainstStaticBase);
                     TraceDestination(context, @out);
                 }
-                catch (XPathException e)
+                catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation()).MaybeWithContext(context)))
                 {
-                    throw e.MaybeWithLocation(GetLocation()).MaybeWithContext(context);
+                    // Decorated in the filter, never handled (XPathException.PassOn).
+                    throw;
                 }
             }
 
             @out.GetPipelineConfiguration().SetController(controller);
             string systemId = @out.GetSystemId();
-            NamespaceReducer nr = new NamespaceReducer(@out);
-            ComplexContentOutputter cco = new ComplexContentOutputter(nr);
+            ComplexContentOutputter cco = new ComplexContentOutputter(@out);
             cco.SetSystemId(systemId);
 
             context.CurrentOutputUri = systemId;
@@ -394,15 +380,46 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
                 try
                 {
-                    IReceiver @out = resolver.Resolve(context, hrefValue, @base, @params);
+                    // Checked before the resolver opens the file: opened first, a refused destination (the input the run
+                    // read, its first result document) was truncated, and the refusal left it open and locked.
+                    string expected = ExpectedUri(hrefValue, @base);
+                    if (expected != null)
+                    {
+                        CheckAcceptableUri(context, expected);
+                    }
+
+                    IReceiver @out = null;
+                    try
+                    {
+                        @out = resolver.Resolve(context, hrefValue, @base, @params);
+                    }
+                    finally
+                    {
+                        if (@out == null && expected != null)
+                        {
+                            // Not written after all (the policy refused it, say): a retry is not a second write.
+                            ((XsltController)controller).RemoveUnavailableOutputDestination(new DocumentKey(expected));
+                        }
+                    }
+
                     string systemId = @out.GetSystemId();
                     if (systemId == null)
                     {
-                        systemId = ResolveURI.MakeAbsolute(hrefValue, @base).ToASCIIString();
+                        systemId = expected ?? ResolveURI.MakeAbsolute(hrefValue, @base).ToASCIIString();
                         @out.SetSystemId(systemId);
                     }
 
-                    CheckAcceptableUri(context, systemId);
+                    if (systemId != expected)
+                    {
+                        // The resolver chose another destination: that one is the result document's.
+                        if (expected != null)
+                        {
+                            ((XsltController)controller).RemoveUnavailableOutputDestination(new DocumentKey(expected));
+                        }
+
+                        CheckResolvedUri(context, systemId, @out);
+                    }
+
                     return @out;
                 }
                 catch (XPathException)
@@ -417,6 +434,43 @@ namespace OutSmart.DAXon.Expressions.Instructions
             catch (XPathException e)
             {
                 throw XPathException.MakeXPathException(e);
+            }
+        }
+
+        private static string ExpectedUri(string hrefValue, string @base)
+        {
+            try
+            {
+                return ResolveURI.MakeAbsolute(hrefValue, @base).ToASCIIString();
+            }
+            catch (URISyntaxException)
+            {
+                return null;   // the resolver reports it
+            }
+        }
+
+        // A destination a host's resolver chose, checked once it is open: refused, it is closed again.
+        private static void CheckResolvedUri(IXPathContext context, string systemId, IReceiver @out)
+        {
+            bool accepted = false;
+            try
+            {
+                CheckAcceptableUri(context, systemId);
+                accepted = true;
+            }
+            finally
+            {
+                if (!accepted)
+                {
+                    try
+                    {
+                        @out.Close();
+                    }
+                    catch (XPathException)
+                    {
+                        // The refusal is the error to report.
+                    }
+                }
             }
         }
 

@@ -51,59 +51,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return OperandList(selectOp, sortOp);
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet target = Select.AddToPathMap(pathMap, pathMapNodeSet);
-            foreach (SortKeyDefinition sortKeyDefinition in GetSortKeyDefinitionList())
-            {
-                if (sortKeyDefinition.IsSetContextForSortKey())
-                {
-                    sortKeyDefinition.SortKey.AddToPathMap(pathMap, target);
-                }
-                else
-                {
-                    sortKeyDefinition.SortKey.AddToPathMap(pathMap, pathMapNodeSet);
-                }
-
-                AddSortKeyDetailsToPathMap(pathMap, pathMapNodeSet, sortKeyDefinition);
-            }
-
-            return target;
-        }
-
-        public static void AddSortKeyDetailsToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet, SortKeyDefinition skd)
-        {
-            Expression e = skd.Order;
-            if (e != null)
-            {
-                e.AddToPathMap(pathMap, pathMapNodeSet);
-            }
-
-            e = skd.CaseOrder;
-            if (e != null)
-            {
-                e.AddToPathMap(pathMap, pathMapNodeSet);
-            }
-
-            e = skd.DataTypeExpression;
-            if (e != null)
-            {
-                e.AddToPathMap(pathMap, pathMapNodeSet);
-            }
-
-            e = skd.Language;
-            if (e != null)
-            {
-                e.AddToPathMap(pathMap, pathMapNodeSet);
-            }
-
-            e = skd.CollationNameExpression;
-            if (e != null)
-            {
-                e.AddToPathMap(pathMap, pathMapNodeSet);
-            }
-        }
-
         public override Expression TypeCheck(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             selectOp.TypeCheck(visitor, contextInfo);

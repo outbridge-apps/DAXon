@@ -17,9 +17,6 @@ namespace OutSmart.DAXon.Types
     {
         private readonly ValidationFailure failure;
 
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
         public virtual NodeInfo Node
         {
             get
@@ -38,28 +35,19 @@ namespace OutSmart.DAXon.Types
         {
         }
 
-        /*setIsTypeError(true);*/
         public ValidationException(string message, Exception exception) : base(message, (Exception)exception)
         {
         }
 
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
         public ValidationException(string message, ILocation locator) : base(message, null, locator)
         {
         }
 
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
         public ValidationException(ValidationFailure failure) : base(failure.GetMessage(), failure.GetErrorCode(), failure.Locator)
         {
             this.failure = failure;
         }
 
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
         public string GetMessage()
         {
 
@@ -75,9 +63,6 @@ namespace OutSmart.DAXon.Types
             }
         }
 
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
         public virtual ValidationFailure GetValidationFailure()
         {
             if (failure != null)
@@ -93,9 +78,6 @@ namespace OutSmart.DAXon.Types
             }
         }
 
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder("ValidationException: ");
@@ -108,9 +90,6 @@ namespace OutSmart.DAXon.Types
             return sb.ToString();
         }
 
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
         public virtual string GetPath()
         {
             AbsolutePath ap = GetAbsolutePath();
@@ -132,9 +111,6 @@ namespace OutSmart.DAXon.Types
             }
         }
 
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
-        /*setIsTypeError(true);*/
         public virtual AbsolutePath GetAbsolutePath()
         {
             if (failure != null)

@@ -40,14 +40,9 @@ namespace OutSmart.DAXon.Regex.CharClass
         private Categories()
         {
             // Runs inside a type initializer: see Controller.SuspendThreadDeadline
-            Controller.DeadlineToken outer = Controller.SuspendThreadDeadline();
-            try
+            using (Controller.SuspendScope())
             {
                 Build();
-            }
-            finally
-            {
-                Controller.RestoreThreadDeadline(outer);
             }
         }
 
@@ -195,7 +190,6 @@ namespace OutSmart.DAXon.Regex.CharClass
                 return null;
             }
 
-            // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
             public IIntPredicateProxy Union(IIntPredicateProxy other) => IntPredicateLambda.Of((i) => Test(i) || other.Test(i));
         }
 

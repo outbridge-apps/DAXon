@@ -4,7 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.schema.UserSimpleType;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Lib;
@@ -124,8 +123,6 @@ namespace OutSmart.DAXon.Types
 
         public virtual string Description => DisplayName;
 
-        // OK
-        // OK
         public virtual int WhitespaceAction
         {
             get
@@ -142,8 +139,6 @@ namespace OutSmart.DAXon.Types
             }
         }
 
-        // OK
-        // OK
         public virtual ISchemaType BuiltInBaseType
         {
             get
@@ -158,8 +153,6 @@ namespace OutSmart.DAXon.Types
             }
         }
 
-        // OK
-        // OK
         public virtual IList<IPlainType> PlainMemberTypes => new List<IPlainType>(1) { this };
         public virtual double DefaultPriority => 0; // upstream BuiltInAtomicType.getDefaultPriority (NumericType overrides with 0.125)
         static BuiltInAtomicType()
@@ -435,50 +428,36 @@ namespace OutSmart.DAXon.Types
             }
         }
 
-        // OK
-        // OK
         public bool IsSimpleType()
         {
             return true;
         }
 
-        // OK
-        // OK
         public virtual bool IsAtomicType()
         {
             return true;
         }
 
-        // OK
-        // OK
         public virtual bool IsIdType()
         {
             return fingerprint == StandardNames.XS_ID;
         }
 
-        // OK
-        // OK
         public virtual bool IsIdRefType()
         {
             return fingerprint == StandardNames.XS_IDREF;
         }
 
-        // OK
-        // OK
         public virtual bool IsListType()
         {
             return false;
         }
 
-        // OK
-        // OK
         public virtual bool IsUnionType()
         {
             return false;
         }
 
-        // OK
-        // OK
         public virtual bool IsNamespaceSensitive()
         {
             BuiltInAtomicType @base = this;
@@ -492,8 +471,6 @@ namespace OutSmart.DAXon.Types
             return fp == StandardNames.XS_QNAME || fp == StandardNames.XS_NOTATION;
         }
 
-        // OK
-        // OK
         public virtual ValidationFailure ValidateContent(UnicodeString value, INamespaceResolver nsResolver, ConversionRules rules)
         {
             int f = Fingerprint;
@@ -539,8 +516,6 @@ namespace OutSmart.DAXon.Types
             return converter.Validate(value);
         }
 
-        // OK
-        // OK
         public virtual StringConverter GetStringConverter(ConversionRules rules)
         {
             if (stringConverter != null)
@@ -576,8 +551,6 @@ namespace OutSmart.DAXon.Types
             }
         }
 
-        // OK
-        // OK
         public virtual IAtomicSequence Atomize(NodeInfo node)
         {
 
@@ -590,7 +563,7 @@ namespace OutSmart.DAXon.Types
 
             if (fingerprint == StandardNames.XS_STRING)
             {
-                return new StringValue(stringValue.Tidy());
+                return new StringValue(stringValue);
             }
             else if (fingerprint == StandardNames.XS_UNTYPED_ATOMIC)
             {
@@ -611,15 +584,13 @@ namespace OutSmart.DAXon.Types
             return converter.ConvertString(stringValue).AsAtomic();
         }
 
-        // OK
-        // OK
         public virtual IAtomicSequence GetTypedValue(UnicodeString value, INamespaceResolver resolver, ConversionRules rules)
         {
 
             // Fast path for common cases
             if (fingerprint == StandardNames.XS_STRING)
             {
-                return new StringValue(value.Tidy());
+                return new StringValue(value);
             }
             else if (fingerprint == StandardNames.XS_UNTYPED_ATOMIC)
             {
@@ -635,22 +606,16 @@ namespace OutSmart.DAXon.Types
             return converter.ConvertString(value).AsAtomic();
         }
 
-        // OK
-        // OK
         public override bool Equals(object obj)
         {
             return obj is BuiltInAtomicType && Fingerprint == ((BuiltInAtomicType)obj).Fingerprint;
         }
 
-        // OK
-        // OK
         public override int GetHashCode()
         {
             return Fingerprint;
         }
 
-        // OK
-        // OK
         public virtual ValidationFailure Validate(AtomicValue primValue, UnicodeString lexicalValue, ConversionRules rules)
         {
             switch (fingerprint)
@@ -727,26 +692,16 @@ namespace OutSmart.DAXon.Types
             }
         }
 
-        // OK
-        // OK
         public virtual void AnalyzeContentExpression(Expression expression, int kind)
         {
             AnalyzeContentExpression(this, expression, kind);
         }
 
-        // OK
-        // OK
         public static void AnalyzeContentExpression(ISimpleType simpleType, Expression expression, int kind)
         {
             if (kind == Types.Type.ELEMENT)
             {
-                expression.CheckPermittedContents(simpleType, true); //            // if we are building the content of an element or document, no atomization will take
-                //            // place, and therefore the presence of any element or attribute nodes in the content will
-                //            // cause a validity error, since only simple content is allowed
-                //                throw new XPathException("The content of an element with a simple type must not include any element nodes");
-                //            }
-                //                throw new XPathException("The content of an element with a simple type must not include any attribute nodes");
-                //            }
+                expression.CheckPermittedContents(simpleType, true);
             }
             else if (kind == Types.Type.ATTRIBUTE)
             {
@@ -759,8 +714,6 @@ namespace OutSmart.DAXon.Types
             }
         }
 
-        // OK
-        // OK
         private static BuiltInAtomicType MakeAtomicType(int fingerprint, ISimpleType baseType, string code, bool ordered)
         {
             BuiltInAtomicType t = new BuiltInAtomicType(fingerprint);
@@ -782,38 +735,35 @@ namespace OutSmart.DAXon.Types
             return t;
         }
 
-        // OK
-        // OK
         public virtual UnicodeString Preprocess(UnicodeString input)
         {
             return input;
         }
 
-        // OK
-        // OK
         public virtual UnicodeString Postprocess(UnicodeString input)
         {
             return input;
         }
 
-        // OK
-        // OK
         public virtual bool IsNumericType()
         {
             ItemType p = GetPrimitiveItemType();
             return p == NumericType.GetInstance() || p == DECIMAL || p == DOUBLE || p == FLOAT || p == INTEGER;
         }
 
-        // OK
-        // OK
         public virtual bool IsDurationType()
         {
             return this == DURATION || this == DAY_TIME_DURATION || this == YEAR_MONTH_DURATION;
         }
         IAtomicType IPlainType.GetPrimitiveItemType() => GetPrimitiveItemType();
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual Genre GetGenre() => Genre.ATOMIC; // upstream AtomicType.getGenre() default; was a throwing stub (broke axis type-checks on atomic context)
-        public virtual string ExplainMismatch(IItem item, TypeHierarchy th) => null; // upstream default: no extra explanation (diagnostics must not throw)
+        public virtual string ExplainMismatch(IItem item, TypeHierarchy th)
+        {
+            return item is AtomicValue atomic
+                ? "The supplied value is of type " + atomic.GetItemType()
+                : "The supplied value is " + OutSmart.DAXon.Transformation.Err.DescribeGenre(item.GetGenre());
+        }
+
     }
 }

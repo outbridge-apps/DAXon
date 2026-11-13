@@ -40,7 +40,7 @@ namespace OutSmart.DAXon.Serialization
             IList<AttributeInfo> atts2 = new List<AttributeInfo>(attributes.Size());
             foreach (AttributeInfo att in attributes)
             {
-                UnicodeString oldValue = StringView.Of(att.Value).Tidy();
+                UnicodeString oldValue = StringView.Of(att.Value);
                 if (!ReceiverOption.Contains(att.GetProperties(), ReceiverOption.DISABLE_CHARACTER_MAPS))
                 {
                     UnicodeString mapped = charMap.IMap(oldValue, useNullMarkers);

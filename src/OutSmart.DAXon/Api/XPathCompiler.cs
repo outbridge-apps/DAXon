@@ -88,7 +88,16 @@ namespace OutSmart.DAXon.Api
                     throw new ArgumentException("XPath version");
                 }
 
-                env.SetXPathLanguageLevel(version);
+                try
+                {
+                    env.SetXPathLanguageLevel(version);
+                }
+                catch (XPathException e)
+                {
+                    // XPath 4.0 is Saxon-PE's: refused as SetSchemaAware refuses schema awareness
+                    throw new NotSupportedException(e.Message, e);
+                }
+
                 env.SetDefaultFunctionLibrary(version);
             }
         }
@@ -133,7 +142,9 @@ namespace OutSmart.DAXon.Api
         {
             get => requiredContextItemType; set
             {
+                ArgumentCheck.NotNull(value, nameof(value));
                 requiredContextItemType = value;
+                Changed();
                 env.SetRequiredContextItemType(value.UnderlyingItemType);
             }
         }
@@ -141,6 +152,7 @@ namespace OutSmart.DAXon.Api
         public virtual IStaticContext UnderlyingStaticContext => env;
         public XPathCompiler(Processor processor)
         {
+            ArgumentCheck.NotNull(processor, nameof(processor));
             this.processor = processor;
             this.evaluator = new XPathEvaluator(processor.UnderlyingConfiguration);
             env = (IndependentContext)this.evaluator.StaticContext;
@@ -173,6 +185,7 @@ namespace OutSmart.DAXon.Api
                 throw new NotSupportedException("Schema processing requires a licensed Saxon-EE configuration");
             }
 
+            Changed();
             env.SetSchemaAware(schemaAware);
         }
 
@@ -183,6 +196,8 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetUnprefixedElementMatchingPolicy(UnprefixedElementMatchingPolicy policy)
         {
+            ArgumentCheck.Defined(policy, nameof(policy));
+            Changed();
             env.SetUnprefixedElementMatchingPolicy(policy);
         }
 
@@ -201,6 +216,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void DeclareNamespace(string prefix, string uri)
         {
+            ArgumentCheck.NotNull(prefix, nameof(prefix));
             if (cache != null)
             {
                 cache.Clear();
@@ -237,6 +253,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void DeclareVariable(QName qname)
         {
+            ArgumentCheck.NotNull(qname, nameof(qname));
             if (cache != null)
             {
                 cache.Clear();
@@ -247,6 +264,8 @@ namespace OutSmart.DAXon.Api
 
         public virtual void DeclareVariable(QName qname, ItemType itemType, OccurrenceIndicator occurrences)
         {
+            ArgumentCheck.NotNull(qname, nameof(qname));
+            ArgumentCheck.NotNull(itemType, nameof(itemType));
             if (cache != null)
             {
                 cache.Clear();
@@ -258,6 +277,8 @@ namespace OutSmart.DAXon.Api
 
         public virtual void AddXsltFunctionLibrary(XsltPackage libraryPackage)
         {
+            ArgumentCheck.NotNull(libraryPackage, nameof(libraryPackage));
+            Changed();
             ((FunctionLibraryList)env.GetFunctionLibrary()).AddFunctionLibrary(libraryPackage.UnderlyingPreparedPackage.PublicFunctions);
         }
 
@@ -278,7 +299,15 @@ namespace OutSmart.DAXon.Api
                 throw new InvalidOperationException("Unknown collation " + uri);
             }
 
+            Changed();
             env.SetDefaultCollationName(uri);
+        }
+
+        // A setting that changes what an expression compiles to empties the cache: these kept serving expressions compiled
+        // before the change (another default collation, decimal format, context item type, function library).
+        private void Changed()
+        {
+            cache?.Clear();
         }
 
         public virtual void SetCaching(bool caching)
@@ -320,8 +349,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual XPathExecutable Compile(string source)
         {
-            if (source == null)
-                throw new NullReferenceException();
+            ArgumentCheck.NotNull(source, nameof(source));
             if (cache != null)
             {
                 // GetOrAdd runs InternalCompile at most once per source (factory outside the lock);
@@ -341,13 +369,9 @@ namespace OutSmart.DAXon.Api
             {
                 env.GetDecimalFormatManager().CheckConsistency();
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
 
             string module = BaseURI == null ? null : BaseURI.ToString();
@@ -371,68 +395,49 @@ namespace OutSmart.DAXon.Api
 
             // Compile under the Processor's deadline: constant folding of hostile expression text is
             // otherwise unbounded work before any run-time deadline exists (see ArmThreadDeadline).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(processor.UnderlyingConfiguration, "Compilation");
+            using Controller.ThreadLimits deadline = Controller.ArmScope(processor.UnderlyingConfiguration, "Compilation");
             try
             {
                 XPathExpression cexp = eval.CreateExpression(source);
                 return new XPathExecutable(cexp, processor, ic);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            catch (UncheckedXPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            finally
-            {
-                Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e);
             }
         }
 
         public virtual XdmValue Evaluate(string expression, XdmItem contextItem)
         {
-            if (expression == null)
-                throw new NullReferenceException();
-            bool oldFastCompileOption = IsFastCompilation();
-            if (!IsCaching())
-            {
-                SetFastCompilation(true);
-            }
-
-            XPathSelector selector = Compile(expression).Load();
-            if (!IsCaching())
-            {
-                SetFastCompilation(oldFastCompileOption);
-            }
-
-            if (contextItem != null)
-            {
-                selector.SetContextItem(contextItem);
-            }
-
-            return selector.Evaluate();
+            return Selector(expression, contextItem).Evaluate();
         }
 
         public virtual XdmItem EvaluateSingle(string expression, XdmItem contextItem)
         {
-            if (expression == null)
-                throw new NullReferenceException();
-            bool oldFastCompileOption = IsFastCompilation();
-            if (!IsCaching())
-            {
-                SetFastCompilation(true);
-            }
+            return Selector(expression, contextItem).EvaluateSingle();
+        }
 
-            XPathSelector selector = Compile(expression).Load();
-            if (!IsCaching())
+        // A one-off compile, without the optimizer unless the compiler caches. On this thread only: switching the
+        // compiler's option and restoring what it read left it switched for good when two threads evaluated at once.
+        private XPathSelector Selector(string expression, XdmItem contextItem)
+        {
+            ArgumentCheck.NotNull(expression, nameof(expression));
+            XPathSelector selector;
+            if (IsCaching())
             {
-                SetFastCompilation(oldFastCompileOption);
+                selector = Compile(expression).Load();
+            }
+            else
+            {
+                IndependentContext previous = env.BeginUnoptimized();
+                try
+                {
+                    selector = Compile(expression).Load();
+                }
+                finally
+                {
+                    IndependentContext.EndUnoptimized(previous);
+                }
             }
 
             if (contextItem != null)
@@ -440,28 +445,23 @@ namespace OutSmart.DAXon.Api
                 selector.SetContextItem(contextItem);
             }
 
-            return selector.EvaluateSingle();
+            return selector;
         }
 
         public virtual XPathExecutable CompilePattern(string source)
         {
-            if (source == null)
-                throw new NullReferenceException();
+            ArgumentCheck.NotNull(source, nameof(source));
             try
             {
                 env.GetDecimalFormatManager().CheckConsistency();
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
 
             // Compile under the Processor's deadline (see InternalCompile).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(processor.UnderlyingConfiguration, "Compilation");
+            using Controller.ThreadLimits deadline = Controller.ArmScope(processor.UnderlyingConfiguration, "Compilation");
             try
             {
                 string @base = BaseURI == null ? null : BaseURI.ToString();
@@ -469,26 +469,16 @@ namespace OutSmart.DAXon.Api
                 XPathExpression cexp = evaluator.CreatePattern(source);
                 return new XPathExecutable(cexp, processor, env);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            finally
-            {
-                Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e);
             }
         }
 
         public virtual void SetDecimalFormatProperty(string property, string value)
         {
-            if (property == null)
-                throw new NullReferenceException();
-            if (value == null)
-                throw new NullReferenceException();
+            ArgumentCheck.NotNull(property, nameof(property));
+            ArgumentCheck.NotNull(value, nameof(value));
             DecimalFormatManager dfm = env.GetDecimalFormatManager();
             if (dfm == null)
             {
@@ -501,12 +491,9 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetDecimalFormatProperty(QName format, string property, string value)
         {
-            if (format == null)
-                throw new NullReferenceException();
-            if (property == null)
-                throw new NullReferenceException();
-            if (value == null)
-                throw new NullReferenceException();
+            ArgumentCheck.NotNull(format, nameof(format));
+            ArgumentCheck.NotNull(property, nameof(property));
+            ArgumentCheck.NotNull(value, nameof(value));
             DecimalFormatManager dfm = env.GetDecimalFormatManager();
             if (dfm == null)
             {
@@ -515,6 +502,7 @@ namespace OutSmart.DAXon.Api
             }
 
             DecimalSymbols symbols = dfm.ObtainNamedDecimalFormat(format.GetStructuredQName());
+            Changed();
             SetDecimalFormatProperty(symbols, property, value);
         }
 
@@ -561,13 +549,9 @@ namespace OutSmart.DAXon.Api
                         throw new ArgumentException("Unknown decimal format attribute " + property);
                 }
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
     }

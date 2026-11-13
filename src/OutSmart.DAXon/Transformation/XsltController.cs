@@ -311,6 +311,25 @@ namespace OutSmart.DAXon.Transformation
             return tunnel ? initialTemplateTunnelParams : initialTemplateParams;
         }
 
+        // The initial template's parameters, whose nodes must be of the stylesheet's configuration as a global parameter's are.
+        private ParameterSet InitialParameters(Dictionary<StructuredQName, ISequence> parameters)
+        {
+            if (parameters == null)
+            {
+                return null;
+            }
+
+            foreach (ISequence value in parameters.Values)
+            {
+                if (executable.GetConfiguration().HoldsForeignNode(value))
+                {
+                    throw new XPathException("A node supplied in a template parameter must be built using the same Configuration that was used to compile the stylesheet", DAXonErrorCode.SXXP0004);
+                }
+            }
+
+            return new ParameterSet(parameters);
+        }
+
         // The initial template's parameters count against the memory limit too.
         internal override void ChargeRunInputs()
         {
@@ -346,8 +365,16 @@ namespace OutSmart.DAXon.Transformation
             {
                 int n = messageCounters.GetOrDefault(code, 0);
                 messageCounters[code] = n + 1;
+                if (n == 0 && (messageCounters.Count & 0x3FF) == 0)
+                {
+                    // One entry per distinct error code, in the ledger past a thousand of them (4 000 000 codes held 664 MB
+                    // under a 100 MB limit); entered once a call, summed at its size then.
+                    MemoryLedger.HoldOnce(messageCounters, -1, CountersSizer);
+                }
             }
         }
+
+        private static readonly Func<object, long> CountersSizer = o => 64 + 128L * ((Dictionary<StructuredQName, int>)o).Count;
 
         public virtual IOutputURIResolver GetOutputURIResolver()
         {
@@ -401,20 +428,9 @@ namespace OutSmart.DAXon.Transformation
                     throw new XPathException("Requested initial mode " + (mode.ModeName.DisplayName) + " is not public or final", "XTDE0045");
                 }
 
-                WarningIfStreamable(mode);
-
                 // Process the source document by applying template rules to the initial context node
-                ParameterSet ordinaryParams = null;
-                if (initialTemplateParams != null)
-                {
-                    ordinaryParams = new ParameterSet(initialTemplateParams);
-                }
-
-                ParameterSet tunnelParams = null;
-                if (initialTemplateTunnelParams != null)
-                {
-                    tunnelParams = new ParameterSet(initialTemplateTunnelParams);
-                }
+                ParameterSet ordinaryParams = InitialParameters(initialTemplateParams);
+                ParameterSet tunnelParams = InitialParameters(initialTemplateTunnelParams);
 
                 ISequenceIterator iter = source.Iterate();
                 IMappingFunction preprocessor = GetInputPreprocessor(mode);
@@ -475,9 +491,6 @@ namespace OutSmart.DAXon.Transformation
             }
 
 
-            //@out = new RegularSequenceChecker(@out); // uncomment for debugging
-            //@out = new TracingFilter(@out); // uncomment for debugging
-            //NamespaceReducer nr = new NamespaceReducer(@out);
             ComplexContentOutputter cco = new ComplexContentOutputter(@out);
             cco.SetSystemId(@out.GetSystemId());
             cco.Open();
@@ -547,19 +560,15 @@ namespace OutSmart.DAXon.Transformation
 
                     return SingletonIterator.MakeIterator(node);
                 }
+                else if ((item is Values.Maps.MapItem || item is Values.Arrays.ArrayItem) && executable.GetConfiguration().HoldsForeignNode(item))
+                {
+                    throw new XPathException("Source document and stylesheet must use the same or compatible Configurations", DAXonErrorCode.SXXP0004);
+                }
                 else
                 {
                     return SingletonIterator.MakeIterator(item);
                 }
             });
-        }
-
-        private void WarningIfStreamable(Mode mode)
-        {
-            if (mode.IsDeclaredStreamable())
-            {
-                Warning((initialMode == null ? "" : GetInitialMode().GetModeTitle(true)) + " is streamable, but the input is not supplied as a stream", DAXonErrorCode.SXWN9045, Loc.NONE);
-            }
         }
 
         public virtual void CallTemplate(StructuredQName initialTemplateName, IReceiver @out)
@@ -578,17 +587,8 @@ namespace OutSmart.DAXon.Transformation
 
 
                 // Process the source document by invoking the initial named template
-                ParameterSet ordinaryParams = null;
-                if (initialTemplateParams != null)
-                {
-                    ordinaryParams = new ParameterSet(initialTemplateParams);
-                }
-
-                ParameterSet tunnelParams = null;
-                if (initialTemplateTunnelParams != null)
-                {
-                    tunnelParams = new ParameterSet(initialTemplateTunnelParams);
-                }
+                ParameterSet ordinaryParams = InitialParameters(initialTemplateParams);
+                ParameterSet tunnelParams = InitialParameters(initialTemplateTunnelParams);
 
                 StylesheetPackage pack = (StylesheetPackage)executable.TopLevelPackage;
                 Component initialComponent = pack.GetComponent(new SymbolicName(StandardNames.XSL_TEMPLATE, initialTemplateName));
@@ -633,172 +633,12 @@ namespace OutSmart.DAXon.Transformation
             }
         }
 
-        public virtual void ApplyStreamingTemplates(IActiveSource source, IReceiver @out)
-        {
-            CheckReadiness();
-            ComplexContentOutputter dest = PrepareOutputReceiver(@out);
-            try
-            {
-                int validationMode = SchemaValidationMode;
-                IActiveSource underSource = source;
-
-                Configuration config = GetConfiguration();
-                IActiveSource s2 = underSource;
-
-                if (!initialMode.GetActor().IsDeclaredStreamable())
-                {
-                    throw new ArgumentException("Initial mode is not streamable");
-                }
-
-                XPathContextMajor initialContext = NewXPathContext();
-                initialContext.CreateThreadManager();
-                initialContext.Origin = this;
-
-                // Process the source document by applying template rules to the initial context node
-                ParameterSet ordinaryParams = null;
-                if (initialTemplateParams != null)
-                {
-                    ordinaryParams = new ParameterSet(initialTemplateParams);
-                }
-
-                ParameterSet tunnelParams = null;
-                if (initialTemplateTunnelParams != null)
-                {
-                    tunnelParams = new ParameterSet(initialTemplateTunnelParams);
-                }
-
-                IReceiver despatcher = config.MakeStreamingTransformer(initialMode.GetActor(), ordinaryParams, tunnelParams, dest, initialContext);
-                if (config.IsStripsAllWhiteSpace() || IsStylesheetContainingStripSpace())
-                {
-                    despatcher = MakeStripper(despatcher);
-                }
-
-                PipelineConfiguration pipe = despatcher.GetPipelineConfiguration();
-                pipe.SetParseOptions(pipe.GetParseOptions().WithSchemaValidationMode(this.validationMode));
-                bool verbose = GetConfiguration().IsTiming();
-                if (verbose)
-                {
-                    GetConfiguration().Logger.Info("Streaming " + source.GetSystemId());
-                }
-
-                try
-                {
-                    if (s2 != null)
-                    {
-                        Sender.Send(s2, despatcher, null);
-                    }
-                    else
-                    {
-                        Sender.Send(underSource, despatcher, null);
-                    }
-                }
-                catch (QuitParsingException)
-                {
-                    if (verbose)
-                    {
-                        GetConfiguration().Logger.Info("Streaming " + source.GetSystemId() + " : early exit");
-                    }
-                }
-
-                initialContext.WaitForChildThreads();
-                dest.Close();
-            }
-            catch (TerminationException err)
-            {
-
-                if (!err.HasBeenReported())
-                {
-                    ReportFatalError(err);
-                }
-
-                throw;
-            }
-            catch (UncheckedXPathException err)
-            {
-                HandleXPathException(err.GetXPathException());
-            }
-            catch (XPathException err)
-            {
-                HandleXPathException(err);
-            }
-            finally
-            {
-                inUse = false;
-                if (traceListener != null)
-                {
-                    traceListener.Close();
-                }
-
-                ReleaseRunState();
-            }
-        }
-
-        public virtual IReceiver GetStreamingReceiver(Mode mode, IReceiver result)
-        {
-
-            CheckReadiness();
-
-            // Determine whether we need to close the output stream at the end. We
-            // do this if the Result object is a StreamResult and is supplied as a
-            // system ID, not as a System.IO.TextWriter or System.IO.Stream
-            ComplexContentOutputter dest = PrepareOutputReceiver(result);
-            XPathContextMajor initialContext = NewXPathContext();
-            initialContext.Origin = this;
-
-            globalContextItem = null;
-
-            // Process the source document by applying template rules to the initial context node
-            if (!mode.IsDeclaredStreamable())
-            {
-                throw new XPathException("mode supplied to getStreamingReceiver() must be streamable");
-            }
-
-            Configuration config = GetConfiguration();
-            IReceiver despatcher = config.MakeStreamingTransformer(mode, null, null, dest, initialContext);
-            if (despatcher == null)
-            {
-                throw new XPathException("Streaming requires Saxon-EE");
-            }
-
-            if (config.IsStripsAllWhiteSpace() || IsStylesheetContainingStripSpace())
-            {
-                despatcher = MakeStripper(despatcher);
-            }
-
-            despatcher.SetPipelineConfiguration(MakePipelineConfiguration());
-            Outputter finalResult = dest;
-            return new AnonymousProxyReceiver(this, despatcher, finalResult);
-        }
-
         public virtual void ReleaseAttributeSetEvaluationStack()
         {
             lock (syncLock)
             {
                 long thread = Environment.CurrentManagedThreadId;
                 attributeSetEvaluationStacks.Remove(thread);
-            }
-        }
-
-        private sealed class AnonymousProxyReceiver : ProxyReceiver
-        {
-
-            private readonly XsltController parent;
-            private readonly Outputter finalResult;
-            public AnonymousProxyReceiver(XsltController parent, IReceiver despatcher, Outputter finalResult) : base(despatcher)
-            {
-                this.parent = parent;
-                this.finalResult = finalResult;
-            }
-            public override void Close()
-            {
-                if (parent.traceListener != null)
-                {
-                    parent.traceListener.Close();
-                }
-
-                finalResult.Close();
-                parent.inUse = false;
-                parent.ReleaseRunState();
             }
         }
     }

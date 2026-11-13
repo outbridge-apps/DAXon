@@ -467,7 +467,7 @@ namespace OutSmart.DAXon.Lib
                     {
                         case StandardNames.XS_UNTYPED_ATOMIC:
                         case StandardNames.XS_STRING:
-                            return new StringToQName(this);
+                            return new StringConverter.StringToQName(this);
                         case StandardNames.XS_NOTATION:
                             return Converter.NotationToQName.INSTANCE;
                         default:
@@ -479,7 +479,7 @@ namespace OutSmart.DAXon.Lib
                     {
                         case StandardNames.XS_UNTYPED_ATOMIC:
                         case StandardNames.XS_STRING:
-                            return new StringToNotation(this);
+                            return new StringConverter.StringToNotation(this);
                         case StandardNames.XS_QNAME:
                             return Converter.QNameToNotation.INSTANCE;
                         default:

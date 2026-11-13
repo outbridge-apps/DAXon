@@ -4,7 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.stream.Streamability;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Flwor;
 using OutSmart.DAXon.Expressions.Instructions;
@@ -457,8 +456,10 @@ namespace OutSmart.DAXon.Expressions
             // consulted (optimize of `$v/child` under sum/count/…), the body IS optimized and carries ORDERED/PEER,
             // letting the redundant DocumentSorter be removed exactly as Java-HE does. CONTEXT_DOCUMENT is excluded
             // (the context at the point of use differs). Guarded against re-entrancy (self/circular bindings).
+            // Not for a parameter or an overridable variable, as in Saxon's SourceBinding: the value supplied can be any
+            // nodes in any order, and $p/descendant::x must still be sorted.
             if (refinedSpecialProps == 0 && !computingBindingProps && !(binding is null) && !binding.IsAssignable()
-                && binding is OutSmart.DAXon.Expressions.Instructions.GlobalVariable gv)
+                && binding is OutSmart.DAXon.Expressions.Instructions.GlobalVariable gv && IsFixedValue(gv))
             {
                 computingBindingProps = true;
                 try
@@ -478,6 +479,17 @@ namespace OutSmart.DAXon.Expressions
             return p & ~StaticProperty.ALL_NODES_NEWLY_CREATED;
         }
 
+        private static bool IsFixedValue(GlobalVariable gv)
+        {
+            if (gv is GlobalParam)
+            {
+                return false;
+            }
+
+            Visibility vis = gv.DeclaringComponent?.GetVisibility() ?? Visibility.PRIVATE;
+            return vis != Visibility.PUBLIC && vis != Visibility.ABSTRACT;
+        }
+
         public override bool SupportsLazyEvaluation()
         {
             return false;
@@ -493,11 +505,6 @@ namespace OutSmart.DAXon.Expressions
             return binding == null ? 73619830 : binding.GetHashCode();
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            return pathMap.GetPathForVariable(GetBinding());
-        }
-
         public override ISequenceIterator Iterate(IXPathContext c)
         {
             try
@@ -505,9 +512,10 @@ namespace OutSmart.DAXon.Expressions
                 ISequence actual = EvaluateVariable(c);
                 return actual.Iterate();
             }
-            catch (XPathException err)
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(GetLocation())))
             {
-                throw err.MaybeWithLocation(GetLocation());
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
             catch (NullReferenceException)
             {
@@ -532,9 +540,10 @@ namespace OutSmart.DAXon.Expressions
                 ISequence actual = EvaluateVariable(c);
                 return actual.Head();
             }
-            catch (XPathException err)
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(GetLocation()).MaybeWithContext(c)))
             {
-                throw err.MaybeWithLocation(GetLocation()).MaybeWithContext(c);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 
@@ -550,9 +559,10 @@ namespace OutSmart.DAXon.Expressions
             {
                 throw uxe.GetXPathException().MaybeWithLocation(GetLocation()).MaybeWithContext(c);
             }
-            catch (XPathException err)
+            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(GetLocation()).MaybeWithContext(c)))
             {
-                throw err.MaybeWithLocation(GetLocation()).MaybeWithContext(c);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 

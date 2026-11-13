@@ -25,6 +25,7 @@ namespace OutSmart.DAXon.Values
 
         public override ISequenceIterator Iterate()
         {
+            UncheckedXPathException failure;
             try
             {
                 IItem item = AsItem();
@@ -43,8 +44,12 @@ namespace OutSmart.DAXon.Values
             }
             catch (XPathException e)
             {
-                throw new UncheckedXPathException(e);
+                // Thrown below, once this frame is unwound: a throw from a catch block re-enters exception
+                // dispatch on the deep stack, at ~9 KB per nesting level on .NET Framework.
+                failure = new UncheckedXPathException(e);
             }
+
+            throw failure;
         }
 
 #if NET
@@ -55,14 +60,17 @@ namespace OutSmart.DAXon.Values
 #endif
         public override IItem Head()
         {
+            XPathException failure;
             try
             {
                 return AsItem();
             }
             catch (UncheckedXPathException e)
             {
-                throw e.GetXPathException();
+                failure = e.GetXPathException();   // thrown below: see Iterate
             }
+
+            throw failure;
         }
 
 #if NET
@@ -96,14 +104,17 @@ namespace OutSmart.DAXon.Values
 
         public override IGroundedValue Materialize()
         {
+            XPathException failure;
             try
             {
                 return SequenceTool.ItemOrEmpty(AsItem());
             }
             catch (UncheckedXPathException e)
             {
-                throw e.GetXPathException();
+                failure = e.GetXPathException();   // thrown below: see Iterate
             }
+
+            throw failure;
         }
 
         public override ISequence MakeRepeatable()

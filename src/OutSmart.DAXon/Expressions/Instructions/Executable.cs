@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         // a list of required parameters, identified by the structured QName of their names
         private readonly Dictionary<StructuredQName, GlobalParam> globalParams = new Dictionary<StructuredQName, GlobalParam>();
         // Hash table of named (and unnamed) output declarations. This is assembled only
-        // if there is a need for it: that @is, if there is a call on xsl:result-document
+        // if there is a need for it: that is, if there is a call on xsl:result-document
         // with a format attribute computed at run-time. The key is a StructuredQName object,
         // the value is a Properties object
         private Dictionary<StructuredQName, Properties> outputDeclarations;
@@ -295,8 +295,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             main.CheckForCircularities(varDefinitions, main.GlobalFunctionLibrary);
             main.FixupGlobalFunctions();
 
-            //                QueryModule module = (QueryModule) miter.next();
-            //                module.lookForModuleCycles(new Stack<QueryModule>(), 1);
             main.TypeCheckGlobalVariables(varDefinitions);
             main.OptimizeGlobalFunctions();
         }
@@ -423,9 +421,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public virtual void SetSchemaAware(bool aware)
         {
 
-            //        if (aware) {
-            //            config.checkLicensedFeature(Configuration.LicenseFeature.SCHEMA_VALIDATION,
-            //        }
             schemaAware = aware;
         }
 

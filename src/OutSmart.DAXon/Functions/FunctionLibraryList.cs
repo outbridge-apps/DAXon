@@ -146,6 +146,5 @@ namespace OutSmart.DAXon.Functions
             return new List<IFunctionLibrary>(allocated);
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
     }
 }

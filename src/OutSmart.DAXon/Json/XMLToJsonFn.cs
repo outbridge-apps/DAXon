@@ -11,6 +11,7 @@ using OutSmart.DAXon.Functions;
 using OutSmart.DAXon.Values.Maps;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Text;
+using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Internal.Collections;
@@ -42,8 +43,6 @@ namespace OutSmart.DAXon.Json
             }
 
             Options options = GetOptions(context, arguments);
-            PipelineConfiguration pipe = context.GetController().MakePipelineConfiguration();
-            pipe.XPathContext = context;
             UniStringCollector uniBuffer = new UniStringCollector();
             ConvertToJson(xml, uniBuffer, options, context);
             return new StringValue(uniBuffer.ToUnicodeString());
@@ -77,16 +76,21 @@ namespace OutSmart.DAXon.Json
             if (xml != null)
             {
                 Options options = GetOptions(context, arguments);
-                PipelineConfiguration pipe = context.GetController().MakePipelineConfiguration();
-                pipe.XPathContext = context;
                 ConvertToJson(xml, destination.GetStringReceiver(false, Loc.NONE), options, context);
             }
         }
 
         private void ConvertToJson(NodeInfo xml, IUniStringConsumer output, Options options, IXPathContext context)
         {
+            int kind = xml.GetNodeKind();
+            if (kind == Types.Type.ATTRIBUTE || kind == Types.Type.NAMESPACE)
+            {
+                // A copy of either into the receiver is no event at all (Navigator.Copy refuses it raw).
+                throw new XPathException("xml-to-json: the input must be an element or a document node, not "
+                    + (kind == Types.Type.ATTRIBUTE ? "an attribute" : "a namespace node"), "FOJS0006");
+            }
+
             PipelineConfiguration pipe = context.GetController().MakePipelineConfiguration();
-            pipe.XPathContext = context;
             JsonReceiver receiver = new JsonReceiver(pipe, context, output);
             receiver.SetIndenting(options.indent);
             if (options.numberFormatter != null)

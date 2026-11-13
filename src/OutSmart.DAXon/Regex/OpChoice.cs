@@ -53,17 +53,26 @@ namespace OutSmart.DAXon.Regex
             }
         }
 
+        // Memoized, as the capture answer below: REProgram computes both at compile, matching only reads them.
+        private int loopingDepth = -1;
+        private int containsCaptures = -1;
+
         public override int MaxLoopingDepth
         {
             get
             {
-                int max = 0;
-                foreach (Operation o in branches)
+                if (loopingDepth < 0)
                 {
-                    max = Math.Max(max, o.MaxLoopingDepth);
+                    int max = 0;
+                    foreach (Operation o in branches)
+                    {
+                        max = Math.Max(max, o.MaxLoopingDepth);
+                    }
+
+                    loopingDepth = max;
                 }
 
-                return max;
+                return loopingDepth;
             }
         }
         public OpChoice(IList<Operation> branches)
@@ -88,15 +97,22 @@ namespace OutSmart.DAXon.Regex
 
         public override bool ContainsCapturingExpressions()
         {
-            foreach (Operation o in branches)
+            if (containsCaptures < 0)
             {
-                if (o is OpCapture || o.ContainsCapturingExpressions())
+                bool found = false;
+                foreach (Operation o in branches)
                 {
-                    return true;
+                    if (o is OpCapture || o.ContainsCapturingExpressions())
+                    {
+                        found = true;
+                        break;
+                    }
                 }
+
+                containsCaptures = found ? 1 : 0;
             }
 
-            return false;
+            return containsCaptures == 1;
         }
 
         public override ICharacterClass GetInitialCharacterClass(bool caseBlind)
@@ -128,6 +144,9 @@ namespace OutSmart.DAXon.Regex
 
         public override IIntIterator IterateMatches(REMatcher matcher, int position)
         {
+            // Nested quantifiers and choices recurse here per level of the pattern: the guard of OpCapture, so a pattern
+            // compiled on a large stack and cached cannot overflow a smaller thread that matches it.
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             return new AnonymousIntIterator(this, matcher, position);
         }
 

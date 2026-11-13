@@ -111,6 +111,11 @@ namespace OutSmart.DAXon.Functions.HigherOrder
 
                 xqx = xqc.Compile(q.ToString());
             }
+            catch (S.DAXonApiException e) when (e.InnerException is XPathException.StackOverflow overflow)
+            {
+                // As an XPathException every level of the caller's recursion would catch and rethrow it.
+                throw OutSmart.DAXon.Internal.RecursionDepthError.FromNestedRun(overflow);
+            }
             catch (System.Exception e)
             {
                 // Upstream maybeSetErrorCode("FOQM0002"): the resolver's XQST0059 propagates UNCHANGED —

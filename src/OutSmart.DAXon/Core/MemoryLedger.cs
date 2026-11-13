@@ -59,6 +59,31 @@ namespace OutSmart.DAXon.Core
             Active?.Add(holder, bytes, null);
         }
 
+        /// <summary>
+        /// A list that collects items one at a time, as a group's members (one group can hold the whole population): the
+        /// clock is read as it grows, and past BigCount the list is entered in the ledger.
+        /// </summary>
+        internal static void Collected<T>(IList<T> list)
+        {
+            int n = list.Count;
+            if ((n & 0xFF) == 0)
+            {
+                if (n == BigCount)
+                {
+                    Hold(list, CollectedSizer<T>.Of);
+                }
+
+                Controller.CheckActiveTimeout();
+            }
+        }
+
+        // The members too, as a few of them tell: by its references alone a group of 4 000 000 new strings held 768 MB
+        // under a 100 MB limit.
+        private static class CollectedSizer<T>
+        {
+            internal static readonly Func<object, long> Of = o => ListBytes((IList<T>)o);
+        }
+
         /// <summary>A structure that may still grow: the sizer reads its size when the ledger is summed.</summary>
         internal static void Hold(object holder, Func<object, long> sizer)
         {
@@ -324,6 +349,42 @@ namespace OutSmart.DAXon.Core
         private const int EntryInterval = 1024;
         private long untilEntry = EntryInterval;
 
+        /// <summary>
+        /// A member a growing holder takes: true once, when the strings of 1K to 32K chars among them pass Big bytes, so the
+        /// holder is entered before its count reaches BigCount (8191 strings of 32 000 chars, 512 MB, were never counted).
+        /// Smaller members the count covers; a larger string or a tree is entered on its own.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static bool Weighs(object member, ref long weight)
+        {
+            return weight < Big && (member is StringValue || member is OutSmart.DAXon.Expressions.Flwor.Tuple) && Weighed(member, ref weight);
+        }
+
+        private static bool Weighed(object member, ref long weight)
+        {
+            if (member is OutSmart.DAXon.Expressions.Flwor.Tuple tuple)
+            {
+                foreach (ISequence value in tuple.GetMembers())
+                {
+                    if (value is StringValue && Weighed(value, ref weight))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            UnicodeString u = ((StringValue)member).UnicodeStringValue;
+            long chars = u.Length();
+            if (chars >= 1024 && chars < BigChars)
+            {
+                weight += chars * (u.Width >> 3);
+            }
+
+            return weight >= Big;
+        }
+
         /// <summary>One member's own bytes; what a ledger enters on its own (a large string, a tree) adds nothing here.</summary>
         internal static long MemberBytes(object o)
         {
@@ -335,12 +396,25 @@ namespace OutSmart.DAXon.Core
                     UnicodeString u = s.UnicodeStringValue;
                     long length = u.Length();
                     return length >= BigChars ? 32 : 80 + length * (u.Width >> 3);
+                case OutSmart.DAXon.Trees.Utilities.Orphan orphan:
+                    // A parentless text, comment or attribute node has a tree of its own and its string: ~270 B measured.
+                    UnicodeString text = orphan.UnicodeStringValue;
+                    long chars = text?.Length() ?? 0;
+                    return chars >= BigChars ? 200 : 200 + chars * ((text?.Width ?? 8) >> 3);
                 case NodeInfo _:
                     return 40;
                 case AtomicValue _:
                     return 32;
                 case SequenceExtent extent:
                     return 32 + 40L * extent.GetLength();
+                case OutSmart.DAXon.Expressions.Flwor.Tuple tuple:
+                    long held = 32;
+                    foreach (ISequence value in tuple.GetMembers())
+                    {
+                        held += 8 + MemberBytes(value);
+                    }
+
+                    return held;
                 case OutSmart.DAXon.Values.Maps.MapItem _:
                 case OutSmart.DAXon.Values.Arrays.ArrayItem _:
                     return 0;   // in the ledger on their own: a large one entered, a small one sampled

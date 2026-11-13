@@ -57,6 +57,8 @@ namespace OutSmart.DAXon.XQuery
 
             while (t.currentToken == Token.CASE || IsKeyword("case"))
             {
+                // Each case nests one more conditional below: 3100 cases killed a 1 MB thread.
+                CheckIterativeDepth(types.Count + 1);
                 IList<Values.SequenceType> typeList;
                 Expression action;
                 NextToken();
@@ -147,13 +149,13 @@ namespace OutSmart.DAXon.XQuery
             return MakeTracer(outerLet, null);
         }
 
-        /*clause.getRangeVariable()*/
-        //
         private IList<Values.SequenceType> ParseSequenceTypeList()
         {
             IList<Values.SequenceType> typeList = new List<Values.SequenceType>();
             while (true)
             {
+                // The types of one case are or-ed into a chain one level deeper each.
+                CheckIterativeDepth(typeList.Count + 1);
                 Values.SequenceType type = ParseSequenceType();
                 typeList.Add(type);
                 t.TreatCurrentAsOperator();
@@ -172,7 +174,6 @@ namespace OutSmart.DAXon.XQuery
             return typeList;
         }
 
-        /*clause.getRangeVariable()*/
         private Expression ParseTypeswitchReturnClause(StructuredQName varQName, LetExpression outerLet)
         {
             Expression action;
@@ -185,11 +186,9 @@ namespace OutSmart.DAXon.XQuery
             action = ParseExprSingle();
             UndeclareRangeVariable();
             innerLet.SetAction(action);
-            return innerLet; //        if (Literal.isEmptySequence(action)) {
+            return innerLet;
         }
 
-        /*clause.getRangeVariable()*/
-        //
         protected override Expression ParseSwitchExpression()
         {
             Expression operand;
@@ -258,6 +257,8 @@ namespace OutSmart.DAXon.XQuery
                 Expect(Token.CASE);
                 do
                 {
+                    // The values of one case are or-ed into a chain one level deeper each.
+                    CheckIterativeDepth(caseExpressions.Count + 1);
                     NextToken();
                     Expression c = ParseExprSingle();
                     caseExpressions.Add(c);
@@ -301,9 +302,6 @@ namespace OutSmart.DAXon.XQuery
             return MakeTracer(outerLet, null);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
         protected override Expression ParseValidateExpression()
         {
             int mode = Validation.STRICT;
@@ -324,9 +322,6 @@ namespace OutSmart.DAXon.XQuery
                     break;
                 case Token.VALIDATE_TYPE:
 
-                    //                if (XQUERY10.equals(queryVersion)) {
-                    //                    grumble("validate-as-type requires XQuery 3.0");
-                    //                }
                     mode = Validation.BY_TYPE;
                     NextToken();
                     Expect(Token.KEYWORD_CURLY);
@@ -386,9 +381,6 @@ namespace OutSmart.DAXon.XQuery
             return MakeTracer(exp, null);
         }
 
-        /*clause.getRangeVariable()*/
-        //
-        //
         protected override Expression ParseExtensionExpression()
         {
             ISchemaType requiredType = null;
@@ -409,7 +401,7 @@ namespace OutSmart.DAXon.XQuery
 
             if (c < len)
             {
-                pragmaContents = trimmed.Substring(c) /*Java substring(begin,END==length()) -> C# to-end overload*/;
+                pragmaContents = trimmed.Substring(c);
             }
 
             bool validateType = false;

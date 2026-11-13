@@ -6,6 +6,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Elaboration;
+using OutSmart.DAXon.Internal;
+
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     internal sealed class WhereClausePush : TuplePush
@@ -20,6 +22,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void ProcessTuple(IXPathContext context)
         {
+            StackGuard.Probe();
             if (predicate(context))
             {
                 destination.ProcessTuple(context);
@@ -28,6 +31,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void Dispose()
         {
+            StackGuard.Probe();
             destination.Dispose();
         }
     }

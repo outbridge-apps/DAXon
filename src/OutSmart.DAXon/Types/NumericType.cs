@@ -4,7 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.schema.UserSimpleType;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Lib;
 using OutSmart.DAXon.Text;
@@ -16,7 +15,6 @@ namespace OutSmart.DAXon.Types
 {
     internal sealed class NumericType : LocalUnionType, ISimpleType, IPlainType
     {
-        //    }
         private static NumericType THE_INSTANCE;
 
         public override StructuredQName TypeName => new StructuredQName("xs", NamespaceUri.SCHEMA, "numeric");
@@ -51,16 +49,13 @@ namespace OutSmart.DAXon.Types
 
         public override string Description => "xs:numeric";
 
-        //    }
         public SchemaValidationStatus ValidationStatus => SchemaValidationStatus.VALIDATED;
 
-        //    }
         public int RedefinitionLevel => 0;
 
         private NumericType() : base(new List<IAtomicType> { BuiltInAtomicType.DOUBLE, BuiltInAtomicType.FLOAT, BuiltInAtomicType.DECIMAL })
         {
         }
-        //    }
         public static NumericType GetInstance()
         {
             lock (typeof(NumericType))
@@ -210,7 +205,6 @@ namespace OutSmart.DAXon.Types
             throw new NotSupportedException(); // nodes are never annotated with a union type
         }
 
-        //    }
         public bool IsSameType(ISchemaType other)
         {
             return other is NumericType;
@@ -231,13 +225,11 @@ namespace OutSmart.DAXon.Types
             return false;
         }
 
-        //    }
         public override string ToString()
         {
             return "xs:numeric";
         }
 
-        //    }
         public void CheckTypeDerivationIsOK(ISchemaType @base, int block)
         {
         }

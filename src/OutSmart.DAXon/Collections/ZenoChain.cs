@@ -490,7 +490,6 @@ namespace OutSmart.DAXon.Collections.Zeno
 
         private static readonly Func<object, long> SegmentSizer = o => OutSmart.DAXon.Core.MemoryLedger.ListBytes((List<T>)o);
 
-        // copy.
         public int Size()
         {
             int total = 0;
@@ -502,19 +501,16 @@ namespace OutSmart.DAXon.Collections.Zeno
             return total;
         }
 
-        // copy.
         public bool IsEmpty()
         {
             return masterList.Count == 0 || (masterList.Count == 1 && masterList[0].Count == 0);
         }
 
-        // copy.
         public IEnumerator<T> IIterator()
         {
             return new ZenoChainIterator<T>(masterList);
         }
 
-        // copy.
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();

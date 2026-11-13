@@ -18,9 +18,6 @@ namespace OutSmart.DAXon.Lib
     internal sealed class StandardUnparsedTextResolver : IUnparsedTextURIResolver
     {
         public StandardUnparsedTextResolver() { }
-        // Phase C 2026-06-09: real resolver (was => null, which made json-doc()/unparsed-text() fail with
-        // "Unable to resolve URI"). Opens an absolute file:// or http(s):// URI and returns a Reader over its
-        // content (the real StandardUnparsedTextResolver.cs is excluded). A failed read names its reason.
         // Open a file as text honouring the F&O unparsed-text encoding rules: an explicit encoding wins;
         // otherwise a byte-order mark; otherwise, for a resource carrying an XML declaration, the encoding it
         // names; otherwise UTF-8. STREAMS the content (F1): the encoding is sniffed from the first 256 bytes
@@ -30,7 +27,8 @@ namespace OutSmart.DAXon.Lib
         // first cost a read of a small file a third of its time); uri names the resource in the error.
         private static TextReader OpenTextFile(string path, string encoding, long maxInput = long.MaxValue, string uri = null)
         {
-            var fs = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(path, 65536);
+            // Unbuffered, the reader's buffers the size of a small file are the only ones; a large file is read 64 KB at a time.
+            System.IO.Stream fs = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(path, 1);
             try
             {
                 if (maxInput != long.MaxValue && fs.CanSeek && fs.Length > maxInput)
@@ -38,10 +36,15 @@ namespace OutSmart.DAXon.Lib
                     throw OutSmart.DAXon.Internal.Streams.InputSizeLimit.Oversized(fs.Length, maxInput, uri ?? path, "FOUT1170");
                 }
 
+                if (!fs.CanSeek || fs.Length > 4096)
+                {
+                    fs = new System.IO.BufferedStream(fs, 65536);
+                }
+
                 Encoding enc;
                 if (!string.IsNullOrEmpty(encoding))
                 {
-                    enc = Encoding.GetEncoding(encoding);
+                    enc = Strict(OutSmart.DAXon.Internal.PlatformEncodings.GetForReading(encoding));
                 }
                 else
                 {
@@ -54,11 +57,11 @@ namespace OutSmart.DAXon.Lib
                     }
 
                     fs.Position = 0;
-                    enc = InferEncoding(head, n);
+                    enc = Strict(InferEncoding(head, n));
                 }
 
-                // A BOM, if present, still wins over the sniffed/default encoding.
-                return new StreamReader(fs, enc, detectEncodingFromByteOrderMarks: true);
+                // A mark wins over what was sniffed, not over an encoding that was asked for.
+                return new OutSmart.DAXon.Internal.Streams.StrictTextReader(fs, enc, OutSmart.DAXon.Internal.Streams.StrictTextReader.MarksOf(encoding));
             }
             catch
             {
@@ -76,7 +79,7 @@ namespace OutSmart.DAXon.Lib
             var m = System.Text.RegularExpressions.Regex.Match(head, "^\\s*<\\?xml\\b[^>]*?encoding\\s*=\\s*[\"']([^\"']+)[\"']");
             if (m.Success)
             {
-                try { return Encoding.GetEncoding(m.Groups[1].Value); }
+                try { return OutSmart.DAXon.Internal.PlatformEncodings.GetForReading(m.Groups[1].Value); }
                 catch { }
             }
 
@@ -101,7 +104,7 @@ namespace OutSmart.DAXon.Lib
                 throw new OutSmart.DAXon.Internal.ResourceDeniedException(denied, "FOUT1170");
             }
 
-            if (!Uri.TryCreate(absoluteURI.ToString(), UriKind.Absolute, out Uri sysUri)
+            if (!OutSmart.DAXon.Internal.Net.BidiUri.TryMake(absoluteURI.ToString(), UriKind.Absolute, out Uri sysUri)
                 || !(sysUri.IsFile || sysUri.Scheme == Uri.UriSchemeHttp || sysUri.Scheme == Uri.UriSchemeHttps))
             {
                 return null;
@@ -115,7 +118,7 @@ namespace OutSmart.DAXon.Lib
                 string text;
                 if (sysUri.IsFile)
                 {
-                    return OpenTextFile(sysUri.LocalPath, encoding, maxInput, absoluteURI.ToString());
+                    return OpenTextFile(OutSmart.DAXon.Internal.Net.BidiUri.Out(OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(sysUri)), encoding, maxInput, absoluteURI.ToString());
                 }
                 else if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config))
                 {
@@ -141,11 +144,24 @@ namespace OutSmart.DAXon.Lib
             {
                 var tr = src.TextReader;
                 if (tr != null)
-                    return new StringReader(tr.ReadToEnd());
+                {
+                    // The host's reader is closed when it asks, as its stream is.
+                    try
+                    {
+                        return new StringReader(tr.ReadToEnd());
+                    }
+                    finally
+                    {
+                        if (src.PleaseCloseAfterUse)
+                        {
+                            tr.Dispose();
+                        }
+                    }
+                }
                 var ins = src.Stream;
                 if (ins != null)
                 {
-                    using (var sr = string.IsNullOrEmpty(encoding) ? new StreamReader(ins) : new StreamReader(ins, Encoding.GetEncoding(encoding)))
+                    using (var sr = new OutSmart.DAXon.Internal.Streams.StrictTextReader(ins, string.IsNullOrEmpty(encoding) ? Strict(new UTF8Encoding(false)) : Strict(OutSmart.DAXon.Internal.PlatformEncodings.GetForReading(encoding)), OutSmart.DAXon.Internal.Streams.StrictTextReader.MarksOf(encoding)))
                     {
                         return new StringReader(sr.ReadToEnd());
                     }
@@ -153,10 +169,10 @@ namespace OutSmart.DAXon.Lib
                 var sysId = src.SystemId;
                 if (sysId != null)
                 {
-                    var u = new Uri(sysId);
+                    var u = OutSmart.DAXon.Internal.Net.BidiUri.Make(sysId);
                     if (u.IsFile)
                     {
-                        return OpenTextFile(u.LocalPath, encoding);
+                        return OpenTextFile(OutSmart.DAXon.Internal.Net.BidiUri.Out(OutSmart.DAXon.Internal.Net.FileUris.LocalPathOf(u)), encoding);
                     }
                     if (OutSmart.DAXon.Internal.ResourceGate.IsRestricted(config))
                     {
@@ -176,10 +192,32 @@ namespace OutSmart.DAXon.Lib
             throw new XPathException(function + ": resource has no reader, stream or system ID", "FOUT1170");
         }
 
+        // A decoder that refuses bytes it cannot decode (FOUT1190, or FOUT1200 when the encoding was inferred), where
+        // .NET's default writes U+FFFD and the text was changed silently.
+        internal static Encoding Strict(Encoding e)
+        {
+            if (e.CodePage == 65001)
+            {
+                return StrictUtf8;   // nearly every read: no copy per file (a reader skips a mark itself)
+            }
+
+            var strict = (Encoding)e.Clone();
+            strict.DecoderFallback = DecoderFallback.ExceptionFallback;
+            return strict;
+        }
+
+        private static readonly Encoding StrictUtf8 = new UTF8Encoding(false, true);
+
         // An argument the file system did not refuse is the encoding's: an unknown name.
         private static XPathException Unreadable(Exception e, string function, string systemId, string encoding)
         {
-            if (e is ArgumentException && !OutSmart.DAXon.Api.DAXonApiException.IsIO(e))
+            if (e is DecoderFallbackException)
+            {
+                return new XPathException(function + ": " + systemId + " cannot be decoded as " + (encoding ?? "UTF-8") + ": " + e.Message, e)
+                    .WithErrorCode(string.IsNullOrEmpty(encoding) ? "FOUT1200" : "FOUT1190");
+            }
+
+            if ((e is ArgumentException || e is NotSupportedException) && !OutSmart.DAXon.Api.DAXonApiException.IsIO(e))   // UTF-7 on .NET 5 and later
             {
                 return new XPathException(function + ": unknown encoding " + encoding + " (" + e.Message + ")", "FOUT1190");
             }
@@ -193,7 +231,7 @@ namespace OutSmart.DAXon.Lib
         {
             OutSmart.DAXon.Internal.Net.URLConnection conn = OutSmart.DAXon.Resources.ResourceLoader.UrlConnection(uri, config, OutSmart.DAXon.Api.ResourceKind.Text);
             string effective = string.IsNullOrEmpty(encoding) ? CharsetOf(conn.ContentType) : encoding;
-            return ReadCapped(conn.DecodedStream(maxInput, systemId, "FOUT1170"), effective, maxInput, systemId);
+            return ReadCapped(conn.DecodedStream(maxInput, systemId, "FOUT1170"), effective, encoding, maxInput, systemId);
         }
 
         // The default path of a remote fetch; WebClient follows redirects itself.
@@ -207,7 +245,7 @@ namespace OutSmart.DAXon.Lib
                     WebHeaderCollection headers = wc.ResponseHeaders;
                     string effective = string.IsNullOrEmpty(encoding) ? CharsetOf(headers?["Content-Type"]) : encoding;
                     body = HttpContentDecoding.Decode(body, headers?["Content-Encoding"], maxInput, systemId, "FOUT1170");
-                    return ReadCapped(body, effective, maxInput, systemId);
+                    return ReadCapped(body, effective, encoding, maxInput, systemId);
                 }
                 finally
                 {
@@ -218,12 +256,10 @@ namespace OutSmart.DAXon.Lib
 
         // Decoded bytes against the cap. Encoding precedence (F&O rules): the argument, else the
         // Content-Type charset (unparsed-text-2002), else a BOM, else UTF-8.
-        private static string ReadCapped(Stream body, string encoding, long maxInput, string systemId)
+        private static string ReadCapped(Stream body, string encoding, string asked, long maxInput, string systemId)
         {
             using (var raw = OutSmart.DAXon.Internal.Streams.InputSizeLimit.Apply(body, maxInput, systemId, "FOUT1170"))
-            using (var sr = string.IsNullOrEmpty(encoding)
-                ? new StreamReader(raw, new UTF8Encoding(false), detectEncodingFromByteOrderMarks: true)
-                : new StreamReader(raw, Encoding.GetEncoding(encoding)))
+            using (var sr = new OutSmart.DAXon.Internal.Streams.StrictTextReader(raw, string.IsNullOrEmpty(encoding) ? Strict(new UTF8Encoding(false)) : Strict(OutSmart.DAXon.Internal.PlatformEncodings.GetForReading(encoding)), OutSmart.DAXon.Internal.Streams.StrictTextReader.MarksOf(asked)))
             {
                 return sr.ReadToEnd();
             }

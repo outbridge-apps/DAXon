@@ -12,6 +12,7 @@ using OutSmart.DAXon.Text;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Internal.Collections;
+using OutSmart.DAXon.Internal.Numerics;
 using System;
 using System.Globalization;
 using System.Collections.Generic;
@@ -41,6 +42,8 @@ namespace OutSmart.DAXon.Json
         private static readonly string ERR_OPTIONS = "FOJS0005";
         private static readonly string ERR_LIMITS = "FOJS0001"; // No specific code in spec
         private IFunctionItem numberParser;
+        // ProcessorOptions.JsonNumbersAsDecimal of the Processor the parse runs under
+        private bool exactNumbers;
         /// <summary>
         /// Create a JSON parser
         /// </summary>
@@ -54,6 +57,8 @@ namespace OutSmart.DAXon.Json
             {
                 InvalidJSON("An empty string is not valid JSON", ERR_GRAMMAR, 1);
             }
+
+            exactNumbers = (context?.GetConfiguration()?.GetProcessor() as OutSmart.DAXon.Api.Processor)?.Options.JsonNumbersAsDecimal == true;
 
             JsonTokenizer t = new JsonTokenizer(input);
             t.Next();
@@ -152,6 +157,16 @@ namespace OutSmart.DAXon.Json
                     ParseArray(handler, tokenizer, flags, context);
                     break;
                 case JsonToken.NUMERIC_LITERAL:
+                    if (numberParser == null && !handler.NeedsNumberText)
+                    {
+                        AtomicValue plain = exactNumbers ? tokenizer.PlainExact() : tokenizer.PlainDouble();
+                        if (plain != null)
+                        {
+                            handler.WriteNumeric(null, plain);
+                            break;
+                        }
+                    }
+
                     string lexical = tokenizer.TokenValue();
                     AtomicValue d = ParseNumericLiteral(lexical, flags, tokenizer.lineNumber, context);
                     handler.WriteNumeric(lexical, d);
@@ -166,11 +181,17 @@ namespace OutSmart.DAXon.Json
                     handler.WriteNull();
                     break;
                 case JsonToken.STRING_LITERAL:
+                    if (tokenizer.RangeStart >= 0 && handler.WriteString(tokenizer.input, tokenizer.RangeStart, tokenizer.RangeLength))
+                    {
+                        break;
+                    }
+
                     string literal = tokenizer.TokenValue();
                     handler.WriteString(Unescape(literal, flags, ERR_GRAMMAR));
                     break;
                 default:
-                    InvalidJSON("Unexpected symbol: " + tokenizer.TokenValue(), ERR_GRAMMAR, tokenizer.lineNumber);
+                    // The token itself: the text left from an earlier token named the wrong one ("[1," gave "1")
+                    InvalidJSON("Unexpected symbol: " + (tok == JsonToken.UNQUOTED_STRING ? tokenizer.TokenValue() : ShowToken(tok, tokenizer.TokenValue())), ERR_GRAMMAR, tokenizer.lineNumber);
                     break;
             }
         }
@@ -191,9 +212,13 @@ namespace OutSmart.DAXon.Json
                     InvalidJSON("Property name must be a string literal (found " + ShowToken(tok, tokenizer.TokenValue() + ")"), ERR_GRAMMAR, tokenizer.lineNumber);
                 }
 
-                string key = tokenizer.TokenValue();
-                key = Unescape(key, flags, ERR_GRAMMAR);
-                string reEscaped = handler.ReEscape(key);
+                string key = tokenizer.RangeStart >= 0 ? handler.Key(tokenizer.input, tokenizer.RangeStart, tokenizer.RangeLength) : null;
+                string reEscaped = key;
+                if (key == null)
+                {
+                    key = Unescape(tokenizer.TokenValue(), flags, ERR_GRAMMAR);
+                    reEscaped = handler.ReEscape(key);
+                }
                 tok = tokenizer.Next();
                 if (tok != JsonToken.COLON)
                 {
@@ -416,23 +441,19 @@ namespace OutSmart.DAXon.Json
                             buffer.Append('\t');
                             break;
                         case 'u':
-                            try
+                            int code = Hex4(literal, i + 1);
+                            if (code >= 0)
                             {
-                                string hex = literal.Substring(i + 1, 4);
-                                int code = Convert.ToInt32(hex, 16);
                                 buffer.Append((char)code);
                                 i += 4;
                             }
-                            catch (Exception)
+                            else if (liberal)
                             {
-                                if (liberal)
-                                {
-                                    buffer.Append("\\u");
-                                }
-                                else
-                                {
-                                    throw new XPathException("Invalid JSON escape: \\u must be followed by four hex characters", errorCode);
-                                }
+                                buffer.Append("\\u");
+                            }
+                            else
+                            {
+                                throw new XPathException("Invalid JSON escape: \\u must be followed by four hex characters", errorCode);
                             }
 
                             break;
@@ -458,6 +479,30 @@ namespace OutSmart.DAXon.Json
             }
 
             return buffer.ToString();
+        }
+
+        // The value of exactly four hex digits at start, or -1. Not Convert.ToInt32(_, 16): it takes "0x41".
+        internal static int Hex4(string s, int start)
+        {
+            if (start < 0 || start + 4 > s.Length)
+            {
+                return -1;
+            }
+
+            int code = 0;
+            for (int k = start; k < start + 4; k++)
+            {
+                char c = s[k];
+                int d = c >= '0' && c <= '9' ? c - '0' : c >= 'a' && c <= 'f' ? c - 'a' + 10 : c >= 'A' && c <= 'F' ? c - 'A' + 10 : -1;
+                if (d < 0)
+                {
+                    return -1;
+                }
+
+                code = code * 16 + d;
+            }
+
+            return code;
         }
 
         private static void Error(string message, string code)
@@ -557,14 +602,148 @@ namespace OutSmart.DAXon.Json
             public int lineNumber = 1;
             public JsonToken currentToken;
             public StringBuilder currentTokenValue = new StringBuilder(64);
-            // Zero-copy token value: string/number/name tokens without escapes are delivered as a
-            // substring of the input (no per-char StringBuilder); null = value lives in the builder.
+            // A string, number or name token without escapes: the token's text, cut from the input; null = the text
+            // is in currentTokenValue, or (RangeStart >= 0) not cut yet.
             public string currentTokenString;
+            // A number, or a string literal with no escape or control character, is first a range of the input;
+            // its string is cut only when asked for.
+            public int RangeStart = -1;
+            public int RangeLength;
 
             public string TokenValue()
             {
+                if (currentTokenString == null && RangeStart >= 0)
+                {
+                    currentTokenString = input.Substring(RangeStart, RangeLength);
+                }
+
                 return currentTokenString ?? currentTokenValue.ToString();
             }
+
+            // The number token in JSON's own form, -?(0|[1-9][0-9]*)(.[0-9]+)? - no exponent and none of what only
+            // liberal mode lets through: where its digits lie (fracEnd = intEnd when there is no fraction).
+            private bool ScanPlain(out bool negative, out int intStart, out int intEnd, out int fracEnd)
+            {
+                int i = RangeStart;
+                int end = RangeStart + RangeLength;
+                negative = input[i] == '-';
+                if (negative)
+                {
+                    i++;
+                }
+
+                intStart = i;
+                while (i < end && input[i] >= '0' && input[i] <= '9')
+                {
+                    i++;
+                }
+
+                intEnd = i;
+                fracEnd = i;
+                if (intEnd == intStart || (input[intStart] == '0' && intEnd - intStart > 1))
+                {
+                    return false;
+                }
+
+                if (i < end && input[i] == '.')
+                {
+                    i++;
+                    while (i < end && input[i] >= '0' && input[i] <= '9')
+                    {
+                        i++;
+                    }
+
+                    if (i == intEnd + 1)
+                    {
+                        return false;
+                    }
+
+                    fracEnd = i;
+                }
+
+                return i == end;
+            }
+
+            // A plain number of at most 15 significant digits as xs:double, read in place with the same correctly
+            // rounded division StringToDouble makes; null sends every other number down the general path.
+            public DoubleValue PlainDouble()
+            {
+                if (!ScanPlain(out bool negative, out int intStart, out int intEnd, out int fracEnd))
+                {
+                    return null;
+                }
+
+                long num = 0;
+                for (int i = intStart; i < fracEnd; i++)
+                {
+                    if (i == intEnd)
+                    {
+                        continue;
+                    }
+
+                    if (num > StringToDouble.MAX_EXACT / 10)
+                    {
+                        return null;
+                    }
+
+                    num = num * 10 + (input[i] - '0');
+                }
+
+                int fraction = fracEnd == intEnd ? 0 : fracEnd - intEnd - 1;
+                return StringToDouble.TryExact(num, -fraction, negative, out double value) ? new DoubleValue(value) : null;
+            }
+
+            // A plain number as written (JsonNumbersAsDecimal): xs:integer without a point, else an exact xs:decimal;
+            // null for an exponent, a liberal form or more than ExactDigits digits, which stay xs:double.
+            public AtomicValue PlainExact()
+            {
+                if (!ScanPlain(out bool negative, out int intStart, out int intEnd, out int fracEnd))
+                {
+                    return null;
+                }
+
+                int digits = fracEnd == intEnd ? intEnd - intStart : fracEnd - intStart - 1;
+                if (digits > ExactDigits)
+                {
+                    return null;
+                }
+
+                if (digits > 18)
+                {
+                    string text = input.Substring(RangeStart, RangeLength);
+                    return fracEnd == intEnd ? IntegerValue.StringToInteger(text).AsAtomic() : BigDecimalValue.Parse(text);
+                }
+
+                long num = 0;
+                for (int i = intStart; i < fracEnd; i++)
+                {
+                    if (i != intEnd)
+                    {
+                        num = num * 10 + (input[i] - '0');
+                    }
+                }
+
+                num = negative ? -num : num;
+                return fracEnd == intEnd
+                    ? (AtomicValue)Int64Value.MakeIntegerValue(num)
+                    : new BigDecimalValue(BigDecimal.FromCompact(num, fracEnd - intEnd - 1));
+            }
+
+            // true/false/null read in place: their token string is a constant, not a cut of the input.
+            private bool IsWord(string word)
+            {
+                int end = position - 1 + word.Length;
+                if (end > input.Length || string.CompareOrdinal(input, position - 1, word, 0, word.Length) != 0)
+                {
+                    return false;
+                }
+
+                return end == input.Length || !NameChecker.IsNCNameChar(input[end]);
+            }
+            private static readonly string[] Words = { "null", "true", "false" };
+            // Exact reading is quadratic in the digits (BigInteger.Parse): 100 000 took seconds no time limit stops.
+            private const int ExactDigits = 1000;
+
             public JsonTokenizer(string input)
             {
                 this.input = input;
@@ -579,6 +758,7 @@ namespace OutSmart.DAXon.Json
 
             public JsonToken Next()
             {
+                RangeStart = -1;
                 currentToken = ReadToken();
                 return currentToken;
             }
@@ -652,7 +832,9 @@ namespace OutSmart.DAXon.Json
                             char fc = input[position];
                             if (fc == '"')
                             {
-                                currentTokenString = input.Substring(litStart, position - litStart);
+                                currentTokenString = null;
+                                RangeStart = litStart;
+                                RangeLength = position - litStart;
                                 position++;
                                 return JsonToken.STRING_LITERAL;
                             }
@@ -683,17 +865,9 @@ namespace OutSmart.DAXon.Json
                                 InvalidJSON("Unescaped control character (x" + ((int)(c)).ToString("x", CultureInfo.InvariantCulture) + ")", ERR_GRAMMAR, lineNumber);
                             }
 
-                            if (afterBackslash && c == 'u')
+                            if (afterBackslash && c == 'u' && Hex4(input, position) < 0)
                             {
-                                try
-                                {
-                                    string hex = input.Substring(position, 4);
-                                    Convert.ToInt32(hex, 16);
-                                }
-                                catch (Exception)
-                                {
-                                    InvalidJSON("\\u must be followed by four hex characters", ERR_GRAMMAR, lineNumber);
-                                }
+                                InvalidJSON("\\u must be followed by four hex characters", ERR_GRAMMAR, lineNumber);
                             }
 
                             if (c == '"' && !afterBackslash)
@@ -747,10 +921,21 @@ namespace OutSmart.DAXon.Json
                             }
                         }
 
-                        currentTokenString = input.Substring(numStart, position - numStart);
+                        currentTokenString = null;
+                        RangeStart = numStart;
+                        RangeLength = position - numStart;
                         return JsonToken.NUMERIC_LITERAL;
                     default:
                         {
+                            foreach (string word in Words)
+                            {
+                                if (ch == word[0] && IsWord(word))
+                                {
+                                    position += word.Length - 1;
+                                    currentTokenString = word;
+                                    return word == "null" ? JsonToken.NULL : word == "true" ? JsonToken.TRUE : JsonToken.FALSE;
+                                }
+                            }
 
                             // Allow unquoted strings in liberal mode
                             if (NameChecker.IsNCNameChar(ch))

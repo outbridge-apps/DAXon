@@ -25,8 +25,12 @@ namespace OutSmart.DAXon.Patterns
             SetPriority(double.NaN);
         }
 
+        // What runs at run time recurses through nested Venn patterns: xsl:number asks the item type of its count pattern
+        // on every call, matching walks the tree per node. A union chain is built balanced, but one nested in intersect
+        // or except chains is not, so each such walk probes.
         public override ItemType GetItemType()
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             ItemType t1 = p1.GetItemType();
             ItemType t2 = p2.GetItemType();
             return Types.Type.GetCommonSuperType(t1, t2);
@@ -34,16 +38,19 @@ namespace OutSmart.DAXon.Patterns
 
         public override UType GetUType()
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             return p1.GetUType().Union(p2.GetUType());
         }
 
         public override bool Matches(IItem item, IXPathContext context)
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             return p1.Matches(item, context) || p2.Matches(item, context);
         }
 
         public override bool MatchesBeneathAnchor(NodeInfo node, NodeInfo anchor, IXPathContext context)
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             return p1.MatchesBeneathAnchor(node, anchor, context) || p2.MatchesBeneathAnchor(node, anchor, context);
         }
 
@@ -59,27 +66,6 @@ namespace OutSmart.DAXon.Patterns
             {
                 return new UnionPattern(np1, np2);
             }
-        }
-
-        public override bool Equals(object other)
-        {
-            if (other is UnionPattern)
-            {
-                HashSet<Pattern> s0 = new HashSet<Pattern>();
-                GatherComponentPatterns(s0);
-                HashSet<Pattern> s1 = new HashSet<Pattern>();
-                ((UnionPattern)other).GatherComponentPatterns(s1);
-                return s0.Equals(s1);
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        protected override int ComputeHashCode()
-        {
-            return 0x3bd723a6 ^ p1.GetHashCode() ^ p2.GetHashCode();
         }
 
         public override Expression Copy(RebindingMap rebindings)

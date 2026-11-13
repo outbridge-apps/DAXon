@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Regex
     {
         private readonly int len;
 
-        public override int MatchLength => min == max ? min * len : -1;
+        public override int MatchLength => min == max ? Fixed((long)min * len) : -1;
         public OpGreedyFixed(Operation op, int min, int max, int len) : base(op, min, max, true)
         {
             this.len = len;
@@ -47,6 +47,9 @@ namespace OutSmart.DAXon.Regex
 
         public override IIntIterator IterateMatches(REMatcher matcher, int position)
         {
+            // Nested quantifiers and choices recurse here per level of the pattern: the guard of OpCapture, so a pattern
+            // compiled on a large stack and cached cannot overflow a smaller thread that matches it.
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             if (len == 0)
             {
                 // A zero-length repetition ends where it began, so one match stands for any count. Saxon
@@ -57,7 +60,7 @@ namespace OutSmart.DAXon.Regex
             int guard = matcher.search.Length32();
             if (max < int.MaxValue)
             {
-                guard = Math.Min(guard, position + len * max);
+                guard = (int)Math.Min(guard, position + (long)len * max);
             }
 
             if (position >= guard && min > 0)
@@ -69,6 +72,7 @@ namespace OutSmart.DAXon.Regex
             int matches = 0;
             while (p <= guard)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(matches);
                 IIntIterator it = op.IterateMatches(matcher, p);
                 bool matched = false;
                 if (it.MoveNext())

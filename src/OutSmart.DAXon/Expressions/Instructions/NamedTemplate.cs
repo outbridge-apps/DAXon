@@ -26,7 +26,16 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private bool mayOmitContextItem = true;
         private bool absentFocus;
         private IList<LocalParamInfo> localParamDetails = new List<LocalParamInfo>(4);
-        private IPushEvaluator bodyEvaluator;
+        private volatile IPushEvaluator bodyEvaluator;   // elaborated once, under the lock (Elaborated); read without it
+
+        // Saxon takes the lock on every call
+        private IPushEvaluator Elaborated()
+        {
+            lock (syncLock)
+            {
+                return bodyEvaluator ??= GetBody().MakeElaborator().ElaborateForPush();
+            }
+        }
 
         public override string TracingTag => "xsl:template";
 
@@ -162,17 +171,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 }
             }
 
-            lock (syncLock)
-            {
-                if (bodyEvaluator == null)
-                {
-                    bodyEvaluator = GetBody().MakeElaborator().ElaborateForPush();
-                }
-            }
+            IPushEvaluator body = bodyEvaluator ?? Elaborated();
 
             try
             {
-                return bodyEvaluator.ProcessLeavingTail(output, context);
+                return body.ProcessLeavingTail(output, context);
             }
             catch (RecursionDepthError e) when (!e.Described)
             {
@@ -181,21 +184,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 // included). Filtered: one such catch per recursion level.
                 throw e.Describe("Too many nested template or function calls. The stylesheet may be looping.", DAXonErrorCode.SXLM0001, GetLocation());
             }
-        }
-
-        public override void Export(ExpressionPresenter presenter)
-        {
-            presenter.StartElement("template");
-            presenter.EmitAttribute("name", TemplateName);
-            ExplainProperties(presenter);
-            presenter.EmitAttribute("slots", "" + GetStackFrameMap().NumberOfVariables);
-            if (GetBody() != null)
-            {
-                presenter.SetChildRole("body");
-                GetBody().Export(presenter);
-            }
-
-            presenter.EndElement();
         }
 
         public virtual void ExplainProperties(ExpressionPresenter presenter)

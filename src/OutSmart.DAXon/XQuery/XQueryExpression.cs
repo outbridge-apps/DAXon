@@ -91,7 +91,7 @@ namespace OutSmart.DAXon.XQuery
 
                 if (optimizer.IsOptionSet(OptimizerOptions.LOOP_LIFTING))
                 {
-                    e2 = LoopLifter.Process(exp);
+                    e2 = LoopLifter.Process(exp, visitor, cit);
                     if (e2 != exp)
                     {
                         e2.SetRetainedStaticContext(exp.GetRetainedStaticContext());
@@ -195,39 +195,6 @@ namespace OutSmart.DAXon.XQuery
             return stackFrameMap;
         }
 
-        public virtual void ExplainPathMap()
-        {
-        }
-
-        public virtual IList<object> Evaluate(DynamicQueryContext env)
-        {
-            if (IsUpdateQuery())
-            {
-                throw new XPathException("Cannot call evaluate() on an updating query");
-            }
-
-            List<object> list = new List<object>(100);
-            SequenceTool.Supply(IIterator(env), (item) => list.Add(SequenceTool.ConvertToJava(item)));
-            return list;
-        }
-
-        public virtual object EvaluateSingle(DynamicQueryContext env)
-        {
-            if (IsUpdateQuery())
-            {
-                throw new XPathException("Cannot call evaluateSingle() on an updating query");
-            }
-
-            ISequenceIterator iter = IIterator(env);
-            IItem item = iter.Next();
-            if (item == null)
-            {
-                return null;
-            }
-
-            return SequenceTool.ConvertToJava(item);
-        }
-
         public virtual ISequenceIterator IIterator(DynamicQueryContext env)
         {
             if (IsUpdateQuery())
@@ -314,43 +281,44 @@ namespace OutSmart.DAXon.XQuery
             }
 
             Controller controller = NewController(env);
-            controller.OpenTraceEpisode();
             if (result is IReceiver)
             {
                 ((IReceiver)result).GetPipelineConfiguration().SetController(controller);
             }
 
             Properties actualProperties = ValidateOutputProperties(controller, outputProperties);
-            XPathContextMajor context = InitialContext(env, controller);
-
-            // In tracing/debugging mode, evaluate all the global variables first
-            ITraceListener tracer = controller.GetTraceListener();
-            if (tracer != null)
-            {
-                controller.PreEvaluateGlobals(context);
-            }
-
-            context.OpenStackFrame(stackFrameMap);
             bool mustClose = result is StreamResult && ((StreamResult)result).GetOutputStream() == null;
-            IReceiver @out;
-            if (result is IReceiver)
-            {
-                @out = (IReceiver)result;
-            }
-            else
-            {
-                SerializerFactory sf = context.GetConfiguration().SerializerFactory;
-                PipelineConfiguration pipe = controller.MakePipelineConfiguration();
-                pipe.SetHostLanguage(HostLanguage.XQUERY);
-                @out = sf.GetReceiver(result, new SerializationProperties(actualProperties), pipe);
-            }
+            ComplexContentOutputter dest = null;
 
-            ComplexContentOutputter dest = new ComplexContentOutputter(@out);
-            dest.Open();
-
-            // Run the query
+            // The episode and the report cover the setup too: the globals a trace evaluates first, the opened output.
+            controller.OpenTraceEpisode();
             try
             {
+                XPathContextMajor context = InitialContext(env, controller);
+
+                // In tracing mode the globals are evaluated first, inside the episode and the limits (Saxon did it in
+                // initializeController, before both)
+                if (controller.GetTraceListener() != null)
+                {
+                    controller.PreEvaluateGlobals(context);
+                }
+
+                context.OpenStackFrame(stackFrameMap);
+                IReceiver @out;
+                if (result is IReceiver)
+                {
+                    @out = (IReceiver)result;
+                }
+                else
+                {
+                    SerializerFactory sf = context.GetConfiguration().SerializerFactory;
+                    PipelineConfiguration pipe = controller.MakePipelineConfiguration();
+                    pipe.SetHostLanguage(HostLanguage.XQUERY);
+                    @out = sf.GetReceiver(result, new SerializationProperties(actualProperties), pipe);
+                }
+
+                dest = new ComplexContentOutputter(@out);
+                dest.Open();
                 ProcessQuery(dest, context);
             }
             catch (XPathException err)
@@ -363,7 +331,6 @@ namespace OutSmart.DAXon.XQuery
                 try
                 {
                     controller.CloseTraceEpisode();
-                    dest.Close();
                 }
                 catch (XPathException)
                 {
@@ -371,9 +338,24 @@ namespace OutSmart.DAXon.XQuery
                 }
             }
 
-            if (result is StreamResult)
+            // Reached when the query completed: closing the output of a failed one told the destination's listeners of a
+            // result there is not (the API releases that destination instead, as for XSLT). A failure closing it - a
+            // chained stylesheet's, a writer's flush - is the run's: it was swallowed, and the output silently lost.
+            try
             {
-                CloseStreamIfNecessary((StreamResult)result, mustClose);
+                dest.Close();
+            }
+            catch (XPathException err)
+            {
+                controller.ReportFatalError(err);
+                throw;
+            }
+            finally
+            {
+                if (result is StreamResult)
+                {
+                    CloseStreamIfNecessary((StreamResult)result, mustClose);
+                }
             }
         }
 
@@ -517,19 +499,6 @@ namespace OutSmart.DAXon.XQuery
             return executable;
         }
 
-        public virtual void SetAllowDocumentProjection(bool allowed)
-        {
-            if (allowed)
-            {
-                throw new NotSupportedException("Document projection requires Saxon-EE");
-            }
-        }
-
-        public virtual bool IsDocumentProjectionAllowed()
-        {
-            return false;
-        }
-
         public virtual string GetPublicId()
         {
             return null;
@@ -565,7 +534,6 @@ namespace OutSmart.DAXon.XQuery
             expression = expr;
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual void GatherProperties(Action<string, object> consumer) { } // upstream Traceable default: no properties
 
         private sealed class ErrorReportingIterator : ISequenceIterator
@@ -586,8 +554,9 @@ namespace OutSmart.DAXon.XQuery
                 {
                     return @base.Next();
                 }
-                catch (UncheckedXPathException e1)
+                catch (UncheckedXPathException e1) when (!e1.GetXPathException().HasBeenReported())
                 {
+                    // Reported once: a nested transform() in a later step had reported its error already (Saxon: twice)
                     XPathException xe = e1.GetXPathException().MaybeWithLocation(location);
                     XmlProcessingException err = new XmlProcessingException(xe);
                     reporter.Report(err);

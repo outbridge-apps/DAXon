@@ -146,7 +146,7 @@ namespace OutSmart.DAXon.Expressions.Accumulators
             return accumulatorName;
         }
 
-        public override void Export(ExpressionPresenter presenter)
+        public virtual void Export(ExpressionPresenter presenter)
         {
             Export(presenter, null);
         }

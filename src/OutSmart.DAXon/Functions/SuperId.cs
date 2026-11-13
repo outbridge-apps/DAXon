@@ -38,7 +38,7 @@ namespace OutSmart.DAXon.Functions
                 map.document = doc;
                 map.operation = operation;
                 ISequenceIterator result = new Expressions.MappingIterator(tokens, map);
-                return new DocumentOrderIterator(result, LocalOrderComparer.GetInstance());
+                return DocumentOrderIterator.Of(result, LocalOrderComparer.GetInstance());
             }
             else
             {
@@ -52,7 +52,7 @@ namespace OutSmart.DAXon.Functions
             map.document = doc;
             map.operation = operation;
             ISequenceIterator result = new Expressions.MappingIterator(idrefs, map);
-            return new DocumentOrderIterator(result, LocalOrderComparer.GetInstance());
+            return DocumentOrderIterator.Of(result, LocalOrderComparer.GetInstance());
         }
 
         public override ISequence Call(IXPathContext context, ISequence[] arguments)

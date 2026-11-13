@@ -31,13 +31,15 @@ namespace OutSmart.DAXon.Functions
                     return new StringValue(sb.ToUnicodeString());
                 }
 
-                long next = nextInt.LongValue();
-                if (next < 0 || next > int.MaxValue || !checker.Test((int)next))
+                // AsSubscript: LongValue() keeps the low 64 bits of a bigger integer (18446744073709551681 gave "A")
+                int next = nextInt.AsSubscript();
+                if (next < 0 || !checker.Test(next))
                 {
-                    throw new XPathException("codepoints-to-string(): invalid XML character [x" + ((int)next).ToString("x", CultureInfo.InvariantCulture) + ']', "FOCH0001");
+                    string shown = nextInt.Signum() >= 0 && nextInt.CompareTo(int.MaxValue) <= 0 ? "x" + nextInt.LongValue().ToString("x", CultureInfo.InvariantCulture) : nextInt.GetStringValue();
+                    throw new XPathException("codepoints-to-string(): invalid XML character [" + shown + ']', "FOCH0001");
                 }
 
-                sb.Append((int)next);
+                sb.Append(next);
             }
         }
 

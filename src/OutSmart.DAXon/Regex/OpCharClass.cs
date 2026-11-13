@@ -46,8 +46,7 @@ namespace OutSmart.DAXon.Regex
 
         public override IIntIterator IterateMatches(REMatcher matcher, int position)
         {
-            UnicodeString @in = matcher.search;
-            if (position < @in.Length() && predicate.Test(@in.CodePointAt(position)))
+            if (position < matcher.SearchLength && predicate.Test(matcher.CharAt(position)))
             {
                 return new IntSingletonIterator(position + 1);
             }

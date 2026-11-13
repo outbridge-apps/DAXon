@@ -15,16 +15,19 @@ namespace OutSmart.DAXon.Api
     {
         // The empty array.
         public XdmArray() : base(SimpleArrayItem.EMPTY_ARRAY) { }
-        public XdmArray(IItem array) : base(array) { }
+        public XdmArray(IItem array) : base(ArgumentCheck.Checked(array, nameof(array))) { }
 
         // upstream s9api XdmArray(XdmItem[]): each member becomes one array member.
         public XdmArray(XdmItem[] members) : base(MakeArray(members)) { }
 
         private static IItem MakeArray(XdmItem[] members)
         {
+            ArgumentCheck.NoNulls(members, nameof(members));
             var list = new List<IGroundedValue>(members.Length);
             foreach (XdmItem m in members)
+            {
                 list.Add((IGroundedValue)m.UnderlyingValue);
+            }
 
             return new SimpleArrayItem(list);
         }

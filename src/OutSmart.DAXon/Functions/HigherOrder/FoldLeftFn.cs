@@ -52,6 +52,7 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                                 ISequence data = Values.Int64Value.MakeIntegerValue(acc);
                                 for (; i < n; i++, v++)
                                 {
+                                    Core.Controller.CheckActiveTimeout();   // the boxed replay runs as long as the fast lane did
                                     data = fused.CallTwo(data, Values.Int64Value.MakeIntegerValue(v));
                                 }
 

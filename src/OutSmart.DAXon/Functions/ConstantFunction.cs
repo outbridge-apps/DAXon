@@ -11,18 +11,14 @@ using OutSmart.DAXon.Values;
 
 namespace OutSmart.DAXon.Functions
 {
-    // ConstantFunction stub.
-    // Runtime: functional impl ported from the excluded ConstantFunction.cs (csproj Compile Remove). The real
-    // ConstantFunction stores an IGroundedValue and Call returns it; fn:true()/fn:false() (XPath20FunctionSet:
-    // 210/109) are ConstantFunction.True/.False whose Call returns the constant BooleanValue. The (object value)
-    // ctor + New() are retained for the existing callers (ContextItemAccessorFunction, CurrentGroup,
-    // CurrentGroupingKey, CurrentOutputUri, PositionAndLast) -- previously no-ops; Call now returns the stored
-    // value when it is an IGroundedValue (all those callers pass GroundedValues).
+    // A function whose call returns a fixed value: fn:true(), fn:false() and the context accessors' early values.
     internal class ConstantFunction : SystemFunction
     {
         private readonly IGroundedValue _value;
         public ConstantFunction(object value) { _value = value as IGroundedValue; }
         public override ISequence Call(IXPathContext context, ISequence[] arguments) => _value;
+        // A call is its value, as in Saxon: true() compiles to a literal, so nothing treats it as work (loop lifting).
+        public override Expression MakeFunctionCall(params Expression[] arguments) => Literal.MakeLiteral(_value);
         internal sealed class True : ConstantFunction { public True() : base(BooleanValue.TRUE) { } }
         internal sealed class False : ConstantFunction { public False() : base(BooleanValue.FALSE) { } }
     }

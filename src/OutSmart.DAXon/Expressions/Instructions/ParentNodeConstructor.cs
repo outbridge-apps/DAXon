@@ -160,20 +160,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return StaticProperty.EXACTLY_ONE;
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet result = base.AddToPathMap(pathMap, pathMapNodeSet);
-            result.SetReturnable(false);
-            TypeHierarchy th = GetConfiguration().GetTypeHierarchy();
-            ItemType type = GetItemType();
-            if (th.Relationship(type, NodeKindTest.ELEMENT) != Affinity.DISJOINT || th.Relationship(type, NodeKindTest.DOCUMENT) != Affinity.DISJOINT)
-            {
-                result.AddDescendants();
-            }
-
-            return new PathMap.PathMapNodeSet(pathMap.MakeNewRoot(this));
-        }
-
         public virtual bool IsLocal()
         {
             return ExpressionTool.IsLocalConstructor(this);

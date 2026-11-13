@@ -62,8 +62,7 @@ namespace OutSmart.DAXon.Regex
 
         public override IIntIterator IterateMatches(REMatcher matcher, int position)
         {
-            UnicodeString @in = matcher.search;
-            if (position + len > @in.Length())
+            if (position + len > matcher.SearchLength)
             {
                 return EmptyIntIterator.GetInstance();
             }
@@ -72,7 +71,7 @@ namespace OutSmart.DAXon.Regex
             {
                 for (int i = 0; i < len; i++)
                 {
-                    if (!matcher.EqualCaseBlind(@in.CodePointAt(position + i), atom.CodePointAt(i)))
+                    if (!matcher.EqualCaseBlind(matcher.CharAt(position + i), atom.CodePointAt(i)))
                     {
                         return EmptyIntIterator.GetInstance();
                     }
@@ -82,7 +81,7 @@ namespace OutSmart.DAXon.Regex
             {
                 for (int i = 0; i < len; i++)
                 {
-                    if (@in.CodePointAt(position + i) != atom.CodePointAt(i))
+                    if (matcher.CharAt(position + i) != atom.CodePointAt(i))
                     {
                         return EmptyIntIterator.GetInstance();
                     }

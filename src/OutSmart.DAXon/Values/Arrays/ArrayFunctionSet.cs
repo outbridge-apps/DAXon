@@ -4,8 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.functions.qt4.Slice;
-//import com.saxonica.functions.qt4.UnparcelFn;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Functions;
@@ -180,6 +178,8 @@ namespace OutSmart.DAXon.Values.Arrays
             {
                 // one level of recursion per level of array nesting, so the depth is the input's
                 StackGuard.Probe();
+                // and a level may hold the one below twice: the breadth is under the clock and the memory limit
+                Core.Controller.CheckActiveTimeout();
                 SequenceTool.Supply(arg.Iterate(), (item) =>
                 {
                     if (item is ArrayItem)
@@ -192,6 +192,7 @@ namespace OutSmart.DAXon.Values.Arrays
                     else
                     {
                         @out.Add(item);
+                        Core.MemoryLedger.Collected(@out);
                     }
                 });
             }

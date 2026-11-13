@@ -15,7 +15,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
     internal sealed class AtomicSortComparer : IAtomicComparer
     {
 
-        //} else
         public static IAtomicMatchKey COLLATION_KEY_NaN = new MatchKeyForNaN();
         private readonly IStringCollator collator;
         private readonly int itemType;
@@ -156,7 +155,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
-        //} else
         protected int CompareNonComparables(AtomicValue a, AtomicValue b)
         {
             XPathException err = new XPathException("Values are not comparable (" + Types.Type.DisplayTypeName(a) + ", " + Types.Type.DisplayTypeName(b) + ')', "XPTY0004");

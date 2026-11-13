@@ -26,29 +26,5 @@ namespace OutSmart.DAXon.Transformation
         DEEP_DESCENT,
         // ASCENT("ascent")
         ASCENT
-
-        // --------------------
-        // public String streamabilityStr;
-        // public boolean isConsuming() {
-        // public boolean isStreaming() {
-        //     streamabilityStr = v;
-        // }
-        // public static FunctionStreamability of(String v) {
-        //             return UNCLASSIFIED;
-        //         case "absorbing":
-        //             return ABSORBING;
-        //         case "inspection":
-        //             return INSPECTION;
-        //         case "filter":
-        //             return FILTER;
-        //         case "shallow-descent":
-        //             return SHALLOW_DESCENT;
-        //         case "deep-descent":
-        //             return DEEP_DESCENT;
-        //         case "ascent":
-        //             return ASCENT;
-        //         default:
-        //             throw new ArgumentException();
-        // --------------------
     }
 }

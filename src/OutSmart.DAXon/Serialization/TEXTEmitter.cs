@@ -98,7 +98,7 @@ namespace OutSmart.DAXon.Serialization
             {
                 writer.Write(chars);
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }
@@ -113,12 +113,10 @@ namespace OutSmart.DAXon.Serialization
         {
         }
 
-        // no-op
         public override void ProcessingInstruction(string name, UnicodeString value, ILocation locationId, int properties)
         {
         }
 
-        // no-op
         public override void Comment(UnicodeString chars, ILocation locationId, int properties)
         {
         }

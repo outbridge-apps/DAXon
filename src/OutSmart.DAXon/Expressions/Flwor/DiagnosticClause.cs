@@ -21,7 +21,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
         private Operand sequenceOp;
         public override ClauseName ClauseKey => DIAG;
 
-        //    }
         public Expression Sequence => sequenceOp.GetChildExpression();
 
         public override LocalVariableBinding[] RangeVariables => new LocalVariableBinding[]
@@ -57,20 +56,15 @@ namespace OutSmart.DAXon.Expressions.Flwor
             processor.ProcessOperand(sequenceOp);
         }
 
-        //    }
         public override void TypeCheck(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
         }
 
-        //    }
-        //
         public override void GatherVariableReferences(ExpressionVisitor visitor, IBinding binding, IList<VariableReference> references)
         {
             ExpressionTool.GatherVariableReferences(Sequence, binding, references);
         }
 
-        //    }
-        //
         public override void RefineVariableType(ExpressionVisitor visitor, IList<VariableReference> references, Expression returnExpr)
         {
             Expression seq = Sequence;
@@ -82,15 +76,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        //    }
-        //
-        public override void AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            Sequence.AddToPathMap(pathMap, pathMapNodeSet);
-        }
-
-        //    }
-        //
         public override void Explain(ExpressionPresenter @out)
         {
             @out.StartElement("trace");
@@ -98,8 +83,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
             @out.EndElement();
         }
 
-        //    }
-        //
         public override string ToShortString()
         {
             StringBuilder fsb = new StringBuilder(64);
@@ -108,8 +91,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
             return fsb.ToString();
         }
 
-        //    }
-        //
         public override string ToString()
         {
             StringBuilder fsb = new StringBuilder(64);

@@ -128,9 +128,10 @@ namespace OutSmart.DAXon.Expressions
             {
                 return Eval((context) => GetMin().EvaluateItem(context), (context) => GetMax().EvaluateItem(context), (context) => Value.Iterate(context), c);
             }
-            catch (XPathException e)
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation()).MaybeWithContext(c)))
             {
-                throw e.MaybeWithLocation(GetLocation()).MaybeWithContext(c);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 

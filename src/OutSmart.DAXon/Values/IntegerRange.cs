@@ -216,7 +216,6 @@ namespace OutSmart.DAXon.Values
         }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         // IntegerRange is already an in-memory grounded value, so materialize/makeRepeatable return itself,
         // and an integer range contains no nodes. (Materialize was a throwing stub, so `1 to 5` blew up wherever
         // it had to be grounded, e.g. map:entry("k", 1 to 5).)
@@ -235,14 +234,7 @@ namespace OutSmart.DAXon.Values
             }
         }
         public bool ContainsNode(NodeInfo sought) => false;
-        public IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         public ISequence MakeRepeatable() => this;
     }
 }

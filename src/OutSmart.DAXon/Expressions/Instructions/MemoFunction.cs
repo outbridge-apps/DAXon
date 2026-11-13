@@ -237,8 +237,18 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 return true;
             }
 
+            // A cache of every distinct call: past BigCount entries it is entered in the memory ledger, summed as it grows
+            // (the results are counted where they were made).
+            private long entries;
+            private static readonly Func<object, long> Sizer = o => 64 + 96L * ((MemoFunctionCache)o).entries;
+
             public void Put(int hash, ISequence[] args, IGroundedValue result)
             {
+                if (++entries == Core.MemoryLedger.BigCount)
+                {
+                    Core.MemoryLedger.Hold(this, Sizer);
+                }
+
                 List<IGroundedValue> bucket = cacheMap.Get(hash);
                 if (bucket == null)
                 {
@@ -261,7 +271,13 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         IItem subs = Substitute((NodeInfo)gVal);
                         if (subs == null)
                         {
-                            return; // Value is not cacheable, e.g. a streamed or mutable node
+                            // Not cacheable (a mutable node): the arguments already added go too, or the bucket's entries misalign
+                            while (bucket.Count > initialSize)
+                            {
+                                bucket.RemoveAt(bucket.Count - 1);
+                            }
+
+                            return;
                         }
                         bucket.Add((IGroundedValue)subs);
                     }

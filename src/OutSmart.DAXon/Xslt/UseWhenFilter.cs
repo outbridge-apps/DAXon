@@ -72,7 +72,7 @@ namespace OutSmart.DAXon.Xslt
             {
                 try
                 {
-                    baseUriStack.Push(new Uri(Path.GetFullPath(sysId)).AbsoluteUri);
+                    baseUriStack.Push(OutSmart.DAXon.Internal.Net.FileUris.Of(Path.GetFullPath(sysId)));
                 }
                 catch (Exception)
                 {
@@ -249,21 +249,15 @@ namespace OutSmart.DAXon.Xslt
                 // Filtered: every clause below is set-if-unset plus a report-once, so on an outer
                 // level of a nested include the body has nothing left to do - and an unentered
                 // filter costs no funclet and no re-dispatch on the unwind, which is what bounds
-                // include nesting (AW). The XTSE0180 exception to that: a cycle error still has to
-                // be re-coded to XTSE0210 by an importing level above the level that raised it.
-                catch (XPathException e) when (!e.HasBeenReported() || e.HasErrorCode("XTSE0180"))
+                // include nesting (AW). A cycle error is re-coded to XTSE0210 by each importing level
+                // in the filter itself: entering the handler on every level for it made a cycle 20
+                // includes deep kill a 256 KB thread.
+                catch (XPathException e) when (CycleThroughImport(e, isImport) && !e.HasBeenReported())
                 {
                     e.MaybeSetErrorCode("XTSE0165");
                     if (e.HasErrorCode(DAXonErrorCode.SXXP0003))
                     {
                         e.SetErrorCode("XTSE0165");
-                    }
-                    else if (e.HasErrorCode("XTSE0180"))
-                    {
-                        if (isImport)
-                        {
-                            e.SetErrorCode("XTSE0210");
-                        }
                     }
 
                     e.MaybeSetLocation(location);
@@ -275,6 +269,17 @@ namespace OutSmart.DAXon.Xslt
                     throw;
                 }
             }
+        }
+
+        // For an exception filter: an include cycle (XTSE0180) passing an importing level is XTSE0210. Always true.
+        private static bool CycleThroughImport(XPathException e, bool isImport)
+        {
+            if (isImport && e.HasErrorCode("XTSE0180"))
+            {
+                e.SetErrorCode("XTSE0210");
+            }
+
+            return true;
         }
 
         private ParsedAttributes StartElementProcessAttributes(INodeName elemName, IAttributeMap attributes, NamespaceMap namespaces, bool inXsltNamespace, NamespaceUri stdAttUri)
@@ -441,6 +446,11 @@ namespace OutSmart.DAXon.Xslt
         private void ProcessStaticVariable(INodeName elemName, IAttributeMap attributes, INamespaceResolver nsResolver, ILocation location, URI baseUri, NestedIntegerValue precedence)
         {
             string nameStr = attributes.GetValue(NamespaceUri.NULL, "name");
+            if (nameStr == null)
+            {
+                throw CreateXPathException(elemName.DisplayName + " must have a name attribute", new StructuredQName("", NamespaceUri.ERR, "XTSE0010"), location);
+            }
+
             string asStr = attributes.GetValue(NamespaceUri.NULL, "as");
             string requiredStr = Whitespace.Trim(attributes.GetValue(NamespaceUri.NULL, "required"));
             bool isRequired = StyleElement.IsYes(requiredStr);
@@ -670,8 +680,8 @@ namespace OutSmart.DAXon.Xslt
             staticContext.SetContainingLocation(loc);
             SetNamespaceBindings(staticContext);
             Expression expr = AttributeValueTemplate.Make(expression, staticContext);
-            expr = TypeCheck(expr, staticContext);
-            SlotManager stackFrameMap = AllocateSlots(expression, expr);
+            expr = Compiled(expr, staticContext);
+            SlotManager stackFrameMap = AllocateSlots(expr);
             IXPathContext dynamicContext = MakeDynamicContext(staticContext);
             ((XPathContextMajor)dynamicContext).OpenStackFrame(stackFrameMap);
             return expr.EvaluateAsString(dynamicContext).ToString();
@@ -737,22 +747,19 @@ namespace OutSmart.DAXon.Xslt
             SetNamespaceBindings(staticContext);
             Expression expr = ExpressionTool.Make(expression, staticContext, 0, Token.EOF, null);
             expr.SetRetainedStaticContext(staticContext.MakeRetainedStaticContext());
-            expr = TypeCheck(expr, staticContext);
-            SlotManager stackFrameMap = AllocateSlots(expression, expr);
+            expr = Compiled(expr, staticContext);
+            SlotManager stackFrameMap = AllocateSlots(expr);
             IXPathContext dynamicContext = MakeDynamicContext(staticContext);
 
             ((XPathContextMajor)dynamicContext).OpenStackFrame(stackFrameMap);
             return expr.EffectiveBooleanValue(dynamicContext);
         }
 
-        private SlotManager AllocateSlots(string expression, Expression expr)
+        // Also with no variable in the text: the optimizer may bind one.
+        private SlotManager AllocateSlots(Expression expr)
         {
             SlotManager stackFrameMap = GetPipelineConfiguration().GetConfiguration().MakeSlotManager();
-            if (expression.IndexOf('$') >= 0)
-            {
-                ExpressionTool.AllocateSlots(expr, stackFrameMap.NumberOfVariables, stackFrameMap);
-            }
-
+            ExpressionTool.AllocateSlots(expr, stackFrameMap.NumberOfVariables, stackFrameMap);
             return stackFrameMap;
         }
 
@@ -769,12 +776,20 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        private Expression TypeCheck(Expression expr, UseWhenStaticContext staticContext)
+        // Type-checked and optimized, as an XPath compile is: unoptimized, use-when="(1 to 100000000)[last()] gt 0"
+        // walked all the items under the compile's deadline.
+        private Expression Compiled(Expression expr, UseWhenStaticContext staticContext)
         {
             Types.ItemType contextItemType = Types.Type.ITEM_TYPE;
             ContextItemStaticInfo cit = GetConfiguration().MakeContextItemStaticInfo(contextItemType, true);
             ExpressionVisitor visitor = ExpressionVisitor.Make(staticContext);
-            return expr.TypeCheck(visitor, cit);
+            expr = expr.TypeCheck(visitor, cit);
+            if (GetConfiguration().ObtainOptimizer().IsOptionSet(OptimizerOptions.MISCELLANEOUS))
+            {
+                expr = expr.Optimize(visitor, cit);
+            }
+
+            return expr;
         }
 
         private IXPathContext MakeDynamicContext(UseWhenStaticContext staticContext)
@@ -807,7 +822,7 @@ namespace OutSmart.DAXon.Xslt
             {
                 SetNamespaceBindings(staticContext);
                 Expression expr = ExpressionTool.Make(expression, staticContext, 0, Token.EOF, null);
-                expr = TypeCheck(expr, staticContext);
+                expr = Compiled(expr, staticContext);
                 SlotManager stackFrameMap = GetPipelineConfiguration().GetConfiguration().MakeSlotManager();
                 ExpressionTool.AllocateSlots(expr, stackFrameMap.NumberOfVariables, stackFrameMap);
                 IXPathContext dynamicContext = MakeDynamicContext(staticContext);

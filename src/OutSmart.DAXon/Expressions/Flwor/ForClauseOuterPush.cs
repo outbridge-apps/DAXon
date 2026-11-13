@@ -5,8 +5,10 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Events;
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Values;
+
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     internal sealed class ForClauseOuterPush : TuplePush
@@ -21,6 +23,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void ProcessTuple(IXPathContext context)
         {
+            StackGuard.Probe();
             ISequenceIterator iter = forClause.GetIterator(context);
             int pos = 0;
             IItem next = iter.Next();
@@ -37,6 +40,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
             {
                 do
                 {
+                    OutSmart.DAXon.Core.Controller.CheckActiveTimeout();   // as ForClausePush
                     context.SetLocalVariable(forClause.RangeVariable.LocalSlotNumber, next);
                     if (forClause.PositionVariable != null)
                     {
@@ -50,6 +54,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void Dispose()
         {
+            StackGuard.Probe();
             destination.Dispose();
         }
     }

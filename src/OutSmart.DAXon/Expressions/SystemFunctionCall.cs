@@ -24,7 +24,6 @@ namespace OutSmart.DAXon.Expressions
     public class SystemFunctionCall : StaticFunctionCall, INegatable
     {
 
-        //    }
         public new SystemFunction TargetFunction => (SystemFunction)base.TargetFunction;
 
         public override int IntrinsicDependencies
@@ -108,7 +107,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //    }
         public override IntegerValue[] IntegerBounds
         {
             get
@@ -128,9 +126,8 @@ namespace OutSmart.DAXon.Expressions
         {
         }
 
-        public override void SetRetainedStaticContext(RetainedStaticContext rsc)
+        protected override void RetainedStaticContextSet(RetainedStaticContext rsc)
         {
-            base.SetRetainedStaticContext(rsc);
             TargetFunction.SetRetainedStaticContext(rsc);
         }
 
@@ -185,7 +182,6 @@ namespace OutSmart.DAXon.Expressions
             return base.IsLiftable(forStreaming) && !IsCallOn(typeof(CurrentMergeGroup)) && !IsCallOn(typeof(CurrentMergeKey)) && (!forStreaming || !IsCallOn(typeof(MapFunctionSet.MapEntry)));
         }
 
-        //    }
         public override Expression Optimize(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             int properties = TargetFunction.Details.properties;
@@ -199,8 +195,6 @@ namespace OutSmart.DAXon.Expressions
                     sfo.ParentExpression = ParentExpression;
                     ExpressionTool.CopyLocationInfo(this, sfo);
 
-                    //                if (sfo instanceof SystemFunctionCall) {
-                    //                }
                     return sfo;
                 }
             }
@@ -251,7 +245,6 @@ namespace OutSmart.DAXon.Expressions
             return sf;
         }
 
-        //    }
         public override bool IsVacuousExpression()
         {
             return IsCallOn(typeof(Exception));
@@ -332,23 +325,6 @@ namespace OutSmart.DAXon.Expressions
             }
 
             return this;
-        }
-
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            if (IsCallOn(typeof(Doc)) || IsCallOn(typeof(DocumentFn)) || IsCallOn(typeof(CollectionFn)))
-            {
-                GetArg(0).AddToPathMap(pathMap, pathMapNodeSet);
-                return new PathMap.PathMapNodeSet(pathMap.MakeNewRoot(this));
-            }
-            else if (IsCallOn(typeof(KeyFn)))
-            {
-                return ((KeyFn)TargetFunction).AddToPathMap(pathMap, pathMapNodeSet);
-            }
-            else
-            {
-                return base.AddToPathMap(pathMap, pathMapNodeSet);
-            }
         }
 
         public override Patterns.Pattern ToPattern(Configuration config)
@@ -477,6 +453,7 @@ namespace OutSmart.DAXon.Expressions
                 AllocateArgumentEvaluators((FunctionCall)expr, false);
             }
 
+            // One form per arity and per path on purpose, as in UserFunctionCall: shared, a recursion fits fewer levels.
             public override IPullEvaluator ElaborateForPull()
             {
                 SystemFunctionCall expr = (SystemFunctionCall)GetExpression();
@@ -490,9 +467,10 @@ namespace OutSmart.DAXon.Expressions
                             {
                                 return fn.Call(context, StackFrame.EMPTY_ARRAY_OF_SEQUENCE).Iterate();
                             }
-                            catch (XPathException err)
+                            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                             {
-                                throw err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                                // Decorated in the filter, never handled (XPathException.PassOn).
+                                throw;
                             }
                         };
                     case 1:
@@ -502,9 +480,10 @@ namespace OutSmart.DAXon.Expressions
                             {
                                 return fn.Call(context, new ISequence[] { argumentEvaluators[0].Evaluate(context) }).Iterate();
                             }
-                            catch (XPathException err)
+                            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                             {
-                                throw err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                                // Decorated in the filter, never handled (XPathException.PassOn).
+                                throw;
                             }
                         };
                     case 2:
@@ -514,9 +493,10 @@ namespace OutSmart.DAXon.Expressions
                             {
                                 return fn.Call(context, new ISequence[] { argumentEvaluators[0].Evaluate(context), argumentEvaluators[1].Evaluate(context) }).Iterate();
                             }
-                            catch (XPathException err)
+                            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                             {
-                                throw err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                                // Decorated in the filter, never handled (XPathException.PassOn).
+                                throw;
                             }
                         };
                     default:
@@ -526,9 +506,10 @@ namespace OutSmart.DAXon.Expressions
                             {
                                 return fn.Call(context, EvaluateArguments(context)).Iterate();
                             }
-                            catch (XPathException err)
+                            catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                             {
-                                throw err.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                                // Decorated in the filter, never handled (XPathException.PassOn).
+                                throw;
                             }
                         };
                 }
@@ -547,9 +528,10 @@ namespace OutSmart.DAXon.Expressions
                             {
                                 return fn.Call(context, StackFrame.EMPTY_ARRAY_OF_SEQUENCE).Head();
                             }
-                            catch (XPathException e)
+                            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                             {
-                                throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                                // Decorated in the filter, never handled (XPathException.PassOn).
+                                throw;
                             }
                         };
                     case 1:
@@ -559,9 +541,10 @@ namespace OutSmart.DAXon.Expressions
                             {
                                 return fn.Call(context, new ISequence[] { argumentEvaluators[0].Evaluate(context) }).Head();
                             }
-                            catch (XPathException e)
+                            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                             {
-                                throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                                // Decorated in the filter, never handled (XPathException.PassOn).
+                                throw;
                             }
                         };
                     case 2:
@@ -571,9 +554,10 @@ namespace OutSmart.DAXon.Expressions
                             {
                                 return fn.Call(context, new ISequence[] { argumentEvaluators[0].Evaluate(context), argumentEvaluators[1].Evaluate(context) }).Head();
                             }
-                            catch (XPathException e)
+                            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                             {
-                                throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                                // Decorated in the filter, never handled (XPathException.PassOn).
+                                throw;
                             }
                         };
                     default:
@@ -583,9 +567,10 @@ namespace OutSmart.DAXon.Expressions
                             {
                                 return fn.Call(context, EvaluateArguments(context)).Head();
                             }
-                            catch (XPathException e)
+                            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                             {
-                                throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                                // Decorated in the filter, never handled (XPathException.PassOn).
+                                throw;
                             }
                         };
                 }
@@ -604,9 +589,10 @@ namespace OutSmart.DAXon.Expressions
                         {
                             ((IPushableFunction)fn).Process(output, context, actualArgs);
                         }
-                        catch (XPathException e)
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithFailingExpression(expr).MaybeWithContext(context)))
                         {
-                            throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithFailingExpression(expr).MaybeWithContext(context);
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
 
                         return null;

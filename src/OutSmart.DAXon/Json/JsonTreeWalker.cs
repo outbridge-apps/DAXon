@@ -76,7 +76,7 @@ namespace OutSmart.DAXon.Json
                         UnicodeString text = TinyTextImpl.GetStringValue(tree, n);
                         if (!Values.Whitespace.IsAllWhite(text))
                         {
-                            throw new XPathException("A valid document must contain no text outside the outermost element (found \"" + Err.Truncate30(text.Tidy()) + "\")", "FOJS0006");
+                            throw new XPathException("A valid document must contain no text outside the outermost element (found \"" + Err.Truncate30(text) + "\")", "FOJS0006");
                         }
 
                         break;

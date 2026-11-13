@@ -76,13 +76,8 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 return null;
             }
 
-            if (!(slash.GetRhsExpression() is AxisExpression axis) || axis.Axis != AxisInfo.CHILD
-                || !(axis.GetNodeTest() is NameTest test) || test.PrimitiveType != Type.ELEMENT)
-            {
-                return null;
-            }
-
-            return new NumericChildSortKey(test.Fingerprint);
+            int fp = TinyText.ElementStep(slash.GetRhsExpression(), AxisInfo.CHILD);
+            return fp < 0 ? null : new NumericChildSortKey(fp);
         }
 
         public DoubleValue TryExtract(IItem item)
@@ -92,34 +87,13 @@ namespace OutSmart.DAXon.Functions.HigherOrder
                 return null;
             }
 
-            if (!parent.HasChildNodes())
-            {
-                return DoubleValue.NaN;   // number(()) is NaN
-            }
-
+            // the one child named childFp; two are SingletonAtomizer's error, not ours
             TinyTree tree = parent.tree;
-            int found = -1;
-            for (int cur = parent.nodeNr + 1; ;)
+            int n = TinyText.FirstChild(tree, parent.nodeNr);
+            int found = TinyText.NextChildNamed(tree, childFp, ref n);
+            if (found >= 0 && TinyText.NextChildNamed(tree, childFp, ref n) >= 0)
             {
-                // Sibling chain as walked by NamedChildIterator: TEXTUAL_ELEMENT folds to ELEMENT
-                // under the 0xf mask; next[] of the last sibling points back up the tree.
-                if ((tree.nodeKind[cur] & 0xf) == Type.ELEMENT && (tree.nameCode[cur] & 0xfffff) == childFp)
-                {
-                    if (found >= 0)
-                    {
-                        return null;   // two matching children: SingletonAtomizer's error, not ours
-                    }
-
-                    found = cur;
-                }
-
-                int next = tree.next[cur];
-                if (next < cur)
-                {
-                    break;
-                }
-
-                cur = next;
+                return null;
             }
 
             if (found < 0)

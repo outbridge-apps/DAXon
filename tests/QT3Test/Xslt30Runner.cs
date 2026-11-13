@@ -38,7 +38,7 @@ namespace OutSmart.DAXon.ConformanceTests
         {
             XDocument doc;
             try { doc = XDocument.Load(tsPath, System.Xml.Linq.LoadOptions.PreserveWhitespace); }
-            catch { return; }
+            catch (Exception e) { _setLoadFailure = e.GetType().Name + ": " + e.Message; return; }
             var setEl = doc.Root;
             string setName = (string)setEl.Attribute("name") ?? Path.GetFileName(tsPath);
             string baseDir = Path.GetDirectoryName(tsPath);
@@ -46,8 +46,8 @@ namespace OutSmart.DAXon.ConformanceTests
             // (FOTS convention; base-uri()/static-base-uri() of such a doc = the catalog, backwards-041).
             _xTsUri = new Uri(Path.GetFullPath(tsPath)).AbsoluteUri;
 
-            // conformance measures correctness, not wall-clock; no transformation time limit
-            _proc = new S.Processor(new S.ProcessorOptions { TransformTimeout = TimeSpan.Zero });
+            // conformance measures correctness, not wall-clock: no time limit; the memory limit as Program.MaxMemory() says
+            _proc = new S.Processor(new S.ProcessorOptions { TransformTimeout = TimeSpan.Zero, MaxMemoryBytes = Program.MaxMemory() });
             _dummy = DummyDoc(_proc);
 
             var envs = setEl.Elements(X + "environment").Where(e => e.Attribute("name") != null)
@@ -127,10 +127,11 @@ namespace OutSmart.DAXon.ConformanceTests
                     // that support (satisfied="false", e.g. date-094*/095* expecting FODT0001) don't apply.
                     return satisfied ? null : "feature-present: year_component_values (" + value + ")";
                 case "unicode-version":
-                    // Version-locked: the assert bakes in the exact character database of one frozen Unicode
-                    // release. No shipping runtime is pinned to an old version, so neither we nor Saxon-HE-Java
-                    // match it — parity skip (matches the qt3 policy).
-                    return _noskip ? null : "unicode-version: " + value + " (version-locked data-table)";
+                    // The assert bakes in one Unicode release's tables; the cases whose data changed since are skipped,
+                    // Saxon-HE-Java failing the same: unicode-90 (Unicode 9.0 categories and blocks) and 22 of
+                    // regex-classes. The other 98 regex-classes cases run (a blanket skip hid them).
+                    return (!_noskip && (_curId.StartsWith("unicode-90/", StringComparison.Ordinal) || UnicodeLockedXCases.Contains(_curId)))
+                        ? "unicode-version: " + value + " (version-locked data-table)" : null;
                 case "package_version_resolution":
                     // We resolve a use-package reference to the HIGHEST matching version (Saxon's
                     // policy); the catalog's lowest-version triplet variants don't apply.
@@ -146,6 +147,7 @@ namespace OutSmart.DAXon.ConformanceTests
             }
         }
 
+        // Only QT3_NOSKIP gets to unicode-90: a normal run skips the whole set by its unicode-version dependency.
         // unicode-90-Gen modes whose stylesheet computes $validrange[not(. = $c)] — the degenerate
         // nested-loop subset (see the skip in RunXCase). Derived from unicode90-Gen-001.xsl: every
         // mode that references $allcharsnot / the filtered range. Linear full-range modes (9, 10,
@@ -163,6 +165,14 @@ namespace OutSmart.DAXon.ConformanceTests
         // (xsl:number format='𐋡…' → HE emits ASCII), per-run lang numbering (2506 → English), and error-code
         // diagnostics HE cannot produce either (collations-1006 gives XTSE0125 not FOCH0002; json-to-xml-typed-010
         // XTSE1650 not XTDE3245; package-021err XTSE3000 not XTSE3050). Excluded to reflect the true HE ceiling.
+        static readonly HashSet<string> UnicodeLockedXCases = new HashSet<string>(new[]
+        {
+            "regex-classes-001", "regex-classes-003", "regex-classes-004", "regex-classes-006", "regex-classes-007", "regex-classes-008",
+            "regex-classes-009", "regex-classes-011", "regex-classes-012", "regex-classes-013", "regex-classes-015", "regex-classes-016",
+            "regex-classes-017", "regex-classes-019", "regex-classes-020", "regex-classes-022", "regex-classes-024", "regex-classes-026",
+            "regex-classes-028", "regex-classes-029", "regex-classes-031", "regex-classes-032",
+        }.Select(n => "regex-classes/" + n), StringComparer.Ordinal);
+
         static readonly HashSet<string> HeParityExclusions = new HashSet<string>(StringComparer.Ordinal)
         {
             "number-5079", "number-5080", "number-5081", "number-5082", "number-5091", "number-5092",
@@ -177,16 +187,14 @@ namespace OutSmart.DAXon.ConformanceTests
             // emits "<!DOCTYPE HTML>"; verified Java-HE 12.5 produces byte-identical output to this port and
             // fails the same serialization-matches. Shared HE-12 behaviour, not a port gap.
             "result-document-1402",
-            // static-032: @kinds sorts a path result of PARENTLESS text nodes returned by a function; their
-            // document order is implementation-defined (XPath 3.1 §2.4.1). Saxon 12 orders them
-            // "processing-instruction element element comment text"; the expected assumes the reverse of the
-            // first two. Verified Java-HE 12.5 emits the identical order and fails the same assert — parity.
-            "static-032",
             // docbook-001: the DocBook chunker writes docbook.css via write.chunk, whose capability probe
             // (saxon:output / exsl:document / redirect:write element-available) finds nothing in HE and
             // terminates "Can't make chunks" (XTMM9000 at chunker.xsl:244). Verified live: Java-HE 12.5 CLI
             // terminates identically. This port now reproduces Java's exact behaviour — shared HE boundary.
             "docbook-001",
+            // evaluate-048 reads https://www.saxonica.com/welcome/welcome.xml, which since 2026-11 redirects to a page that is
+            // not well-formed: FODC0002, which the case does not accept. Verified: Java-HE 12.9 gives the same FODC0002 today.
+            "evaluate-048",
         };
 
         static void RunXCase(string id, XElement tc, List<XElement> setDeps, Dictionary<string, XElement> envs, string baseDir)
@@ -598,10 +606,9 @@ namespace OutSmart.DAXon.ConformanceTests
                 }
                 else if (initialMode != null)
                 {
-                    // XTDE0044: an initial mode was requested but there is no initial match selection —
-                    // falling back to xsl:initial-template would mis-report XTDE0040 (error-0044*).
-                    throw new OutSmart.DAXon.Transformation.XPathException(
-                        "An initial mode was supplied but no initial match selection", "XTDE0044");
+                    // An initial mode and no initial match selection: XTDE0044 from the engine, as from s9api. Falling
+                    // back to xsl:initial-template would mis-report XTDE0040 (error-0044*).
+                    t.ApplyTemplates((Stream)null, null, ser);
                 }
                 else
                 {

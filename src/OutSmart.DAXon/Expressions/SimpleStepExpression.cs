@@ -93,7 +93,7 @@ namespace OutSmart.DAXon.Expressions
 
         public override ISequenceIterator Iterate(IXPathContext context)
         {
-            return MakeElaborator().ElaborateForPull().Iterate(context); //        NodeInfo origin;
+            return MakeElaborator().ElaborateForPull().Iterate(context);
             //        try {
             //            origin = (NodeInfo) getStart().evaluateItem(context);
             //        } catch (XPathException e) {

@@ -4,7 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.stream.ManualGroupIterator;
 
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Transformation;
@@ -37,6 +36,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         {
             currentMembers = new List<IItem>(20);
             currentMembers.Add(current);
+            Core.MemoryLedger.Collected(currentMembers);
             while (true)
             {
                 IItem nextCandidate = population.Next();
@@ -51,6 +51,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     if (!result.GetBooleanValue())
                     {
                         currentMembers.Add(nextCandidate);
+                        Core.MemoryLedger.Collected(currentMembers);
                     }
                     else
                     {

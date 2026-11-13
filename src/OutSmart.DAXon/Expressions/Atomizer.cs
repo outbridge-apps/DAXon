@@ -263,6 +263,20 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
+        // An operand's error restated for this role, when there is one. The caller throws it once its frame is
+        // unwound; termination and fn:error() pass untouched (Rephrases).
+        private XPathException Rephrased(XPathException e, IXPathContext context)
+        {
+            return new XPathException(ExpandMessage(e.Message)).WithErrorCode(e.ErrorCodeQName).WithLocation(e.GetLocator()).WithXPathContext(context).MaybeWithLocation(GetLocation());
+        }
+
+        // The exception filter for an operand's error: true when it is to be restated. Any other passes on with no
+        // handler run - a rethrow from a handler cost a dispatch per nesting level (XPathException.PassOn).
+        private bool Rephrases(XPathException e)
+        {
+            return roleSupplier != null && !(e is TerminationException) && !(e is Error.UserDefinedXPathException);
+        }
+
         public override Expression Optimize(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             Expression exp = base.Optimize(visitor, contextInfo);
@@ -348,9 +362,6 @@ namespace OutSmart.DAXon.Expressions
             int p = base.ComputeSpecialProperties();
             p &= ~StaticProperty.NODESET_PROPERTIES;
 
-            //        if (!untyped) {
-            //            p |= StaticProperty.NOT_UNTYPED_ATOMIC;
-            //        }
             return p | StaticProperty.NO_NODES_NEWLY_CREATED;
         }
 
@@ -371,31 +382,18 @@ namespace OutSmart.DAXon.Expressions
 
         public override ISequenceIterator Iterate(IXPathContext context)
         {
+            XPathException failure;
             try
             {
                 ISequenceIterator @base = BaseExpression.Iterate(context);
                 return GetAtomizingIterator(@base, untyped && operandItemType is NodeTest);
             }
-            catch (TerminationException)
+            catch (XPathException e) when (Rephrases(e))
             {
-                throw;
+                failure = Rephrased(e, context);
             }
-            catch (Error.UserDefinedXPathException)
-            {
-                throw;
-            }
-            catch (XPathException e)
-            {
-                if (roleSupplier == null)
-                {
-                    throw;
-                }
-                else
-                {
-                    string message = ExpandMessage(e.Message);
-                    throw new XPathException(message).WithErrorCode(e.ErrorCodeQName).WithLocation(e.GetLocator()).WithXPathContext(context).MaybeWithLocation(GetLocation());
-                }
-            }
+
+            throw failure;
         }
 
         public override IItem EvaluateItem(IXPathContext context)
@@ -405,8 +403,10 @@ namespace OutSmart.DAXon.Expressions
 
         public override ItemType GetItemType()
         {
+            // The operand's type read once: reading it again in GetAtomizedItemType doubled the cost per level of nested
+            // atomizers (data(data(...)) 31 deep compiled 47 s).
             operandItemType = BaseExpression.GetItemType();
-            return GetAtomizedItemType(BaseExpression, untyped);
+            return GetAtomizedItemType(operandItemType, untyped);
         }
 
         public override UType GetStaticUType(UType contextItemType)
@@ -416,7 +416,11 @@ namespace OutSmart.DAXon.Expressions
 
         public static ItemType GetAtomizedItemType(Expression operand, bool alwaysUntyped)
         {
-            ItemType @in = operand.GetItemType();
+            return GetAtomizedItemType(operand.GetItemType(), alwaysUntyped);
+        }
+
+        public static ItemType GetAtomizedItemType(ItemType @in, bool alwaysUntyped)
+        {
             if (@in.IsPlainType())
             {
                 return @in;
@@ -501,22 +505,6 @@ namespace OutSmart.DAXon.Expressions
             }
 
             return StaticProperty.ALLOWS_ZERO_OR_MORE;
-        }
-
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet result = BaseExpression.AddToPathMap(pathMap, pathMapNodeSet);
-            if (result != null)
-            {
-                TypeHierarchy th = GetConfiguration().GetTypeHierarchy();
-                ItemType operandItemType = BaseExpression.GetItemType();
-                if (th.Relationship(NodeKindTest.ELEMENT, operandItemType) != Affinity.DISJOINT || th.Relationship(NodeKindTest.DOCUMENT, operandItemType) != Affinity.DISJOINT)
-                {
-                    result.SetAtomized();
-                }
-            }
-
-            return null;
         }
 
         public static ISequenceIterator GetAtomizingIterator(ISequenceIterator @base, bool oneToOne)
@@ -605,97 +593,41 @@ namespace OutSmart.DAXon.Expressions
                 // Tiny arrays per parent — no per-parent axis iterator, no child node wrapper.
                 // Gates: the one-to-one form (so a typed-tree parent atomizes 1:1 through the same
                 // UntypedAtomizingIterator), a bare child::NAME step, and a node-only select.
+                IPullEvaluator operand;
+                Func<ISequenceIterator, ISequenceIterator> atomizing;
                 if (oneToOne
                     && expr.BaseExpression is SlashExpression slash
                     && Elaboration.FusedChildAtomizer.MatchAxis(slash.GetStep(), out int childFp)
                     && slash.GetSelectExpression().GetItemType() is NodeTest)
                 {
                     NodeTest childTest = ((AxisExpression)slash.GetStep()).GetNodeTest();
-                    IPullEvaluator selectEval = slash.GetSelectExpression().MakeElaborator().ElaborateForPull();
-                    return (context) =>
-                    {
-                        try
-                        {
-                            ISequenceIterator parents = selectEval.Iterate(context);
-                            return new Elaboration.FusedChildAtomizer.ChildSequenceAtomizeIterator(parents, childFp, childTest);
-                        }
-                        catch (TerminationException)
-                        {
-                            throw;
-                        }
-                        catch (Error.UserDefinedXPathException)
-                        {
-                            throw;
-                        }
-                        catch (XPathException e)
-                        {
-                            if (expr.roleSupplier == null)
-                            {
-                                throw;
-                            }
-                            else
-                            {
-                                string message = expr.ExpandMessage(e.Message);
-                                throw new XPathException(message).WithErrorCode(e.ErrorCodeQName).WithLocation(e.GetLocator()).WithXPathContext(context).MaybeWithLocation(expr.GetLocation());
-                            }
-                        }
-                        catch (UncheckedXPathException uxe)
-                        {
-                            XPathException e = uxe.GetXPathException();
-                            if (expr.roleSupplier == null)
-                            {
-                                throw e;
-                            }
-                            else
-                            {
-                                string message = expr.ExpandMessage(e.Message);
-                                throw new XPathException(message).WithErrorCode(e.ErrorCodeQName).WithLocation(e.GetLocator()).WithXPathContext(context).MaybeWithLocation(expr.GetLocation());
-                            }
-                        }
-                    };
+                    operand = slash.GetSelectExpression().MakeElaborator().ElaborateForPull();
+                    atomizing = parents => new Elaboration.FusedChildAtomizer.ChildSequenceAtomizeIterator(parents, childFp, childTest);
+                }
+                else
+                {
+                    operand = expr.BaseExpression.MakeElaborator().ElaborateForPull();
+                    atomizing = @base => GetAtomizingIterator(@base, oneToOne);
                 }
 
-                IPullEvaluator baseEval = expr.BaseExpression.MakeElaborator().ElaborateForPull();
                 IPullEvaluator generic = (context) =>
                 {
+                    XPathException failure;
                     try
                     {
-                        ISequenceIterator @base = baseEval.Iterate(context);
-                        return GetAtomizingIterator(@base, oneToOne);
+                        return atomizing(operand.Iterate(context));
                     }
-                    catch (TerminationException)
+                    catch (XPathException e) when (expr.Rephrases(e))
                     {
-                        throw;
-                    }
-                    catch (Error.UserDefinedXPathException)
-                    {
-                        throw;
-                    }
-                    catch (XPathException e)
-                    {
-                        if (expr.roleSupplier == null)
-                        {
-                            throw;
-                        }
-                        else
-                        {
-                            string message = expr.ExpandMessage(e.Message);
-                            throw new XPathException(message).WithErrorCode(e.ErrorCodeQName).WithLocation(e.GetLocator()).WithXPathContext(context).MaybeWithLocation(expr.GetLocation());
-                        }
+                        failure = expr.Rephrased(e, context);
                     }
                     catch (UncheckedXPathException uxe)
                     {
                         XPathException e = uxe.GetXPathException();
-                        if (expr.roleSupplier == null)
-                        {
-                            throw e;
-                        }
-                        else
-                        {
-                            string message = expr.ExpandMessage(e.Message);
-                            throw new XPathException(message).WithErrorCode(e.ErrorCodeQName).WithLocation(e.GetLocator()).WithXPathContext(context).MaybeWithLocation(expr.GetLocation());
-                        }
+                        failure = expr.roleSupplier == null ? e : expr.Rephrased(e, context);
                     }
+
+                    throw failure;
                 };
 
                 // atomize(descendant::text()[parent leaf]) — the compiled body of

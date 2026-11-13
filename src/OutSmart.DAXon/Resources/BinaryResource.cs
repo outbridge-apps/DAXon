@@ -100,7 +100,7 @@ namespace OutSmart.DAXon.Resources
 
         public static string Decode(byte[] value, int offset, int len, string encoding)
         {
-            Encoding enc = EncodingDetector.Lookup(encoding, true);
+            Encoding enc = EncodingDetector.Lookup(encoding, true, value, offset, len);
             int bom = EncodingDetector.BomLength(value, offset, len, enc);
             try
             {

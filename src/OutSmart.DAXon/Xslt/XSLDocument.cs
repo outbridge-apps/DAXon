@@ -49,30 +49,7 @@ namespace OutSmart.DAXon.Xslt
                 }
             }
 
-            if (validationAtt == null)
-            {
-                validationAction = DefaultValidation;
-            }
-            else
-            {
-                validationAction = ValidateValidationAttribute(validationAtt);
-            }
-
-            if (typeAtt != null)
-            {
-                if (!IsSchemaAware())
-                {
-                    CompileError("The @type attribute is available only with a schema-aware XSLT processor", "XTSE1660");
-                }
-
-                schemaType = GetSchemaType(typeAtt);
-                validationAction = Validation.BY_TYPE;
-            }
-
-            if (typeAtt != null && validationAtt != null)
-            {
-                CompileError("The @validation and @type attributes are mutually exclusive", "XTSE1505");
-            }
+            validationAction = ValidationAction(validationAtt, typeAtt, out schemaType);
         }
 
         public override void Validate(ComponentDeclaration decl)

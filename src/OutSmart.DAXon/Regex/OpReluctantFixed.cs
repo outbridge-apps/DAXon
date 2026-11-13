@@ -12,7 +12,7 @@ namespace OutSmart.DAXon.Regex
     {
         private readonly int len;
 
-        public override int MatchLength => min == max ? min * len : -1;
+        public override int MatchLength => min == max ? Fixed((long)min * len) : -1;
         public OpReluctantFixed(Operation op, int min, int max, int len) : base(op, min, max, false)
         {
             this.len = len;
@@ -36,6 +36,9 @@ namespace OutSmart.DAXon.Regex
 
         public override IIntIterator IterateMatches(REMatcher matcher, int position)
         {
+            // Nested quantifiers and choices recurse here per level of the pattern: the guard of OpCapture, so a pattern
+            // compiled on a large stack and cached cannot overflow a smaller thread that matches it.
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             return new AnonymousIntIterator(this, matcher, position);
         }
 

@@ -76,10 +76,6 @@ namespace OutSmart.DAXon.Serialization
             {
                 bool doubleSpaced = IsDoubleSpaced();
 
-                //            if (doubleSpaced) {
-                //                line = 0;
-                //                column = 0;
-                //            }
                 Indent(doubleSpaced);
             }
             else
@@ -88,6 +84,13 @@ namespace OutSmart.DAXon.Serialization
             }
 
             level++;
+            // Below the depth where the indent stops growing, no more new lines: a 350 KB tree 50 000 levels deep came out at
+            // 77 M characters, 768 spaces a line (XdmValue.ToString indents what a host logs).
+            if (suppressedAtLevel < 0 && level > IndentWhitespace.MaxLevels)
+            {
+                suppressedAtLevel = level;
+            }
+
             if (suppressedAtLevel < 0)
             {
                 string xmlSpace = attributes.GetValue(NamespaceUri.XML, "space");
@@ -196,7 +199,6 @@ namespace OutSmart.DAXon.Serialization
             }
 
             emitter.ProcessingInstruction(target, data, locationId, properties); //afterStartTag = false;
-            //afterEndTag = false;
         }
 
         /// <summary>
@@ -248,7 +250,6 @@ namespace OutSmart.DAXon.Serialization
             }
 
             emitter.Comment(chars, locationId, properties); //afterStartTag = false;
-            //afterEndTag = false;
         }
 
         public override bool UsesTypeAnnotations()
@@ -267,7 +268,7 @@ namespace OutSmart.DAXon.Serialization
             }
 
             pendingWhitespace = null; // if we're adding new whitespace, we're allowed to discard existing whitespace
-            int spaces = level * Indentation;
+            int spaces = Math.Min(level, IndentWhitespace.MaxLevels) * Indentation;
             if (line > 0)
             {
                 spaces -= column;

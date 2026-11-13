@@ -189,7 +189,8 @@ namespace OutSmart.DAXon.Functions
         }
 
         // The value of a parameter, made of its required type by the function conversion rules as the conventions
-        // for options have it: an untyped value is cast, an array or a node is atomized.
+        // for options have it: an untyped value is cast, an array or a node is atomized. Their errors keep their codes
+        // (F&O 1.7, rule 6: "typically XPTY0004 or FORG0001"): a cast that fails is FORG0001, a map atomized FOTY0013.
         private static IGroundedValue Converted(string name, IGroundedValue value, SequenceType required, IXPathContext context)
         {
             TypeHierarchy th = context.GetConfiguration().GetTypeHierarchy();
@@ -198,17 +199,8 @@ namespace OutSmart.DAXon.Functions
                 return value;
             }
 
-            try
-            {
-                Func<RoleDiagnostic> role = () => new RoleDiagnostic(RoleDiagnostic.OPTION, name, 0, "XPTY0004");
-                return th.ApplyFunctionConversionRules(value, required, role, Loc.NONE).Materialize();
-            }
-            catch (XPathException e) when (!e.HasErrorCode("XPTY0004"))
-            {
-                // A value that cannot be made of the required type - a cast that fails, an item with no atoms - is
-                // the type error of the conventions, whatever the conversion itself called it.
-                throw new XPathException(e.Message, "XPTY0004").AsTypeError();
-            }
+            Func<RoleDiagnostic> role = () => new RoleDiagnostic(RoleDiagnostic.OPTION, name, 0, "XPTY0004");
+            return th.ApplyFunctionConversionRules(value, required, role, Loc.NONE).Materialize();
         }
 
         // The entries of the map that are parameters. An entry whose key is not one of the strings of the table - a

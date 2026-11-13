@@ -61,11 +61,6 @@ namespace OutSmart.DAXon.Lib
             AbsolutePath path;
             string nodeMessage = null;
             int lineNumber = err.GetLineNumber();
-            if (err is DOMLocator)
-            {
-                nodeMessage = "at " + ((DOMLocator)err).OriginatingNode.GetNodeName() + ' ';
-            }
-
             if (nodeMessage == null)
             {
                 if (lineNumber == -1 && (path = err.GetPath()) != null)

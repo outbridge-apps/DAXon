@@ -18,13 +18,10 @@ namespace OutSmart.DAXon.Expressions
 
         public override int ImplementationMethod => ITERATE_METHOD;
 
-        /* | StaticProperty.ALLOWS_ONE */
         public int Start => start;
 
-        /* | StaticProperty.ALLOWS_ONE */
         public override string StreamerName => "TailExpression";
 
-        /* | StaticProperty.ALLOWS_ONE */
         public override string ExpressionName => "tail";
         public TailExpression(Expression @base, int start) : base(@base)
         {
@@ -69,32 +66,27 @@ namespace OutSmart.DAXon.Expressions
             return BaseExpression.GetCardinality() | StaticProperty.ALLOWS_ZERO;
         }
 
-        /* | StaticProperty.ALLOWS_ONE */
         protected override OperandRole GetOperandRole()
         {
             return OperandRole.SAME_FOCUS_ACTION;
         }
 
-        /* | StaticProperty.ALLOWS_ONE */
         public override bool Equals(object other)
         {
             return other is TailExpression && BaseExpression.IsEqual(((TailExpression)other).BaseExpression) && start == ((TailExpression)other).start;
         }
 
-        /* | StaticProperty.ALLOWS_ONE */
         protected override int ComputeHashCode()
         {
             return base.ComputeHashCode() ^ start;
         }
 
-        /* | StaticProperty.ALLOWS_ONE */
         public override ISequenceIterator Iterate(IXPathContext context)
         {
             ISequenceIterator baseIter = BaseExpression.Iterate(context);
             return TailIterator.Make(baseIter, start);
         }
 
-        /* | StaticProperty.ALLOWS_ONE */
         public override void Export(ExpressionPresenter destination)
         {
             destination.StartElement("tail", this);
@@ -103,7 +95,6 @@ namespace OutSmart.DAXon.Expressions
             destination.EndElement();
         }
 
-        /* | StaticProperty.ALLOWS_ONE */
         public override string ToString()
         {
             if (start == 2)
@@ -116,7 +107,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /* | StaticProperty.ALLOWS_ONE */
         public override string ToShortString()
         {
             if (start == 2)
@@ -129,13 +119,11 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        /* | StaticProperty.ALLOWS_ONE */
         public override Elaborator GetElaborator()
         {
             return new TailExprElaborator();
         }
 
-        /* | StaticProperty.ALLOWS_ONE */
         /// <summary>
         /// Elaborator for a tail expression
         /// </summary>

@@ -12,29 +12,29 @@ namespace OutSmart.DAXon.Lib
 {
     public abstract class Logger
     {
-        public const int INFO = 0;
-        public const int WARNING = 1;
-        public const int ERROR = 2;
-        public const int DISASTER = 3;
+        public const int SeverityInfo = 0;
+        public const int SeverityWarning = 1;
+        public const int SeverityError = 2;
+        public const int SeverityDisaster = 3;
         private bool unicodeAware;
         public virtual void Info(string message)
         {
-            Println(message, INFO);
+            Println(message, SeverityInfo);
         }
 
         public virtual void Warning(string message)
         {
-            Println(message, WARNING);
+            Println(message, SeverityWarning);
         }
 
         public virtual void Error(string message)
         {
-            Println(message, ERROR);
+            Println(message, SeverityError);
         }
 
         public virtual void Disaster(string message)
         {
-            Println(message, DISASTER);
+            Println(message, SeverityDisaster);
         }
 
         public abstract void Println(string message, int severity);
@@ -80,7 +80,7 @@ namespace OutSmart.DAXon.Lib
                     char ch = cbuf[off + i];
                     if (ch == '\n')
                     {
-                        logger.Println(builder.ToString(), INFO);
+                        logger.Println(builder.ToString(), SeverityInfo);
                         builder.Length = 0;
                     }
                     else
@@ -94,7 +94,7 @@ namespace OutSmart.DAXon.Lib
             {
                 if (builder.Length > 0)
                 {
-                    logger.Println(builder.ToString(), INFO);
+                    logger.Println(builder.ToString(), SeverityInfo);
                     builder.Length = 0;
                 }
             }

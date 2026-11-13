@@ -15,7 +15,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         /// <summary>
         /// An empty SlotManager
         /// </summary>
-        public static SlotManager EMPTY = new SlotManager(0);
+        public static readonly SlotManager EMPTY = new SlotManager(0);
         private readonly List<StructuredQName> variableMap;
         // values are StructuredQName objects representing the variable names
         private int numberOfVariables;

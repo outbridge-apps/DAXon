@@ -31,13 +31,19 @@ namespace OutSmart.DAXon.Values
         {
             lock (this)
             {
+                UncheckedXPathException failure = null;
                 try
                 {
                     MakeSequence();
                 }
                 catch (XPathException e)
                 {
-                    throw new UncheckedXPathException(e);
+                    failure = new UncheckedXPathException(e);   // thrown below: see SingletonClosure.Iterate
+                }
+
+                if (failure != null)
+                {
+                    throw failure;
                 }
 
                 return sequence.Iterate();
@@ -95,6 +101,7 @@ namespace OutSmart.DAXon.Values
 
         public override IGroundedValue Reduce()
         {
+            XPathException failure;
             try
             {
                 if (sequence is IGroundedValue)
@@ -108,8 +115,10 @@ namespace OutSmart.DAXon.Values
             }
             catch (UncheckedXPathException e)
             {
-                throw e.GetXPathException();
+                failure = e.GetXPathException();   // thrown below: see SingletonClosure.Iterate
             }
+
+            throw failure;
         }
 
         public override ISequence MakeRepeatable()

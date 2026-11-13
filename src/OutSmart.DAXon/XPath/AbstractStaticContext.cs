@@ -263,7 +263,6 @@ namespace OutSmart.DAXon.XPath
         public abstract HashSet<NamespaceUri> GetImportedSchemaNamespaces();
         public abstract INamespaceResolver GetNamespaceResolver();
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         // Upstream returns getConfiguration().getOptimizerOptions(); the NIE stub broke static-parameter
         // evaluation in fn:transform (xsl:param static='yes').
         public virtual OptimizerOptions GetOptimizerOptions() => config.GetOptimizerOptions();

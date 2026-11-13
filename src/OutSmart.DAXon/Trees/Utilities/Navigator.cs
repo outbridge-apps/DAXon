@@ -107,7 +107,7 @@ namespace OutSmart.DAXon.Trees.Utilities
                         if (parent == null)
                         {
                             // We have a parentless element with a relative xml:base attribute.
-                            // See for example test XQTS fn-@base-uri-10 and @base-uri-27
+                            // See for example test XQTS fn-base-uri-10 and base-uri-27
                             URI base2 = new URI(n.GetSystemId());
                             result = ((xmlBase.Length == 0) ? base2 : base2.Resolve(relative)).ToString();
                             break;
@@ -174,8 +174,12 @@ namespace OutSmart.DAXon.Trees.Utilities
 
             if (chain != null)
             {
+                // Each level resolves, and remembers, a URI as long as its depth: an xml:base on every level of a deep
+                // document costs depth^2 characters, so the clock is read by them and the remembered ones are ledgered.
+                long work = 0;
                 for (int i = chain.Count - 1; i >= 0; i--)
                 {
+                    Controller.CheckActiveTimeoutAfterWork(ref work, result?.Length ?? 0);
                     BaseUriStep step = chain[i];
                     if (step.XmlBase != null)
                     {
@@ -193,6 +197,10 @@ namespace OutSmart.DAXon.Trees.Utilities
                     if (i > 0)
                     {
                         ((IInheritedBaseUri)step.Node).RememberBaseUri(result);
+                        if (result != null)
+                        {
+                            MemoryLedger.Hold(result, 22 + 2L * result.Length);
+                        }
                     }
                 }
             }
@@ -599,6 +607,24 @@ namespace OutSmart.DAXon.Trees.Utilities
             }
         }
 
+        /// <summary>Java's NodeInfo.toShortString() default, for the node classes that have no better.</summary>
+        public static string ToShortString(NodeInfo node)
+        {
+            switch (node.GetNodeKind())
+            {
+                case Types.Type.DOCUMENT: return "document-node()";
+                case Types.Type.ELEMENT: return "<" + node.DisplayName + "/>";
+                case Types.Type.ATTRIBUTE: return "@" + node.DisplayName;
+                case Types.Type.TEXT: return "text(\"" + Transformation.Err.Truncate30(node.UnicodeStringValue) + "\")";
+                case Types.Type.COMMENT: return "<!--" + Transformation.Err.Truncate30(node.UnicodeStringValue) + "-->";
+                case Types.Type.PROCESSING_INSTRUCTION: return "<?" + node.DisplayName + "?>";
+                case Types.Type.NAMESPACE:
+                    string prefix = node.GetLocalPart();
+                    return "xmlns" + (prefix.Length == 0 ? "" : ":" + prefix) + "=\"" + node.UnicodeStringValue + "\"";
+                default: return "";
+            }
+        }
+
         public static void Copy(NodeInfo node, IReceiver @out, int copyOptions, ILocation locationId)
         {
             switch (node.GetNodeKind())
@@ -936,7 +962,7 @@ namespace OutSmart.DAXon.Trees.Utilities
                 NodeInfo par2 = p2.GetParent();
                 if (par1 == null || par2 == null)
                 {
-                    throw new NullReferenceException("Node order comparison - internal error");
+                    throw new InvalidOperationException("Node order comparison - internal error");
                 }
 
                 if (par1.Equals(par2))
@@ -1095,19 +1121,25 @@ namespace OutSmart.DAXon.Trees.Utilities
             }
 
 
-            // Generic implementation
+            // Generic implementation. The steps climbed count towards the clock across calls: innermost/outermost climb per
+            // node, 21 s on 32 000 levels, each call too short to look at it alone.
             NodeInfo p = d;
+            long steps = 0;
+            bool found = false;
             while (p != null)
             {
                 if (a.Equals(p))
                 {
-                    return true;
+                    found = true;
+                    break;
                 }
 
                 p = p.GetParent();
+                steps++;
             }
 
-            return false;
+            Controller.CheckActiveTimeoutAfterWork(ref Controller.climbed, steps);
+            return found;
         }
 
         // Helper classes to support axis iteration

@@ -42,6 +42,11 @@ namespace OutSmart.DAXon.Lib
                 return true;
             }
 
+            if (!EscapesAndScheme(sv))
+            {
+                return false;
+            }
+
             try
             {
                 new URI(sv);
@@ -63,6 +68,48 @@ namespace OutSmart.DAXon.Lib
                 return false;
             }
         }
+
+        // What java.net.URI refuses and System.Uri takes: a '%' not followed by two hex digits ("%", "%gg"), and a
+        // scheme - text before a ':' that comes ahead of any '/', '?' or '#' - that is empty (":/") or malformed ("1a:b").
+        private static bool EscapesAndScheme(string s)
+        {
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (s[i] == '%' && !(i + 2 < s.Length && IsHex(s[i + 1]) && IsHex(s[i + 2])))
+                {
+                    return false;
+                }
+            }
+
+            int colon = s.IndexOf(':');
+            int delimiter = s.IndexOfAny(SchemeEnds);
+            if (colon < 0 || (delimiter >= 0 && delimiter < colon))
+            {
+                return true;
+            }
+
+            if (colon == 0 || !IsAsciiLetter(s[0]))
+            {
+                return false;
+            }
+
+            for (int i = 1; i < colon; i++)
+            {
+                char c = s[i];
+                if (!(IsAsciiLetter(c) || (c >= '0' && c <= '9') || c == '+' || c == '-' || c == '.'))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static readonly char[] SchemeEnds = { '/', '?', '#' };
+
+        private static bool IsHex(char c) => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+
+        private static bool IsAsciiLetter(char c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 
         // Detailed post-parse checks (passesAdditionalChecks) are not ported; upstream's checkThoroughly
         // then never throws, so this stays a no-op — ResolveURI relies on it not rejecting parsed URIs.

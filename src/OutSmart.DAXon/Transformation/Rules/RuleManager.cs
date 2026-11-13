@@ -135,15 +135,6 @@ namespace OutSmart.DAXon.Transformation.Rules
             }
         }
 
-        public void InvertStreamableTemplates()
-        {
-            unnamedMode.InvertStreamableTemplates();
-            foreach (Mode mode in modes.Values)
-            {
-                mode.ActivePart.InvertStreamableTemplates();
-            }
-        }
-
         public void CheckConsistency()
         {
             unnamedMode.ResolveProperties(this);

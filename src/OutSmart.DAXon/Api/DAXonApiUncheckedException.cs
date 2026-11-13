@@ -13,7 +13,7 @@ namespace OutSmart.DAXon.Api
     // before, an Exception apart whose Message was the cause's whole ToString(), stack trace included.
     public class DAXonApiUncheckedException : DAXonApiException
     {
-        public DAXonApiUncheckedException(Exception err) : base(err)
+        public DAXonApiUncheckedException(Exception err) : base(ArgumentCheck.Checked(err, nameof(err)))
         {
         }
     }

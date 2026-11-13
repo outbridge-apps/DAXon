@@ -158,138 +158,23 @@ namespace OutSmart.DAXon.Text
                 return cachedHash;
             }
 
-            int h = 0;
-            for (int i = start; i < end; i++)
-            {
-                byte b = bytes[i];
-                h = 31 * h + (b & 0xff);
-            }
-
-            return cachedHash = h;
+            return cachedHash = Hash(bytes, start, end);
         }
 
         public override bool Equals(object o)
         {
-            // Same-width fast compare (tree text is Slice8; the base compare allocates two
-            // codepoint iterators and pays interface calls per char -- hot in distinct-values,
-            // grouping and key lookups).
-            if (o is Slice8 s)
-            {
-                int n = end - start;
-                if (n != s.end - s.start)
-                {
-                    return false;
-                }
-
-                for (int i = 0; i < n; i++)
-                {
-                    if (bytes[start + i] != s.bytes[s.start + i])
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            if (o is BMPString obstr)
-            {
-                // BMP rep is surrogate-free, so char == codepoint: compare directly against the
-                // backing string (comparisons against stylesheet literals otherwise fall to the
-                // iterator-allocating base Equals — hot in [CHILD='lit'] predicate scans).
-                string os = obstr.ToString();   // backing string, no copy
-                return EqualsBmp(os, 0, os.Length);
-            }
-
-            if (o is BMPSlice obsl)
-            {
-                return EqualsBmp(obsl.Backing, obsl.Start, obsl.End);
-            }
-
-            if (o is Twine8 t)
-            {
-                byte[] tb = t.ByteArray;
-                int n = end - start;
-                if (n != tb.Length)
-                {
-                    return false;
-                }
-
-                for (int i = 0; i < n; i++)
-                {
-                    if (bytes[start + i] != tb[i])
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            return base.Equals(o);
+            return o is UnicodeString u && TryEquals(bytes, start, end, u, out bool equal) ? equal : base.Equals(o);
         }
 
-        // Same-width lexicographic compare (tree text is Slice8; the base compare allocates two
-        // codepoint iterators and pays MoveNext/Current per char -- hot in xsl:sort / fn:sort).
-        // Latin1 byte value == codepoint, so an unsigned byte compare is codepoint-order-identical.
         public override int CompareTo(UnicodeString other)
         {
-            byte[] ob;
-            int oj, oe;
-            if (other is Slice8 s)
-            {
-                ob = s.bytes;
-                oj = s.start;
-                oe = s.end;
-            }
-            else if (other is Twine8 tw)
-            {
-                ob = tw.ByteArray;
-                oj = 0;
-                oe = ob.Length;
-            }
-            else if (other is BMPString bstr)
-            {
-                // BMP rep holds surrogate-free chars, so char order == codepoint order: compare
-                // directly against the backing string instead of the base codepoint-iterator loop
-                // (which allocates two iterators per comparison — hot in string comparisons
-                // against stylesheet literals).
-                string os = bstr.ToString();   // backing string, no copy
-                return CompareToBmp(os, 0, os.Length);
-            }
-            else if (other is BMPSlice bsl)
-            {
-                return CompareToBmp(bsl.Backing, bsl.Start, bsl.End);
-            }
-            else
-            {
-                return base.CompareTo(other);
-            }
-
-            int i = start;
-            int j = oj;
-            while (i < end && j < oe)
-            {
-                int diff = (bytes[i++] & 0xff) - (ob[j++] & 0xff);
-                if (diff != 0)
-                {
-                    return diff;
-                }
-            }
-
-            return (end - start).CompareTo(oe - oj);
+            return TryCompare(bytes, start, end, other, out int order) ? order : base.CompareTo(other);
         }
 
-        // Byte-rep substring search (haystack = this). The base IndexOf/HasSubstring run on
-        // codepoint iterators (two allocations + per-char virtual calls per probe) — hot in
-        // contains()/starts-with()/ends-with()/substring-before()/after() under the codepoint
-        // collation. Latin1 byte value == codepoint, and BMP reps are surrogate-free, so direct
-        // byte/char scans realise the same codepoint semantics. Guard order mirrors the base
-        // exactly (bounds first, then the empty-needle case).
+        // Guard order mirrors the base exactly (bounds first, then the empty-needle case).
         public override long IndexOf(UnicodeString other, long from)
         {
-            int len = end - start;
-            if (from < 0 || from >= len)
+            if (from < 0 || from >= end - start)
             {
                 return -1;
             }
@@ -299,68 +184,160 @@ namespace OutSmart.DAXon.Text
                 return from;
             }
 
-            if (other is Slice8 s)
-            {
-                return ByteIndexOf(bytes, start, end, s.bytes, s.start, s.end, (int)from);
-            }
-
-            if (other is Twine8 t)
-            {
-                byte[] tb = t.ByteArray;
-                return ByteIndexOf(bytes, start, end, tb, 0, tb.Length, (int)from);
-            }
-
-            if (other is BMPString bstr)
-            {
-                string os = bstr.ToString();   // backing string, no copy
-                return CharIndexOf(bytes, start, end, os, 0, os.Length, (int)from);
-            }
-
-            if (other is BMPSlice bsl)
-            {
-                return CharIndexOf(bytes, start, end, bsl.Backing, bsl.Start, bsl.End, (int)from);
-            }
-
-            return base.IndexOf(other, from);
+            return TryIndexOf(bytes, start, end, other, (int)from, out long index) ? index : base.IndexOf(other, from);
         }
 
         public override bool HasSubstring(UnicodeString other, long offset)
         {
-            int len = end - start;
-            if (offset < 0 || offset > len)
+            if (offset < 0 || offset > end - start)
             {
                 throw new IndexOutOfRangeException();
             }
 
-            if (other is Slice8 s)
+            return TryHasSubstring(bytes, start, end, other, (int)offset, out bool has) ? has : base.HasSubstring(other, offset);
+        }
+
+        // The Latin-1 bytes of either 8-bit form that keeps them in one array: a Slice8, or a Twine8 from 0 to its end.
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal static bool Latin1Span(UnicodeString s, out byte[] bytes, out int start, out int end)
+        {
+            if (s is Slice8 s8)
             {
-                return ByteRegionEquals(bytes, start, len, s.bytes, s.start, s.end - s.start, (int)offset);
+                bytes = s8.bytes;
+                start = s8.start;
+                end = s8.end;
+                return true;
             }
 
-            if (other is Twine8 t)
+            if (s is Twine8 t8)
             {
-                byte[] tb = t.ByteArray;
-                return ByteRegionEquals(bytes, start, len, tb, 0, tb.Length, (int)offset);
+                bytes = t8.ByteArray;
+                start = 0;
+                end = bytes.Length;
+                return true;
             }
 
-            if (other is BMPString bstr)
+            bytes = null;
+            start = 0;
+            end = 0;
+            return false;
+        }
+
+        // The comparisons of a Latin-1 span (b, s, e) with a string that has a byte or char span; false for any other,
+        // which the base compares codepoint by codepoint (two iterator allocations and virtual calls a character).
+        // A byte is its codepoint and the 16-bit forms are surrogate-free, so a byte or char scan is a codepoint scan.
+        internal static int Hash(byte[] b, int s, int e)
+        {
+            int h = 0;
+            for (int i = s; i < e; i++)
             {
-                string os = bstr.ToString();   // backing string, no copy
-                return CharRegionEquals(bytes, start, len, os, 0, os.Length, (int)offset);
+                h = 31 * h + b[i];
             }
 
-            if (other is BMPSlice bsl)
+            return h;
+        }
+
+        internal static bool TryEquals(byte[] b, int s, int e, UnicodeString other, out bool equal)
+        {
+            if (Latin1Span(other, out byte[] ob, out int os, out int oe))
             {
-                return CharRegionEquals(bytes, start, len, bsl.Backing, bsl.Start, bsl.End - bsl.Start, (int)offset);
+                equal = e - s == oe - os && ByteRegionEquals(b, s, e - s, ob, os, oe - os, 0);
+                return true;
             }
 
-            return base.HasSubstring(other, offset);
+            if (BMPSlice.CharSpan(other, out string oc, out os, out oe))
+            {
+                equal = e - s == oe - os && CharRegionEquals(b, s, e - s, oc, os, oe - os, 0);
+                return true;
+            }
+
+            equal = false;
+            return false;
+        }
+
+        internal static bool TryCompare(byte[] b, int s, int e, UnicodeString other, out int order)
+        {
+            int i = s;
+            if (Latin1Span(other, out byte[] ob, out int j, out int oe))
+            {
+                int oj = j;
+                while (i < e && j < oe)
+                {
+                    int diff = b[i++] - ob[j++];
+                    if (diff != 0)
+                    {
+                        order = diff;
+                        return true;
+                    }
+                }
+
+                order = (e - s).CompareTo(oe - oj);
+                return true;
+            }
+
+            if (BMPSlice.CharSpan(other, out string oc, out j, out oe))
+            {
+                int oj = j;
+                while (i < e && j < oe)
+                {
+                    int diff = b[i++] - oc[j++];
+                    if (diff != 0)
+                    {
+                        order = diff;
+                        return true;
+                    }
+                }
+
+                order = (e - s).CompareTo(oe - oj);
+                return true;
+            }
+
+            order = 0;
+            return false;
+        }
+
+        // Searches a needle that is not empty from a position inside the haystack.
+        internal static bool TryIndexOf(byte[] b, int s, int e, UnicodeString other, int from, out long index)
+        {
+            if (Latin1Span(other, out byte[] ob, out int os, out int oe))
+            {
+                index = ByteIndexOf(b, s, e, ob, os, oe, from);
+                return true;
+            }
+
+            if (BMPSlice.CharSpan(other, out string oc, out os, out oe))
+            {
+                index = CharIndexOf(b, s, e, oc, os, oe, from);
+                return true;
+            }
+
+            index = -1;
+            return false;
+        }
+
+        internal static bool TryHasSubstring(byte[] b, int s, int e, UnicodeString other, int offset, out bool has)
+        {
+            if (Latin1Span(other, out byte[] ob, out int os, out int oe))
+            {
+                has = ByteRegionEquals(b, s, e - s, ob, os, oe - os, offset);
+                return true;
+            }
+
+            if (BMPSlice.CharSpan(other, out string oc, out os, out oe))
+            {
+                has = CharRegionEquals(b, s, e - s, oc, os, oe - os, offset);
+                return true;
+            }
+
+            has = false;
+            return false;
         }
 
         internal static long ByteIndexOf(byte[] hb, int hs, int he, byte[] nb, int ns, int ne, int from)
         {
             int nlen = ne - ns;
             byte first = nb[ns];
+            long work = 0;
             for (int i = hs + from; i <= he - nlen; i++)
             {
                 if (hb[i] == first)
@@ -370,6 +347,8 @@ namespace OutSmart.DAXon.Text
                     {
                         k++;
                     }
+
+                    OutSmart.DAXon.Core.Controller.CheckActiveTimeoutAfterWork(ref work, k);   // a candidate compares up to the needle's length
 
                     if (k == nlen)
                     {
@@ -390,6 +369,7 @@ namespace OutSmart.DAXon.Text
                 return -1;   // a >Latin1 codepoint can never occur in a byte haystack
             }
 
+            long work = 0;
             for (int i = hs + from; i <= he - nlen; i++)
             {
                 if (hb[i] == first)
@@ -399,6 +379,8 @@ namespace OutSmart.DAXon.Text
                     {
                         k++;
                     }
+
+                    OutSmart.DAXon.Core.Controller.CheckActiveTimeoutAfterWork(ref work, k);   // a candidate compares up to the needle's length
 
                     if (k == nlen)
                     {
@@ -444,41 +426,6 @@ namespace OutSmart.DAXon.Text
             }
 
             return true;
-        }
-
-        private bool EqualsBmp(string os, int oj, int oe)
-        {
-            int n = end - start;
-            if (n != oe - oj)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < n; i++)
-            {
-                if ((bytes[start + i] & 0xff) != os[oj + i])
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private int CompareToBmp(string os, int oj, int oe)
-        {
-            int i = start;
-            int j = oj;
-            while (i < end && j < oe)
-            {
-                int diff = (bytes[i++] & 0xff) - os[j++];
-                if (diff != 0)
-                {
-                    return diff;
-                }
-            }
-
-            return (end - start).CompareTo(oe - oj);
         }
 
         //    @Override

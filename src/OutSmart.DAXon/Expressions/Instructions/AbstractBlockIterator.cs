@@ -44,13 +44,19 @@ namespace OutSmart.DAXon.Expressions.Instructions
             {
                 if (currentIter == null)
                 {
+                    UncheckedXPathException failure = null;
                     try
                     {
                         currentIter = GetNthChildIterator(currentOperand++);
                     }
                     catch (XPathException e)
                     {
-                        throw new UncheckedXPathException(e);
+                        failure = new UncheckedXPathException(e);   // thrown below: see SingletonClosure.Iterate
+                    }
+
+                    if (failure != null)
+                    {
+                        throw failure;
                     }
                 }
 

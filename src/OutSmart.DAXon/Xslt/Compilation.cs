@@ -27,8 +27,6 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     public class Compilation
     {
-        // diagnostic switch to control output of timing information
-        public static bool TIMING;
         private readonly Configuration config;
         private readonly CompilerInfo compilerInfo;
         private PrincipalStylesheetModule principalStylesheetModule;
@@ -44,7 +42,6 @@ namespace OutSmart.DAXon.Xslt
         private readonly Dictionary<DocumentKey, ITreeInfo> stylesheetModules = new Dictionary<DocumentKey, ITreeInfo>();
         private readonly Stack<DocumentKey> importStack = new Stack<DocumentKey>(); // handles both include and import
         private PackageData packageData;
-        private bool preScan = true;
         private bool createsSecondaryResultDocuments;
         private bool libraryPackage;
         private readonly IList<UsePack> packageDependencies = new List<UsePack>();
@@ -52,7 +49,6 @@ namespace OutSmart.DAXon.Xslt
         private GlobalParameterSet suppliedParameters;
         private bool fallbackToNonStreaming;
         private readonly HashSet<StructuredQName> referencedModes = new HashSet<StructuredQName>();
-        public Timer timer;
 
         public virtual int ErrorCount => errorCount;
 
@@ -86,14 +82,9 @@ namespace OutSmart.DAXon.Xslt
                 (info.ErrorReporter as StandardErrorReporter)?.StartCompilationEpisode();
             }
             schemaAware = info.IsSchemaAware();
-            preScan = info.IsJustInTimeCompilation();
             suppliedParameters = compilerInfo.Parameters;
             referencedModes.Add(Mode.UNNAMED_MODE_NAME);
             qNameParser = new QNameParser(null).WithAcceptEQName(true).WithErrorOnBadSyntax("XTSE0020").WithErrorOnUnresolvedPrefix("XTSE0280");
-            if (TIMING)
-            {
-                timer = new Timer();
-            }
         }
 
         public static PreparedStylesheet CompileSingletonPackage(Configuration config, CompilerInfo compilerInfo, ResolvedResource source)
@@ -171,9 +162,6 @@ namespace OutSmart.DAXon.Xslt
         public virtual void SatisfyPackageDependencies(XSLPackage thisPackage)
         {
 
-            //            throw new XPathException("Name and version of package in XSLT source [" + thisPackage.getNameAndVersion() +
-            //            "] do not match name and version in configuration file [" + expectedNameAndVersion + "]");
-            //        }
             PackageLibrary library = compilerInfo.GetPackageLibrary();
             library.GetCompilerInfo().TargetEdition = compilerInfo.TargetEdition;
             XPathException lastError = null;
@@ -290,11 +278,6 @@ namespace OutSmart.DAXon.Xslt
                 throw;
             }
 
-            if (Compilation.TIMING)
-            {
-                timer.Report("Built stylesheet documents");
-            }
-
             CompilerInfo info = GetCompilerInfo();
             StyleNodeFactory factory = GetStyleNodeFactory(true);
             PrincipalStylesheetModule psm = factory.NewPrincipalModule(xslpackage);
@@ -314,10 +297,6 @@ namespace OutSmart.DAXon.Xslt
             SetPrincipalStylesheetModule(psm);
             packageData = null;
             SatisfyPackageDependencies(xslpackage);
-            if (TIMING)
-            {
-                timer.Report("Preparing package");
-            }
 
             try
             {
@@ -341,12 +320,6 @@ namespace OutSmart.DAXon.Xslt
                 }
             }
 
-            if (TIMING)
-            {
-                timer.Report("Fixup");
-            }
-
-
             // Compile groups of like-named attribute sets into a single attributeSet object
             if (ErrorCount == 0)
             {
@@ -359,12 +332,6 @@ namespace OutSmart.DAXon.Xslt
                     ReportError(e);
                 }
             }
-
-            if (TIMING)
-            {
-                timer.Report("Combine attribute sets");
-            }
-
 
             // Compile the stylesheet package
             if (ErrorCount == 0)
@@ -391,20 +358,10 @@ namespace OutSmart.DAXon.Xslt
                 }
             }
 
-            if (TIMING)
-            {
-                timer.Report("Completion");
-            }
-
             psm.GetStylesheetPackage().SetCreatesSecondaryResultDocuments(createsSecondaryResultDocuments);
             if (IsFallbackToNonStreaming())
             {
                 psm.GetStylesheetPackage().SetFallbackToNonStreaming();
-            }
-
-            if (TIMING)
-            {
-                timer.Report("Streaming fallback");
             }
 
             return psm;
@@ -460,7 +417,11 @@ namespace OutSmart.DAXon.Xslt
 
         public virtual void ReportError(IXmlProcessingError err)
         {
-            Retain(err);
+            if (!Retain(err))
+            {
+                return;   // the same diagnostic again: reported and counted once
+            }
+
             IErrorReporter reporter = compilerInfo.ErrorReporter;
             if (reporter != null)
             {
@@ -485,9 +446,14 @@ namespace OutSmart.DAXon.Xslt
 
             if (!err.HasBeenReported())
             {
-                errorCount++;
                 XmlProcessingException error = new XmlProcessingException(err);
-                Retain(error);
+                if (!Retain(error))
+                {
+                    err.SetHasBeenReported(true);
+                    return;
+                }
+
+                errorCount++;
                 try
                 {
                     el.Report(error);
@@ -512,27 +478,44 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        private void Retain(IXmlProcessingError err)
+        private static bool SameDiagnostic(IXmlProcessingError a, IXmlProcessingError b)
+        {
+            ILocation la = a.GetLocation();
+            ILocation lb = b.GetLocation();
+            return Equals(a.GetErrorCode(), b.GetErrorCode()) && a.GetMessage() == b.GetMessage()
+                && la?.GetSystemId() == lb?.GetSystemId() && la?.GetLineNumber() == lb?.GetLineNumber() && la?.GetColumnNumber() == lb?.GetColumnNumber()
+                && SameInstruction(la, lb);
+        }
+
+        // The place of a mistake in an XPath is its column in that expression: two instructions on one line can share it.
+        private static bool SameInstruction(ILocation a, ILocation b)
+        {
+            ILocation ca = (a as OutSmart.DAXon.Expressions.Parsing.XPathParser.NestedLocation)?.GetContainingLocation();
+            ILocation cb = (b as OutSmart.DAXon.Expressions.Parsing.XPathParser.NestedLocation)?.GetContainingLocation();
+            return ca == null || cb == null || (ca.GetLineNumber() == cb.GetLineNumber() && ca.GetColumnNumber() == cb.GetColumnNumber());
+        }
+
+        // Whether err is a diagnostic not met before (past the cap, every one counts as new).
+        private bool Retain(IXmlProcessingError err)
         {
             if (reportedErrors.Count >= MaxRetainedErrors)
             {
-                return;
+                return true;
             }
 
-            // One failure can arrive twice - reported once, then again as it unwinds. Keep the first.
+            // One failure can arrive twice - reported once, then again as it unwinds, at times as another exception with the
+            // same code, message and place (an unknown instruction). Keep the first.
             XPathException cause = (err as XmlProcessingException)?.GetXPathException();
-            if (cause != null)
+            foreach (IXmlProcessingError seen in reportedErrors)
             {
-                foreach (IXmlProcessingError seen in reportedErrors)
+                if ((cause != null && (seen as XmlProcessingException)?.GetXPathException() == cause) || SameDiagnostic(seen, err))
                 {
-                    if ((seen as XmlProcessingException)?.GetXPathException() == cause)
-                    {
-                        return;
-                    }
+                    return false;
                 }
             }
 
             reportedErrors.Add(err);
+            return true;
         }
 
         /// <summary>
@@ -688,16 +671,6 @@ namespace OutSmart.DAXon.Xslt
         public virtual QNameParser GetQNameParser()
         {
             return qNameParser;
-        }
-
-        public virtual bool IsPreScan()
-        {
-            return preScan;
-        }
-
-        public virtual void SetPreScan(bool preScan)
-        {
-            this.preScan = preScan;
         }
 
         public virtual bool IsCreatesSecondaryResultDocuments()

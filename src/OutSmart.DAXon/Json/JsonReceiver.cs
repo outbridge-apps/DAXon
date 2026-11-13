@@ -240,8 +240,11 @@ namespace OutSmart.DAXon.Json
                     }
                 }
 
+                // Duplicates are found on the unescaped key: an escaped key was unescaped, a plain one was compared escaped,
+                // so a" and an escaped a\" both passed.
+                string normalizedKey = alreadyEscaped ? null : key;
                 key = (alreadyEscaped ? HandleEscapedString(key) : EscapeText(key));
-                string normalizedKey = alreadyEscaped ? Unescape(key) : key;
+                normalizedKey = normalizedKey ?? JsonParser.Unescape(key, 0, "FOJS0007");
                 bool added = keyChecker.Peek().Add(normalizedKey);
                 if (!added)
                 {
@@ -326,14 +329,9 @@ namespace OutSmart.DAXon.Json
         // 8-bit strings are scanned on their bytes: a virtual CodePointAt per character was 1.5% of Trans
         private static bool IsCleanString(UnicodeString s)
         {
-            if (s is Slice8 slice)
+            if (Slice8.Latin1Span(s, out byte[] b, out int start, out int end))
             {
-                return IsCleanBytes(slice.ByteArray, slice.Start, slice.End);
-            }
-
-            if (s is Twine8 twine)
-            {
-                return IsCleanBytes(twine.ByteArray, 0, twine.ByteArray.Length);
+                return IsCleanBytes(b, start, end);
             }
 
             // Segment by segment: the text of a long node is a ZenoString, where CodePointAt searched for the segment of
@@ -471,7 +469,7 @@ namespace OutSmart.DAXon.Json
         {
 
             // check that escape sequences are valid
-            Unescape(str);
+            JsonParser.Unescape(str, 0, "FOJS0007");
             StringBuilder @out = new StringBuilder(str.Length * 2);
             bool afterEscapeChar = false;
             for (int i = 0; i < str.Length; i++)
@@ -671,78 +669,6 @@ namespace OutSmart.DAXon.Json
             }
         }
 
-        private static string Unescape(string literal)
-        {
-            if (literal.IndexOf('\\') < 0)
-            {
-                return literal;
-            }
-
-            StringBuilder buffer = new StringBuilder(literal.Length);
-            for (int i = 0; i < literal.Length; i++)
-            {
-                char c = literal[i];
-                if (c == '\\')
-                {
-                    if (i++ == literal.Length - 1)
-                    {
-                        throw new XPathException("String '" + Err.Wrap(literal) + "' ends in backslash ", "FOJS0007");
-                    }
-
-                    switch (literal[i])
-                    {
-                        case '"':
-                            buffer.Append('"');
-                            break;
-                        case '\\':
-                            buffer.Append('\\');
-                            break;
-                        case '/':
-                            buffer.Append('/');
-                            break;
-                        case 'b':
-                            buffer.Append('\b');
-                            break;
-                        case 'f':
-                            buffer.Append('\f');
-                            break;
-                        case 'n':
-                            buffer.Append('\n');
-                            break;
-                        case 'r':
-                            buffer.Append('\r');
-                            break;
-                        case 't':
-                            buffer.Append('\t');
-                            break;
-                        case 'u':
-                            try
-                            {
-                                string hex = literal.Substring(i + 1, 4) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
-                                int code = Convert.ToInt32(hex, 16);
-                                buffer.Append((char)code);
-                                i += 4;
-                            }
-                            catch (Exception)
-                            {
-                                throw new XPathException("Invalid hex escape sequence in string '" + Err.Wrap(literal) + "'", "FOJS0007");
-                            }
-
-                            break;
-                        default:
-                            int next = literal[i];
-                            string xx = next < 256 ? next + "" : "x" + (next).ToString("x", CultureInfo.InvariantCulture);
-                            throw new XPathException("Unknown escape sequence \\" + xx, "FOJS0007");
-                    }
-                }
-                else
-                {
-                    buffer.Append(c);
-                }
-            }
-
-            return buffer.ToString();
-        }
 
         private KeyChecker TakeKeyChecker()
         {

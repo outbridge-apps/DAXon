@@ -1067,7 +1067,7 @@ namespace OutSmart.DAXon.Types
                 // any test cases to fail, so I decided to leave it.  I don't think it causes any problems
                 // with type safety, because elements and attributes validated against union(X, Y) will have
                 // a type annotation of either X or Y, which means they will be accepted as instances of
-                // element(*, union(X,Y,Z)): that @is, the instances of element(*, union(X,Y)) are indeed
+                // element(*, union(X,Y,Z)): that is, the instances of element(*, union(X,Y)) are indeed
                 // a subset of the instances of element(*, union(X,Y,Z)).               MHK 2018-11-08.
             }
 

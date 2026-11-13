@@ -154,7 +154,7 @@ namespace OutSmart.DAXon.XQuery
                     return NamespaceMap.EmptyMap();
                 }
 
-                NamespaceMap result = NamespaceMap.EmptyMap();
+                var result = new NamespaceMap.Builder(NamespaceMap.EmptyMap());   // one sort, not a copy per binding
                 HashSet<string> prefixes = new HashSet<string>();
                 for (int n = activeNamespaces.Size() - 1; n >= 0; n--)
                 {
@@ -164,12 +164,12 @@ namespace OutSmart.DAXon.XQuery
                         prefixes.Add(an.GetPrefix());
                         if (!an.GetNamespaceUri().IsEmpty())
                         {
-                            result = result.Put(an.GetPrefix(), an.GetNamespaceUri());
+                            result.Put(an.GetPrefix(), an.GetNamespaceUri());
                         }
                     }
                 }
 
-                return result;
+                return result.ToMap();
             }
         }
 
@@ -442,7 +442,7 @@ namespace OutSmart.DAXon.XQuery
         {
 
             // The only part of the RetainedStaticContext that can change as the query module is parsed is the
-            // "activeNamespaces", that @is, namespaces declared on direct element constructors. If this is empty,
+            // "activeNamespaces", that is, namespaces declared on direct element constructors. If this is empty,
             // we can reuse the top-level static context on each request.
             if (activeNamespaces.IsEmpty())
             {
@@ -532,9 +532,7 @@ namespace OutSmart.DAXon.XQuery
 
         public virtual void SetExecutable(Executable executable)
         {
-            this.executable = executable; //        if (!executable.isSchemaAware()) {
-            //            constructionMode = Validation.STRIP;
-            //        }
+            this.executable = executable;
         }
 
         public virtual ILocation GetContainingLocation()
@@ -596,6 +594,7 @@ namespace OutSmart.DAXon.XQuery
         public virtual IList<GlobalVariable> FixupGlobalVariables(SlotManager globalVariableMap)
         {
             IList<GlobalVariable> varDefinitions = new List<GlobalVariable>(20);
+            var compiled = new HashSet<GlobalVariable>();   // a Contains on the list was O(n^2): 20 000 globals took 7 s
             IList<IEnumerable<GlobalVariable>> iters = new List<IEnumerable<GlobalVariable>>();
             iters.Add(variables.Values);
             iters.Add(libraryVariables.Values);
@@ -603,7 +602,7 @@ namespace OutSmart.DAXon.XQuery
             {
                 foreach (GlobalVariable var in iter)
                 {
-                    if (!varDefinitions.Contains(var))
+                    if (compiled.Add(var))
                     {
                         int slot = globalVariableMap.AllocateSlotNumber(var.GetVariableQName(), null);
                         var.Compile(GetExecutable(), slot);
@@ -617,7 +616,16 @@ namespace OutSmart.DAXon.XQuery
 
         public virtual void CheckForCircularities(IList<GlobalVariable> compiledVars, XQueryFunctionLibrary globalFunctionLibrary)
         {
+            // The search below names a cycle as Saxon does, but walks every path through the functions, exponentially many
+            // when they are mutually recursive (22 levels: past the 60 s compile limit). It can only fail on a cycle
+            // through a variable, so it runs only when there is one.
+            if (!AnyCycleThroughVariable(compiledVars, globalFunctionLibrary))
+            {
+                return;
+            }
+
             IndexedStack<object> stack = null;
+            var cleared = new HashSet<object>();   // searched clean, for every root
             foreach (GlobalVariable gv in compiledVars)
             {
                 if (stack == null)
@@ -627,9 +635,126 @@ namespace OutSmart.DAXon.XQuery
 
                 if (gv != null)
                 {
-                    gv.LookForCycles(stack, globalFunctionLibrary);
+                    gv.LookForCycles(stack, globalFunctionLibrary, cleared);
                 }
             }
+        }
+
+        // Tarjan's strongly connected components of the variables and functions, without recursion: whether a component
+        // with a cycle holds a variable. A cycle of functions alone is recursion, which is allowed.
+        private static bool AnyCycleThroughVariable(IList<GlobalVariable> roots, XQueryFunctionLibrary library)
+        {
+            var index = new Dictionary<object, int>();
+            var low = new Dictionary<object, int>();
+            var successors = new Dictionary<object, List<object>>();
+            var component = new Stack<object>();
+            var onComponent = new HashSet<object>();
+            var work = new Stack<KeyValuePair<object, int>>();
+            foreach (GlobalVariable root in roots)
+            {
+                if (root == null || index.ContainsKey(root))
+                {
+                    continue;
+                }
+
+                Enter(root);
+                while (work.Count > 0)
+                {
+                    KeyValuePair<object, int> top = work.Pop();
+                    object v = top.Key;
+                    List<object> next = SuccessorsOf(v, library, successors);
+                    if (top.Value < next.Count)
+                    {
+                        work.Push(new KeyValuePair<object, int>(v, top.Value + 1));
+                        object w = next[top.Value];
+                        if (!index.ContainsKey(w))
+                        {
+                            Enter(w);
+                        }
+                        else if (onComponent.Contains(w))
+                        {
+                            low[v] = Math.Min(low[v], index[w]);
+                        }
+
+                        continue;
+                    }
+
+                    if (work.Count > 0)
+                    {
+                        object u = work.Peek().Key;
+                        low[u] = Math.Min(low[u], low[v]);
+                    }
+
+                    if (low[v] == index[v])
+                    {
+                        bool variable = false;
+                        int size = 0;
+                        object w;
+                        do
+                        {
+                            w = component.Pop();
+                            onComponent.Remove(w);
+                            variable |= w is GlobalVariable;
+                            size++;
+                        }
+                        while (w != v);
+
+                        if (variable && (size > 1 || next.Contains(v)))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+
+            void Enter(object node)
+            {
+                index[node] = index.Count;
+                low[node] = index[node];
+                component.Push(node);
+                onComponent.Add(node);
+                work.Push(new KeyValuePair<object, int>(node, 0));
+            }
+        }
+
+        // The global variables a variable's or a function's body uses and the functions it calls, as LookForCycles finds them.
+        private static List<object> SuccessorsOf(object node, XQueryFunctionLibrary library, Dictionary<object, List<object>> known)
+        {
+            if (known.TryGetValue(node, out List<object> found))
+            {
+                return found;
+            }
+
+            var result = new List<object>();
+            Expression body = node is GlobalVariable gv ? gv.GetBody() : ((XQueryFunction)node).Body;
+            if (body != null)
+            {
+                var variables = new List<IBinding>();
+                ExpressionTool.GatherReferencedVariables(body, variables);
+                foreach (IBinding b in variables)
+                {
+                    if (b is GlobalVariable)
+                    {
+                        result.Add(b);
+                    }
+                }
+
+                var functions = new List<SymbolicName>();
+                ExpressionTool.GatherCalledFunctionNames(body, functions);
+                foreach (SymbolicName s in functions)
+                {
+                    XQueryFunction f = library.GetDeclarationByKey(s);
+                    if (f != null)
+                    {
+                        result.Add(f);
+                    }
+                }
+            }
+
+            known[node] = result;
+            return result;
         }
 
         public virtual void TypeCheckGlobalVariables(IList<GlobalVariable> compiledVars)
@@ -688,9 +813,7 @@ namespace OutSmart.DAXon.XQuery
                             uvar.RegisterReference(@ref);
                             undeclaredVariables[qName] = uvar;
                             return @ref;
-                        } //                    } else {
-                        //                        throw err;
-                        //                    }
+                        }
                     }
                     else
                     {
@@ -1033,47 +1156,45 @@ namespace OutSmart.DAXon.XQuery
 
         public virtual INamespaceResolver GetNamespaceResolver()
         {
-            NamespaceMap result = NamespaceMap.EmptyMap();
+            var result = new NamespaceMap.Builder(NamespaceMap.EmptyMap());   // one sort, not a copy per binding
             Dictionary<string, NamespaceUri> userDeclaredNamespaces = userQueryContext.UserDeclaredNamespaces;
             foreach (KeyValuePair<string, NamespaceUri> e in userDeclaredNamespaces)
             {
-                result = result.Put(e.Key, e.Value);
+                result.Put(e.Key, e.Value);
             }
 
             foreach (KeyValuePair<string, NamespaceUri> e in explicitPrologNamespaces)
             {
-                result = result.Put(e.Key, e.Value);
+                result.Put(e.Key, e.Value);
             }
 
             if (!defaultElementNamespace.IsEmpty())
             {
-                result = result.Put("", defaultElementNamespace);
+                result.Put("", defaultElementNamespace);
             }
 
-            if (activeNamespaces == null)
+            if (activeNamespaces != null)
             {
-                return result;
-            }
-
-            HashSet<string> prefixes = new HashSet<string>();
-            for (int n = activeNamespaces.Size() - 1; n >= 0; n--)
-            {
-                NamespaceBinding an = activeNamespaces[n];
-                if (!prefixes.Contains(an.GetPrefix()))
+                HashSet<string> prefixes = new HashSet<string>();
+                for (int n = activeNamespaces.Size() - 1; n >= 0; n--)
                 {
-                    prefixes.Add(an.GetPrefix());
-                    if (an.GetNamespaceUri().IsEmpty())
+                    NamespaceBinding an = activeNamespaces[n];
+                    if (!prefixes.Contains(an.GetPrefix()))
                     {
-                        result = result.Remove(an.GetPrefix());
-                    }
-                    else
-                    {
-                        result = result.Put(an.GetPrefix(), an.GetNamespaceUri());
+                        prefixes.Add(an.GetPrefix());
+                        if (an.GetNamespaceUri().IsEmpty())
+                        {
+                            result.Remove(an.GetPrefix());
+                        }
+                        else
+                        {
+                            result.Put(an.GetPrefix(), an.GetNamespaceUri());
+                        }
                     }
                 }
             }
 
-            return result;
+            return result.ToMap();
         }
 
         public virtual Types.ItemType GetRequiredContextItemType()

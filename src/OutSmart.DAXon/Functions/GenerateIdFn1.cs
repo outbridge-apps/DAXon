@@ -41,5 +41,12 @@ namespace OutSmart.DAXon.Functions
         {
             return StringValue.EMPTY_STRING;
         }
+
+        // Counted as creative, as in Saxon: generate-id(<a/>) gives a new id on each evaluation and must stay in its loop.
+        public override int GetSpecialProperties(Expression[] arguments)
+        {
+            int p = base.GetSpecialProperties(arguments);
+            return p & ~StaticProperty.NO_NODES_NEWLY_CREATED;
+        }
     }
 }

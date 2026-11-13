@@ -13,6 +13,7 @@ using OutSmart.DAXon.Transformation;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 namespace OutSmart.DAXon.Functions
 {
     /// <summary>
@@ -73,6 +74,7 @@ namespace OutSmart.DAXon.Functions
         {
             if (query != null)
             {
+                query = Decoded(query);
                 foreach (string tok in query.Split(new[] { ';', '&' }, StringSplitOptions.RemoveEmptyEntries))
                 {
                     int eq = tok.IndexOf('=');
@@ -86,6 +88,43 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
+        // The query with its %-escapes decoded (UTF-8), as Java's URI.getQuery() gives it: select=*.x%6Dl is *.xml. A %
+        // not followed by two hex digits is FODC0004, as Java refuses the URI.
+        private static string Decoded(string query)
+        {
+            if (query.IndexOf('%') < 0)
+            {
+                return query;
+            }
+
+            var text = new StringBuilder(query.Length);
+            var bytes = new List<byte>();
+            for (int i = 0; i < query.Length; i++)
+            {
+                if (query[i] == '%')
+                {
+                    if (i + 2 >= query.Length || !Uri.IsHexDigit(query[i + 1]) || !Uri.IsHexDigit(query[i + 2]))
+                    {
+                        throw new XPathException("Invalid %-escape in the query of a collection URI: " + Err.Wrap(query), "FODC0004");
+                    }
+
+                    bytes.Add((byte)(Uri.FromHex(query[i + 1]) * 16 + Uri.FromHex(query[i + 2])));
+                    i += 2;
+                    continue;
+                }
+
+                if (bytes.Count > 0)
+                {
+                    text.Append(Encoding.UTF8.GetString(bytes.ToArray()));
+                    bytes.Clear();
+                }
+
+                text.Append(query[i]);
+            }
+
+            return text.Append(Encoding.UTF8.GetString(bytes.ToArray())).ToString();
+        }
+
         private void ProcessParameter(Configuration config, string keyword, string value)
         {
             if (keyword.Equals("select"))
@@ -94,8 +133,8 @@ namespace OutSmart.DAXon.Functions
             }
             else if (keyword.Equals("match"))
             {
-                ARegularExpression regex = new ARegularExpression(StringView.Of(value).Tidy(), "", "XP", new List<string>(), config);
-                filter = ((Func<string, string, bool>)(new RegexFilter(regex).Accept));
+                ARegularExpression regex = new ARegularExpression(StringView.Of(value), "", "XP", new List<string>(), config);
+                filter = ((Func<string, string, bool>)(new RegexFilter(regex.Matches).Accept));
             }
             else if (keyword.Equals("recurse"))
             {
@@ -179,6 +218,20 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
+        // Whether the query of a URI says xinclude=yes.
+        internal static bool AsksForXInclude(string uri)
+        {
+            int mark = uri.IndexOf('?');
+            if (mark < 0)
+            {
+                return false;
+            }
+
+            int end = uri.IndexOf('#', mark);
+            string query = end < 0 ? uri.Substring(mark + 1) : uri.Substring(mark + 1, end - mark - 1);
+            return System.Array.IndexOf(query.Split(';', '&'), "xinclude=yes") >= 0;
+        }
+
         private static void CheckXIncludeIsSupported()
         {
             // FODC0002: the resource the URI asks for - the document with its inclusions made - cannot be had
@@ -219,7 +272,7 @@ namespace OutSmart.DAXon.Functions
             sb.Append('$');
             try
             {
-                return new RegexFilter(new JavaRegularExpression(sb.ToUnicodeString(), "")).Accept;
+                return new RegexFilter(new JavaRegularExpression(sb.ToUnicodeString(), "").Matches).Accept;
             }
             catch (XPathException)
             {
@@ -267,16 +320,16 @@ namespace OutSmart.DAXon.Functions
         /// </summary>
         internal sealed class RegexFilter
         {
-            private readonly IRegularExpression pattern;
-            public RegexFilter(IRegularExpression regex)
+            private readonly Func<UnicodeString, bool> matches;
+            public RegexFilter(Func<UnicodeString, bool> matches)
             {
-                this.pattern = regex;
+                this.matches = matches;
             }
 
             // dir is null for an archive entry: there is no directory on disk to look at
             public bool Accept(string dir, string name)
             {
-                return (dir != null && Directory.Exists(Path.Combine(dir, name))) || pattern.Matches(StringView.Of(name).Tidy());
+                return (dir != null && Directory.Exists(Path.Combine(dir, name))) || matches(StringView.Of(name));
             }
         }
     }

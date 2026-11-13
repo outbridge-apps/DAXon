@@ -21,10 +21,9 @@ namespace OutSmart.DAXon.Text
         {
             get
             {
-                UnicodeString prep = Tidy();
-                int len = RequireInt(prep.Length());
+                int len = RequireInt(Length());
                 byte[] result = new byte[len * 3];
-                IIntIterator iter = prep.CodePoints();
+                IIntIterator iter = CodePoints();
                 int j = 0;
                 while (iter.MoveNext())
                 {
@@ -37,11 +36,6 @@ namespace OutSmart.DAXon.Text
                 return result;
             }
         }
-        public virtual UnicodeString Tidy()
-        {
-            return this;
-        }
-
         public virtual UnicodeString Economize()
         {
             return this;
@@ -84,6 +78,7 @@ namespace OutSmart.DAXon.Text
             int initial = other.CodePointAt(0);
             long len = other.Length();
             long lastPossible = Length() - len;
+            long work = 0;
             while (from <= lastPossible)
             {
                 long i = IndexOf(initial, from);
@@ -91,6 +86,8 @@ namespace OutSmart.DAXon.Text
                 {
                     return -1;
                 }
+
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutAfterWork(ref work, i - from + len);   // the scan, then up to the needle's length
 
                 if (HasSubstring(other, i))
                 {
@@ -118,6 +115,7 @@ namespace OutSmart.DAXon.Text
 
             for (long k = 0; k < len; k++)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(k);
                 if (CodePointAt(offset + k) != other.CodePointAt(k))
                 {
                     return false;
@@ -191,8 +189,10 @@ namespace OutSmart.DAXon.Text
 
                 IIntIterator iter1 = CodePoints();
                 IIntIterator iter2 = other.CodePoints();
+                long k = 0;
                 while (true)
                 {
+                    OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(k++);   // equal prefixes of long strings
                     bool more1 = iter1.MoveNext();
                     bool more2 = iter2.MoveNext();
                     if (more1 && more2)
@@ -241,8 +241,10 @@ namespace OutSmart.DAXon.Text
         {
             IIntIterator iter1 = CodePoints();
             IIntIterator iter2 = other.CodePoints();
+            long k = 0;
             while (true)
             {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutEvery64K(k++);   // a sort compares long keys this way, n log n times
                 bool more1 = iter1.MoveNext();
                 bool more2 = iter2.MoveNext();
                 if (more1 && more2)
@@ -312,7 +314,7 @@ namespace OutSmart.DAXon.Text
             throw new NotSupportedException();
         }
 
-        // Pack each code point as 3 big-endian bytes (high, mid, low) — the layout Slice24/Twine24 read back
+        // Pack each code point as 3 big-endian bytes (high, mid, low) — the layout Slice24 reads back
         // (Slice24: (b0<<16)|(b1<<8)|b2). Was a throwing stub, so concatenating a 24-bit-wide string whose
         // concrete class doesn't override this (ZenoString.ConcatSegments -> left.Copy24bit) failed for astral
         // (supplementary-plane) content — misc-Surrogates.

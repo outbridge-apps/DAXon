@@ -25,7 +25,6 @@ namespace OutSmart.DAXon.Trees.Tiny
         public static UnicodeString GetStringValue(TinyTree tree, int nodeNr)
         {
 
-            //        return tree.textChunks[tree.alpha[nodeNr]];
             int start = tree.alpha[nodeNr];
             int len = tree.beta[nodeNr];
 

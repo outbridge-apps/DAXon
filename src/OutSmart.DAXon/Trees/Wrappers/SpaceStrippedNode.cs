@@ -107,28 +107,9 @@ namespace OutSmart.DAXon.Trees.Wrappers
             }
 
             // if there is an ancestor with xml:space="preserve", it is preserved
-            if (docWrapper.ContainsPreserveSpace())
+            if (docWrapper.ContainsPreserveSpace() && docWrapper.IsSpacePreserved(actualParent))
             {
-                NodeInfo p = actualParent;
-                // the document contains one or more xml:space="preserve" attributes, so we need to see
-                // if one of them is on an ancestor of this node
-                while (p.GetNodeKind() == OutSmart.DAXon.Types.Type.ELEMENT)
-                {
-                    string val = p.GetAttributeValue(NamespaceUri.XML, "space");
-                    if (val != null)
-                    {
-                        if (val == "preserve")
-                        {
-                            return true;
-                        }
-                        else if (val == "default")
-                        {
-                            break;
-                        }
-                    }
-
-                    p = p.GetParent();
-                }
+                return true;
             }
 
             // if there is an ancestor whose type has an assertion, it is preserved

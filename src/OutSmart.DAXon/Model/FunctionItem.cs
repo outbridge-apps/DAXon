@@ -30,7 +30,6 @@ namespace OutSmart.DAXon.Model
         OperandRole[] OperandRoles { get; }
         AnnotationList GetAnnotations();
         IXPathContext MakeNewContext(IXPathContext callingContext, IContextOriginator originator);
-        bool DeepEquals(IFunctionItem other, IXPathContext context, IAtomicComparer comparer, int flags);
         bool DeepEqual40(IFunctionItem other, IXPathContext context, DeepEqual.DeepEqualOptions options);
         string Description { get; }
         void Export(ExpressionPresenter @out);

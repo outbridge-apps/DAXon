@@ -18,8 +18,6 @@ namespace OutSmart.DAXon.Text
 {
     internal sealed class Twine8 : UnicodeString
     {
-
-        private static readonly bool CHECKING = Configuration.IsAssertionsEnabled();
         protected byte[] bytes;
         protected int cachedHash;
 
@@ -39,11 +37,6 @@ namespace OutSmart.DAXon.Text
             for (int i = 0; i < len; i++)
             {
                 int c = chars[start + i];
-                if (CHECKING && c > 255)
-                {
-                    throw new ArgumentException();
-                }
-
                 bytes[i] = (byte)(c & 0xff);
             }
 
@@ -71,11 +64,6 @@ namespace OutSmart.DAXon.Text
             for (int i = 0; i < str.Length; i++)
             {
                 char c = str[i];
-                if (CHECKING && c > 255)
-                {
-                    throw new ArgumentException();
-                }
-
                 result[i] = (byte)(c & 0xff);
             }
 
@@ -197,26 +185,7 @@ namespace OutSmart.DAXon.Text
                 return from;
             }
 
-            int initial = other.CodePointAt(0);
-            int len = RequireInt(other.Length());
-            int lastPossible = Length32() - len;
-            while (from <= lastPossible)
-            {
-                long i = IndexOf(initial, from);
-                if (i < 0)
-                {
-                    return -1;
-                }
-
-                if (HasSubstring(other, i))
-                {
-                    return i;
-                }
-
-                from = i + 1;
-            }
-
-            return -1;
+            return Slice8.TryIndexOf(bytes, 0, bytes.Length, other, (int)from, out long index) ? index : base.IndexOf(other, from);
         }
 
         public override bool IsEmpty()
@@ -236,67 +205,14 @@ namespace OutSmart.DAXon.Text
                 return cachedHash;
             }
 
-            // Byte-identical to the base codepoint hash (Latin1: each byte IS its codepoint < 0x100),
-            // without the per-char CodePoints() iterator.
-            int h = 0;
-            byte[] b = bytes;
-            for (int i = 0; i < b.Length; i++)
-            {
-                h = 31 * h + (b[i] & 0xff);
-            }
-
-            return cachedHash = h;
+            return cachedHash = Slice8.Hash(bytes, 0, bytes.Length);
         }
 
         public override bool Equals(object o)
         {
-            if (o is Twine8)
-            {
-                Twine8 other = (Twine8)o;
-                if (this.Length32() != other.Length32())
-                {
-                    return false;
-                }
-
-                if (this.GetHashCode() != other.GetHashCode())
-                {
-                    return false;
-                }
-
-                return ArrayTools.Equals(bytes, other.bytes);
-            }
-
-            if (o is Slice8 sl8)
-            {
-                return sl8.Equals(this);   // Slice8 carries the byte-vs-byte fast case
-            }
-
-            if (o is BMPString bstr)
-            {
-                // Surrogate-free chars: char == codepoint, compare without iterator allocations.
-                string os = bstr.ToString();   // backing string, no copy
-                if (bytes.Length != os.Length)
-                {
-                    return false;
-                }
-
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    if ((bytes[i] & 0xff) != os[i])
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            return base.Equals(o);
+            return o is UnicodeString u && Slice8.TryEquals(bytes, 0, bytes.Length, u, out bool equal) ? equal : base.Equals(o);
         }
 
-        // Byte-rep region compare — same rationale as Slice8 (see there). The existing
-        // IndexOf(UnicodeString) override above keeps its Java-mirrored guard semantics and
-        // probes candidates through this method, so it gets the byte scan automatically.
         public override bool HasSubstring(UnicodeString other, long offset)
         {
             if (offset < 0 || offset > bytes.Length)
@@ -304,65 +220,12 @@ namespace OutSmart.DAXon.Text
                 throw new IndexOutOfRangeException();
             }
 
-            if (other is Slice8 s)
-            {
-                return Slice8.ByteRegionEquals(bytes, 0, bytes.Length, s.ByteArray, s.Start, s.End - s.Start, (int)offset);
-            }
-
-            if (other is Twine8 t)
-            {
-                return Slice8.ByteRegionEquals(bytes, 0, bytes.Length, t.bytes, 0, t.bytes.Length, (int)offset);
-            }
-
-            if (other is BMPString bstr)
-            {
-                string os = bstr.ToString();   // backing string, no copy
-                return Slice8.CharRegionEquals(bytes, 0, bytes.Length, os, 0, os.Length, (int)offset);
-            }
-
-            if (other is BMPSlice bsl)
-            {
-                return Slice8.CharRegionEquals(bytes, 0, bytes.Length, bsl.Backing, bsl.Start, bsl.End - bsl.Start, (int)offset);
-            }
-
-            return base.HasSubstring(other, offset);
+            return Slice8.TryHasSubstring(bytes, 0, bytes.Length, other, (int)offset, out bool has) ? has : base.HasSubstring(other, offset);
         }
 
         public override int CompareTo(UnicodeString other)
         {
-            byte[] b;
-            int bs, be;
-            if (other is Twine8 o)
-            {
-                b = o.bytes;
-                bs = 0;
-                be = b.Length;
-            }
-            else if (other is Slice8 sl)
-            {
-                // cross-width byte compare: tree text (Slice8) vs a materialized Twine8
-                b = sl.ByteArray;
-                bs = sl.Start;
-                be = sl.End;
-            }
-            else
-            {
-                return base.CompareTo(other);
-            }
-
-            byte[] a = bytes;
-            int i = 0;
-            int j = bs;
-            while (i < a.Length && j < be)
-            {
-                int diff = (a[i++] & 0xff) - (b[j++] & 0xff);
-                if (diff != 0)
-                {
-                    return diff;
-                }
-            }
-
-            return a.Length.CompareTo(be - bs);
+            return Slice8.TryCompare(bytes, 0, bytes.Length, other, out int order) ? order : base.CompareTo(other);
         }
 
         public override string ToString()

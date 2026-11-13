@@ -54,7 +54,8 @@ namespace OutSmart.DAXon.Expressions.Flwor
         {
             if (refCount != FilterExpression.FILTERED)
             {
-                refCount += (isLoopingReference ? 10 : 1);
+                // Counting stops short of FILTERED, which only SetIndexedVariable sets: 334 looping references landed on it.
+                refCount = System.Math.Min(refCount + (isLoopingReference ? 10 : 1), FilterExpression.FILTERED - 1);
             }
         }
 

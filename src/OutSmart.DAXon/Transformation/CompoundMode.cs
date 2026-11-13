@@ -131,12 +131,6 @@ namespace OutSmart.DAXon.Transformation
             return r;
         }
 
-        public override void ExportTemplateRules(ExpressionPresenter presenter)
-        {
-            overrides.ExportTemplateRules(presenter);
-            @base.ExportTemplateRules(presenter);
-        }
-
         public override void ExplainTemplateRules(ExpressionPresenter presenter)
         {
             overrides.ExplainTemplateRules(presenter);

@@ -4,10 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.stream.PostureAndSweep;
-//import com.saxonica.ee.stream.Streamability;
-//import com.saxonica.ee.stream.Sweep;
-//import com.saxonica.ee.trans.ContextItemStaticInfoEE;
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Accumulators;

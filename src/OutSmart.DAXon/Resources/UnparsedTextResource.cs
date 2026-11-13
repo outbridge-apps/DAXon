@@ -108,7 +108,7 @@ namespace OutSmart.DAXon.Resources
                 encoding = EncodingDetector.InferEncoding(bytes, bytes.Length, "UTF-8");
             }
 
-            Encoding enc = EncodingDetector.Lookup(encoding, false);
+            Encoding enc = EncodingDetector.Lookup(encoding, false, bytes, 0, bytes.Length);
             int bom = EncodingDetector.BomLength(bytes, 0, bytes.Length, enc);
             return enc.GetString(bytes, bom, bytes.Length - bom);
         }

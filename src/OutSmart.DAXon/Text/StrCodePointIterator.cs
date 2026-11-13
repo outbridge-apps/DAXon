@@ -11,7 +11,7 @@ namespace OutSmart.DAXon.Text
 {
 
     // Runtime: real code-point iterator for the string-backed UnicodeString stubs
-    // (StringView/BMPString/EmptyUnicodeString/Twine16). Java UnicodeString.codePoints()
+    // (StringView/BMPString/EmptyUnicodeString). Java UnicodeString.codePoints()
     // returns an IntIterator over Unicode code points; the stubs returned null, which NRE'd
     // any consumer (first hit: StandardDiagnostics.expandSpecialCharacters in the error
     // reporter). Surrogate-pair aware so astral code points iterate as single values.

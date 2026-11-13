@@ -31,13 +31,9 @@ namespace OutSmart.DAXon.Api
                     IAtomicSequence v = UnderlyingNode.Atomize();
                     return XdmValue.Wrap(v);
                 }
-                catch (XPathException e)
+                catch (Exception e) when (ApiErrors.IsEngineError(e))
                 {
-                    throw new DAXonApiException(e);
-                }
-                catch (RecursionDepthError e)
-                {
-                    throw new DAXonApiException(e.ToXPathException());
+                    throw ApiErrors.Wrap(e);
                 }
             }
         }
@@ -94,7 +90,7 @@ namespace OutSmart.DAXon.Api
                 }
             }
         }
-        public XdmNode(NodeInfo node) : base(node)
+        public XdmNode(NodeInfo node) : base(ArgumentCheck.Checked(node, nameof(node)))
         {
         }
 
@@ -193,6 +189,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual XdmSequenceIterator<XdmNode> AxisIterator(Axis axis, QName name)
         {
+            ArgumentCheck.NotNull(name, nameof(name));
             int kind;
             switch (axis)
             {
@@ -221,6 +218,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual string GetAttributeValue(QName name)
         {
+            ArgumentCheck.NotNull(name, nameof(name));
             NodeInfo node = UnderlyingNode;
             StructuredQName sq = name.GetStructuredQName();
             return node.GetAttributeValue(sq.GetNamespaceUri(), sq.GetLocalPart());
@@ -228,6 +226,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual string Attribute(string name)
         {
+            ArgumentCheck.NotNull(name, nameof(name));
             return UnderlyingNode.GetAttributeValue(NamespaceUri.NULL, name);
         }
 

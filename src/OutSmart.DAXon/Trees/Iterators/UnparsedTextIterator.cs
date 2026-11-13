@@ -29,14 +29,21 @@ namespace OutSmart.DAXon.Trees.Iterators
     /// Line endings #xA, #xD, #xD#xA separate lines (TextReader.ReadLine matches the upstream
     /// LineNumberReader definition); a trailing line-ending produces no final empty line.
     /// </summary>
-    internal sealed class UnparsedTextIterator : ISequenceIterator
+    internal sealed class UnparsedTextIterator : ISequenceIterator, ISuspendableResource
     {
         private TextReader reader;
         private readonly RunResources scope;   // the API call that closes the reader if this iterator does not
         private readonly WeakReference<IDisposable> ticket;
         private readonly IIntPredicateProxy checker;
         private readonly URI uri;
+        private readonly bool encodingGiven;   // a decode failure is FOUT1190 then, FOUT1200 when it was inferred
         private int position;   // lines delivered so far; -1 after end
+        private readonly string encoding;
+        private readonly IXPathContext context;   // to open it again; streaming form only
+        private readonly long openedAt;
+        private volatile bool suspended;
+
+        long ISuspendableResource.OpenedAt => openedAt;
 
         /// <summary>Streaming form: resolve the URI to a reader and iterate straight off the file.</summary>
         public UnparsedTextIterator(URI absoluteURI, IXPathContext context, string encoding)
@@ -45,8 +52,17 @@ namespace OutSmart.DAXon.Trees.Iterators
             TextReader r = UnparsedTextFunction.OpenText(absoluteURI, encoding, context, "unparsed-text-lines()");
             this.reader = r;
             this.scope = RunResources.Track(this, out ticket);
+            this.openedAt = scope?.Opened ?? 0;
+            this.encoding = encoding;
+            this.context = context;
             this.uri = absoluteURI;
             this.checker = config.ValidCharacterChecker;
+            this.encodingGiven = encoding != null;
+        }
+
+        private XPathException Recoded(XPathException e)
+        {
+            return encodingGiven ? e.ReplacingErrorCode("FOUT1200", "FOUT1190") : e;
         }
 
         /// <summary>Stable form: iterate over already-fetched (cached) content.</summary>
@@ -65,15 +81,27 @@ namespace OutSmart.DAXon.Trees.Iterators
                 return null;
             }
 
+            if (suspended)
+            {
+                Resume();
+            }
+
             if (reader == null)
             {
                 throw new XPathException("unparsed-text-lines(): " + uri + " was closed when the evaluation that opened it ended", "FOUT1170");
             }
 
+            // count() and [last()] pull every line with no look at the clock of their own (16M lines: 3 s past 1 s).
+            Controller.CheckActiveTimeout();
             string s;
             try
             {
                 s = reader.ReadLine();
+            }
+            catch (System.Text.DecoderFallbackException e)
+            {
+                Dispose();
+                throw Recoded(UnparsedTextFunction.HandleIOError(uri, new Internal.Charsets.MalformedInputException(e)));
             }
             catch (InvalidOperationException e)
             {
@@ -102,6 +130,30 @@ namespace OutSmart.DAXon.Trees.Iterators
             CheckLine(s);
             position++;
             return new StringValue(s);
+        }
+
+        // The file is let go; a next step, if one comes, opens it again past the lines delivered.
+        void ISuspendableResource.Suspend()
+        {
+            TextReader r = Interlocked.Exchange(ref reader, null);
+            if (r != null)
+            {
+                suspended = true;
+                r.Dispose();
+            }
+        }
+
+        private void Resume()
+        {
+            suspended = false;
+            TextReader r = UnparsedTextFunction.OpenText(uri, encoding, context, "unparsed-text-lines()");
+            for (int line = 0; line < position; line++)
+            {
+                Controller.CheckActiveTimeoutEvery64K(line);
+                r.ReadLine();
+            }
+
+            reader = r;
         }
 
         private void CheckLine(string buffer)
@@ -157,6 +209,7 @@ namespace OutSmart.DAXon.Trees.Iterators
         // finalizer can close it at once; whoever takes the reader closes it - two Disposes of a StreamReader race.
         public void Dispose()
         {
+            suspended = false;
             TextReader r = Interlocked.Exchange(ref reader, null);
             if (r != null)
             {

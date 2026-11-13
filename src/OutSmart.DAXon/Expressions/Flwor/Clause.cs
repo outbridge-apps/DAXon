@@ -97,8 +97,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
         public virtual void RefineVariableType(ExpressionVisitor visitor, IList<VariableReference> references, Expression returnExpr)
         {
         }
-
-        public abstract void AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet);
         public virtual string ToShortString()
         {
             return ToString();

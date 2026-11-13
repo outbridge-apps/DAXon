@@ -14,18 +14,21 @@ for hosts that are stuck on the old Framework where current XSLT 3.0 engines are
 **Base version**: the port derives from the Saxon-HE **12.9** Java source release, published by
 Saxonica at <https://github.com/Saxonica/Saxon-HE> (see also <https://www.saxonica.com/>).
 
-**Current version: 1.4.0** — see [`CHANGELOG.md`](CHANGELOG.md), and its *Upgrading from 1.3* section before
-replacing 1.3.x in a host.
+**Current version: 1.5.0** — see [`CHANGELOG.md`](CHANGELOG.md), and its *Upgrading from 1.4* section before
+replacing 1.4.x in a host. How to embed the engine - lifecycle, limits, resources, threads, failures - is in
+[`docs/HOSTING.md`](docs/HOSTING.md).
 
-## What's new in 1.4
+## What's new in 1.5
 
-- .NET 8 and .NET 10 builds beside .NET Framework 4.7.2, in one package.
-- `ProcessorOptions`: a time limit and a memory limit per call (one minute and 500 MB by default), the stack a
-  recursion must leave free, and control over file, network and environment access (see Security).
-- Hardening: deep input, long expression chains and runaway work stop with a coded error instead of a stack
-  overflow or a hang; memory and file-lock leaks closed; two output-escaping security fixes.
-- Faster compilation, regex, XSLT 1.0-style stylesheets and small repeated calls.
-- Some behaviour changed — listed in [`CHANGELOG.md`](CHANGELOG.md), *Upgrading from 1.3*.
+- Hardening: some stylesheets, queries and documents could crash the process or run past the time and memory
+  limits in 1.4.x; they now stop with a coded error. Upgrade if your host runs input it does not control.
+- Answers closer to the specifications and to Saxon-HE: URIs and file names, encodings, collations, number and
+  date formatting, error codes.
+- API: more ways to make and read values (`XdmValue`, `XdmAtomicValue`), `ProcessorOptions.MaxStackBytes` and
+  `JsonNumbersAsDecimal`, `ArgumentNullException` instead of `NullReferenceException`.
+- Faster grouping and `distinct-values` under collations, and hashing of binary values.
+- Tests you can run yourself: [`tests/README.md`](tests/README.md).
+- Some behaviour changed — listed in [`CHANGELOG.md`](CHANGELOG.md), *Upgrading from 1.4*.
 
 ## Build
 
@@ -134,8 +137,8 @@ var proc = new Processor(new ProcessorOptions
 
 The port is verified against the full W3C QT3 (XPath/XQuery 3.1) + XSLT 3.0 test corpora and
 matches Java Saxon-HE verdict-for-verdict, except 17 cases requiring XML 1.1 input documents,
-which the .NET `XmlReader` cannot parse. Hostile inputs cannot kill the process: transformation
-and compile-time deadlines, a memory limit per call (500 MB by default), input-size caps and
+which the .NET `XmlReader` cannot parse. Hostile input is meant to end in a coded error, not a dead
+process or a hang, and every way past that found so far is closed: transformation and compile-time deadlines, a memory limit per call (500 MB by default), input-size caps and
 adaptive stack guards turn deep recursion / deep JSON / deep regex nesting into catchable coded
 errors; `ProcessorOptions.StackSizeThreshold` sets how much of the thread's stack stays free for
 that (128 KB by default, and at least).
@@ -152,7 +155,7 @@ performance work since, were done by Anthropic's Claude (Opus 4.8, Fable 5 and O
 human direction.
 
 Nothing was taken on the model's word. Every change to the engine had to pass the **W3C QT3
-(XPath/XQuery 3.1) and XSLT 3.0 conformance corpora**: 38 554 cases passing against a fixed,
+(XPath/XQuery 3.1) and XSLT 3.0 conformance corpora**: 38 693 cases passing against a fixed,
 documented set of 17 known failures (XML 1.1 input documents, which the .NET `XmlReader` cannot
 parse). The runner is in [`tests/QT3Test`](tests/QT3Test), so anyone can repeat the run. CI builds
 every change for .NET Framework 4.7.2, .NET 8 and .NET 10 and runs a smoke test on Windows and Linux.

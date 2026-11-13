@@ -19,17 +19,17 @@ namespace OutSmart.DAXon.Api
         private static readonly ConversionRules defaultConversionRules = new ConversionRules();
 
         /// <summary>
-        /// ItemType representing the type item(), that @is, any item at all
+        /// ItemType representing the type item(), that is, any item at all
         /// </summary>
-        public static ItemType ANY_ITEM = new AnonymousItemType(AnyItemType.GetInstance());
+        public static readonly ItemType ANY_ITEM = new AnonymousItemType(AnyItemType.GetInstance());
 
         /// <summary>
-        /// ItemType representing the type function(*), that @is, any function
+        /// ItemType representing the type function(*), that is, any function
         /// </summary>
-        public static ItemType ANY_FUNCTION = new AnonymousItemType1(AnyFunctionType.GetInstance());
+        public static readonly ItemType ANY_FUNCTION = new AnonymousItemType1(AnyFunctionType.GetInstance());
 
         /// <summary>
-        /// ItemType representing the type node(), that @is, any node
+        /// ItemType representing the type node(), that is, any node
         /// </summary>
         public static readonly ItemType ANY_NODE = new AnonymousItemType2(AnyNodeTest.GetInstance());
 
@@ -69,17 +69,17 @@ namespace OutSmart.DAXon.Api
         public static readonly ItemType PROCESSING_INSTRUCTION_NODE = new AnonymousItemType9(NodeKindTest.PROCESSING_INSTRUCTION);
 
         /// <summary>
-        /// ItemType representing the type map(*), that @is, any map
+        /// ItemType representing the type map(*), that is, any map
         /// </summary>
         public static readonly ItemType ANY_MAP = new AnonymousItemType10(MapType.ANY_MAP_TYPE);
 
         /// <summary>
-        /// ItemType representing the type array(*), that @is, any array
+        /// ItemType representing the type array(*), that is, any array
         /// </summary>
         public static readonly ItemType ANY_ARRAY = new AnonymousItemType11(ArrayItemType.ANY_ARRAY_TYPE);
 
         /// <summary>
-        /// ItemType representing the type xs:anyAtomicType, that @is, any atomic value
+        /// ItemType representing the type xs:anyAtomicType, that is, any atomic value
         /// </summary>
         public static readonly ItemType ANY_ATOMIC_VALUE = Atomic(BuiltInAtomicType.ANY_ATOMIC, defaultConversionRules);
         /// <summary>
@@ -389,11 +389,13 @@ namespace OutSmart.DAXon.Api
 
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 return true;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return true;
             }
         }
@@ -405,11 +407,13 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 return item.UnderlyingValue is IFunctionItem;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType is IFunctionItemType;
             }
         }
@@ -421,11 +425,13 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 return item.UnderlyingValue is NodeInfo;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType is NodeTest;
             }
         }
@@ -437,12 +443,14 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 IItem it = item.UnderlyingValue;
                 return it is NodeInfo && ((NodeInfo)it).GetNodeKind() == Types.Type.ATTRIBUTE;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType.GetUType() == UType.ATTRIBUTE;
             }
         }
@@ -454,12 +462,14 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 IItem it = item.UnderlyingValue;
                 return it is NodeInfo && ((NodeInfo)it).GetNodeKind() == Types.Type.COMMENT;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType.GetUType() == UType.COMMENT;
             }
         }
@@ -471,12 +481,14 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 IItem it = item.UnderlyingValue;
                 return it is NodeInfo && ((NodeInfo)it).GetNodeKind() == Types.Type.TEXT;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType.GetUType() == UType.TEXT;
             }
         }
@@ -488,12 +500,14 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 IItem it = item.UnderlyingValue;
                 return it is NodeInfo && ((NodeInfo)it).GetNodeKind() == Types.Type.ELEMENT;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType.GetUType() == UType.ELEMENT;
             }
         }
@@ -505,12 +519,14 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 IItem it = item.UnderlyingValue;
                 return it is NodeInfo && ((NodeInfo)it).GetNodeKind() == Types.Type.DOCUMENT;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType.GetUType() == UType.DOCUMENT;
             }
         }
@@ -522,12 +538,14 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 IItem it = item.UnderlyingValue;
                 return it is NodeInfo && ((NodeInfo)it).GetNodeKind() == Types.Type.NAMESPACE;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType.GetUType() == UType.NAMESPACE;
             }
         }
@@ -539,12 +557,14 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 IItem it = item.UnderlyingValue;
                 return it is NodeInfo && ((NodeInfo)it).GetNodeKind() == Types.Type.PROCESSING_INSTRUCTION;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType.GetUType() == UType.PI;
             }
         }
@@ -556,11 +576,13 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 return item.UnderlyingValue is MapItem;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType is MapType;
             }
         }
@@ -572,11 +594,13 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 return item.UnderlyingValue is ArrayItem;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType is ArrayItemType;
             }
         }
@@ -588,11 +612,13 @@ namespace OutSmart.DAXon.Api
             }
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 return false;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return other.UnderlyingItemType is ErrorType;
             }
         }
@@ -622,6 +648,7 @@ namespace OutSmart.DAXon.Api
 
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 IItem value = item.UnderlyingValue;
                 if (!(value is AtomicValue))
                 {
@@ -634,6 +661,7 @@ namespace OutSmart.DAXon.Api
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 Types.ItemType otherType = other.UnderlyingItemType;
                 if (!otherType.IsPlainType())
                 {
@@ -682,11 +710,13 @@ namespace OutSmart.DAXon.Api
 
             public override bool Matches(XdmItem item)
             {
+                ArgumentCheck.NotNull(item, nameof(item));
                 return item.UnderlyingValue is NumericValue;
             }
 
             public override bool Subsumes(ItemType other)
             {
+                ArgumentCheck.NotNull(other, nameof(other));
                 return DECIMAL.Subsumes(other) || DOUBLE.Subsumes(other) || FLOAT.Subsumes(other);
             }
         }

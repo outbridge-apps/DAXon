@@ -40,9 +40,76 @@ namespace OutSmart.DAXon.Types
         // (the "" stub made "".StartsWith("")==true -> every atomic pair returned SUBSUMED_BY -> spurious XPTY0004).
         public static string GetFullAlphaCode(this ItemType t) => "";
         public static double GetNormalizedDefaultPriority(this ItemType t) => 0.0;
-        // 1-arg form taking TypeHierarchy (TypeChecker uses this).
-        public static bool IsAtomizable(this ItemType t, object th) => true;
-        public static string ExplainMismatch(this ItemType t, object item, object th) => "";
+        // 1-arg form taking TypeHierarchy (TypeChecker, Atomizer). Each type's own answer: as a stub that said true for
+        // all, a map reached the static conversion rules as xs:error (XPTY0004) where atomizing it is FOTY0013.
+        public static bool IsAtomizable(this ItemType t, object th)
+        {
+            TypeHierarchy h = th as TypeHierarchy;
+            switch (t)
+            {
+                case OutSmart.DAXon.Values.Maps.IRecordType _:
+                    return false;   // a map
+                case AnyFunctionType f:
+                    return f.IsAtomizable(h);
+                case OutSmart.DAXon.Patterns.NodeTest n:
+                    return n.IsAtomizable(h);
+                case BuiltInAtomicType a:
+                    return a.IsAtomizable(h);
+                case EnumerationType e:
+                    return e.IsAtomizable(h);
+                case AnyExternalObjectType x:
+                    return x.IsAtomizable(h);
+                default:
+                    return true;
+            }
+        }
+        // A value nested thousands deep is explained a few levels down: each level depicts and matches all that lies under it,
+        // and the whole was seconds and hundreds of MB past every limit for 2500 levels.
+        private const int ExplainedLevels = 4;
+
+        [System.ThreadStatic]
+        private static int explaining;
+
+        // What more can be said of an item that does not match, null when nothing. Each type answers for itself.
+        public static string ExplainMismatch(this ItemType t, OutSmart.DAXon.Model.IItem item, TypeHierarchy th)
+        {
+            if (explaining >= ExplainedLevels)
+            {
+                return null;
+            }
+
+            explaining++;
+            try
+            {
+                return ExplainOneLevel(t, item, th);
+            }
+            finally
+            {
+                explaining--;
+            }
+        }
+
+        private static string ExplainOneLevel(ItemType t, OutSmart.DAXon.Model.IItem item, TypeHierarchy th)
+        {
+            switch (t)
+            {
+                case OutSmart.DAXon.Patterns.NodeTest node:
+                    return node.ExplainMismatch(item, th);
+                case IUnionType union:
+                    return union.ExplainMismatch(item, th);
+                case IAtomicType atomic:
+                    return atomic.ExplainMismatch(item, th);
+                case OutSmart.DAXon.Values.Maps.RecordTest record:
+                    return record.ExplainMismatch(item, th);
+                case OutSmart.DAXon.Values.Maps.MapType map:
+                    return map.ExplainMismatch(item, th);
+                case OutSmart.DAXon.Values.Arrays.ArrayItemType array:
+                    return array.ExplainMismatch(item, th);
+                default:
+                    return null;
+            }
+        }
+
         public static string ToExportString(this ItemType t) => "";
     }
 }

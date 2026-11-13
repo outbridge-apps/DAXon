@@ -151,15 +151,41 @@ namespace OutSmart.DAXon.Serialization
             return mustCloseAfterUse;
         }
 
+        // The .NET 4.5 mode's Path refuses a path past MAX_PATH, which a rooted one need not be made full for.
+        private static string FullPath(string path)
+        {
+            try
+            {
+                return Path.GetFullPath(path);
+            }
+            catch (PathTooLongException) when (OutSmart.DAXon.Internal.Net.FileUris.IsPath(path))
+            {
+                return path;
+            }
+        }
+
         public static string MakeWritableOutputFile(string uriString)
         {
-            URI uri = new URI(uriString);
-            if (!uri.IsAbsolute())
+            // A path may hold any number of '#', a URI one: a path is not read as a URI first.
+            URI uri = null;
+            if (!OutSmart.DAXon.Internal.Net.FileUris.IsPath(uriString))
+            {
+                try
+                {
+                    uri = new URI(uriString);
+                }
+                catch (URISyntaxException) when (!URI.HasScheme(uriString))
+                {
+                    uri = null;
+                }
+            }
+
+            if (uri == null || !uri.IsAbsolute())
             {
                 // A name the file system refuses fails here, with the reason (the caller reports it). A device first,
                 // by what it is: its full path, \\.\NUL, is no URI, and the reason given was that of the URI.
                 OutSmart.DAXon.Internal.Streams.FileNames.Check(uriString);
-                uri = new Uri(Path.GetFullPath(uriString)).AbsoluteUri;
+                uri = OutSmart.DAXon.Internal.Net.FileUris.Of(FullPath(uriString));
             }
 
             // Java's File(URI) takes a file: URI and no other. LocalPath gives a path of this machine for any: a name
@@ -170,26 +196,31 @@ namespace OutSmart.DAXon.Serialization
                 throw new ArgumentException("it is not the name of a file: '" + uri.Scheme + ":' reads as the scheme of a URI");
             }
 
-            string file = new Uri(uri.ToString()).LocalPath;
+            string file = OutSmart.DAXon.Internal.Net.BidiUri.LocalPath(uri.ToString());
             try
             {
-                if (uri.Scheme == "file" && !(File.Exists(file) || Directory.Exists(file)))
+                // Past MAX_PATH .NET Framework's File and Directory find nothing: asked through FileNames, which can.
+                bool isFile = OutSmart.DAXon.Internal.Streams.FileNames.IsFile(file);
+                bool isDirectory = !isFile && OutSmart.DAXon.Internal.Streams.FileNames.IsDirectory(file);
+                if (uri.Scheme == "file" && !isFile && !isDirectory)
                 {
-                    string directory = Path.GetDirectoryName(file);
-                    if (directory != null && !(File.Exists(directory) || Directory.Exists(directory)))
+                    int slash = file.LastIndexOfAny(new[] { '\\', '/' });
+                    string directory = slash > 0 ? file.Substring(0, slash) : null;   // Path's own refuses MAX_PATH in the .NET 4.5 mode
+                    if (directory != null && !OutSmart.DAXon.Internal.Streams.FileNames.IsFile(directory) && !OutSmart.DAXon.Internal.Streams.FileNames.IsDirectory(directory))
                     {
-                        Directory.CreateDirectory(directory);
+                        Directory.CreateDirectory(OutSmart.DAXon.Internal.Streams.FileNames.ForListing(directory));
                     }
 
                     using (OutSmart.DAXon.Internal.Streams.FileNames.Create(file)) { }
+                    isFile = true;
                 }
 
-                if (Directory.Exists(file))
+                if (isDirectory)
                 {
                     throw new XPathException("Cannot write to a directory: " + uriString, DAXonErrorCode.SXRD0004);
                 }
 
-                if (File.Exists(file) && new FileInfo(file).IsReadOnly)
+                if (isFile && OutSmart.DAXon.Internal.Streams.FileNames.IsReadOnly(file))
                 {
                     throw new XPathException("Cannot write to URI " + uriString, DAXonErrorCode.SXRD0004);
                 }
@@ -208,8 +239,8 @@ namespace OutSmart.DAXon.Serialization
         }
 
         // The byte order mark of UTF-16 and UTF-32 bytes is what byte-order-mark says: yes is a mark, no is none. When
-        // it says nothing they have one, as .NET writes one for each of them - but for UTF-16LE and UTF-16BE, which
-        // have none, as in Saxon: the name says the order. UTF-8 under another of its names has one when the parameter
+        // it says nothing UTF-16 and UTF-32 have one, and UTF-16LE, UTF-16BE, UTF-32LE and UTF-32BE have none, as in Saxon: the name says
+        // the order. UTF-8 under another of its names has one when the parameter
         // says yes, as UTF-8 has. The StreamWriter writes the mark, at the start of a stream and nowhere else, so that
         // no emitter need add it: with one of its own as well, UTF-16LE with "yes" began with two and did not parse.
         private Encoding Marked(Encoding platform)
@@ -220,16 +251,24 @@ namespace OutSmart.DAXon.Serialization
                 case 1200:
                 case 1201:
                     marksItself = true;
-                    return new UnicodeEncoding(platform.CodePage == 1201, mark == "yes" || (mark != "no" && !NamesItsOrder()));
+                    // Big-endian unless the name says UTF-16LE: Java writes plain UTF-16 big-endian, .NET's own is little-endian.
+                    return new UnicodeEncoding(platform.CodePage == 1201 || !NamesItsOrder(), mark == "yes" || (mark != "no" && !NamesItsOrder()));
                 case 12000:
                 case 12001:
                     marksItself = true;
-                    return new UTF32Encoding(platform.CodePage == 12001, mark != "no");
+                    // With a mark little-endian, the one form of an XML document with this label that System.Xml reads; Java's parser reads
+                    // only the other. With none big-endian, which is what UTF-32 with no mark means.
+                    bool asked = NamesItsOrder();
+                    return asked
+                        ? new UTF32Encoding(platform.CodePage == 12001, mark == "yes")
+                        : new UTF32Encoding(mark == "no", mark != "no");
                 case 65001:
                     marksItself = true;
                     return new UTF8Encoding(mark == "yes");
                 default:
-                    return platform;
+                    Encoding oneMark = (Encoding)platform.Clone();
+                    oneMark.EncoderFallback = OutSmart.DAXon.Internal.OneMarkPerCharacterFallback.Instance;
+                    return oneMark;
             }
         }
 
@@ -237,7 +276,8 @@ namespace OutSmart.DAXon.Serialization
         private bool NamesItsOrder()
         {
             string name = outputProperties.GetProperty(DAXonOutputKeys.ENCODING);
-            return "UTF-16LE".Equals(name, StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(name, StringComparison.OrdinalIgnoreCase);
+            return "UTF-16LE".Equals(name, StringComparison.OrdinalIgnoreCase) || "UTF-16BE".Equals(name, StringComparison.OrdinalIgnoreCase)
+                || "UTF-32LE".Equals(name, StringComparison.OrdinalIgnoreCase) || "UTF-32BE".Equals(name, StringComparison.OrdinalIgnoreCase);
         }
 
         private TextWriter MakeWriterFromOutputStream(System.IO.Stream stream)
@@ -258,7 +298,7 @@ namespace OutSmart.DAXon.Serialization
                 {
                     Encoding dotnetEncoding = encoding.Equals("iso-646", StringComparison.OrdinalIgnoreCase) || encoding.Equals("iso646", StringComparison.OrdinalIgnoreCase)
                         ? Encoding.ASCII
-                        : Encoding.GetEncoding(encoding);
+                        : OutSmart.DAXon.Internal.PlatformEncodings.Get(encoding);
                     writer = new StreamWriter(outputStream, Marked(dotnetEncoding));
                 }
 

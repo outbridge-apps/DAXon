@@ -5,6 +5,8 @@
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Expressions.Elaboration;
+using OutSmart.DAXon.Internal;
+
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     internal sealed class WhereClausePull : TuplePull
@@ -19,6 +21,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override bool NextTuple(IXPathContext context)
         {
+            StackGuard.Probe();
             while (@base.NextTuple(context))
             {
                 if (predicate(context))
@@ -31,6 +34,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void Dispose()
         {
+            StackGuard.Probe();
             @base.Dispose();
         }
     }

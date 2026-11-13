@@ -94,7 +94,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         /// <returns>the compiled regular expression, if it was known statically</returns>
         public IRegularExpression PatternExpression => pattern;
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public override string ExpressionName => "analyzeString";
         public AnalyzeString(Expression select, Expression regex, Expression flags, Expression matching, Expression nonMatching, IRegularExpression pattern)
         {
@@ -119,13 +118,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return OperandSparseList(selectOp, regexOp, flagsOp, matchingOp, nonMatchingOp);
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public override bool AllowExtractingCommonSubexpressions()
         {
             return false;
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public override Expression TypeCheck(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             Configuration config = visitor.GetConfiguration();
@@ -155,7 +152,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return this;
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public override Expression Optimize(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             Configuration config = visitor.GetConfiguration();
@@ -182,7 +178,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return this;
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public void PrecomputeRegex(Configuration config, IList<string> warnings)
         {
             if (pattern == null && Regex is StringLiteral && Flags is StringLiteral)
@@ -213,14 +208,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         private void InvalidRegex(string message, StructuredQName errorCode)
         {
             pattern = null;
             throw new XPathException(message).WithErrorCode(errorCode).WithLocation(GetLocation());
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public override Expression Copy(RebindingMap rm)
         {
             AnalyzeString a2 = new AnalyzeString(Copy(Select, rm), Copy(Regex, rm), Copy(Flags, rm), Copy(Matching, rm), Copy(NonMatching, rm), pattern);
@@ -228,13 +221,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return a2;
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         private Expression Copy(Expression exp, RebindingMap rebindings)
         {
             return exp == null ? null : exp.Copy(rebindings);
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public override void CheckPermittedContents(ISchemaType parentType, bool whole)
         {
             if (Matching != null)
@@ -248,7 +239,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public override ItemType GetItemType()
         {
             if (Matching != null)
@@ -276,7 +266,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public override int ComputeDependencies()
         {
 
@@ -299,13 +288,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return dependencies;
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public override ISequenceIterator Iterate(IXPathContext context)
         {
             return MakeElaborator().ElaborateForPull().Iterate(context);
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public override void Export(ExpressionPresenter @out)
         {
             @out.StartElement("analyzeString", this);
@@ -330,16 +317,13 @@ namespace OutSmart.DAXon.Expressions.Instructions
             @out.EndElement();
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         public override Elaborator GetElaborator()
         {
             return new AnalyzeStringElaborator();
         }
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
-        private delegate IRegularExpression IRegexEvaluator(IXPathContext context); /*Java SAM interface -> delegate (lambda call sites)*/
+        private delegate IRegularExpression IRegexEvaluator(IXPathContext context);
 
-        /// <returns>the compiled regular expression, if it was known statically</returns>
         internal sealed class AnalyzeStringElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()

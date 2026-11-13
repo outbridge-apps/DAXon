@@ -92,7 +92,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        // OK;
         public override void PostValidate()
         {
 
@@ -108,7 +107,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        // OK;
         private void CheckParams()
         {
             IList<NamedTemplate.LocalParamInfo> declaredParams = template.LocalParamDetails;
@@ -163,7 +161,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        // OK;
         private NamedTemplate FindTemplate(StructuredQName templateName)
         {
             PrincipalStylesheetModule pack = GetPrincipalStylesheetModule();
@@ -183,7 +180,6 @@ namespace OutSmart.DAXon.Xslt
             return template;
         }
 
-        // OK;
         public override bool MarkTailCalls()
         {
             useTailRecursion = true;

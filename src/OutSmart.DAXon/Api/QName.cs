@@ -235,7 +235,7 @@ namespace OutSmart.DAXon.Api
 
         /*
    * The expanded name, as a string using the notation defined by the EQName production in XPath 3.0.
-   * If the name @is in a @namespace, the resulting string takes the form <code>Q{uri}local</code>.
+   * If the name is in a namespace, the resulting string takes the form <code>Q{uri}local</code>.
    * Otherwise, the value is the local part of the name.
    *
    */
@@ -256,11 +256,13 @@ namespace OutSmart.DAXon.Api
         }
         public QName(string prefix, string uri, string localName)
         {
+            ArgumentCheck.NotNull(localName, nameof(localName));
             sqName = new StructuredQName(prefix, NamespaceUri.Of(uri), localName);
         }
 
         public QName(string uri, string lexical)
         {
+            ArgumentCheck.NotNull(lexical, nameof(lexical));
             uri = (uri == null ? "" : uri);
             int colon = lexical.IndexOf(':');
             if (colon < 0)
@@ -277,6 +279,8 @@ namespace OutSmart.DAXon.Api
 
         public QName(NamespaceUri uri, string lexical)
         {
+            ArgumentCheck.NotNull(lexical, nameof(lexical));
+            uri = uri ?? NamespaceUri.NULL;
             int colon = lexical.IndexOf(':');
             if (colon < 0)
             {
@@ -292,6 +296,7 @@ namespace OutSmart.DAXon.Api
 
         public QName(string localName)
         {
+            ArgumentCheck.NotNull(localName, nameof(localName));
             int colon = localName.IndexOf(':');
             if (colon < 0)
             {
@@ -305,6 +310,8 @@ namespace OutSmart.DAXon.Api
 
         public QName(string lexicalQName, XdmNode element)
         {
+            ArgumentCheck.NotNull(lexicalQName, nameof(lexicalQName));
+            ArgumentCheck.NotNull(element, nameof(element));
             if (lexicalQName.StartsWith("{", StringComparison.Ordinal))
             {
                 lexicalQName = "Q" + lexicalQName;
@@ -313,7 +320,8 @@ namespace OutSmart.DAXon.Api
             try
             {
                 NodeInfo node = element.UnderlyingValue;
-                sqName = StructuredQName.FromLexicalQName((lexicalQName), true, true, node.AllNamespaces);
+                // A node other than an element has no in-scope namespaces: none are bound.
+                sqName = StructuredQName.FromLexicalQName((lexicalQName), true, true, node.AllNamespaces ?? NamespaceMap.EmptyMap());
             }
             catch (XPathException err)
             {
@@ -323,12 +331,13 @@ namespace OutSmart.DAXon.Api
 
         public QName(System.Xml.XmlQualifiedName qName)
         {
+            ArgumentCheck.NotNull(qName, nameof(qName));
             sqName = new StructuredQName("", NamespaceUri.Of(qName.Namespace), qName.Name);
         }
 
         public QName(StructuredQName sqName)
         {
-            this.sqName = sqName ?? throw new NullReferenceException();
+            this.sqName = sqName ?? throw new ArgumentNullException(nameof(sqName));
         }
 
         public static QName FromClarkName(string expandedName)
@@ -348,7 +357,7 @@ namespace OutSmart.DAXon.Api
                     throw new ArgumentException("No closing '}' in Clark name");
                 }
 
-                namespaceURI = expandedName.Substring(1, closeBrace - 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+                namespaceURI = expandedName.Substring(1, closeBrace - 1);
                 if (closeBrace == expandedName.Length)
                 {
                     throw new ArgumentException("Missing local part in Clark name");
@@ -367,9 +376,15 @@ namespace OutSmart.DAXon.Api
 
         public static QName FromEQName(string expandedName)
         {
+            ArgumentCheck.NotNull(expandedName, nameof(expandedName));
+            if (expandedName.Length == 0)
+            {
+                throw new ArgumentException("Supplied EQName is empty");   // as FromClarkName
+            }
+
             string namespaceURI;
             string localName;
-            if (expandedName[0] == 'Q' && expandedName[1] == '{')
+            if (expandedName.StartsWith("Q{", StringComparison.Ordinal))
             {
                 int closeBrace = expandedName.IndexOf('}');
                 if (closeBrace < 0)
@@ -377,7 +392,7 @@ namespace OutSmart.DAXon.Api
                     throw new ArgumentException("No closing '}' in EQName");
                 }
 
-                namespaceURI = expandedName.Substring(2, closeBrace - 2) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+                namespaceURI = expandedName.Substring(2, closeBrace - 2);
                 if (closeBrace == expandedName.Length)
                 {
                     throw new ArgumentException("Missing local part in EQName");

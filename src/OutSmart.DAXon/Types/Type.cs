@@ -307,6 +307,46 @@ namespace OutSmart.DAXon.Types
             }
             return false;
         }
-        public static string DisplayTypeName(IItem item) => item?.GetType().Name ?? "item";
+        // The item's type as an error message names it, as Saxon's Type.displayTypeName does: xs:decimal, element(a,
+        // xs:untyped), text(), function(*). It gave the .NET class name (BigDecimalValue).
+        public static string DisplayTypeName(IItem item)
+        {
+            switch (item)
+            {
+                case null:
+                    return "item()";
+                case AtomicValue atomic:
+                    return atomic.GetItemType().ToString();
+                case NodeInfo node:
+                    switch (node.GetNodeKind())
+                    {
+                        case DOCUMENT:
+                            return "document-node()";
+                        case ELEMENT:
+                            return "element(" + node.DisplayName + ", " + node.GetSchemaType().EQName + ")";
+                        case ATTRIBUTE:
+                            return "attribute(" + node.DisplayName + ", " + node.GetSchemaType().EQName + ")";
+                        case TEXT:
+                            return "text()";
+                        case COMMENT:
+                            return "comment()";
+                        case PROCESSING_INSTRUCTION:
+                            return "processing-instruction()";
+                        case NAMESPACE:
+                            return "namespace-node()";
+                        default:
+                            return "node()";
+                    }
+
+                case MapItem _:
+                    return "map(*)";
+                case ArrayItem _:
+                    return "array(*)";
+                case IFunctionItem _:
+                    return "function(*)";
+                default:
+                    return "item()";
+            }
+        }
     }
 }

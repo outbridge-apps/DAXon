@@ -59,32 +59,38 @@ namespace OutSmart.DAXon.Functions
             // the algorithm defined in [RFC 3986], adapted by treating any ·character· that would not be valid in
             // an RFC3986 URI or relative reference in the same way that RFC3986 treats unreserved characters.
             // No percent-encoding takes place.
-            // We rely on the Java implementation, but the Java implementation will not handle invalid characters
-            // notably spaces. If there are spaces present, we escape them to prevent Java objecting, and then unescape
-            // them at the end. We accept the consequence that if the input contains both escaped and unescaped spaces,
-            // they will all be unescaped at the end.
-            bool escaped = false;
-            if (relative.Contains(" "))
+            // The URI classes will not handle spaces, so they travel as %20 and come back at the end. A %20 that was there
+            // travels as %2520 and stays what it was (see ProtectSpaces), which Java does not do.
+            bool escaped = relative.IndexOf(' ') >= 0 || @base.IndexOf(' ') >= 0;
+            if (escaped)
             {
-                relative = EscapeSpaces(relative);
-                escaped = true;
-            }
-
-            if (@base.Contains(" "))
-            {
-                @base = EscapeSpaces(@base);
-                escaped = true;
+                relative = ProtectSpaces(relative);
+                @base = ProtectSpaces(@base);
             }
 
             // The port's URI is lenient where Java's java.net.URI is strict, so reject two malformations Java
             // catches (both FORG0002): (1) a '%' not followed by two hex digits (e.g. "%gg" — the port would
             // otherwise re-escape it to "%25gg"); this runs after EscapeSpaces, which only adds valid "%20".
-            for (int __i = 0; __i < relative.Length; __i++)
+            if (HasMalformedEscape(relative))
             {
-                if (relative[__i] == '%' && (__i + 2 >= relative.Length || !IsHexDigit(relative[__i + 1]) || !IsHexDigit(relative[__i + 2])))
-                {
-                    throw new XPathException("Relative URI " + Err.Wrap(relative) + " contains a malformed percent-encoded octet", "FORG0002", context);
-                }
+                throw new XPathException("Relative URI " + Err.Wrap(relative) + " contains a malformed percent-encoded octet", "FORG0002", context);
+            }
+
+            if (HasMalformedEscape(@base))
+            {
+                throw new XPathException("Base URI " + Err.Wrap(@base) + " contains a malformed percent-encoded octet", "FORG0002", context);
+            }
+
+            // (2) '\' is no IRI character; System.Uri reads it as '/', so '..\x' climbed a directory.
+            if (relative.IndexOf('\\') >= 0)
+            {
+                throw new XPathException("Relative URI " + Err.Wrap(relative) + " contains a backslash, which is not allowed in a URI", "FORG0002", context);
+            }
+
+            // System.Uri refuses anything longer on .NET Framework and .NET 8. RFC 3986 has no limit and its merge needs no parser.
+            if (relative.Length > URI.LongestForPlatform || @base.Length > URI.LongestForPlatform)
+            {
+                return ResolveLong(@base, relative, escaped, context);
             }
 
             URI relativeURI;
@@ -97,32 +103,24 @@ namespace OutSmart.DAXon.Functions
                 // .NET's System.Uri mis-parses single-letter-scheme URIs (e.g. "g:h") as DOS drive
                 // paths and throws; RFC 3986 treats a scheme-prefixed reference as ABSOLUTE, and
                 // resolve-uri returns it unchanged (base-uri-006). Detect the scheme syntactically.
-                if (HasUriScheme(relative))
+                if (URI.HasScheme(relative))
                 {
-                    return new AnyURIValue(relative);
+                    return new AnyURIValue(escaped ? RestoreSpaces(relative) : relative);
                 }
 
                 throw new XPathException("Relative URI " + Err.Wrap(relative) + " is invalid: " + e.Message, "FORG0002", context);
             }
 
-            if (relativeURI.IsAbsolute())
+            // http:g, ftp:x: a scheme makes the reference absolute (RFC 3986 4.3), though System.Uri wants "//" after
+            // the schemes it knows and calls them relative.
+            if (relativeURI.IsAbsolute() || URI.HasScheme(relative))
             {
-                return new AnyURIValue(relative);
+                return new AnyURIValue(escaped ? RestoreSpaces(relative) : relative);
             }
 
             // (2) RFC 3986: a relative-reference's first path segment must not contain ':' (it would be
             // mis-parsed as a scheme). ":" is neither absolute (empty scheme) nor a valid relative reference.
-            int __segEnd = relative.Length;
-            foreach (char __d in new[] { '/', '?', '#' })
-            {
-                int __p = relative.IndexOf(__d);
-                if (__p >= 0 && __p < __segEnd)
-                {
-                    __segEnd = __p;
-                }
-            }
-            int __colon = relative.IndexOf(':');
-            if (__colon >= 0 && __colon < __segEnd)
+            if (HasColonInFirstSegment(relative))
             {
                 throw new XPathException("Relative URI " + Err.Wrap(relative) + " has a ':' in its first path segment", "FORG0002", context);
             }
@@ -139,14 +137,23 @@ namespace OutSmart.DAXon.Functions
 
             if (!absoluteURI.IsAbsolute())
             {
+                if (URI.HasScheme(@base) && PathAbsoluteBase.IsMatch(@base) && @base.IndexOf('#') < 0)
+                {
+                    string merged = URI.ResolveReference(@base, relative);
+                    return new AnyURIValue(escaped ? RestoreSpaces(merged) : merged);
+                }
+
                 throw new XPathException("Base URI " + Err.Wrap(@base) + " is not an absolute URI", "FORG0002", context);
             }
 
-            if (absoluteURI.IsOpaque() && !@base.StartsWith("jar:", StringComparison.Ordinal))
+            // Non-hierarchic: no '/' after the scheme (urn:a:b, mailto:). System.Uri gives urn:a:b a path, and resolving
+            // against it made urn:x/y and urn:../y; F&O raises FORG0002, as Java does.
+            bool nonHierarchic = URI.HasScheme(@base) && !@base.Substring(@base.IndexOf(':') + 1).StartsWith("/", StringComparison.Ordinal);
+            if ((absoluteURI.IsOpaque() || nonHierarchic) && !@base.StartsWith("jar:", StringComparison.Ordinal))
             {
 
                 // Special-case JAR file URLs, even though non-conformant
-                throw new XPathException("Base URI " + Err.Wrap(@base) + " is a non-hierarchic URI", "FORG0002", context);
+                throw new XPathException("Base URI " + Err.Wrap(@base) + (FileUris.IsPath(@base) ? " is a path, not a URI: write it as a file: URI" : " is a non-hierarchic URI"), "FORG0002", context);
             }
 
             string fragment = absoluteURI.RawFragment;
@@ -171,28 +178,32 @@ namespace OutSmart.DAXon.Functions
                 @base = absoluteURI.ToString();
             }
 
-            URI resolved;
-            try
+            // The spec says that special characters are not escaped, and an escape stays as it was given (URI.Resolve merges
+            // those as text). jar: and file://// bases are checked by System.Uri (MakeAbsolute) but merged on the text too:
+            // what System.Uri gives back has %2F, %41 and %2E decoded and file://// as two slashes, Java keeps both.
+            // A path that begins with a drive, "/C:/x": System.Uri keeps the base's drive before it, C:/C:/x, and is not asked.
+            bool drive = @base.StartsWith("file:", StringComparison.Ordinal) && StartsWithDrive(relative);
+            bool onText = drive || @base.StartsWith("jar:", StringComparison.Ordinal) || @base.StartsWith("file:////", StringComparison.Ordinal);
+            URI resolved = null;
+            if (!drive)
             {
-                resolved = MakeAbsolute(relative, @base);
-            }
-            catch (URISyntaxException e)
-            {
-                throw new XPathException(e.Message, "FORG0002");
+                try
+                {
+                    resolved = MakeAbsolute(relative, @base);
+                }
+                catch (URISyntaxException e)
+                {
+                    throw new XPathException(e.Message, "FORG0002");
+                }
+
+                if (!resolved.ToString().StartsWith("file:////", StringComparison.Ordinal))
+                {
+                    resolved = resolved.Normalize();
+                }
             }
 
-            if (!resolved.ToASCIIString().StartsWith("file:////", StringComparison.Ordinal))
-            {
-                resolved = resolved.Normalize();
-            }
-
-
-            // The spec says that special characters are not escaped. But if the input was percent-escaped,
-            // we want the output to be percent-escaped too. Java achieves this automatically, but on C#
-            // it needs special attention.
-            bool inputIsPercentEncoded = @base.Contains("%") || relative.Contains("%");
-            string resolvedString = inputIsPercentEncoded ? resolved.ToASCIIString() : resolved.ToString();
-            string result = escaped ? UnescapeSpaces(resolvedString) : resolvedString;
+            string resolvedString = onText ? URI.ResolveReference(@base, relative) : resolved.ToString();
+            string result = escaped ? RestoreSpaces(resolvedString) : resolvedString;
 
             // Test case XSLT3 resolve-uri-022. Java even after normalization can leave a URI with trailing "../" or ".." parts.
             // Pragmatically, we just strip these off. This might not be enough if there are query or fragment parts, but it
@@ -210,6 +221,15 @@ namespace OutSmart.DAXon.Functions
             return new AnyURIValue(result);
         }
 
+        // "/C:/x" or "/C:": an absolute path whose first segment is a drive.
+        private static bool StartsWithDrive(string reference)
+        {
+            return reference.Length >= 3 && reference[0] == '/' && IsAsciiLetter(reference[1]) && reference[2] == ':'
+                && (reference.Length == 3 || reference[3] == '/');
+        }
+
+        private static bool IsAsciiLetter(char c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+
         public static URI AbsoluteOrRelativeURI(string href)
         {
             return new URI(href);
@@ -217,34 +237,10 @@ namespace OutSmart.DAXon.Functions
 
         private static bool IsHexDigit(char c) => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 
-        // RFC 3986 scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) followed by ':'. A reference with
-        // a scheme is an absolute URI reference. Used to recognise refs (e.g. "g:h") that .NET's
-        // System.Uri rejects as DOS drive paths but RFC 3986 treats as absolute.
-        private static bool HasUriScheme(string s)
-        {
-            if (string.IsNullOrEmpty(s) || !((s[0] >= 'A' && s[0] <= 'Z') || (s[0] >= 'a' && s[0] <= 'z')))
-            {
-                return false;
-            }
-
-            for (int i = 1; i < s.Length; i++)
-            {
-                char c = s[i];
-                if (c == ':')
-                {
-                    return true;
-                }
-
-                bool ok = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
-                    || c == '+' || c == '-' || c == '.';
-                if (!ok)
-                {
-                    return false;
-                }
-            }
-
-            return false;
-        }
+        // scheme ":" path-absolute, no authority (file:/x/y, http:/x/y): absolute for RFC 3986, refused by System.Uri for
+        // the schemes it knows.
+        private static readonly System.Text.RegularExpressions.Regex PathAbsoluteBase =
+            new System.Text.RegularExpressions.Regex("^[A-Za-z][A-Za-z0-9+.-]*:/(?!/)", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
         // Shared syntax screen for URIs the lenient port URI class accepts but java.net.URI rejects
         // (same two checks as Resolve() above): a '%' not followed by two hex digits, and — for a
@@ -258,6 +254,11 @@ namespace OutSmart.DAXon.Functions
                 {
                     return false;
                 }
+            }
+
+            if (uri.Length > URI.LongestForPlatform)
+            {
+                return URI.HasScheme(uri) || !HasColonInFirstSegment(uri);
             }
 
             URI parsed;
@@ -275,17 +276,52 @@ namespace OutSmart.DAXon.Functions
                 return true;
             }
 
-            int segEnd = uri.Length;
-            foreach (char d in new[] { '/', '?', '#' })
-            {
-                int p = uri.IndexOf(d);
-                if (p >= 0 && p < segEnd)
-                {
-                    segEnd = p;
-                }
-            }
+            return !HasColonInFirstSegment(uri);
+        }
+
+        // RFC 3986: the first path segment of a relative reference holds no ':', which would read as a scheme.
+        private static bool HasColonInFirstSegment(string uri)
+        {
             int colon = uri.IndexOf(':');
-            return colon < 0 || colon >= segEnd;
+            if (colon < 0)
+            {
+                return false;
+            }
+
+            int segEnd = uri.IndexOfAny(new[] { '/', '?', '#' });
+            return segEnd < 0 || colon < segEnd;
+        }
+
+        // The checks of Resolve that System.Uri does not make, and the merge of RFC 3986 on the text of both.
+        private static AnyURIValue ResolveLong(string @base, string relative, bool escaped, IXPathContext context)
+        {
+            if (URI.HasScheme(relative))
+            {
+                return new AnyURIValue(escaped ? RestoreSpaces(relative) : relative);
+            }
+
+            if (HasColonInFirstSegment(relative))
+            {
+                throw new XPathException("Relative URI " + Err.Wrap(relative) + " has a ':' in its first path segment", "FORG0002", context);
+            }
+
+            if (!URI.HasScheme(@base))
+            {
+                throw new XPathException("Base URI " + Err.Wrap(@base) + " is not an absolute URI", "FORG0002", context);
+            }
+
+            if (!@base.Substring(@base.IndexOf(':') + 1).StartsWith("/", StringComparison.Ordinal))
+            {
+                throw new XPathException("Base URI " + Err.Wrap(@base) + " is a non-hierarchic URI", "FORG0002", context);
+            }
+
+            if (@base.IndexOf('#') >= 0)
+            {
+                throw new XPathException("Base URI " + Err.Wrap(@base) + " contains a fragment identifier", "FORG0002", context);
+            }
+
+            string merged = URI.ResolveReference(@base, relative);
+            return new AnyURIValue(escaped ? RestoreSpaces(merged) : merged);
         }
 
         public static string TryToExpand(string systemId)
@@ -304,6 +340,20 @@ namespace OutSmart.DAXon.Functions
             {
                 return ResolveAgainstCurrentDirectory(systemId);
             }
+        }
+
+        // A '%' not followed by two hex digits.
+        private static bool HasMalformedEscape(string uri)
+        {
+            for (int i = 0; i < uri.Length; i++)
+            {
+                if (uri[i] == '%' && (i + 2 >= uri.Length || !IsHexDigit(uri[i + 1]) || !IsHexDigit(uri[i + 2])))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static string ResolveAgainstCurrentDirectory(string systemId)
@@ -335,7 +385,7 @@ namespace OutSmart.DAXon.Functions
 
             try
             {
-                URI currentDirectoryURI = new Uri(Path.GetFullPath(dir)).AbsoluteUri;
+                URI currentDirectoryURI = FileUris.Of(Path.GetFullPath(dir));
                 URI baseURI = currentDirectoryURI.Resolve(systemId);
                 return baseURI.ToString();
             }
@@ -416,8 +466,8 @@ namespace OutSmart.DAXon.Functions
                     // So we resolve via System.Uri(base, relative) for this case too, because it works.
                     try
                     {
-                        Uri baseURL = new Uri(@base);
-                        Uri absoluteURL = new Uri(baseURL, relativeURI);
+                        Uri baseURL = BidiUri.Make(@base);
+                        Uri absoluteURL = new Uri(baseURL, BidiUri.In(relativeURI));
                         absoluteURI = new URI(absoluteURL);
                     }
                     catch (UriFormatException err)
@@ -523,21 +573,46 @@ namespace OutSmart.DAXon.Functions
 
         public static string EscapeSpaces(string s)
         {
-
             // It's not entirely clear why we have to escape spaces by hand, and not other special characters;
             // it's just that tests with a variety of filenames show that this approach seems to work.
-            int i = s.IndexOf(' ');
-            if (i < 0)
-            {
-                return s;
-            }
-
-            return (i == 0 ? "" : s.Substring(0, i)) + "%20" + (i == s.Length - 1 ? "" : EscapeSpaces(s.Substring(i + 1)));
+            return s.Replace(" ", "%20");
         }
 
-        public static string UnescapeSpaces(string uri)
+        // A space as %20, and so that it can be told from them afterwards a %20 as %2520 and a %25 as %2525.
+        private static string ProtectSpaces(string s)
         {
-            return uri.Replace("%20", " ");
+            return s.Replace("%25", "%2525").Replace("%20", "%2520").Replace(" ", "%20");
+        }
+
+        // Undoes ProtectSpaces in one pass: %2520 holds a %20 and %252520 a %25 and a 20, whichever is met first.
+        private static string RestoreSpaces(string uri)
+        {
+            var result = new System.Text.StringBuilder(uri.Length);
+            for (int i = 0; i < uri.Length; i++)
+            {
+                char c = uri[i];
+                if (c == '%' && string.CompareOrdinal(uri, i, "%2520", 0, 5) == 0)
+                {
+                    result.Append("%20");
+                    i += 4;
+                }
+                else if (c == '%' && string.CompareOrdinal(uri, i, "%2525", 0, 5) == 0)
+                {
+                    result.Append("%25");
+                    i += 4;
+                }
+                else if (c == '%' && string.CompareOrdinal(uri, i, "%20", 0, 3) == 0)
+                {
+                    result.Append(' ');
+                    i += 2;
+                }
+                else
+                {
+                    result.Append(c);
+                }
+            }
+
+            return result.ToString();
         }
     }
 }

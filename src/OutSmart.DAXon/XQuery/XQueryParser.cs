@@ -298,7 +298,7 @@ namespace OutSmart.DAXon.XQuery
             }
             else
             {
-                XPathException err = new XPathException("One or more static errors were reported during query analysis");
+                XPathException err = new XPathException(firstError.IsRunLimit() ? firstError.Message : "One or more static errors were reported during query analysis");
                 err.SetHasBeenReported(true);
                 err.ErrorCodeQName = firstError.ErrorCodeQName; // largely for the XQTS test driver
                 throw err;
@@ -367,7 +367,7 @@ namespace OutSmart.DAXon.XQuery
 
             if (errorCount != 0)
             {
-                XPathException err = new XPathException("Static errors were reported in the imported library module");
+                XPathException err = new XPathException(firstError.IsRunLimit() ? firstError.Message : "Static errors were reported in the imported library module");
                 err.ErrorCodeQName = firstError.ErrorCodeQName;
                 throw err;
             }

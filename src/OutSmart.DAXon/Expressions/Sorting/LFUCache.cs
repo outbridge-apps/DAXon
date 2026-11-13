@@ -22,6 +22,8 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 LFUCacheEntryWithCounter<V> entry;
                 if (map.TryGetValue(key, out entry) && entry != null)
                 {
+                    // Counted, as Saxon's get: uncounted, Rebuild kept no entry however often it was used.
+                    entry.counter++;
                     return entry.value;
                 }
                 return default(V);

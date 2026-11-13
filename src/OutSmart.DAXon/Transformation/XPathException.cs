@@ -264,6 +264,24 @@ namespace OutSmart.DAXon.Transformation
             return HasErrorCode(DAXonErrorCode.SXTO0001) || HasErrorCode(DAXonErrorCode.SXLM0003);
         }
 
+        /// <summary>
+        /// The limit of the run that stopped e or one of its causes: System.Xml wraps what an entity's stream throws in an
+        /// XmlException of its own. Null when no limit is among them.
+        /// </summary>
+        internal static XPathException RunLimitIn(Exception e)
+        {
+            for (int depth = 0; e != null && depth < 16; e = e.InnerException, depth++)
+            {
+                XPathException x = e as XPathException ?? (e as UncheckedXPathException)?.GetXPathException();
+                if (x != null && x.IsRunLimit())
+                {
+                    return x;
+                }
+            }
+
+            return null;
+        }
+
         public virtual void SetIsGlobalError(bool @is)
         {
             _isGlobalError = @is;
@@ -412,6 +430,18 @@ namespace OutSmart.DAXon.Transformation
             }
 
             return this;
+        }
+
+        /// <summary>
+        /// For an exception filter that decorates an error on its way up and lets it go on:
+        /// <c>catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(loc))) { throw; }</c>.
+        /// Always false, so no handler runs. A throw from a catch block re-enters exception dispatch on top of the
+        /// stack not yet unwound (~9 KB per level on .NET Framework), so an ordinary error rising through a few dozen
+        /// nested constructors or calls used to kill the process; a filter runs and returns before the unwind.
+        /// </summary>
+        internal static bool PassOn(XPathException decorated)
+        {
+            return false;
         }
 
         public virtual bool IsReportableStatically()

@@ -45,7 +45,7 @@ namespace OutSmart.DAXon.Transformation
             "XQST0098",
             "XQST0114"
         };
-        public static readonly string[] propertyNames = new[]
+        internal static readonly string[] propertyNames = new[]
         {
             "decimal-separator",
             "grouping-separator",

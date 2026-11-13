@@ -103,7 +103,7 @@ namespace OutSmart.DAXon.Model
             Types.Type.ELEMENT
         };
         /// <summary>
-        /// Table indicating for each axis whether it @is in forwards document order
+        /// Table indicating for each axis whether it is in forwards document order
         /// </summary>
         public static readonly bool[] isForwards = new[]
         {

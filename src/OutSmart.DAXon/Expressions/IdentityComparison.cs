@@ -141,7 +141,7 @@ namespace OutSmart.DAXon.Expressions
             return node1 != null && CompareIdentity(node0, node1);
         }
 
-        private bool CompareIdentity(NodeInfo node0, NodeInfo node1)
+        internal bool CompareIdentity(NodeInfo node0, NodeInfo node1)
         {
             switch (Operator)
             {
@@ -194,167 +194,56 @@ namespace OutSmart.DAXon.Expressions
                 IdentityComparison exp = (IdentityComparison)GetExpression();
                 IItemEvaluator p0 = exp.GetLhsExpression().MakeElaborator().ElaborateForItem();
                 IItemEvaluator p1 = exp.GetRhsExpression().MakeElaborator().ElaborateForItem();
-                bool nullable0 = Cardinality.AllowsZero(exp.GetLhsExpression().GetCardinality());
-                bool nullable1 = Cardinality.AllowsZero(exp.GetRhsExpression().GetCardinality());
-                int op = exp.Operator;
-                bool gie = exp.IsGenerateIdEmulation();
-
-                switch (op)
+                if (exp.Operator == Token.IS
+                    && !Cardinality.AllowsZero(exp.GetLhsExpression().GetCardinality())
+                    && !Cardinality.AllowsZero(exp.GetRhsExpression().GetCardinality()))
                 {
-                    case Token.IS:
-                        if (nullable0 || nullable1)
-                        {
-                            if (gie)
-                            {
-                                return (context) =>
-                                {
-                                    NodeInfo v0 = (NodeInfo)p0.Eval(context);
-                                    NodeInfo v1 = (NodeInfo)p1.Eval(context);
-                                    if (v0 == null)
-                                    {
-                                        return v1 == null;
-                                    }
-                                    return v0.Equals(v1);
-                                };
-                            }
-                            else
-                            {
-                                return (context) =>
-                                {
-                                    NodeInfo v0 = (NodeInfo)p0.Eval(context);
-                                    NodeInfo v1 = (NodeInfo)p1.Eval(context);
-                                    if (v0 == null || v1 == null)
-                                    {
-                                        return false;
-                                    }
-                                    return v0.Equals(v1);
-                                };
-                            }
-                        }
-                        else
-                        {
-                            return (context) => p0.Eval(context).Equals(p1.Eval(context));
-                        }
-
-                    case Token.PRECEDES:
-                        return (context) =>
-                        {
-                            NodeInfo v0 = (NodeInfo)p0.Eval(context);
-                            NodeInfo v1 = (NodeInfo)p1.Eval(context);
-                            if (v0 == null || v1 == null)
-                            {
-                                return false;
-                            }
-                            return GlobalOrderComparer.GetInstance().Compare(v0, v1) < 0;
-                        };
-
-                    case Token.FOLLOWS:
-                        return (context) =>
-                        {
-                            NodeInfo v0 = (NodeInfo)p0.Eval(context);
-                            NodeInfo v1 = (NodeInfo)p1.Eval(context);
-                            if (v0 == null || v1 == null)
-                            {
-                                return false;
-                            }
-                            return GlobalOrderComparer.GetInstance().Compare(v0, v1) > 0;
-                        };
-
-                    default:
-                        throw new System.InvalidOperationException();
+                    return (context) => p0.Eval(context).Equals(p1.Eval(context));
                 }
+
+                bool gie = exp.IsGenerateIdEmulation();
+                return (context) =>
+                {
+                    NodeInfo v0 = (NodeInfo)p0.Eval(context);
+                    NodeInfo v1 = (NodeInfo)p1.Eval(context);
+                    if (v0 == null || v1 == null)
+                    {
+                        // generate-id emulation: two empty operands are the same "node".
+                        return gie && v0 == v1;
+                    }
+
+                    return exp.CompareIdentity(v0, v1);
+                };
             }
 
             public override IItemEvaluator ElaborateForItem()
             {
                 IdentityComparison exp = (IdentityComparison)GetExpression();
+                if (exp.IsGenerateIdEmulation())
+                {
+                    IBooleanEvaluator test = ElaborateForBoolean();
+                    return (context) => BooleanValue.Get(test(context));
+                }
+
+                // An empty operand makes the comparison empty; the right one is not evaluated after an empty left.
                 IItemEvaluator p0 = exp.GetLhsExpression().MakeElaborator().ElaborateForItem();
                 IItemEvaluator p1 = exp.GetRhsExpression().MakeElaborator().ElaborateForItem();
-                bool nullable0 = Cardinality.AllowsZero(exp.GetLhsExpression().GetCardinality());
-                bool nullable1 = Cardinality.AllowsZero(exp.GetRhsExpression().GetCardinality());
-                int op = exp.Operator;
-                bool gie = exp.IsGenerateIdEmulation();
-
-                switch (op)
+                return (context) =>
                 {
-                    case Token.IS:
-                        if (nullable0 || nullable1)
-                        {
-                            if (gie)
-                            {
-                                return (context) =>
-                                {
-                                    NodeInfo v0 = (NodeInfo)p0.Eval(context);
-                                    NodeInfo v1 = (NodeInfo)p1.Eval(context);
-                                    if (v0 == null)
-                                    {
-                                        return v1 == null ? (IItem)BooleanValue.TRUE : BooleanValue.FALSE;
-                                    }
-                                    if (v1 == null)
-                                    {
-                                        return BooleanValue.FALSE;
-                                    }
-                                    return BooleanValue.Get(v0.Equals(v1));
-                                };
-                            }
-                            else
-                            {
-                                return (context) =>
-                                {
-                                    NodeInfo v0 = (NodeInfo)p0.Eval(context);
-                                    if (v0 == null)
-                                    {
-                                        return null;
-                                    }
-                                    NodeInfo v1 = (NodeInfo)p1.Eval(context);
-                                    if (v1 == null)
-                                    {
-                                        return null;
-                                    }
-                                    return BooleanValue.Get(v0.Equals(v1));
-                                };
-                            }
-                        }
-                        else
-                        {
-                            return (context) => BooleanValue.Get(p0.Eval(context).Equals(p1.Eval(context)));
-                        }
+                    NodeInfo v0 = (NodeInfo)p0.Eval(context);
+                    if (v0 == null)
+                    {
+                        return null;
+                    }
 
-                    case Token.PRECEDES:
-                        return (context) =>
-                        {
-                            NodeInfo v0 = (NodeInfo)p0.Eval(context);
-                            if (v0 == null)
-                            {
-                                return null;
-                            }
-                            NodeInfo v1 = (NodeInfo)p1.Eval(context);
-                            if (v1 == null)
-                            {
-                                return null;
-                            }
-                            return BooleanValue.Get(GlobalOrderComparer.GetInstance().Compare(v0, v1) < 0);
-                        };
+                    NodeInfo v1 = (NodeInfo)p1.Eval(context);
+                    if (v1 == null)
+                    {
+                        return null;
+                    }
 
-                    case Token.FOLLOWS:
-                        return (context) =>
-                        {
-                            NodeInfo v0 = (NodeInfo)p0.Eval(context);
-                            if (v0 == null)
-                            {
-                                return null;
-                            }
-                            NodeInfo v1 = (NodeInfo)p1.Eval(context);
-                            if (v1 == null)
-                            {
-                                return null;
-                            }
-                            return BooleanValue.Get(GlobalOrderComparer.GetInstance().Compare(v0, v1) > 0);
-                        };
-
-                    default:
-                        throw new System.InvalidOperationException();
-                }
+                    return BooleanValue.Get(exp.CompareIdentity(v0, v1));
+                };
             }
         }
     }

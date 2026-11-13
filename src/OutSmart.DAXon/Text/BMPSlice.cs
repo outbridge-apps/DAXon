@@ -63,7 +63,7 @@ namespace OutSmart.DAXon.Text
             }
 
             int abs = _start + (int)from;
-            if (abs >= _end)
+            if (abs >= _end || codePoint > char.MaxValue)
             {
                 return -1;
             }
@@ -174,6 +174,31 @@ namespace OutSmart.DAXon.Text
             }
 
             return base.Equals(obj);
+        }
+        // The chars of either 16-bit form backed by a string: a BMPSlice, or a BMPString from 0 to its end.
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal static bool CharSpan(UnicodeString s, out string chars, out int start, out int end)
+        {
+            if (s is BMPSlice sl)
+            {
+                chars = sl._s;
+                start = sl._start;
+                end = sl._end;
+                return true;
+            }
+
+            if (s is BMPString bs)
+            {
+                chars = bs.ToString();   // backing string, no copy
+                start = 0;
+                end = chars.Length;
+                return true;
+            }
+
+            chars = null;
+            start = 0;
+            end = 0;
+            return false;
         }
     }
 }

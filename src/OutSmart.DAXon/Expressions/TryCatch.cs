@@ -16,6 +16,7 @@ using OutSmart.DAXon.Values;
 using System.Collections.Generic;
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Functions;
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Expressions
 {
@@ -36,6 +37,59 @@ namespace OutSmart.DAXon.Expressions
         private static bool IsUncatchable(XPathException err)
         {
             return err is XPathException.StackOverflow || err.IsRunLimit();
+        }
+
+        /// <summary>
+        /// The exception filter of the elaborated try: whether a catch clause takes the error. One that none takes
+        /// passes on with no handler run - a rethrow from the handler cost a dispatch per nested try on .NET
+        /// Framework (XPathException.PassOn). An error of a global variable passes this try once, as before.
+        /// </summary>
+        private bool Catches(XPathException err)
+        {
+            if (err.IsGlobalError())
+            {
+                err.SetIsGlobalError(false);
+            }
+            else if (!IsUncatchable(err) && CatchingClause(err) != null)
+            {
+                return true;
+            }
+
+            err.SetHasBeenReported(false);
+            return false;
+        }
+
+        private CatchClause CatchingClause(XPathException err)
+        {
+            StructuredQName code = err.ErrorCodeQName;
+            if (code == null)
+            {
+                code = new StructuredQName("saxon", NamespaceUri.SAXON, "XXXX9999");
+            }
+
+            foreach (CatchClause clause in catchClauses)
+            {
+                if (clause.nameTest.Matches(code))
+                {
+                    return clause;
+                }
+            }
+
+            return null;
+        }
+
+        // The value of the clause that catches err; an xsl:break inside it is marked on context (test iterate-036).
+        private IGroundedValue Recovered(XPathException err, IXPathContext context)
+        {
+            XPathContextMajor c2 = context.NewContext();
+            c2.SetCurrentException(err);
+            IGroundedValue v = ExpressionTool.EagerEvaluate(CatchingClause(err).catchOp.GetChildExpression(), c2);
+            if (c2.TailCallInfo is BreakInstr brk)
+            {
+                brk.MarkContext(context);
+            }
+
+            return v;
         }
 
         public Expression TryExpr => tryOp.GetChildExpression();
@@ -236,8 +290,10 @@ namespace OutSmart.DAXon.Expressions
                         checkpoint = c1.GetController().GetTraceListener().Checkpoint();
                     }
 
+                    long opened = RunResources.Mark();
                     try
                     {
+                        XPathException unwrapped = null;
                         try
                         {
                             ITailCall tc = tryPush.ProcessLeavingTail(o2, c1);
@@ -258,61 +314,32 @@ namespace OutSmart.DAXon.Expressions
                         }
                         catch (UncheckedXPathException ue)
                         {
-                            throw ue.GetXPathException();
+                            unwrapped = ue.GetXPathException();   // thrown below: see SingletonClosure.Iterate
+                        }
+
+                        if (unwrapped != null)
+                        {
+                            throw unwrapped;
                         }
                     }
-                    catch (XPathException err)
+                    catch (XPathException err) when (expr.Catches(err))
                     {
-                        if (err.IsGlobalError())
+                        RunResources.SuspendOpenedSince(opened);
+                        if (o2 is EventMonitor && ((EventMonitor)o2).HasBeenWrittenTo())
                         {
-                            err.SetIsGlobalError(false);
-                        }
-                        else if (!IsUncatchable(err))
-                        {
-                            StructuredQName code = err.ErrorCodeQName;
-                            if (code == null)
-                            {
-                                code = new StructuredQName("saxon", NamespaceUri.SAXON, "XXXX9999");
-                            }
 
-                            foreach (CatchClause clause in expr.catchClauses)
-                            {
-                                if (clause.nameTest.Matches(code))
-                                {
-                                    if (o2 is EventMonitor && ((EventMonitor)o2).HasBeenWrittenTo())
-                                    {
-
-                                        // rollback=no was specified, and output has been written, so we cannot recover
-                                        string message = err.Message + ". The error could not be caught, because rollback-output=no was specified, and output was already written to the result tree";
-                                        throw new XPathException(message, "XTDE3530").WithLocation(err.GetLocator()).WithXPathContext(context);
-                                    }
-
-                                    if (checkpoint != null)
-                                    {
-                                        context.GetController().GetTraceListener().Recover(checkpoint, err);
-                                    }
-
-                                    Expression caught = clause.catchOp.GetChildExpression();
-                                    XPathContextMajor c2 = context.NewContext();
-                                    c2.SetCurrentException(err);
-
-                                    // check for xsl:break within xsl:catch - test iterate-036
-                                    IGroundedValue v = ExpressionTool.EagerEvaluate(caught, c2);
-                                    TailCallLoop.ITailCallInfo tci = c2.TailCallInfo;
-                                    if (tci is BreakInstr)
-                                    {
-                                        ((BreakInstr)tci).MarkContext(context);
-                                    }
-
-
-                                    SequenceTool.Supply(v.Iterate(), (item) => output.Append(item));
-                                    return null;
-                                }
-                            }
+                            // rollback=no was specified, and output has been written, so we cannot recover
+                            string message = err.Message + ". The error could not be caught, because rollback-output=no was specified, and output was already written to the result tree";
+                            throw new XPathException(message, "XTDE3530").WithLocation(err.GetLocator()).WithXPathContext(context);
                         }
 
-                        err.SetHasBeenReported(false);
-                        throw;
+                        if (checkpoint != null)
+                        {
+                            context.GetController().GetTraceListener().Recover(checkpoint, err);
+                        }
+
+                        SequenceTool.Supply(expr.Recovered(err, context).Iterate(), (item) => output.Append(item));
+                        return null;
                     }
 
                     return null;
@@ -328,8 +355,10 @@ namespace OutSmart.DAXon.Expressions
                     XPathContextMajor c1 = context.NewContext();
                     c1.CreateThreadManager();
                     c1.SetErrorReporter(new FilteringErrorReporter(context.GetErrorReporter(), expr.catchClauses));
+                    long opened = RunResources.Mark();
                     try
                     {
+                        XPathException unwrapped;
                         try
                         {
 
@@ -348,46 +377,15 @@ namespace OutSmart.DAXon.Expressions
                         }
                         catch (UncheckedXPathException ue)
                         {
-                            throw ue.GetXPathException();
+                            unwrapped = ue.GetXPathException();   // thrown below: see SingletonClosure.Iterate
                         }
+
+                        throw unwrapped;
                     }
-                    catch (XPathException err)
+                    catch (XPathException err) when (expr.Catches(err))
                     {
-                        if (err.IsGlobalError())
-                        {
-                            err.SetIsGlobalError(false);
-                        }
-                        else if (!IsUncatchable(err))
-                        {
-                            StructuredQName code = err.ErrorCodeQName;
-                            if (code == null)
-                            {
-                                code = new StructuredQName("saxon", NamespaceUri.SAXON, "XXXX9999");
-                            }
-
-                            foreach (CatchClause clause in expr.catchClauses)
-                            {
-                                if (clause.nameTest.Matches(code))
-                                {
-                                    Expression caught = clause.catchOp.GetChildExpression();
-                                    XPathContextMajor c2 = context.NewContext();
-                                    c2.SetCurrentException(err);
-
-                                    // check for xsl:break within xsl:catch - test iterate-036
-                                    ISequence v = ExpressionTool.EagerEvaluate(caught, c2);
-                                    TailCallLoop.ITailCallInfo tci = c2.TailCallInfo;
-                                    if (tci is BreakInstr)
-                                    {
-                                        ((BreakInstr)tci).MarkContext(context);
-                                    }
-
-                                    return v.Iterate();
-                                }
-                            }
-                        }
-
-                        err.SetHasBeenReported(false);
-                        throw;
+                        RunResources.SuspendOpenedSince(opened);
+                        return expr.Recovered(err, context).Iterate();
                     }
                 };
             }
@@ -399,45 +397,25 @@ namespace OutSmart.DAXon.Expressions
                 return (context) =>
                 {
                     IXPathContext c1 = context.NewMinorContext();
+                    long opened = RunResources.Mark();
                     try
                     {
+                        XPathException unwrapped;
                         try
                         {
                             return tryEval.Evaluate(c1).Head();
                         }
                         catch (UncheckedXPathException e)
                         {
-                            throw e.GetXPathException();
+                            unwrapped = e.GetXPathException();   // thrown below: see SingletonClosure.Iterate
                         }
+
+                        throw unwrapped;
                     }
-                    catch (XPathException err)
+                    catch (XPathException err) when (expr.Catches(err))
                     {
-                        if (err.IsGlobalError())
-                        {
-                            err.SetIsGlobalError(false);
-                        }
-                        else if (!IsUncatchable(err))
-                        {
-                            StructuredQName code = err.ErrorCodeQName;
-                            if (code == null)
-                            {
-                                code = new StructuredQName("saxon", NamespaceUri.SAXON, "XXXX9999");
-                            }
-
-                            foreach (CatchClause clause in expr.catchClauses)
-                            {
-                                if (clause.nameTest.Matches(code))
-                                {
-                                    Expression caught = clause.catchOp.GetChildExpression();
-                                    XPathContextMajor c2 = context.NewContext();
-                                    c2.SetCurrentException(err);
-                                    return caught.EvaluateItem(c2);
-                                }
-                            }
-                        }
-
-                        err.SetHasBeenReported(false);
-                        throw;
+                        RunResources.SuspendOpenedSince(opened);
+                        return expr.Recovered(err, context).Head();
                     }
                 };
             }

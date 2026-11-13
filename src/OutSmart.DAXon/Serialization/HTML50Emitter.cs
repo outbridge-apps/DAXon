@@ -21,30 +21,10 @@ namespace OutSmart.DAXon.Serialization
 
         private static readonly byte[] DOCTYPE = StringConstants.Bytes("<!DOCTYPE HTML>");
         private static readonly byte[] NEWLINE = StringConstants.Bytes("\n");
-        static HTML50Emitter()
-        {
-            SetEmptyTag("area");
-            SetEmptyTag("base");
-            SetEmptyTag("base");
-            SetEmptyTag("basefont");
-            SetEmptyTag("br");
-            SetEmptyTag("col");
+        // No "command": bug 3277 (spec bug 30119)
+        private static readonly HTMLTagHashSet emptyTags = TagSet("area", "base", "basefont", "br", "col", "embed", "frame", "hr", "img", "input", "isindex", "keygen", "link", "meta", "param", "source", "track", "wbr");
 
-            //setEmptyTag("command"); // bug 3277 (spec bug 30119)
-            SetEmptyTag("embed");
-            SetEmptyTag("frame");
-            SetEmptyTag("hr");
-            SetEmptyTag("img");
-            SetEmptyTag("input");
-            SetEmptyTag("isindex");
-            SetEmptyTag("keygen");
-            SetEmptyTag("link");
-            SetEmptyTag("meta");
-            SetEmptyTag("param");
-            SetEmptyTag("source");
-            SetEmptyTag("track");
-            SetEmptyTag("wbr");
-        }
+        protected override bool IsEmptyTag(string tag) => emptyTags.Contains(tag);
 
         public HTML50Emitter()
         {
@@ -83,7 +63,7 @@ namespace OutSmart.DAXon.Serialization
                     base.WriteDocType(name, displayName, systemId, publicId);
                 }
             }
-            catch (IOException err)
+            catch (Exception err) when (Emitter.IsWriteFailure(err))
             {
                 throw WriteFailure(err);
             }

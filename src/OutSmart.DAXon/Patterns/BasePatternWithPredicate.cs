@@ -4,9 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.stream.Streamability;
-//import com.saxonica.ee.stream.Sweep;
-//import com.saxonica.ee.trans.ContextItemStaticInfoEE;
 using OutSmart.DAXon.Expressions.Elaboration;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Expressions.Parsing;
@@ -27,7 +24,7 @@ namespace OutSmart.DAXon.Patterns
     /// <summary>
     /// Class for handling patterns with simple non-positional boolean predicates
     /// </summary>
-    internal sealed class BasePatternWithPredicate : Pattern, IPatternWithPredicate
+    internal sealed class BasePatternWithPredicate : Pattern
     {
         readonly Operand basePatternOp;
         readonly Operand predicateOp;
@@ -37,10 +34,8 @@ namespace OutSmart.DAXon.Patterns
 
         public Pattern BasePattern => (Pattern)basePatternOp.GetChildExpression();
 
-        //try {
         public override int Fingerprint => BasePattern.Fingerprint;
 
-        //try {
         public override int Dependencies => Predicate.Dependencies;
         public BasePatternWithPredicate(Pattern basePattern, Expression predicate)
         {
@@ -366,25 +361,21 @@ namespace OutSmart.DAXon.Patterns
             }
         }
 
-        //try {
         public override bool MatchesBeneathAnchor(NodeInfo node, NodeInfo anchor, IXPathContext context)
         {
             return BasePattern.MatchesBeneathAnchor(node, anchor, context) && MatchesPredicate(node, context);
         }
 
-        //try {
         public override UType GetUType()
         {
             return BasePattern.GetUType();
         }
 
-        //try {
         public override ItemType GetItemType()
         {
             return BasePattern.GetItemType();
         }
 
-        //try {
         public override Expression TypeCheck(ExpressionVisitor visitor, ContextItemStaticInfo contextItemType)
         {
             basePatternOp.SetChildExpression(BasePattern.TypeCheck(visitor, contextItemType));
@@ -393,7 +384,6 @@ namespace OutSmart.DAXon.Patterns
             return this;
         }
 
-        //try {
         public override Expression Optimize(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             basePatternOp.SetChildExpression(BasePattern.Optimize(visitor, contextInfo));
@@ -403,7 +393,6 @@ namespace OutSmart.DAXon.Patterns
             return this;
         }
 
-        //try {
         public override Pattern ConvertToTypedPattern(string val)
         {
             Pattern b2 = BasePattern.ConvertToTypedPattern(val);
@@ -417,19 +406,16 @@ namespace OutSmart.DAXon.Patterns
             }
         }
 
-        //try {
         public override string Reconstruct()
         {
             return BasePattern + "[" + Predicate + "]";
         }
 
-        //try {
         public override string ToShortString()
         {
             return BasePattern.ToShortString() + "[" + Predicate.ToShortString() + "]";
         }
 
-        //try {
         public override Expression Copy(RebindingMap rebindings)
         {
             BasePatternWithPredicate n = new BasePatternWithPredicate((Pattern)BasePattern.Copy(rebindings), Predicate.Copy(rebindings));
@@ -439,19 +425,16 @@ namespace OutSmart.DAXon.Patterns
             return n;
         }
 
-        //try {
         public override bool Equals(object obj)
         {
             return obj is BasePatternWithPredicate && ((BasePatternWithPredicate)obj).BasePattern.IsEqual(BasePattern) && ((BasePatternWithPredicate)obj).Predicate.IsEqual(Predicate);
         }
 
-        //try {
         protected override int ComputeHashCode()
         {
             return BasePattern.GetHashCode() ^ Predicate.GetHashCode();
         }
 
-        //try {
         public override void Export(ExpressionPresenter presenter)
         {
             presenter.StartElement("p.withPredicate");

@@ -25,7 +25,6 @@ namespace OutSmart.DAXon.Values
 
         public override BuiltInAtomicType PrimitiveType => BuiltInAtomicType.DOUBLE;
 
-        //    }
         public override UnicodeString PrimitiveStringValue => DoubleToString(value);
 
         public override UnicodeString CanonicalLexicalRepresentation => FloatingPointConverter.ConvertDouble(value, true);
@@ -99,7 +98,6 @@ namespace OutSmart.DAXon.Values
             return FloatingPointConverter.ConvertDouble(value, d != 0 && (d >= 1000000 || d < 1E-06));
         }
 
-        //    }
         /// <summary>
         /// Negate the value
         /// </summary>
@@ -108,7 +106,6 @@ namespace OutSmart.DAXon.Values
             return new DoubleValue(-value);
         }
 
-        //    }
         /// <summary>
         /// Implement the XPath floor() function
         /// </summary>
@@ -117,7 +114,6 @@ namespace OutSmart.DAXon.Values
             return new DoubleValue(Math.Floor(value));
         }
 
-        //    }
         /// <summary>
         /// Implement the XPath ceiling() function
         /// </summary>
@@ -134,41 +130,14 @@ namespace OutSmart.DAXon.Values
             return new DoubleValue(c);
         }
 
-        //    }
         /// <summary>
         /// Implement the XPath round() function
         /// </summary>
         public override NumericValue Round(int scale)
         {
-            if (double.IsNaN(value))
-            {
-                return this;
-            }
-
-            if (double.IsInfinity(value))
-            {
-                return this;
-            }
-
-            if (value == 0)
-            {
-                return this; // handles the negative zero case
-            }
-
-            if (scale == 0 && value > long.MinValue && value < long.MaxValue)
-            {
-                if (value >= -0.5 && value < 0)
-                {
-                    return new DoubleValue(-0.0);
-                }
-
-                return new DoubleValue(JavaMath.Round(value));
-            }
-
-            return RoundViaDecimal(scale, Functions.Round.RoundingRule.HALF_TO_CEILING);
+            return Round(scale, Functions.Round.RoundingRule.HALF_TO_CEILING);
         }
 
-        //    }
         public override NumericValue Round(int scale, Round.RoundingRule roundingRule)
         {
             if (value == 0 || double.IsNaN(value) || double.IsInfinity(value))
@@ -205,7 +174,6 @@ namespace OutSmart.DAXon.Values
             return RoundViaDecimal(scale, roundingRule);
         }
 
-        //    }
         private DoubleValue RoundViaDecimal(int scale, Round.RoundingRule roundingRule)
         {
             if (value == 0 || double.IsNaN(value) || double.IsInfinity(value))
@@ -226,7 +194,6 @@ namespace OutSmart.DAXon.Values
             return new DoubleValue(result);
         }
 
-        //    }
         public override int Signum()
         {
             if (double.IsNaN(value))
@@ -237,19 +204,16 @@ namespace OutSmart.DAXon.Values
             return value > 0 ? 1 : value == 0 ? 0 : -1;
         }
 
-        //    }
         public override bool IsNegativeZero()
         {
             return value == 0 && (BitConverter.DoubleToInt64Bits(value) & FloatingPointConverter.DOUBLE_SIGN_MASK) != 0;
         }
 
-        //    }
         public override bool IsWholeNumber()
         {
             return value == Math.Floor(value) && !double.IsInfinity(value);
         }
 
-        //    }
         public override int AsSubscript()
         {
             if (IsWholeNumber() && value > 0 && value <= int.MaxValue)
@@ -262,7 +226,6 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override NumericValue Abs()
         {
             if (value > 0)
@@ -275,7 +238,6 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override int CompareTo(long other)
         {
             double otherDouble = (double)other;
@@ -287,7 +249,6 @@ namespace OutSmart.DAXon.Values
             return value < otherDouble ? -1 : +1;
         }
 
-        //    }
         public override IAtomicMatchKey AsMapKey()
         {
             if (IsNaN())
@@ -313,23 +274,9 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override bool IsIdentical(AtomicValue v)
         {
             return v is DoubleValue && DoubleSortComparer.GetInstance().ComparesEqual(this, v);
-        } /*
-     * Diagnostic method: print the sign, exponent, and significand
-     * @param d the double to be diagnosed
-     */ //    public static void printInternalForm(double d) {
-        //                             (bits & 0xfffffffffffffL) << 1 :
-        //                             (bits & 0xfffffffffffffL) | 0x10000000000000L;
-        //                dec = dec.multiply(new BigDecimal(System.Numerics.BigInteger.valueOf(2).pow(exponent)));
-        //            } else {
-        //                // Next line is sometimes failing, e.g. on -3.62e-5. Not investigated.
-        //                dec = dec.divide(new BigDecimal(System.Numerics.BigInteger.valueOf(2).pow(-exponent)), BigDecimal.ROUND_HALF_EVEN);
-        //    public static DoubleValue fromInternalForm(String hex) {
-        //        return new DoubleValue(Double.longBitsToDouble(Long.parseLong(hex, 16)));
-        //
-        //    }
+        }
     }
 }

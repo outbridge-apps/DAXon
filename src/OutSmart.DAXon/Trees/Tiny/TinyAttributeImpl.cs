@@ -34,7 +34,7 @@ namespace OutSmart.DAXon.Trees.Tiny
 
         public override long SequenceNumber => GetParent().SequenceNumber + 0x8000 + (nodeNr - tree.alpha[tree.attParent[nodeNr]]);
 
-        public override UnicodeString UnicodeStringValue => StringView.Of(tree.attValue[nodeNr]).Tidy();
+        public override UnicodeString UnicodeStringValue => StringView.Of(tree.attValue[nodeNr]);
 
         public override int Fingerprint => tree.attCode[nodeNr] & 0xfffff;
 

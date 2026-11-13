@@ -49,7 +49,7 @@ namespace OutSmart.DAXon.Model
                     throw new ArgumentException("No closing '}' in Clark name");
                 }
 
-                @namespace = expandedName.Substring(1, closeBrace - 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+                @namespace = expandedName.Substring(1, closeBrace - 1);
                 if (closeBrace == expandedName.Length)
                 {
                     throw new ArgumentException("Missing local part in Clark name");
@@ -78,7 +78,7 @@ namespace OutSmart.DAXon.Model
                     throw new ArgumentException("No closing '}' in EQName");
                 }
 
-                @namespace = expandedName.Substring(2, closeBrace - 2) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+                @namespace = expandedName.Substring(2, closeBrace - 2);
                 if (closeBrace == expandedName.Length)
                 {
                     throw new ArgumentException("Missing local part in EQName");
@@ -145,9 +145,6 @@ namespace OutSmart.DAXon.Model
             return 0;
         }
 
-        /*
-     * Compare two names for equality
-     */
         public override bool Equals(object other)
         {
             if (other is INodeName)
@@ -167,25 +164,16 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        /*
-     * Compare two names for equality
-     */
         public override int GetHashCode()
         {
             return qName.GetHashCode();
         }
 
-        /*
-     * Compare two names for equality
-     */
         public bool IsIdentical(IIdentityComparable other)
         {
             return other is INodeName && this.Equals(other) && this.GetPrefix().Equals(((INodeName)other).GetPrefix());
         }
 
-        /*
-     * Compare two names for equality
-     */
         public override string ToString()
         {
             return qName.DisplayName;

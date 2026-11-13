@@ -90,7 +90,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             public ITailCall ProcessLeavingTail()
             {
                 TemplateRule nh = (TemplateRule)rule.GetAction();
-                nh.Initialize();
                 XPathContextMajor c2 = evaluationContext.NewContext();
                 c2.Origin = instruction;
 
@@ -148,8 +147,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     c1.SetCurrentMode(modeComponent);
                     c1.Origin = expr;
                     c1.SetCurrentComponent(modeComponent);
-                    PipelineConfiguration pipe = output.GetPipelineConfiguration();
-                    pipe.XPathContext = c1;
                     Rule rule;
                     try
                     {
@@ -177,7 +174,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     else
                     {
                         TemplateRule nh = (TemplateRule)rule.GetAction();
-                        nh.Initialize();
                         XPathContextMajor c2 = context.NewContext();
                         c2.Origin = expr;
 

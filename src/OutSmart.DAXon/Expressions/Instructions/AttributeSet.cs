@@ -19,7 +19,16 @@ namespace OutSmart.DAXon.Expressions.Instructions
     {
         StructuredQName attributeSetName;
         private bool declaredStreamable;
-        private IPushEvaluator bodyEvaluator;
+        private volatile IPushEvaluator bodyEvaluator;   // elaborated once, under the lock (Elaborated); read without it
+
+        // Saxon takes the lock on every call
+        private IPushEvaluator Elaborated()
+        {
+            lock (syncLock)
+            {
+                return bodyEvaluator ??= GetBody().MakeElaborator().ElaborateForPush();
+            }
+        }
 
         public virtual int FocusDependencies => body.Dependencies & StaticProperty.DEPENDS_ON_FOCUS;
         public AttributeSet()
@@ -56,14 +65,20 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public virtual void Expand(Outputter output, IXPathContext context)
         {
-            lock (syncLock)
+            IPushEvaluator body = bodyEvaluator ?? Elaborated();
+
+            // A use-attribute-sets chain expands by recursion through UseAttributeSet (3000 links killed a 256 KB thread),
+            // and sets that share members expand once per path, exponentially many: the stack and the clock bound both.
+            try
             {
-                if (bodyEvaluator == null)
-                {
-                    bodyEvaluator = GetBody().MakeElaborator().ElaborateForPush();
-                }
+                OutSmart.DAXon.Internal.StackGuard.Probe();
+            }
+            catch (OutSmart.DAXon.Internal.RecursionDepthError e) when (!e.Described)
+            {
+                throw e.Describe("Too many nested attribute sets (use-attribute-sets) for the thread's stack.", DAXonErrorCode.SXLM0001, this);
             }
 
+            OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
             Stack<AttributeSet> stack = ((XsltController)context.GetController()).AttributeSetEvaluationStack;
             if (stack.Contains(this))
             {
@@ -76,7 +91,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             stack.Push(this);
             try
             {
-                Expression.DispatchTailCall(bodyEvaluator.ProcessLeavingTail(output, context));
+                Expression.DispatchTailCall(body.ProcessLeavingTail(output, context));
             }
             finally
             {
@@ -91,23 +106,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public virtual StructuredQName GetObjectName()
         {
             return attributeSetName;
-        }
-
-        public override void Export(ExpressionPresenter presenter)
-        {
-            presenter.StartElement("attributeSet");
-            presenter.EmitAttribute("name", GetObjectName());
-            presenter.EmitAttribute("line", GetLineNumber() + "");
-            presenter.EmitAttribute("module", GetSystemId());
-            presenter.EmitAttribute("slots", GetStackFrameMap().NumberOfVariables + "");
-            presenter.EmitAttribute("binds", DeclaringComponent.ComponentBindings.Count + "");
-            if (IsDeclaredStreamable())
-            {
-                presenter.EmitAttribute("flags", "s");
-            }
-
-            GetBody().Export(presenter);
-            presenter.EndElement();
         }
     }
 }

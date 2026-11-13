@@ -135,10 +135,8 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        //    }
         public virtual IFunctionLibrary PublicFunctions => new PublicStylesheetFunctionLibrary(functionLibrary);
 
-        //    }
         public virtual Dictionary<SymbolicName, Component> AbstractComponents => abstractComponents;
         public StylesheetPackage(Configuration config) : base(config)
         {
@@ -187,15 +185,6 @@ namespace OutSmart.DAXon.Xslt
         public virtual void SetImplicitPackage(bool implicitPackage)
         {
             this.implicitPackage = implicitPackage;
-        }
-
-        public virtual bool IsJustInTimeCompilation()
-        {
-            return false;
-        }
-
-        public virtual void SetJustInTimeCompilation(bool justInTimeCompilation)
-        {
         }
 
         public virtual RuleManager GetRuleManager()
@@ -313,9 +302,7 @@ namespace OutSmart.DAXon.Xslt
                 GlobalVariable var = (GlobalVariable)c.GetActor();
                 int slot = slotManager.AllocateSlotNumber(var.GetVariableQName(), null);
                 var.SetPackageData(this);
-                var.BinderySlotNumber = slot; //            if (c.getVisibility() != Visibility.HIDDEN) {
-                //                addGlobalVariable(var);
-                //            }
+                var.BinderySlotNumber = slot;
             }
         }
 
@@ -350,25 +337,21 @@ namespace OutSmart.DAXon.Xslt
             return componentIndex.GetOrDefault(name);
         }
 
-        //    }
         public virtual void AddHiddenComponent(Component component)
         {
             hiddenComponents.Add(component);
         }
 
-        //    }
         public virtual Component GetOverriddenComponent(SymbolicName name)
         {
             return overriddenComponents.GetOrDefault(name);
         }
 
-        //    }
         public virtual void AddOverriddenComponent(Component comp)
         {
             overriddenComponents[comp.GetActor().GetSymbolicName()] = comp;
         }
 
-        //    }
         public virtual void AddComponentsFromUsedPackage(StylesheetPackage usedPackage, IList<XSLAccept> acceptors, HashSet<SymbolicName> overrides)
         {
             usedPackages.Add(usedPackage);
@@ -474,7 +457,6 @@ namespace OutSmart.DAXon.Xslt
                         IList<ComponentBinding> oldBindings = newC.BaseComponent.ComponentBindings;
                         IList<ComponentBinding> newBindings = newC.ComponentBindings;
 
-                        //assert newBindings.size() == oldBindings.size();
                         for (int i = 0; i < oldBindings.Count; i++)
                         {
                             SymbolicName name12 = oldBindings[i].GetSymbolicName();
@@ -482,7 +464,7 @@ namespace OutSmart.DAXon.Xslt
                             if (overrides.Contains(name12))
                             {
 
-                                // if there is an @override in this package, we bind to it
+                                // if there is an override in this package, we bind to it
                                 target = GetComponent(name12);
                                 if (target == null)
                                 {
@@ -538,7 +520,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        //    }
         private void MakeNewComponentBindings(HashSet<SymbolicName> overrides, Dictionary<Component, Component> correspondence, IList<ComponentBinding> oldBindings, IList<ComponentBinding> newBindings)
         {
             foreach (ComponentBinding oldBinding in oldBindings)
@@ -548,7 +529,7 @@ namespace OutSmart.DAXon.Xslt
                 if (overrides.Contains(name))
                 {
 
-                    // if there is an @override in this package, we bind to it
+                    // if there is an override in this package, we bind to it
                     target = GetComponent(name);
                     if (target == null)
                     {
@@ -571,7 +552,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        //    }
         private Visibility ExplicitAcceptedVisibility(SymbolicName name, IList<XSLAccept> acceptors)
         {
             foreach (XSLAccept acceptor in acceptors)
@@ -588,7 +568,6 @@ namespace OutSmart.DAXon.Xslt
             return Visibility.UNDEFINED;
         }
 
-        //    }
         private Visibility WildcardAcceptedVisibility(SymbolicName name, IList<XSLAccept> acceptors)
         {
 
@@ -624,7 +603,6 @@ namespace OutSmart.DAXon.Xslt
             return vis;
         }
 
-        //    }
         public virtual void CreateFunctionLibrary()
         {
             FunctionLibraryList functionLibrary = new FunctionLibraryList();
@@ -651,35 +629,29 @@ namespace OutSmart.DAXon.Xslt
             this.functionLibrary = functionLibrary;
         }
 
-        //    }
         protected virtual void AddIxslFunctionLibrary(FunctionLibraryList functionLibrary)
         {
         }
 
-        //    }
         protected virtual void AddIxsl3FunctionLibrary(FunctionLibraryList functionLibrary)
         {
         }
 
-        //    }
         protected virtual void AddStubFunctionLibrary(IFunctionLibrary stubFunctions)
         {
             throw new NotSupportedException();
         }
 
-        //    }
         public virtual FunctionLibraryList GetFunctionLibrary()
         {
             return functionLibrary;
         }
 
-        //    }
         public virtual XQueryFunctionLibrary GetXQueryFunctionLibrary()
         {
             return queryFunctions;
         }
 
-        //    }
         public virtual void SetFunctionLibraryDetails(FunctionLibraryList library, ExecutableFunctionLibrary overriding, ExecutableFunctionLibrary underriding)
         {
             if (library != null)
@@ -691,7 +663,6 @@ namespace OutSmart.DAXon.Xslt
             this.underriding = underriding;
         }
 
-        //    }
         public virtual UserFunction GetFunction(SymbolicName.F name)
         {
             if (name.GetArity() == -1)
@@ -728,19 +699,16 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        //    }
         public virtual bool IsRetainUnusedFunctions()
         {
             return retainUnusedFunctions;
         }
 
-        //    }
         public virtual void SetRetainUnusedFunctions()
         {
             this.retainUnusedFunctions = true;
         }
 
-        //    }
         public virtual void UpdatePreparedStylesheet(PreparedStylesheet pss)
         {
             foreach (KeyValuePair<SymbolicName, Component> entry in componentIndex)
@@ -837,7 +805,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        //    }
         private bool MayCreateSecondaryResultDocuments()
         {
             if (createsSecondaryResultDocuments)
@@ -856,18 +823,15 @@ namespace OutSmart.DAXon.Xslt
             return false;
         }
 
-        //    }
         public virtual void MarkNonExportable(string message, string errorCode)
         {
         }
 
-        //    }
         public virtual void Export(ExpressionPresenter presenter)
         {
             throw new XPathException("Exporting a stylesheet requires Saxon-EE");
         }
 
-        //    }
         public virtual void CheckForAbstractComponents()
         {
             foreach (KeyValuePair<SymbolicName, Component> entry in componentIndex)
@@ -907,13 +871,11 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        //    }
         public virtual bool IsFallbackToNonStreaming()
         {
             return true;
         }
 
-        //    }
         public virtual void SetFallbackToNonStreaming()
         {
         }

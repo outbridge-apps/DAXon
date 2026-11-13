@@ -49,11 +49,11 @@ namespace OutSmart.DAXon.Api
         public virtual CompilerInfo UnderlyingCompilerInfo => compilerInfo;
         public XsltCompiler(Processor processor)
         {
+            ArgumentCheck.NotNull(processor, nameof(processor));
             this.processor = processor;
             this.config = processor.UnderlyingConfiguration;
             compilerInfo = new CompilerInfo(config.DefaultXsltCompilerInfo);
             compilerInfo.TargetEdition = config.EditionCode;
-            compilerInfo.SetJustInTimeCompilation(config.IsJITEnabled());
         }
 
         public virtual Processor GetProcessor()
@@ -68,17 +68,15 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetParameter(QName name, XdmValue value)
         {
+            ArgumentCheck.NotNull(name, nameof(name));
+            ArgumentCheck.NotNull(value, nameof(value));
             try
             {
                 compilerInfo.SetParameter(name.GetStructuredQName(), ((ISequence)value.UnderlyingValue).Materialize());
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiUncheckedException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiUncheckedException(e.ToXPathException());
+                throw ApiErrors.WrapUnchecked(e);
             }
         }
 
@@ -94,7 +92,8 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetErrorList(IList<IXmlProcessingError> errorList)
         {
-            compilerInfo.ErrorReporter = new DelegateErrorReporter(err => errorList.Add(err));
+            // null clears it, as SetErrorReporter(null) does: the list is not called on a compile error.
+            compilerInfo.ErrorReporter = errorList == null ? null : new DelegateErrorReporter(err => errorList.Add(err));
         }
 
         public virtual void SetErrorReporter(IErrorReporter reporter)
@@ -184,13 +183,13 @@ namespace OutSmart.DAXon.Api
             compilerInfo.SetAssertionsEnabled(enabled);
         }
 
+        // No optimizer passes, as the XPath and XQuery compilers do. Saxon sets JIT here, but just-in-time template
+        // compilation is an EE feature this edition lacks: with it set every template rule was left without a body.
         public virtual void SetFastCompilation(bool fast)
         {
             if (fast)
             {
-
-                // The only optimizer option that speeds up compilation is JIT.
-                compilerInfo.SetOptimizerOptions(new OptimizerOptions(OptimizerOptions.JIT));
+                compilerInfo.SetOptimizerOptions(new OptimizerOptions(0));
             }
             else
             {
@@ -200,7 +199,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual bool IsFastCompilation()
         {
-            return compilerInfo.GetOptimizerOptions().GetOptions() == OptimizerOptions.JIT;
+            return compilerInfo.GetOptimizerOptions().GetOptions() == 0;
         }
 
         public virtual void SetCompileWithTracing(bool option)
@@ -232,40 +231,31 @@ namespace OutSmart.DAXon.Api
 
         public virtual void ImportXQueryEnvironment(XQueryCompiler queryCompiler)
         {
+            ArgumentCheck.NotNull(queryCompiler, nameof(queryCompiler));
             compilerInfo.SetXQueryLibraries(queryCompiler.UnderlyingStaticContext.CompiledLibraries);
         }
 
         public virtual ResolvedResource GetAssociatedStylesheet(ResolvedResource source, string media, string title, string charset)
         {
+            ArgumentCheck.NotNull(source, nameof(source));
             // Parses the source to its first element: claims the deadline slot as DocumentBuilder does, or a spent
             // token from an earlier run on this thread failed the search at once ("Failed while looking for ...").
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Parsing");
+            using Controller.ThreadLimits deadline = Controller.ArmScope(config, "Parsing");
             try
             {
                 return StylesheetModule.GetAssociatedStylesheet(config, compilerInfo.ResourceResolver, source, media, title, charset);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            catch (System.Xml.XmlException e)
-            {
-                throw DAXonApiException.FromXmlParser(e, source.SystemId);
-            }
-            finally
-            {
-                Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e, source.SystemId);
             }
         }
 
         public virtual XsltPackage CompilePackage(ResolvedResource source)
         {
+            ArgumentCheck.NotNull(source, nameof(source));
             // Compile under the Processor's deadline (see Compile(ResolvedResource)).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Compilation");
+            using Controller.ThreadLimits deadline = Controller.ArmScope(config, "Compilation");
             try
             {
                 Compilation compilation = null;
@@ -285,43 +275,24 @@ namespace OutSmart.DAXon.Api
 
                 compilation.SetLibraryPackage(true);
                 XsltPackage pack = new XsltPackage(this, compilation.CompilePackage(InputSizeLimit.Apply(source, MaxInput, "FODC0002")).GetStylesheetPackage());
-                int errors = compilation.ErrorCount;
-                if (errors > 0)
+                if (compilation.ErrorCount > 0)
                 {
-                    string count = errors == 1 ? "one error" : errors + " errors";
-                    throw new DAXonApiException("Package compilation failed: " + count + " reported");
+                    // The first error's code, its location and every message, as Compile gives them: a host with no
+                    // reporter learned only "Package compilation failed: one error reported".
+                    throw compilation.MakeCompilationFailure();
                 }
 
                 return pack;
             }
-            catch (UncheckedXPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e.GetXPathException());
-            }
-            catch (XPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            catch (XmlProcessingAbort e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (System.Xml.XmlException e)
-            {
-                throw DAXonApiException.FromXmlParser(e, source.SystemId);
-            }
-            finally
-            {
-                Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e, source.SystemId);
             }
         }
 
         public virtual XsltPackage CompilePackage(string file)
         {
+            ArgumentCheck.NotNull(file, nameof(file));
             return CompilePackage(new ResolvedResource { SystemId = file });
         }
 
@@ -332,11 +303,13 @@ namespace OutSmart.DAXon.Api
 
         public virtual XsltPackage LoadLibraryPackage(URI location)
         {
+            ArgumentCheck.NotNull(location, nameof(location));
             return LoadLibraryPackage(new ResolvedResource { SystemId = location.ToString() });
         }
 
         public virtual XsltPackage LoadLibraryPackage(ResolvedResource input)
         {
+            ArgumentCheck.NotNull(input, nameof(input));
             try
             {
                 IIPackageLoader loader = processor.UnderlyingConfiguration.MakePackageLoader();
@@ -346,30 +319,29 @@ namespace OutSmart.DAXon.Api
                     return new XsltPackage(this, pack);
                 }
 
-                throw new DAXonApiException("Loading library package requires Saxon PE or higher");
+                throw new DAXonApiException("A compiled package (SEF) cannot be loaded by this edition: compile the stylesheet from source");
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
         public virtual XsltExecutable LoadExecutablePackage(URI location)
         {
+            ArgumentCheck.NotNull(location, nameof(location));
             return LoadLibraryPackage(location).Link();
         }
 
         public virtual XsltExecutable LoadExecutablePackage(ResolvedResource source)
         {
+            ArgumentCheck.NotNull(source, nameof(source));
             return LoadLibraryPackage(source).Link();
         }
 
         public virtual void ImportPackage(XsltPackage thePackage)
         {
+            ArgumentCheck.NotNull(thePackage, nameof(thePackage));
             if (thePackage.GetProcessor() != processor)
             {
                 throw new DAXonApiException("The imported package and the XsltCompiler must belong to the same Processor");
@@ -380,6 +352,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void ImportPackage(XsltPackage thePackage, string packageName, string version)
         {
+            ArgumentCheck.NotNull(thePackage, nameof(thePackage));
             try
             {
                 if (thePackage.GetProcessor() != processor)
@@ -402,13 +375,9 @@ namespace OutSmart.DAXon.Api
                 details.loadedPackage = thePackage.UnderlyingPreparedPackage;
                 compilerInfo.GetPackageLibrary().AddPackage(details);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -440,13 +409,9 @@ namespace OutSmart.DAXon.Api
 
                 return null;
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -460,24 +425,16 @@ namespace OutSmart.DAXon.Api
 
             // The library may compile the package from source here: under the Processor's deadline, as
             // every compile entry is, so its static expressions share one budget (see Compile(ResolvedResource)).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Compilation");
+            using Controller.ThreadLimits deadline = Controller.ArmScope(config, "Compilation");
             try
             {
                 IList<VersionedPackageName> packageNames = new List<VersionedPackageName>();
                 StylesheetPackage pack = GetPackageLibrary().ObtainLoadedPackage(details, packageNames);
                 return new XsltPackage(this, pack);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            finally
-            {
-                Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -485,40 +442,19 @@ namespace OutSmart.DAXon.Api
         // ResolvedResource from GetAssociatedStylesheet (xml-stylesheet PI processing).
         public virtual XsltExecutable Compile(ResolvedResource source)
         {
-            if (source == null)
-                throw new NullReferenceException();
+            ArgumentCheck.NotNull(source, nameof(source));
             // Compile under the Processor's deadline: constant folding of hostile stylesheet text is
             // otherwise unbounded work before any run-time deadline exists (see ArmThreadDeadline).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Compilation");
+            using Controller.ThreadLimits deadline = Controller.ArmScope(config, "Compilation");
             try
             {
                 CompilerInfo ci2 = new CompilerInfo(compilerInfo);
                 PreparedStylesheet pss = Compilation.CompileSingletonPackage(config, ci2, InputSizeLimit.Apply(source, MaxInput, "FODC0002"));
                 return new XsltExecutable(processor, pss);
             }
-            catch (UncheckedXPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e.GetXPathException());
-            }
-            catch (XPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            catch (XmlProcessingAbort e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (System.Xml.XmlException e)
-            {
-                throw DAXonApiException.FromXmlParser(e, source.SystemId);
-            }
-            finally
-            {
-                Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e, source.SystemId);
             }
         }
 
@@ -526,15 +462,13 @@ namespace OutSmart.DAXon.Api
         // explicit system identifier — the caller no longer constructs a JAXP Source.
         public virtual XsltExecutable Compile(System.IO.Stream input, string systemId)
         {
-            if (input == null)
-                throw new NullReferenceException("input");
+            ArgumentCheck.NotNull(input, nameof(input));
             return CompileFromXmlReader(null, input, systemId);
         }
 
         public virtual XsltExecutable Compile(System.IO.TextReader input, string systemId)
         {
-            if (input == null)
-                throw new NullReferenceException("input");
+            ArgumentCheck.NotNull(input, nameof(input));
             return CompileFromXmlReader(input, null, systemId);
         }
 
@@ -542,8 +476,23 @@ namespace OutSmart.DAXon.Api
         // just like one fetched by the resolver (xsl:include/import already were).
         private long MaxInput => InputSizeLimit.MaxFor(config);
 
-        // Saxonica .NET-API compat: compile with just the reader (BaseUri property, else a pseudo-URI).
-        public virtual Uri BaseUri { get; set; }
+        // Saxonica .NET-API compat: compile with just the reader (BaseUri property, else a pseudo-URI). Absolute, as
+        // XPathCompiler.BaseURI and DocumentBuilder.BaseUri: a relative one failed the compile raw.
+        public virtual Uri BaseUri
+        {
+            get => baseUri;
+            set
+            {
+                if (value != null && !value.IsAbsoluteUri)
+                {
+                    throw new ArgumentException("Supplied base URI must be absolute", nameof(value));
+                }
+
+                baseUri = value;
+            }
+        }
+
+        private Uri baseUri;
 
         public virtual XsltExecutable Compile(System.IO.TextReader input)
             => Compile(input, BaseUri != null ? BaseUri.AbsoluteUri : "urn:stylesheet");
@@ -557,7 +506,7 @@ namespace OutSmart.DAXon.Api
             string principal = charStream == null && byteStream == null ? systemId : null;
             System.Xml.XmlResolver resolver = new ResourceResolverXmlResolver(config.GetResourceResolver(), config, principal);
             // Compile under the Processor's deadline (see Compile(ResolvedResource)).
-            Controller.DeadlineToken prevDeadline = Controller.ArmThreadDeadline(config, "Compilation");
+            using Controller.ThreadLimits deadline = Controller.ArmScope(config, "Compilation");
             try
             {
                 charStream = InputSizeLimit.Apply(charStream, MaxInput, systemId, "FODC0002");
@@ -569,55 +518,31 @@ namespace OutSmart.DAXon.Api
                     return new XsltExecutable(processor, pss);
                 }
             }
-            catch (UncheckedXPathException e)
+            catch (Exception e) when (ApiErrors.IsInputError(e))
             {
-                throw new DAXonApiException(e.GetXPathException());
-            }
-            catch (XPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
-            }
-            catch (XmlProcessingAbort e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (System.Xml.XmlException e)
-            {
-                throw DAXonApiException.FromXmlParser(e, systemId);
-            }
-            catch (Exception e) when (DAXonApiException.IsIO(e))
-            {
-                throw DAXonApiException.FromIO(e, systemId);
-            }
-            finally
-            {
-                Controller.RestoreThreadDeadline(prevDeadline);
+                throw ApiErrors.Wrap(e, systemId);
             }
         }
 
         public virtual XsltExecutable Compile(string file)
         {
+            ArgumentCheck.NotNull(file, nameof(file));
             // P5: compile via the native XmlReader path (a bare systemId opens through XmlReader.Create), no JAXP Source.
             return CompileFromXmlReader(null, null, file);
         }
 
+        // Just-in-time template compilation is a Saxon-EE feature: off is the only setting.
         public virtual void SetJustInTimeCompilation(bool jit)
         {
-            if (jit && !config.IsLicensedFeature(Configuration.LicenseFeature.ENTERPRISE_XSLT))
+            if (jit)
             {
                 throw new NotSupportedException("XSLT just-in-time compilation requires a Saxon-EE license");
             }
-
-            compilerInfo.SetJustInTimeCompilation(jit);
         }
 
         public virtual bool IsJustInTimeCompilation()
         {
-            return compilerInfo.IsJustInTimeCompilation();
+            return false;
         }
 
         public virtual string GetDefaultElementNamespace()
@@ -637,6 +562,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetUnprefixedElementMatchingPolicy(UnprefixedElementMatchingPolicy unprefixedElementMatchingPolicy)
         {
+            ArgumentCheck.Defined(unprefixedElementMatchingPolicy, nameof(unprefixedElementMatchingPolicy));
             compilerInfo.SetUnprefixedElementMatchingPolicy(unprefixedElementMatchingPolicy);
         }
     }

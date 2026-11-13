@@ -84,9 +84,10 @@ namespace OutSmart.DAXon.Functions
                         {
                             return fn.EvalMatches(arg0eval.Eval(context), arg1eval.Eval(context), arg2eval.Eval(context), context);
                         }
-                        catch (XPathException err)
+                        catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(fnc.GetLocation()).MaybeWithContext(context)))
                         {
-                            throw err.MaybeWithLocation(fnc.GetLocation()).MaybeWithContext(context);
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     };
                 }

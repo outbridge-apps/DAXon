@@ -32,7 +32,6 @@ namespace OutSmart.DAXon.Expressions
         {
             operand = new Operand(this, p0, GetOperandRole());
 
-            //        }
             ExpressionTool.CopyLocationInfo(p0, this);
         }
 

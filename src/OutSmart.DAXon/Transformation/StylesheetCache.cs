@@ -35,17 +35,31 @@ namespace OutSmart.DAXon.Transformation
 
         public virtual void SetStylesheetByText(string style, XsltExecutable xsltExecutable)
         {
-            cacheByText[style] = xsltExecutable;
+            Put(cacheByText, style, xsltExecutable);
         }
 
         public virtual void SetStylesheetByLocation(string style, XsltExecutable xsltExecutable)
         {
-            cacheByLocation[style] = xsltExecutable;
+            Put(cacheByLocation, style, xsltExecutable);
         }
 
         public virtual void SetStylesheetByNode(NodeInfo style, XsltExecutable xsltExecutable)
         {
-            cacheByNode[style] = xsltExecutable;
+            Put(cacheByNode, style, xsltExecutable);
+        }
+
+        // A run that generates stylesheet text in a loop kept every compiled stylesheet for the run's life: past Capacity
+        // the cache starts again (a miss costs a compile, never a wrong result).
+        internal const int Capacity = 100;
+
+        private static void Put<K>(Dictionary<K, XsltExecutable> cache, K style, XsltExecutable xsltExecutable)
+        {
+            if (cache.Count >= Capacity && !cache.ContainsKey(style))
+            {
+                cache.Clear();
+            }
+
+            cache[style] = xsltExecutable;
         }
     }
 }

@@ -238,15 +238,9 @@ namespace OutSmart.DAXon.Values
             // directly: CodePointAt on these does a per-char RequireInt + Length32 bounds check
             // + virtual dispatch, so the generic loop below spends most of its time in dispatch,
             // not in the comparison. Whitespace chars are all < 128, so byte value == codepoint.
-            if (@in is Slice8 s8)
+            if (Slice8.Latin1Span(@in, out byte[] b, out int start, out int end))
             {
-                return CollapseByteScan(@in, s8.ByteArray, s8.Start, s8.End);
-            }
-
-            if (@in is Twine8 t8)
-            {
-                byte[] tb = t8.ByteArray;
-                return CollapseByteScan(@in, tb, 0, tb.Length);
+                return CollapseByteScan(@in, b, start, end);
             }
 
             bool prevSpace = true; // start-of-string counts as a preceding space: a leading space breaks the fast path
@@ -451,7 +445,7 @@ namespace OutSmart.DAXon.Values
                 return @in;
             }
 
-            return @in.Substring(firstNonWhite, lastNonWhite + 1 - firstNonWhite) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+            return @in.Substring(firstNonWhite, lastNonWhite + 1 - firstNonWhite);
         }
 
         public static string Collapse(string @in)
@@ -523,7 +517,7 @@ namespace OutSmart.DAXon.Values
 
             public Tokenizer(UnicodeString input)
             {
-                this.input = input.Tidy();
+                this.input = input;
                 this.position = 0;
             }
 

@@ -76,7 +76,7 @@ namespace OutSmart.DAXon.Resources
                         resource = MakeResource(context, details);
                     }
                 }
-                catch (XPathException e)
+                catch (XPathException e) when (!e.IsRunLimit())
                 {
                     int onError = @params?.OnError ?? URIQueryParameters.ON_ERROR_FAIL;
                     if (onError == URIQueryParameters.ON_ERROR_FAIL)

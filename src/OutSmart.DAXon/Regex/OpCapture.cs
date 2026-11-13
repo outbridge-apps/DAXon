@@ -54,7 +54,6 @@ namespace OutSmart.DAXon.Regex
             return new AnonymousIntIterator(this, basis, matcher, position);
         }
 
-        //}
         public override string Display()
         {
             return "(" + childOp.Display() + ")";
@@ -92,7 +91,6 @@ namespace OutSmart.DAXon.Regex
                 matcher.SetParenStart(groupNr, position);
                 matcher.SetParenEnd(groupNr, next);
 
-                //}
                 if ((matcher.program.optimizationFlags & REProgram.OPT_HASBACKREFS) != 0)
                 {
                     matcher.startBackref[groupNr] = position;

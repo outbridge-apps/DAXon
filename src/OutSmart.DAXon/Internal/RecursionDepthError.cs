@@ -38,8 +38,21 @@ namespace OutSmart.DAXon.Internal
         private ILocation location;
         private bool nesting;
         private ILocation nestingLocation;
+        private XPathException.StackOverflow nestedRun;
 
         public RecursionDepthError() : base("") { }
+
+        /// <summary>
+        /// A nested run's overflow (fn:transform, load-xquery-module) carried back into the calling run as the guard's
+        /// abort: as an XPathException every level of the caller's recursion would catch and rethrow it. fn:transform's
+        /// own nesting guard (FOXT0003) names the cause and stays; any other is the calling recursion's, described by
+        /// its nearest site (SXLM0001, as Java says), the nested run's words kept for a caller with none.
+        /// </summary>
+        internal static RecursionDepthError FromNestedRun(XPathException.StackOverflow e)
+        {
+            string code = e.ErrorCodeQName?.GetLocalPart();
+            return code == "FOXT0003" ? new RecursionDepthError().Describe(e.Message, code, e.GetLocator()) : new RecursionDepthError { nestedRun = e };
+        }
 
         /// <summary>Raised at a level of stylesheet nesting (an instruction's evaluation), not at a call.</summary>
         internal static RecursionDepthError AtNesting(ILocation location)
@@ -72,6 +85,11 @@ namespace OutSmart.DAXon.Internal
         /// <summary>The host-visible form. Built at the API boundary, once, on an unwound stack.</summary>
         public XPathException.StackOverflow ToXPathException()
         {
+            if (description == null && nestedRun != null)
+            {
+                return nestedRun;
+            }
+
             return new XPathException.StackOverflow(
                 description ?? (nesting ? NestingMessage : "Too many nested function or template calls. May be due to infinite recursion"),
                 errorCode ?? DAXonErrorCode.SXLM0001,

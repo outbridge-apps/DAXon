@@ -30,7 +30,7 @@ namespace OutSmart.DAXon.Internal
         // engine stack. That conversion made ~185 decorating catches re-enter exception dispatch
         // during the unwind. RecursionDepthError is now deliberately foreign until the API boundary,
         // so that depth-proportional cascade no longer exists. Keeping its obsolete reserve made every
-        // probe fail immediately on a 256KB D365 Batch thread, even at logical depth zero.
+        // probe fail immediately on a 256 KB worker thread, even at logical depth zero.
         //
         // Re-calibrated against every hostile recursion shape after the foreign-exception change:
         // 64KB still allowed a real StackOverflowException on a 256KB thread, while 96KB survived.
@@ -49,6 +49,12 @@ namespace OutSmart.DAXon.Internal
 
         [ThreadStatic]
         private static int threshold;   // of the call that owns this thread; MinThreshold when below it (0: none set)
+
+        [ThreadStatic]
+        private static ulong stackHigh;   // high bound of this thread's reserved stack region
+
+        [ThreadStatic]
+        private static long maxStack;   // of the call that owns this thread (ProcessorOptions.MaxStackBytes); 0: all of it
 
         private static volatile bool noApi;   // GetCurrentThreadStackLimits needs Windows 8/Server 2012+; absent off Windows
 
@@ -95,21 +101,51 @@ namespace OutSmart.DAXon.Internal
             }
         }
 
+        // The stack left to this frame is below what a small recursion of its own would need.
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static bool NearlySpent()
+        {
+            ulong floor = stackFloor;
+            if (floor == 0)
+            {
+                return false;
+            }
+
+            unsafe
+            {
+                byte probe;
+                return (ulong)&probe < floor + 64 * 1024;
+            }
+        }
+
         /// <summary>
         /// The thread now runs a call of a Processor whose options ask this many bytes of stack to stay free
-        /// (<see cref="OutSmart.DAXon.Api.ProcessorOptions.StackSizeThreshold"/>); 0 for none, which is the default.
-        /// Set wherever the thread's deadline is (Controller), so it follows the same owner.
+        /// (<see cref="OutSmart.DAXon.Api.ProcessorOptions.StackSizeThreshold"/>); 0 for none, which is the default; and
+        /// stackBytes the most of the thread's stack it may use (<see cref="OutSmart.DAXon.Api.ProcessorOptions.MaxStackBytes"/>),
+        /// 0 for all of it. Set wherever the thread's deadline is (Controller), so it follows the same owner.
         /// </summary>
-        internal static void UseThreshold(int bytes)
+        internal static void UseThreshold(int bytes, long stackBytes)
         {
             threshold = bytes;
+            maxStack = stackBytes;
             ulong low = stackLow;
-            stackFloor = low == 0 ? 0 : low + Effective(bytes);
+            stackFloor = low == 0 ? 0 : FloorOf(low, stackHigh);
         }
 
         private static ulong Effective(int bytes)
         {
             return (ulong)(bytes < MinThreshold ? MinThreshold : bytes);
+        }
+
+        // The threshold above the low bound, of a thread that has no more than maxStack bytes when the call caps it.
+        private static ulong FloorOf(ulong low, ulong high)
+        {
+            if (maxStack > 0 && high > (ulong)maxStack && high - (ulong)maxStack > low)
+            {
+                low = high - (ulong)maxStack;
+            }
+
+            return low + Effective(threshold);
         }
 
         /// <summary>
@@ -166,9 +202,10 @@ namespace OutSmart.DAXon.Internal
             {
                 try
                 {
-                    GetCurrentThreadStackLimits(out UIntPtr lo, out _);
+                    GetCurrentThreadStackLimits(out UIntPtr lo, out UIntPtr hi);
                     stackLow = (ulong)lo;
-                    stackFloor = stackLow + Effective(threshold);
+                    stackHigh = (ulong)hi;
+                    stackFloor = FloorOf(stackLow, stackHigh);
                 }
                 catch (EntryPointNotFoundException)
                 {

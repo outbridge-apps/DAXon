@@ -392,10 +392,50 @@ namespace OutSmart.DAXon.Expressions
                 CastExpression exp = (CastExpression)GetExpression();
                 Expression arg = exp.BaseExpression;
                 IItemEvaluator argEval = arg.MakeElaborator().ElaborateForItem();
-                return (context) =>
+                IItemEvaluator generic = (context) =>
                 {
                     AtomicValue value = (AtomicValue)argEval.Eval(context);
                     return exp.DoCast(value, context);
+                };
+                // Not xs:decimal: its string path is the faster one (measured).
+                bool toInteger = exp.TargetType == BuiltInAtomicType.INTEGER;
+                bool toDouble = exp.TargetType == BuiltInAtomicType.DOUBLE;
+                Expression node = arg is SingletonAtomizer sa ? sa.BaseExpression : arg is Atomizer a ? a.BaseExpression : null;
+                if (!(toInteger || toDouble) || node == null || !(node.GetItemType() is Patterns.NodeTest) || Cardinality.AllowsMany(node.GetCardinality()))
+                {
+                    return generic;
+                }
+
+                // xs:integer(.) and xs:double(.) of an untyped Tiny node whose text is a plain number: the value
+                // parsed in place, without the untypedAtomic value and its string. Any other node is atomized here,
+                // so the argument is evaluated once; only a node that does not atomize to one value takes the generic path.
+                IItemEvaluator nodeEval = node.MakeElaborator().ElaborateForItem();
+                return (context) =>
+                {
+                    IItem item = nodeEval.Eval(context);
+                    if (Trees.Tiny.TinyText.TrySpan(item, out byte[] b, out int off, out int len))
+                    {
+                        if (toInteger && Trees.Tiny.TinyText.TryPlainInteger(b, off, len, out long l))
+                        {
+                            return Int64Value.MakeIntegerValue(l);
+                        }
+
+                        if (toDouble && Trees.Tiny.TinyText.TryPlainDouble(b, off, len, out double d))
+                        {
+                            return new DoubleValue(d);
+                        }
+                    }
+
+                    if (item != null)
+                    {
+                        IAtomicSequence values = item.Atomize();
+                        if (values.GetLength() == 1)
+                        {
+                            return exp.DoCast((AtomicValue)values.Head(), context);
+                        }
+                    }
+
+                    return generic.Eval(context);
                 };
             }
         }

@@ -171,9 +171,6 @@ namespace OutSmart.DAXon.Xslt
                 // See comments in the 9.1 source code for some history of this decision.
                 retainedNamespaces = AllNamespaces;
 
-                // Spec bug 5857: if there is no other binding for the default @namespace, add an undeclaration
-                //                namespaceCodes.add(NamespaceBinding.DEFAULT_UNDECLARATION);
-                //            }
                 // apply any aliases required to create the list of output namespaces
                 PrincipalStylesheetModule sheet = GetPrincipalStylesheetModule();
                 if (sheet.HasNamespaceAliases())
@@ -332,9 +329,6 @@ namespace OutSmart.DAXon.Xslt
                     att.SetLocation(AllocateLocation());
                     Expression exp = att;
 
-                    //                    TraceExpression trace = new TraceExpression(exp);
-                    //                    exp = trace;
-                    //                }
                     if (content == null)
                     {
                         content = exp;

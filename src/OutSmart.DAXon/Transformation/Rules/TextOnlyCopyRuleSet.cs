@@ -17,10 +17,6 @@ namespace OutSmart.DAXon.Transformation.Rules
     {
         private static readonly TextOnlyCopyRuleSet THE_INSTANCE = new TextOnlyCopyRuleSet();
 
-        // NOTE: I tried changing this to use the text node's copy() method, but
-        // performance was worse
-        // no action
-        // no action (e.g. for function items
         public string Name => "text-only";
 
         private TextOnlyCopyRuleSet()
@@ -40,15 +36,7 @@ namespace OutSmart.DAXon.Transformation.Rules
                 {
                     case Types.Type.DOCUMENT:
                     case Types.Type.ELEMENT:
-                        XPathContextMajor c2 = context.NewContext();
-                        c2.Origin = this;
-                        c2.TrackFocus(node.IterateAxis(AxisInfo.CHILD));
-                        c2.SetCurrentComponent(c2.GetCurrentMode()); // Bug 3508
-                        ITailCall tc = c2.GetCurrentMode().GetActor().ApplyTemplates(parameters, tunnelParams, null, output, c2, locationId);
-                        while (tc != null)
-                        {
-                            tc = tc.ProcessLeavingTail();
-                        }
+                        BuiltInRuleSets.ApplyTo(this, node.IterateAxis(AxisInfo.CHILD), parameters, tunnelParams, output, context, locationId);
 
                         return;
                     case Types.Type.TEXT:
@@ -65,15 +53,7 @@ namespace OutSmart.DAXon.Transformation.Rules
             {
                 ISequence seq = ArrayFunctionSet.ArrayToSequence.ToSequence((ArrayItem)item);
                 ISequenceIterator members = seq.Iterate();
-                XPathContextMajor c2 = context.NewContext();
-                c2.Origin = this;
-                c2.TrackFocus(members);
-                c2.SetCurrentComponent(c2.GetCurrentMode()); // Bug 3508
-                ITailCall tc = c2.GetCurrentMode().GetActor().ApplyTemplates(parameters, tunnelParams, null, output, c2, locationId);
-                while (tc != null)
-                {
-                    tc = tc.ProcessLeavingTail();
-                }
+                BuiltInRuleSets.ApplyTo(this, members, parameters, tunnelParams, output, context, locationId);
             }
             else if (item is AtomicValue)
             {

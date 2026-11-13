@@ -120,7 +120,7 @@ namespace OutSmart.DAXon.Functions
             return new SumFnElaborator();
         }
 
-        internal sealed class SumFold : IFold
+        internal sealed class SumFold : IUntypedDoubleFold
         {
             private readonly IXPathContext context;
             private readonly AtomicValue zeroValue; // null means empty sequence
@@ -149,6 +149,18 @@ namespace OutSmart.DAXon.Functions
                 this.toDouble = BuiltInAtomicType.DOUBLE.GetStringConverter(rules);
                 {
                 }
+            }
+
+            // An untypedAtomic value whose double the caller computed: what ProcessItem does with that value.
+            public void ProcessUntypedDouble(double d)
+            {
+                if (onDoublePath)
+                {
+                    dblTotal += d;
+                    return;
+                }
+
+                ProcessItem(new DoubleValue(d));
             }
 
             public void ProcessItem(IItem item)
@@ -352,6 +364,7 @@ namespace OutSmart.DAXon.Functions
                     ?? TryLongTermSum(fnc, puller, zero)
                     ?? TryLeafLengthSum(fnc, puller, zero)
                     ?? TryRangeBoundsSum(fnc, puller, zero)
+                    ?? TryNodeFold(fnc, context => new SumFold(context, (AtomicValue)zero.Eval(context)), false)
                     ?? BuildGenericSum(puller, zero);
             }
 

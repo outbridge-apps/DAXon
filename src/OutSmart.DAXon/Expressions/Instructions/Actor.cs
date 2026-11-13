@@ -28,7 +28,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private Component declaringComponent;
         private Visibility declaredVisibility = Visibility.UNDEFINED;
         private RetainedStaticContext retainedStaticContext;
-        private IPushEvaluator bodyEvaluator;
         public virtual StructuredQName ComponentName => GetSymbolicName().ComponentName;
 
         public virtual string TracingTag => StandardNames.GetLocalName(GetSymbolicName().ComponentKind);
@@ -236,8 +235,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         {
             return null;
         }
-
-        public abstract void Export(ExpressionPresenter presenter);
         public virtual bool IsExportable()
         {
             return true;
@@ -246,19 +243,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public virtual void SetChildExpression(Expression expr)
         {
             SetBody(expr);
-        }
-
-        protected virtual ITailCall Process(Outputter @out, IXPathContext context)
-        {
-            lock (syncLock)
-            {
-                if (bodyEvaluator == null)
-                {
-                    bodyEvaluator = body.MakeElaborator().ElaborateForPush();
-                }
-            }
-
-            return bodyEvaluator.ProcessLeavingTail(@out, context);
         }
     }
 }

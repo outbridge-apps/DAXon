@@ -119,7 +119,8 @@ namespace OutSmart.DAXon.Resources
         protected virtual InputDetails GetInputDetails(string resourceURI)
         {
             // Every member, before it is sniffed or opened.
-            string denied = OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, resourceURI, OutSmart.DAXon.Api.ResourceKind.Collection);
+            string denied = OutSmart.DAXon.Internal.ResourceGate.CheckProtocol(config, resourceURI)
+                ?? OutSmart.DAXon.Internal.ResourceGate.CheckRead(config, resourceURI, OutSmart.DAXon.Api.ResourceKind.Collection);
             if (denied != null)
             {
                 throw new XPathException(denied, "FODC0002");
@@ -175,10 +176,10 @@ namespace OutSmart.DAXon.Resources
                     System.IO.Stream stream;
                     if (uri.Scheme == "file")
                     {
-                        string file = new Uri(uri.ToString()).LocalPath;
+                        string file = OutSmart.DAXon.Internal.Net.BidiUri.LocalPath(uri.ToString());
                         stream = OutSmart.DAXon.Internal.Streams.FileNames.OpenRead(file);
                         // kept only within the policy's input cap: the members read these bytes as content
-                        if (new FileInfo(file).Length <= Math.Min(1024, InputSizeLimit.MaxFor(config)))
+                        if (stream.Length <= Math.Min(1024, InputSizeLimit.MaxFor(config)))
                         {
                             inputDetails.binaryContent = BinaryResource.ReadBinaryFromStream(stream, resourceURI);
                             stream.Dispose();
@@ -213,9 +214,9 @@ namespace OutSmart.DAXon.Resources
             {
                 throw new XPathException(e.Message, "FODC0004");
             }
-            catch (IOException e)
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
             {
-                // a catalog can name a file that is not there: FODC0002 like doc(), not an uncoded error
+                // a catalog can name a file that is not there, a directory one that may not be read: FODC0002 like doc()
                 throw new XPathException(e.Message, "FODC0002");
             }
         }
@@ -429,7 +430,7 @@ namespace OutSmart.DAXon.Resources
             // A member that fails when its item is read obeys the collection's on-error choice.
             internal IItem Skip(IXPathContext context, XPathException e)
             {
-                if (onError == URIQueryParameters.ON_ERROR_FAIL)
+                if (onError == URIQueryParameters.ON_ERROR_FAIL || e.IsRunLimit())
                 {
                     throw e;
                 }

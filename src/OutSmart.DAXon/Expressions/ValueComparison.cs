@@ -446,15 +446,8 @@ namespace OutSmart.DAXon.Expressions
 
             private BuiltInAtomicType OperandType(Expression operand)
             {
-                ItemType type = operand.GetItemType();
-                if (type == AnyItemType.GetInstance())
-                {
-                    return BuiltInAtomicType.ANY_ATOMIC;
-                }
-                else
-                {
-                    return (BuiltInAtomicType)type.GetPrimitiveItemType();
-                }
+                // A branch that can never run (if (false()) then ...) is not type-checked, so its operand may still be a node, an array or a function.
+                return operand.GetItemType().GetPrimitiveItemType() as BuiltInAtomicType ?? BuiltInAtomicType.ANY_ATOMIC;
             }
 
             public override IBooleanEvaluator ElaborateForBoolean()

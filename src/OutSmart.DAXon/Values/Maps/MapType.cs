@@ -84,6 +84,29 @@ namespace OutSmart.DAXon.Values.Maps
             return false;
         }
 
+        public string ExplainMismatch(IItem item, TypeHierarchy th)
+        {
+            if (item is MapItem map)
+            {
+                foreach (KeyValuePair entry in map.KeyValuePairs())
+                {
+                    if (!KeyType.Matches(entry.key, th))
+                    {
+                        return "The map contains a key (" + entry.key.Show() + ") of type " + entry.key.GetItemType() + " that is not an instance of the required type " + KeyType;
+                    }
+
+                    if (!ValueType.Matches(entry.value, th))
+                    {
+                        string s = "The map contains an entry with key (" + entry.key.Show() + ") whose corresponding value (" + OutSmart.DAXon.Transformation.Err.DepictSequence(entry.value) + ") is not an instance of the required type " + ValueType;
+                        string more = ValueType.ExplainMismatch(entry.value, th);
+                        return more == null ? s : s + ". " + more;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         public override bool Matches(IItem item, TypeHierarchy th)
         {
             if (!(item is MapItem))
@@ -223,7 +246,10 @@ namespace OutSmart.DAXon.Values.Maps
                     st = SequenceType.MakeSequenceType(st.PrimaryType, Cardinality.Union(st.GetCardinality(), StaticProperty.ALLOWS_ZERO));
                 }
 
-                return new SpecificFunctionType(new SequenceType[] { SequenceType.ATOMIC_SEQUENCE }, st).Relationship(other, th);
+                // Only maps are maps: a function type the signature subsumes (or equals) is at most overlapped, or any
+                // function item passes unchecked where a map is declared and fails a raw cast.
+                Affinity rel = new SpecificFunctionType(new SequenceType[] { SequenceType.ATOMIC_SEQUENCE }, st).Relationship(other, th);
+                return rel == Affinity.SUBSUMES ? Affinity.OVERLAPS : rel == Affinity.SAME_TYPE ? Affinity.SUBSUMED_BY : rel;
             }
         }
 

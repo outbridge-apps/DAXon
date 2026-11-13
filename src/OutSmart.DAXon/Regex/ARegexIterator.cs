@@ -45,16 +45,89 @@ namespace OutSmart.DAXon.Regex
             return true;
         }
 
+        // last() counts the items still to come in a copy of this iterator, which keeps the states of up to ReplayCap
+        // matches: this iterator then replays them instead of matching the rest of the string twice.
+        private const int ReplayCap = 4096;
+        private List<REMatcher.State> recording;
+        private bool recordingComplete;
+        private bool recordingTruncated;
+        private List<REMatcher.State> replay;
+        private int replayBase;
+        private bool replayComplete;
+        private int matches;
+        private int returned;
+        private int length = -1;
+
         public int GetLength()
         {
-            ARegexIterator another = new ARegexIterator(theString, _regex, new REMatcher(_matcher.Program));
+            if (length >= 0)
+            {
+                return length;
+            }
+
+            // The copy starts where this iterator stands, a pending match's end included.
+            var matcher = new REMatcher(_matcher.Program);
+            matcher.Replay(theString, _matcher._captureState);
+            var rest = new ARegexIterator(theString, _regex, matcher)
+            {
+                prevEnd = prevEnd,
+                skip = skip,
+                current = current,
+                nextSubstring = nextSubstring,
+                recording = new List<REMatcher.State>()
+            };
             int n = 0;
-            while (another.Next() != null)
+            while (rest.Next() != null)
             {
                 n++;
             }
 
-            return n;
+            replay = rest.recording;
+            replayBase = matches;
+            replayComplete = rest.recordingComplete;
+            length = returned + n;
+            return length;
+        }
+
+        // The next match from searchStart: replayed when the counting copy recorded it, else matched.
+        private bool NextMatch(int searchStart)
+        {
+            if (replay != null)
+            {
+                int j = matches - replayBase;
+                if (j < replay.Count)
+                {
+                    _matcher.Replay(theString, replay[j]);
+                    matches++;
+                    return true;
+                }
+
+                if (replayComplete)
+                {
+                    return false;
+                }
+            }
+
+            if (!_matcher.Match(theString, searchStart))
+            {
+                recordingComplete = recording != null && !recordingTruncated;
+                return false;
+            }
+
+            matches++;
+            if (recording != null)
+            {
+                if (recording.Count < ReplayCap)
+                {
+                    recording.Add(_matcher._captureState);
+                }
+                else
+                {
+                    recordingTruncated = true;
+                }
+            }
+
+            return true;
         }
 
         public StringValue Next()
@@ -87,7 +160,7 @@ namespace OutSmart.DAXon.Regex
                         }
                     }
 
-                    if (_matcher.Match(theString, searchStart))
+                    if (NextMatch(searchStart))
                     {
                         int start = _matcher.GetParenStart(0);
                         int end = _matcher.GetParenEnd(0);
@@ -146,6 +219,7 @@ namespace OutSmart.DAXon.Regex
                     }
                 }
 
+                returned++;
                 return CurrentStringValue();
             }
             catch (RecursionDepthError e) when (!e.Described)

@@ -251,12 +251,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return this;
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet target = Select.AddToPathMap(pathMap, pathMapNodeSet);
-            return GetAction().AddToPathMap(pathMap, target);
-        }
-
         public override Expression Copy(RebindingMap rebindings)
         {
             ForEach f2 = new ForEach(Select.Copy(rebindings), GetAction().Copy(rebindings), containsTailCall, Threads);
@@ -308,9 +302,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             GetAction().CheckPermittedContents(parentType, false);
         }
 
-        //
-        //
-        //    }
         protected NodeInfo MakeSeparator(IXPathContext context)
         {
             NodeInfo separator;
@@ -372,10 +363,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         {
         }
 
-        //
-        //
-        //    }
-        // no action in this class: implemented in subclass
         public override string ToString()
         {
             return ExpressionTool.Parenthesize(Select) + " ! " + ExpressionTool.Parenthesize(GetAction());

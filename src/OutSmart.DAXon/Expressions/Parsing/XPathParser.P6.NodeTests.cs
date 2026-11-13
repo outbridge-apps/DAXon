@@ -49,19 +49,31 @@ namespace OutSmart.DAXon.Expressions.Parsing
             }
         }
 
+        // Parentheses nest by recursion, and the alternatives build a left-deep CombinedNodeTest that matching recurses
+        // through: both take the guards of an expression, as a union chain does.
         protected virtual NodeTest ParseUnionNodeTest(short nodeType)
         {
-            NextToken();
-            NodeTest test = ParseNodeTest(nodeType);
-            while (t.currentToken == Token.UNION && !t.currentTokenValue.Equals("union"))
+            EnterNested();
+            try
             {
                 NextToken();
-                test = new CombinedNodeTest(test, Token.UNION, ParseNodeTest(nodeType));
-            }
+                NodeTest test = ParseNodeTest(nodeType);
+                int alternatives = 1;
+                while (t.currentToken == Token.UNION && !t.currentTokenValue.Equals("union"))
+                {
+                    CheckIterativeDepth(++alternatives);
+                    NextToken();
+                    test = new CombinedNodeTest(test, Token.UNION, ParseNodeTest(nodeType));
+                }
 
-            Expect(Token.RPAR);
-            NextToken();
-            return test;
+                Expect(Token.RPAR);
+                NextToken();
+                return test;
+            }
+            finally
+            {
+                expressionDepth--;
+            }
         }
 
         private NodeTest ParseKindTest()

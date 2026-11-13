@@ -272,39 +272,6 @@ namespace OutSmart.DAXon.Values.Maps
             }
         }
 
-        public virtual bool DeepEquals(IFunctionItem other, IXPathContext context, IAtomicComparer comparer, int flags)
-        {
-            if (other is MapItem && ((MapItem)other).Count == Size())
-            {
-                IAtomicIterator keyIter = Keys();
-                AtomicValue key;
-                int steps = 0;
-                while ((key = keyIter.Next()) != null)
-                {
-                    if ((++steps & 1023) == 0)
-                    {
-                        Core.Controller.CheckActiveTimeout();
-                    }
-
-                    ISequence thisValue = Get(key);
-                    ISequence otherValue = ((MapItem)other)[key];
-                    if (otherValue == null)
-                    {
-                        return false;
-                    }
-
-                    if (!DAXonDeepEqual.DeepEqual(otherValue.Iterate(), thisValue.Iterate(), comparer, context, flags))
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
         public virtual bool DeepEqual40(IFunctionItem other, IXPathContext context, DeepEqual.DeepEqualOptions options)
         {
             if (other is MapItem && ((MapItem)other).Count == Size())
@@ -410,27 +377,19 @@ namespace OutSmart.DAXon.Values.Maps
         IItem IGroundedValue.ItemAt(int arg0) => ItemAt(arg0);
         public virtual ISequenceIterator Iterate() => new SingletonIterator(this);
         public virtual IItem Head() => this;
-        public virtual IGroundedValue Subsequence(int arg0, int arg1) => (arg0 <= 0 && (long)arg0 + arg1 > 0) ? (IGroundedValue)this : OutSmart.DAXon.Values.EmptySequence.GetInstance(); // singleton item (upstream GroundedValue default)
+        public virtual IGroundedValue Subsequence(int arg0, int arg1) => GroundedValueDefaults.Subsequence(this, arg0, arg1);
         public virtual int GetLength() => 1;
         public virtual string GetStringValue() => throw new UncheckedXPathException(new XPathException("The string value of a map is not defined", "FOTY0014"));
         IItem IItem.ItemAt(int arg0) => ItemAt(arg0);
         SingletonIterator IItem.Iterate() => new SingletonIterator(this);
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual bool IsSequenceVariadic() => false; // upstream FunctionItem default
         public virtual IGroundedValue Reduce() => this;
         public virtual bool IsStreamed() => false; // upstream NodeInfo/Item default
         public virtual IGroundedValue Materialize() => this;
         public virtual IEnumerable<IItem> AsIterable() => new IItem[] { this };
-        public virtual bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public virtual bool ContainsNode(NodeInfo sought) => false; // holds no node
+        public virtual IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         public virtual ISequence MakeRepeatable() => this; // upstream Sequence.makeRepeatable default
     }
 }

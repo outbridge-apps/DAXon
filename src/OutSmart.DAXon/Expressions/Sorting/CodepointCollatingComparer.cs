@@ -46,53 +46,11 @@ namespace OutSmart.DAXon.Expressions.Sorting
             UnicodeString ua = @as.UnicodeStringValue;
             UnicodeString ub = bs.UnicodeStringValue;
 
-            // Byte-rep fast path (Slice8/Twine8, the tree-text common case): the same per-byte
-            // codepoint order Slice8.CompareTo realises, reached without the collator-interface
-            // and virtual-CompareTo hops — this runs n log n times per sort.
-            byte[] xb = null;
-            int xi = 0, xe = 0;
-            if (ua is Slice8 xs8)
+            // Byte-rep fast path (the tree-text common case): the codepoint order Slice8.CompareTo realises, reached
+            // without the collator-interface and virtual-CompareTo hops — this runs n log n times per sort.
+            if (Slice8.Latin1Span(ua, out byte[] xb, out int xi, out int xe) && Slice8.TryCompare(xb, xi, xe, ub, out int order))
             {
-                xb = xs8.ByteArray;
-                xi = xs8.Start;
-                xe = xs8.End;
-            }
-            else if (ua is Twine8 xt8)
-            {
-                xb = xt8.ByteArray;
-                xe = xb.Length;
-            }
-
-            if (xb != null)
-            {
-                byte[] yb = null;
-                int yi = 0, ye = 0;
-                if (ub is Slice8 ys8)
-                {
-                    yb = ys8.ByteArray;
-                    yi = ys8.Start;
-                    ye = ys8.End;
-                }
-                else if (ub is Twine8 yt8)
-                {
-                    yb = yt8.ByteArray;
-                    ye = yb.Length;
-                }
-
-                if (yb != null)
-                {
-                    int i = xi, j = yi;
-                    while (i < xe && j < ye)
-                    {
-                        int diff = (xb[i++] & 0xff) - (yb[j++] & 0xff);
-                        if (diff != 0)
-                        {
-                            return diff;
-                        }
-                    }
-
-                    return (xe - xi).CompareTo(ye - yi);
-                }
+                return order;
             }
 
             return collator.CompareStrings(ua, ub);

@@ -331,7 +331,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 Properties props = new Properties();
                 if (!(languageX.Length == 0))
                 {
-                    ValidationFailure vf = StringConverter.StringToLanguage.INSTANCE.Validate(StringView.Of(languageX).Tidy());
+                    ValidationFailure vf = StringConverter.StringToLanguage.INSTANCE.Validate(StringView.Of(languageX));
                     if (vf != null)
                     {
                         throw new XPathException("The lang attribute of xsl:sort must be a valid language code", "XTDE0030");

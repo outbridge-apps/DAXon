@@ -144,7 +144,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override IEnumerable<Operand> Operands()
         {
-            return new List<Operand>();
+            return Array.Empty<Operand>();
         }
 
         public override Expression Optimize(ExpressionVisitor visitor, ContextItemStaticInfo contextItemType)

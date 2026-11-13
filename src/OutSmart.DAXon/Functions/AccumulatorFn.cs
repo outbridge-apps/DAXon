@@ -116,8 +116,6 @@ namespace OutSmart.DAXon.Functions
             return base.GetCardinality(args);
         }
 
-        //
-        //
         public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
             string name = arguments[0].Head().GetStringValue();
@@ -142,8 +140,6 @@ namespace OutSmart.DAXon.Functions
             }
         }
 
-        //
-        //
         internal sealed class AccumulatorAfter : AccumulatorFn
         {
 

@@ -104,7 +104,6 @@ namespace OutSmart.DAXon.Values.Arrays
         public abstract int GetArity();
         public abstract AnnotationList GetAnnotations();
         public abstract IXPathContext MakeNewContext(IXPathContext arg0, IContextOriginator arg1);
-        public abstract bool DeepEquals(IFunctionItem arg0, IXPathContext arg1, IAtomicComparer arg2, int arg3);
         public abstract bool DeepEqual40(IFunctionItem arg0, IXPathContext arg1, DeepEqual.DeepEqualOptions arg2);
         public abstract void Export(ExpressionPresenter arg0);
         public abstract bool IsTrustedResultType();
@@ -117,28 +116,20 @@ namespace OutSmart.DAXon.Values.Arrays
         public virtual IItem ItemAt(int arg0) => arg0 == 0 ? (IItem)this : null;
         public virtual IItem Head() => this;
         // Singleton-sequence subsequence rule, same as ItemAt above.
-        public virtual IGroundedValue Subsequence(int start, int length) => start <= 0 && (long)start + length > 0 ? (IGroundedValue)this : OutSmart.DAXon.Values.EmptySequence.GetInstance();
+        public virtual IGroundedValue Subsequence(int start, int length) => GroundedValueDefaults.Subsequence(this, start, length);
         public virtual int GetLength() => 1;
         // Mirrors UnicodeStringValue: arrays have no string value (FOTY0014).
         public virtual string GetStringValue() => throw new UncheckedXPathException(new XPathException("The string value of an array is not defined", "FOTY0014"));
         SingletonIterator IItem.Iterate() => default;
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual bool IsSequenceVariadic() => false; // upstream FunctionItem default
         public virtual IGroundedValue Reduce() => this;
         public virtual bool IsStreamed() => false; // upstream NodeInfo/Item default
         public abstract bool EffectiveBooleanValue();
         public virtual IGroundedValue Materialize() => this;
         public virtual IEnumerable<IItem> AsIterable() => new IItem[] { this };
-        public virtual bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public virtual bool ContainsNode(NodeInfo sought) => false; // holds no node
+        public virtual IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         public virtual ISequence MakeRepeatable() => this; // upstream Sequence.makeRepeatable default
     }
 }

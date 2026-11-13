@@ -32,9 +32,12 @@ namespace OutSmart.DAXon.Functions
             return withFlags.MakeFunctionCall(newArgs);
         }
 
+        // Made once: a dynamic call (tokenize#2 as a value) made the function again on every call, 9% of such a run
+        private SystemFunction withFlagsForCall;
+
         public override ISequence Call(IXPathContext context, ISequence[] args)
         {
-            SystemFunction withFlags = AddFlagsArgument();
+            SystemFunction withFlags = withFlagsForCall ??= AddFlagsArgument();
             ISequence[] newArgs = new ISequence[args.Length + 1];
             Array.Copy(args, 0, newArgs, 0, args.Length);
             newArgs[args.Length] = StringValue.EMPTY_STRING;

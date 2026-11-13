@@ -22,7 +22,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
     /// </summary>
     public class WithParam
     {
-        public static WithParam[] EMPTY_ARRAY = new WithParam[0];
+        public static readonly WithParam[] EMPTY_ARRAY = new WithParam[0];
 
         private Operand selectOp;
         private bool typeChecked;

@@ -15,11 +15,6 @@ using System.Collections.Generic;
 
 namespace OutSmart.DAXon.Events
 {
-    //@CSharpInjectMembers(code = {
-    //        "    public void setErrorReporter(Action<Saxon.Hej.s9api.IXmlProcessingError> reporter) {"
-    //                + "        setErrorReporter(new Saxon.Impl.Helpers.ErrorReportingAction(reporter));"
-    //                + "    }"
-    //})
     public class PipelineConfiguration
     {
         private Configuration config;
@@ -27,7 +22,6 @@ namespace OutSmart.DAXon.Events
         private ParseOptions parseOptions;
         private HostLanguage hostLanguage = HostLanguage.UNKNOWN;
         private Dictionary<string, object> components;
-        private IXPathContext context;
         private Func<NodeInfo, Object> copyInformee;
 
         public virtual Func<NodeInfo, Object> CopyInformee
@@ -38,13 +32,6 @@ namespace OutSmart.DAXon.Events
             }
         }
 
-        public virtual IXPathContext XPathContext
-        {
-            get => context; set
-            {
-                this.context = value;
-            }
-        }
         public PipelineConfiguration(Configuration config)
         {
             this.config = config;
@@ -68,7 +55,6 @@ namespace OutSmart.DAXon.Events
                 components = new Dictionary<string, object>(p.components);
             }
 
-            context = p.context;
             copyInformee = null;
         }
 

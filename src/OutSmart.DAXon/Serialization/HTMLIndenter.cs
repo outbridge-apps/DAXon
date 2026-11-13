@@ -111,10 +111,8 @@ namespace OutSmart.DAXon.Serialization
         private int[] propertyStack = new int[20];
         private HashSet<string> suppressed;
 
-        /*!afterFormatted &&*/
         protected int LineLength => 80;
 
-        /*!afterFormatted &&*/
         protected int Indentation => 3;
         static HTMLIndenter()
         {
@@ -181,11 +179,9 @@ namespace OutSmart.DAXon.Serialization
             sameLine = true;
             afterInline = false;
 
-            //afterFormatted = false;
             afterEndElement = false;
         }
 
-        /*!afterFormatted &&*/
         /// <summary>
         /// Output element end tag
         /// </summary>
@@ -211,7 +207,6 @@ namespace OutSmart.DAXon.Serialization
             afterEndElement = true;
         }
 
-        /*!afterFormatted &&*/
         /// <summary>
         /// Output character data
         /// </summary>
@@ -229,7 +224,7 @@ namespace OutSmart.DAXon.Serialization
             {
 
                 // otherwise try to split long lines into multiple lines
-                UnicodeString t = chars.Tidy();
+                UnicodeString t = chars;
                 int lastNL = 0;
                 IIntIterator iter = t.CodePoints();
                 int i = 0;
@@ -261,7 +256,6 @@ namespace OutSmart.DAXon.Serialization
             afterEndElement = false;
         }
 
-        /*!afterFormatted &&*/
         /// <summary>
         /// Output a processing instruction
         /// </summary>
@@ -276,7 +270,6 @@ namespace OutSmart.DAXon.Serialization
             afterEndElement = false;
         }
 
-        /*!afterFormatted &&*/
         public override void Comment(UnicodeString chars, ILocation locationId, int properties)
         {
             if (afterEndElement && level != 0 && (propertyStack[level - 1] & IS_INLINE) == 0)
@@ -288,16 +281,10 @@ namespace OutSmart.DAXon.Serialization
             afterEndElement = false;
         }
 
-        /*!afterFormatted &&*/
         private void Indent()
         {
-            int spaces = level * Indentation;
+            int spaces = Math.Min(level, IndentWhitespace.MaxLevels) * Indentation;
 
-            //                increment += spaces + 1;
-            //            indentChars = c2;
-            //        }
-            //        nextReceiver.characters(new Twine16(indentChars, 0, spaces + 1),
-            //                                Loc.NONE, ReceiverOption.NONE);
             nextReceiver.Characters(IndentWhitespace.Of(1, spaces), Loc.NONE, ReceiverOption.NONE);
             sameLine = false;
         }

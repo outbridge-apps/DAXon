@@ -28,10 +28,8 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override string ExpressionName => "sequence";
 
-        // no-op
         public override int ImplementationMethod => ITERATE_METHOD | PROCESS_METHOD;
 
-        // no-op
         public override string StreamerName => "Block";
         public Block(Expression[] children)
         {
@@ -68,7 +66,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override IEnumerable<Operand> Operands()
         {
-            return operanda.ToList();
+            return operanda;   // not copied: a copy per call made a walk over a 20 000-item sequence quadratic
         }
 
         public override bool HasVariableBinding(IBinding binding)
@@ -599,7 +597,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             FlushCurrentLiteralList(currentLiteralList, targetList);
         }
 
-        // no-op
         private void FlushCurrentLiteralList(IList<IItem> currentLiteralList, IList<Expression> list)
         {
             if (currentLiteralList != null)
@@ -610,7 +607,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        // no-op
         public bool IsCandidateForSharedAppend()
         {
             foreach (Operand o in Operands())
@@ -625,7 +621,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return false;
         }
 
-        // no-op
         public override Expression TypeCheck(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             TypeCheckChildren(visitor, contextInfo);
@@ -638,7 +633,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return this;
         }
 
-        // no-op
         public override Expression Optimize(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             OptimizeChildren(visitor, contextInfo);
@@ -694,7 +688,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        // no-op
         public override void CheckPermittedContents(ISchemaType parentType, bool whole)
         {
             foreach (Operand o in Operands())
@@ -704,7 +697,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        // no-op
         public override void Export(ExpressionPresenter @out)
         {
             @out.StartElement("sequence", this);
@@ -717,13 +709,11 @@ namespace OutSmart.DAXon.Expressions.Instructions
             @out.EndElement();
         }
 
-        // no-op
         public override string ToShortString()
         {
-            return "(" + Child(0).ToShortString() + ", ...)";
+            return Size() == 0 ? "()" : "(" + Child(0).ToShortString() + ", ...)";
         }
 
-        // no-op
         public override ISequenceIterator Iterate(IXPathContext context)
         {
             if (Size() == 0)
@@ -740,19 +730,16 @@ namespace OutSmart.DAXon.Expressions.Instructions
             }
         }
 
-        // no-op
         public override Elaborator GetElaborator()
         {
             return new BlockElaborator();
         }
 
-        // no-op
         internal interface IChainAction
         {
             ZenoSequence Perform(ZenoSequence @in, IXPathContext context);
         }
 
-        // no-op
         internal sealed class BlockElaborator : PullElaborator
         {
             public override ISequenceEvaluator Lazily(bool repeatable, bool lazyEvaluationRequired)

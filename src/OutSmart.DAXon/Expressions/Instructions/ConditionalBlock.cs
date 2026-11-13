@@ -58,7 +58,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
 
         public override IEnumerable<Operand> Operands()
         {
-            return operanda.ToList();
+            return operanda;   // not copied: a copy per call made a walk over a 20 000-item sequence quadratic
         }
 
         protected override int ComputeSpecialProperties()
@@ -408,9 +408,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
                                     break;
                             }
                         }
-                        catch (XPathException e)
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.operanda[i].GetChildExpression().GetLocation()).MaybeWithContext(context)))
                         {
-                            throw e.MaybeWithLocation(expr.operanda[i].GetChildExpression().GetLocation()).MaybeWithContext(context);
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     }
 

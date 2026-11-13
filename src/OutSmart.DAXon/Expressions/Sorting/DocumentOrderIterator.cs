@@ -6,6 +6,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Trees.Iterators;
+using System;
 using System.Collections.Generic;
 using OutSmart.DAXon.Model;
 namespace OutSmart.DAXon.Expressions.Sorting
@@ -42,6 +43,25 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return new DocumentOrderIterator(@base, (NodeInfo)first, second, comparer);
         }
 
+        // The whole input is held while it is sorted: the clock is read as it collects, and a big list is entered in the
+        // memory ledger (the nodes are their trees'; the list holds references).
+        private static void Added(List<NodeInfo> sequence)
+        {
+            int n = sequence.Count;
+            if ((n & 0xFF) == 0)
+            {
+                if (n == Core.MemoryLedger.BigCount)
+                {
+                    Core.MemoryLedger.Hold(sequence, ListSizer);
+                }
+
+                Core.Controller.CheckActiveTimeout();
+            }
+        }
+
+        // The nodes as well: tree nodes made per step are flyweights the list keeps (8 B each counted, 1.6 GB held under 300 MB).
+        private static readonly Func<object, long> ListSizer = o => Core.MemoryLedger.ListBytes((List<NodeInfo>)o);
+
         private DocumentOrderIterator(ISequenceIterator @base, NodeInfo first, IItem second, IComparer<NodeInfo> comparer)
         {
             int len = SequenceTool.SupportsGetLength(@base) ? SequenceTool.GetLength(@base) : 50;
@@ -52,52 +72,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 if (item is NodeInfo)
                 {
                     sequence.Add((NodeInfo)item);
-                }
-                else
-                {
-                    throw new XPathException("Item in input for sorting is not a node: " + Err.Depict(item), "XPTY0004");
-                }
-            };
-            add(second);
-            SequenceTool.Supply(@base, add);
-            DeadlineSort.Sort(sequence, comparer);
-            iterator = new NodeListIterator(sequence);
-        }
-
-        public DocumentOrderIterator(ISequenceIterator @base, IComparer<NodeInfo> comparer)
-        {
-            // 0/1-item inputs (typical: a docOrder wrapper around a singleton path inside a per-item
-            // lambda) skip the list+sort machinery — ordering/dedup of at most one node is the identity.
-            // The non-node XPTY0004 check is preserved for every item on both paths.
-            IItem first = @base.Next();
-            if (first == null)
-            {
-                sequence = null;
-                iterator = EmptyIterator.GetInstance();
-                return;
-            }
-
-            if (!(first is NodeInfo))
-            {
-                throw new XPathException("Item in input for sorting is not a node: " + Err.Depict(first), "XPTY0004");
-            }
-
-            IItem second = @base.Next();
-            if (second == null)
-            {
-                sequence = null;
-                iterator = SingletonIterator.MakeIterator(first);
-                return;
-            }
-
-            int len = SequenceTool.SupportsGetLength(@base) ? SequenceTool.GetLength(@base) : 50;
-            sequence = new List<NodeInfo>(len < 2 ? 2 : len);
-            sequence.Add((NodeInfo)first);
-            IItemConsumer<IItem> add = (item) =>
-            {
-                if (item is NodeInfo)
-                {
-                    sequence.Add((NodeInfo)item);
+                    Added(sequence);
                 }
                 else
                 {

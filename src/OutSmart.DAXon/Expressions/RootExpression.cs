@@ -144,18 +144,6 @@ namespace OutSmart.DAXon.Expressions
             return new NodeTestPattern(NodeKindTest.DOCUMENT);
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            if (pathMapNodeSet == null)
-            {
-                ContextItemExpression cie = new ContextItemExpression();
-                ExpressionTool.CopyLocationInfo(this, cie);
-                pathMapNodeSet = new PathMap.PathMapNodeSet(pathMap.MakeNewRoot(cie));
-            }
-
-            return pathMapNodeSet.CreateArc(AxisInfo.ANCESTOR_OR_SELF, NodeKindTest.DOCUMENT);
-        }
-
         public override string ToString()
         {
             return "(/)";

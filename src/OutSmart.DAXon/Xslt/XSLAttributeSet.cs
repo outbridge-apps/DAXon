@@ -170,36 +170,58 @@ namespace OutSmart.DAXon.Xslt
             top.IndexAttributeSet(decl);
         }
 
-        public void CheckCircularity(XSLAttributeSet origin)
-        {
-            if (this == origin)
-            {
-                CompileError("The definition of the attribute set is circular", "XTSE0720");
-            }
-            else
-            {
-                if (!validated)
-                {
+        // Whether this set reaches itself through the sets it uses: one walk with a visited set, where a recursion per
+        // path overflowed the stack on a long chain and took exponential time on sets that share the ones they use.
+        // Walked whole with no cycle found: no later walk need enter it (it cannot reach the set walking, or it would reach
+        // itself). Each set walked every set it reached, so a chain of 10 000 took 15 s to compile.
+        private bool acyclic;
+        private bool gathered;   // attributeSetElements filled from use-attribute-sets
 
-                    // if this attribute set isn't validated yet, we don't check it.
-                    // The circularity will be detected when the last attribute set in the cycle
-                    // gets validated
+        private void CheckCircularity()
+        {
+            var seen = new HashSet<XSLAttributeSet>();
+            bool whole = true;
+            var todo = new Stack<XSLAttributeSet>();
+            foreach (ComponentDeclaration used in attributeSetElements)
+            {
+                todo.Push((XSLAttributeSet)used.SourceElement);
+            }
+
+            while (todo.Count > 0)
+            {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
+                XSLAttributeSet m = todo.Pop();
+                if (m == this)
+                {
+                    CompileError("The definition of the attribute set is circular", "XTSE0720");
                     return;
                 }
 
-                if (attributeSetElements != null)
+                // A set whose references are not gathered yet (its CompileDeclaration has not run) is not walked: the last
+                // set of a cycle to gather them finds the cycle. Its empty list must not make the walk look whole.
+                if (!m.validated || (m.useAtt != null && !m.gathered))
                 {
-                    foreach (ComponentDeclaration attributeSetElement in attributeSetElements)
+                    whole = false;
+                    continue;
+                }
+
+                if (m.acyclic || !seen.Add(m))
+                {
+                    continue;
+                }
+
+                foreach (ComponentDeclaration used in m.attributeSetElements)
+                {
+                    XSLAttributeSet element = (XSLAttributeSet)used.SourceElement;
+                    todo.Push(element);
+                    if (m.streamable && !element.streamable)
                     {
-                        XSLAttributeSet element = (XSLAttributeSet)attributeSetElement.SourceElement;
-                        element.CheckCircularity(origin);
-                        if (streamable && !element.streamable)
-                        {
-                            CompileError("Attribute-set is declared streamable but references a non-streamable attribute set " + element.AttributeSetName.DisplayName, "XTSE3430");
-                        }
+                        m.CompileError("Attribute-set is declared streamable but references a non-streamable attribute set " + element.AttributeSetName.DisplayName, "XTSE3430");
                     }
                 }
             }
+
+            acyclic = whole;
         }
 
         public SlotManager GetSlotManager()
@@ -231,10 +253,8 @@ namespace OutSmart.DAXon.Xslt
                     GetPrincipalStylesheetModule().GetAttributeSets(name, attributeSetElements);
                 }
 
-                foreach (ComponentDeclaration attributeSetElement in attributeSetElements)
-                {
-                    ((XSLAttributeSet)attributeSetElement.SourceElement).CheckCircularity(this);
-                }
+                gathered = true;
+                CheckCircularity();
 
 
                 // check for consistency of streamability attribute

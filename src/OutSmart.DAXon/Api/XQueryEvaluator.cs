@@ -20,7 +20,7 @@ using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal;
 namespace OutSmart.DAXon.Api
 {
-    public class XQueryEvaluator : AbstractDestination, IEnumerable<XdmItem>
+    public class XQueryEvaluator : AbstractDestination, IEnumerable<XdmItem>, IChainedDestination
     {
         private readonly Processor processor;
         private readonly XQueryExpression expression;
@@ -29,14 +29,19 @@ namespace OutSmart.DAXon.Api
         private QName calledName;      // the function the last direct call found: a host calls one over and over, and
         private UserFunction called;   // finding it again hashed its name on every call
         private IDestination destination;
+
+        IDestination IChainedDestination.Next => destination;
         private HashSet<XdmNode> updatedDocuments;
         private Builder sourceTreeBuilder;
 
-        public virtual IEnumerator<XdmNode> UpdatedDocuments => updatedDocuments.GetEnumerator();
+        // None before an updating query has run.
+        public virtual IEnumerator<XdmNode> UpdatedDocuments => (updatedDocuments ?? new HashSet<XdmNode>()).GetEnumerator();
 
         public virtual DynamicQueryContext UnderlyingQueryContext => context;
         public XQueryEvaluator(Processor processor, XQueryExpression expression)
         {
+            ArgumentCheck.NotNull(processor, nameof(processor));
+            ArgumentCheck.NotNull(expression, nameof(expression));
             this.processor = processor;
             this.expression = expression;
             this.context = new DynamicQueryContext(expression.GetConfiguration());
@@ -50,7 +55,7 @@ namespace OutSmart.DAXon.Api
 
         public virtual ValidationMode GetSchemaValidationMode()
         {
-            return (ValidationMode)context.SchemaValidationMode;
+            return ValidationModeExtensions.Get(context.SchemaValidationMode);   // the engine's number, not the enum's
         }
 
         internal virtual void SetSource(ResolvedResource source)
@@ -92,22 +97,20 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetExternalVariable(QName name, XdmValue value)
         {
+            ArgumentCheck.NotNull(name, nameof(name));
             try
             {
                 context.SetParameter(name.GetStructuredQName(), value == null ? null : ((ISequence)value.UnderlyingValue).Materialize());
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiUncheckedException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiUncheckedException(e.ToXPathException());
+                throw ApiErrors.WrapUnchecked(e);
             }
         }
 
         public virtual XdmValue GetExternalVariable(QName name)
         {
+            ArgumentCheck.NotNull(name, nameof(name));
             IGroundedValue oval = context.GetParameter(name.GetStructuredQName());
             if (oval == null)
             {
@@ -139,7 +142,8 @@ namespace OutSmart.DAXon.Api
 
         public virtual void SetErrorReporter(IErrorReporter reporter)
         {
-            context.ErrorReporter = reporter;
+            // null clears it (HOSTING, "A null argument"): back to the default, which the run's errors are reported to.
+            context.ErrorReporter = reporter ?? context.GetConfiguration().MakeErrorReporter();
         }
 
         public virtual IErrorReporter GetErrorReporter()
@@ -193,56 +197,38 @@ namespace OutSmart.DAXon.Api
                         throw new InvalidOperationException("No destination supplied");
                     }
 
-                    Run(destination); //                Result receiver;
-                    //                if (destination instanceof Serializer) {
-                    //                    //context.set
-                    //                } else {
-                    //                }
-                    //                expression.run(context, receiver, null);
-                    //                destination.close();
+                    Run(destination);
                 }
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (UncheckedXPathException e)
-            {
-                throw new DAXonApiException(e.GetXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
         public virtual void Run(IDestination destination)
         {
+            ArgumentCheck.NotNull(destination, nameof(destination));
             using RunResources run = RunResources.Enter();
             if (expression.IsUpdateQuery())
             {
                 throw new InvalidOperationException("Query is updating");
             }
 
-            bool closed = false;
             try
             {
-                IReceiver @out = GetDestinationReceiver(destination);
-                expression.Run(context, @out, null);
-                destination.CloseAndNotify();
-                closed = true;
+                DestinationHelper.RunTo(destination, () => expression.Run(context, GetDestinationReceiver(destination), null));
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            finally
-            {
-                if (!closed)
-                {
-                    DestinationHelper.ReleaseUnclosed(destination);
-                }
+                throw ApiErrors.Wrap(e);
             }
         }
 
         public virtual void RunStreamed(ResolvedResource source, IDestination destination)
         {
+            ArgumentCheck.NotNull(source, nameof(source));
+            ArgumentCheck.NotNull(destination, nameof(destination));
             using RunResources run = RunResources.Enter();
             if (expression.IsUpdateQuery())
             {
@@ -261,24 +247,13 @@ namespace OutSmart.DAXon.Api
                 config.Logger.Info("Processing streamed input " + systemId);
             }
 
-            bool closed = false;
             try
             {
-                IReceiver receiver = GetDestinationReceiver(destination);
-                expression.RunStreamed(context, source, receiver, null);
-                destination.CloseAndNotify();
-                closed = true;
+                DestinationHelper.RunTo(destination, () => expression.RunStreamed(context, source, GetDestinationReceiver(destination), null));
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            finally
-            {
-                if (!closed)
-                {
-                    DestinationHelper.ReleaseUnclosed(destination);
-                }
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -295,17 +270,9 @@ namespace OutSmart.DAXon.Api
                 ISequenceIterator iter = expression.IIterator(context);
                 return XdmValue.Wrap(SequenceTool.ToGroundedValue(iter));
             }
-            catch (UncheckedXPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e.GetXPathException());
-            }
-            catch (XPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -318,17 +285,9 @@ namespace OutSmart.DAXon.Api
                 IItem next = iter.Next();
                 return next == null ? null : (XdmItem)XdmValue.Wrap(next);
             }
-            catch (UncheckedXPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e.GetXPathException());
-            }
-            catch (XPathException e)
-            {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -352,15 +311,10 @@ namespace OutSmart.DAXon.Api
             {
                 return new XdmSequenceIterator<XdmItem>(expression.IIterator(context), scope);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
                 scope.CloseAll();
-                throw new DAXonApiUncheckedException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                scope.CloseAll();
-                throw new DAXonApiUncheckedException(e.ToXPathException());
+                throw ApiErrors.WrapUnchecked(e);
             }
             finally
             {
@@ -373,19 +327,13 @@ namespace OutSmart.DAXon.Api
         {
             Executable exec = expression.GetExecutable();
             PipelineConfiguration pipe = expression.GetConfiguration().MakePipelineConfiguration();
-            IReceiver @out = destination.GetReceiver(pipe, exec.PrimarySerializationProperties);
-            if (Configuration.IsAssertionsEnabled())
-            {
-                return new RegularSequenceChecker(@out, true);
-            }
-            else
-            {
-                return @out;
-            }
+            return destination.GetReceiver(pipe, exec.PrimarySerializationProperties);
         }
 
         public override IReceiver GetReceiver(PipelineConfiguration pipe, SerializationProperties @params)
         {
+            ArgumentCheck.NotNull(pipe, nameof(pipe));
+            ArgumentCheck.NotNull(@params, nameof(@params));
             if (destination == null)
             {
                 throw new InvalidOperationException("No destination has been supplied");
@@ -404,15 +352,10 @@ namespace OutSmart.DAXon.Api
                     expression.ArmLimits(controller);
                 }
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
                 Core.Controller.RestoreThreadDeadline(limitsBefore);
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                Core.Controller.RestoreThreadDeadline(limitsBefore);
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
 
             sourceTreeBuilder = controller.MakeBuilder();
@@ -437,8 +380,7 @@ namespace OutSmart.DAXon.Api
                     doc.GetTreeInfo().SpaceStrippingRule = controller.SpaceStrippingRule;
                     SetSource(new ResolvedResource { Node = doc });
                     sourceTreeBuilder = null;
-                    Run(destination);
-                    destination.CloseAndNotify();
+                    Run(destination);   // which closes and notifies the destination
                 }
                 finally
                 {
@@ -454,6 +396,8 @@ namespace OutSmart.DAXon.Api
 
         public virtual XdmValue CallFunction(QName function, params XdmValue[] arguments)
         {
+            ArgumentCheck.NotNull(function, nameof(function));
+            ArgumentCheck.NoNulls(arguments, nameof(arguments));
             using RunResources run = RunResources.Enter();
             UserFunction fn = called != null && called.GetArity() == arguments.Length && function.Equals(calledName)
                 ? called
@@ -479,6 +423,12 @@ namespace OutSmart.DAXon.Api
                     expression.ArmLimits(controller);
                 }
 
+                // Under a trace the globals are evaluated first, as by Saxon's initializeController (Run does it itself)
+                if (controller.GetTraceListener() != null)
+                {
+                    controller.PreEvaluateGlobals(controller.NewXPathContext());
+                }
+
                 limits = controller.Limits;
                 Configuration config = processor.UnderlyingConfiguration;
                 TypeHierarchy th = config.GetTypeHierarchy();
@@ -487,6 +437,15 @@ namespace OutSmart.DAXon.Api
                 {
                     Values.SequenceType type = fn.GetParameterDefinitions()[i].GetRequiredType();
                     IGroundedValue gVal = (IGroundedValue)arguments[i].UnderlyingValue;
+
+                    if (controller.GetConfiguration().HoldsForeignNode(gVal))
+                    {
+                        throw new XPathException(ApiErrors.ForeignArgument, DAXonErrorCode.SXXP0004);
+                    }
+
+                    // As Xslt30Transformer's: the argument trees count in the call's memory limit.
+                    controller.ChargeInput(gVal);
+
                     if (!type.Matches(gVal, th))
                     {
                         int pos = i;
@@ -497,18 +456,16 @@ namespace OutSmart.DAXon.Api
                     vr[i] = gVal;
                 }
 
+                limits?.CheckNow();   // the charged arguments are summed now: the function may allocate too little to look
+
                 ISequence result = fn.Call(vr, controller);
                 // grounded here: a lazy result could still read from a file this call closes on return
                 result = result.Materialize();
                 return XdmValue.Wrap(result);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
             finally
             {

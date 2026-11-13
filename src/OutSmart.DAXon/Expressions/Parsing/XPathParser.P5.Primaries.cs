@@ -363,9 +363,10 @@ namespace OutSmart.DAXon.Expressions.Parsing
                 {
                     @ref = env.BindVariable(vtest);
                 }
-                catch (XPathException err)
+                catch (XPathException err) when (XPathException.PassOn(err.MaybeWithLocation(MakeLocation())))
                 {
-                    throw err.MaybeWithLocation(MakeLocation());
+                    // Decorated in the filter, never handled (XPathException.PassOn).
+                    throw;
                 }
             }
 

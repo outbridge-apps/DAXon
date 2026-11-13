@@ -111,7 +111,19 @@ namespace OutSmart.DAXon.Internal.Numerics
             return p;
         }
 
-        private static SysBigInt Pow10(int k) => k < POW10_BI.Length ? POW10_BI[k] : SysBigInt.Pow(10, k);
+        private static SysBigInt Pow10(int k)
+        {
+            // Past this Java's BigInteger refuses at once, as here: SetScale(int.MaxValue) ran for hours with no way to stop
+            // it. A scale arithmetic that wrapped comes here negative.
+            if (k < 0 || k > MaxPow10)
+            {
+                throw new ArithmeticException("BigInteger would overflow supported range");
+            }
+
+            return k < POW10_BI.Length ? POW10_BI[k] : SysBigInt.Pow(10, k);
+        }
+
+        private const int MaxPow10 = 646456993;
 
         // True (+ the long mantissa) when the value is on the compact path.
         private bool TryGetCompact(out long v)
@@ -360,12 +372,28 @@ namespace OutSmart.DAXon.Internal.Numerics
         public int Scale() => _scale;
 
         public static BigDecimal ValueOf(long value) => new BigDecimal(value);
-        // Java-faithful: valueOf(double) == new BigDecimal(Double.toString(d)) — full double
-        // range. The old (decimal) cast overflowed beyond ~7.9e28; IntegerValue.FromDouble(±1e100)
-        // reaches this via FormatNumber.AdjustToDecimal during Expression static init.
-        // G17 round-trips on net472 ("R" has documented round-trip bugs there); longer-than-shortest
-        // digit tails are exactly what AdjustToDecimal's zeros/nines heuristic cleans up.
-        public static BigDecimal ValueOf(double value) => new BigDecimal(value.ToString("G17", CultureInfo.InvariantCulture));
+        // Java's valueOf(double): new BigDecimal(Double.toString(d)) — the shortest digits that read back as d, scale
+        // from Java's plain form in [1e-3, 1e7), its E form elsewhere. G17 made PT1S * 0.3e0 = PT0.299999999S.
+        public static BigDecimal ValueOf(double value)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value))
+            {
+                throw new FormatException("Cannot convert " + value.ToString(CultureInfo.InvariantCulture) + " to a decimal");
+            }
+
+            BigDecimal d = new BigDecimal(OutSmart.DAXon.Values.FloatingPointConverter.ConvertDouble(value, true).ToString());
+            double abs = Math.Abs(value);
+            if (abs >= 1e-3 && abs < 1e7)
+            {
+                d = d.StripTrailingZeros();
+                if (d._scale < 1)
+                {
+                    d = d.SetScale(1);
+                }
+            }
+
+            return d;
+        }
 
         public static BigDecimal operator +(BigDecimal x, BigDecimal y)
         {
@@ -439,8 +467,8 @@ namespace OutSmart.DAXon.Internal.Numerics
                 return csign + cs.Substring(0, cs.Length - _scale) + "." + cs.Substring(cs.Length - _scale);
             }
             if (_scale == 0)
-                return Unscaled.ToString(CultureInfo.InvariantCulture);
-            var s = SysBigInt.Abs(Unscaled).ToString(CultureInfo.InvariantCulture);
+                return OutSmart.DAXon.Internal.BigIntegers.ToDecimalString(Unscaled);
+            var s = OutSmart.DAXon.Internal.BigIntegers.ToDecimalString(SysBigInt.Abs(Unscaled));
             var sign = Unscaled.Sign < 0 ? "-" : "";
             // Negative scale means an integer: unscaled x 10^(-scale), i.e. |scale| trailing zeros. The
             // positive-scale branch below would compute Substring(0, len-scale) with len-scale > len and throw.
@@ -465,12 +493,14 @@ namespace OutSmart.DAXon.Internal.Numerics
             return unchecked((long)(ulong)(integerPart & ulong.MaxValue));
         }
         public int IntValue() => unchecked((int)LongValue());
-        // Java's doubleValue() gives an infinity for a magnitude no double holds; .NET Framework's parser throws.
+        // Java's doubleValue() gives an infinity for a magnitude no double holds; .NET Framework's parser throws, and
+        // misses the nearest double now and then (StringToDouble.Nearest).
         public double DoubleValue()
         {
             try
             {
-                return double.Parse(ToString(), CultureInfo.InvariantCulture);
+                string text = ToString();
+                return OutSmart.DAXon.Types.StringToDouble.ParseNearest(text, NumberStyles.Float | NumberStyles.AllowThousands);
             }
             catch (OverflowException)
             {
@@ -651,25 +681,62 @@ namespace OutSmart.DAXon.Internal.Numerics
         /// normalized to 0 (value-identical; Java keeps e.g. 3E+1 when the quotient has
         /// trailing zeros — Remainder() reproduces that case exactly via the raw form).
         /// </summary>
-        public BigDecimal DivideToIntegralValue(BigDecimal divisor)
-        {
-            var raw = DivideToIntegralRaw(divisor);
-            return raw._scale >= 0 ? raw : new BigDecimal(raw.Unscaled * Pow10(-raw._scale), 0);
-        }
+        public BigDecimal DivideToIntegralValue(BigDecimal divisor) => IntegralQuotient(divisor);
 
         /// <summary>
         /// Java remainder(divisor) == this.subtract(divideToIntegralValue(divisor)
         /// .multiply(divisor)) — NOT the modulo operation; the result has the sign of
-        /// the dividend. Uses the raw (possibly negative-scale) integral quotient
-        /// internally so result scales match Java exactly; the final scale is always
-        /// max(this.scale, ...) >= 0, so the public invariant holds.
+        /// the dividend. With a negative preferred scale Java first strips up to that many trailing
+        /// zeros from the integral quotient, which sets the result's scale (7.5 rem 0.25 = 0.0).
         /// </summary>
-        public BigDecimal Remainder(BigDecimal divisor) => this - DivideToIntegralRaw(divisor) * divisor;
+        public BigDecimal Remainder(BigDecimal divisor)
+        {
+            int preferredScale = _scale - divisor._scale;
+            if (preferredScale >= 0 || divisor.Sign == 0)
+            {
+                return this - IntegralQuotient(divisor) * divisor;   // which refuses a zero divisor
+            }
 
-        // Integral quotient with Java's preferred-scale semantics. The returned scale may
-        // be negative (internal use by Remainder only; public callers go through
-        // DivideToIntegralValue which normalizes).
-        private BigDecimal DivideToIntegralRaw(BigDecimal divisor)
+            SysBigInt q = Unscaled * Pow10(-preferredScale) / divisor.Unscaled;
+            if (q.IsZero)
+            {
+                return this - new BigDecimal(SysBigInt.Zero, preferredScale) * divisor;
+            }
+
+            // Nine zeros a step while there are, then one: a DivRem by 10 per zero was quadratic in a long quotient
+            // (1 mod 0.000...1 with 100 000 zeros took 20 s); a one-word divisor costs one pass each.
+            int stripped = 0;
+            while (stripped + 9 <= -preferredScale)
+            {
+                var q9 = SysBigInt.DivRem(q, 1000000000, out var r9);
+                if (!r9.IsZero)
+                {
+                    break;
+                }
+
+                q = q9;
+                stripped += 9;
+                Core.Controller.CheckActiveTimeout();
+            }
+
+            while (stripped < -preferredScale)
+            {
+                var q1 = SysBigInt.DivRem(q, 10, out var r1);
+                if (!r1.IsZero)
+                {
+                    break;
+                }
+
+                q = q1;
+                stripped++;
+            }
+
+            return this - new BigDecimal(q, -stripped) * divisor;
+        }
+
+        // The integral quotient at Java's preferred scale (this.scale - divisor.scale), a negative one taken as 0: Java's
+        // trailing zeros stripped and put back again were one DivRem each, for the same value (idiv of a long quotient).
+        private BigDecimal IntegralQuotient(BigDecimal divisor)
         {
             if (divisor.Sign == 0)
                 throw new ArithmeticException("Division by zero");
@@ -682,22 +749,7 @@ namespace OutSmart.DAXon.Internal.Numerics
             else
                 den *= Pow10(-shift);
             var q = num / den; // BigInteger division truncates toward zero == integer part
-
-            if (q.IsZero)
-                return new BigDecimal(SysBigInt.Zero, preferredScale);
-            if (preferredScale >= 0)
-                return new BigDecimal(q * Pow10(preferredScale), preferredScale);
-            // preferredScale < 0: Java strips up to -preferredScale trailing zeros from
-            // the integral quotient (e.g. 7.5 dtiv 0.25 -> 3E+1, scale -1).
-            int stripped = 0;
-            while (stripped < -preferredScale)
-            {
-                var q10 = SysBigInt.DivRem(q, 10, out var r10);
-                if (!r10.IsZero)
-                    break;
-                q = q10; stripped++;
-            }
-            return new BigDecimal(q, -stripped);
+            return preferredScale >= 0 ? new BigDecimal(q * Pow10(preferredScale), preferredScale) : new BigDecimal(q, 0);
         }
 
         // Shared rounded integer division: round(num/den) per Java rounding mode.
@@ -870,7 +922,41 @@ namespace OutSmart.DAXon.Internal.Numerics
             int ns = _scale - n;
             return ns >= 0 ? new BigDecimal(Unscaled, ns) : new BigDecimal(Unscaled * Pow10(-ns), 0);
         }
-        public int Precision() => Unscaled == SysBigInt.Zero ? 1 : SysBigInt.Abs(Unscaled).ToString(CultureInfo.InvariantCulture).Length;
+        // The digits of the unscaled value, counted without printing it: every rounding of a decimal asks.
+        public int Precision()
+        {
+            if (Unscaled.IsZero)
+            {
+                return 1;
+            }
+
+            SysBigInt abs = SysBigInt.Abs(Unscaled);
+            if (abs <= long.MaxValue)
+            {
+                long v = (long)abs;
+                int digits = 1;
+                while (v >= 10)
+                {
+                    v /= 10;
+                    digits++;
+                }
+
+                return digits;
+            }
+
+            // Log10 may be one off next to a power of ten: 10^(d-1) <= abs < 10^d settles it
+            int d = (int)Math.Floor(SysBigInt.Log10(abs)) + 1;
+            if (abs < Pow10(d - 1))
+            {
+                d--;
+            }
+            else if (abs >= Pow10(d))
+            {
+                d++;
+            }
+
+            return d;
+        }
         // Java toBigInteger(): truncates toward zero. Returns System.Numerics.BigInteger directly (the compat
         // wrapper struct OutSmart.DAXon.Internal.Numerics.BigInteger was retired; the engine is idiomatic
         // System.Numerics.BigInteger, with Java-semantics helpers in BigIntegers).

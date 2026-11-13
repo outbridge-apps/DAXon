@@ -71,7 +71,6 @@ namespace OutSmart.DAXon.Xslt
             ms.sourceName = sourceName;
             ms.validation = validationAction;
             ms.schemaType = schemaType;
-            ms.SetStreamable(streamable);
             ms.accumulators = accumulators;
             return ms;
         }
@@ -167,30 +166,7 @@ namespace OutSmart.DAXon.Xslt
                 ReportAbsence("select");
             }
 
-            if (validationAtt == null)
-            {
-                validationAction = DefaultValidation;
-            }
-            else
-            {
-                validationAction = ValidateValidationAttribute(validationAtt);
-            }
-
-            if (typeAtt != null)
-            {
-                if (!IsSchemaAware())
-                {
-                    CompileError("The @type attribute is available only with a schema-aware XSLT processor", "XTSE1660");
-                }
-
-                schemaType = GetSchemaType(typeAtt);
-                validationAction = Validation.BY_TYPE;
-            }
-
-            if (typeAtt != null && validationAtt != null)
-            {
-                CompileError("The @validation and @type attributes are mutually exclusive", "XTSE1505");
-            }
+            validationAction = ValidationAction(validationAtt, typeAtt, out schemaType);
 
             if ((typeAtt != null || validationAtt != null) && forEachSourceAtt == null)
             {

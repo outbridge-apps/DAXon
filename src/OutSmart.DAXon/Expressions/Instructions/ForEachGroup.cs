@@ -408,26 +408,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return (props & StaticProperty.NO_NODES_NEWLY_CREATED) == 0;
         }
 
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet target = GetSelectExpression().AddToPathMap(pathMap, pathMapNodeSet);
-            if (CollationNameExpression != null)
-            {
-                CollationNameExpression.AddToPathMap(pathMap, pathMapNodeSet);
-            }
-
-            if (SortKeyDefinitions != null)
-            {
-                foreach (SortKeyDefinition skd in SortKeyDefinitions)
-                {
-                    skd.SortKey.AddToPathMap(pathMap, target);
-                    SortExpression.AddSortKeyDetailsToPathMap(pathMap, pathMapNodeSet, skd);
-                }
-            }
-
-            return GetActionExpression().AddToPathMap(pathMap, target);
-        }
-
         public override void CheckPermittedContents(ISchemaType parentType, bool whole)
         {
             GetActionExpression().CheckPermittedContents(parentType, false);
@@ -579,7 +559,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
                                 int rowFp = -2;
                                 int keyFp = -1;
                                 IPullEvaluator startPull = null;
-                                if (!expr.composite && FusedChildAtomizer.MatchAtomizer(expr.GroupingKey, out keyFp)
+                                bool fusedKey = !expr.composite && FusedChildAtomizer.MatchAtomizer(expr.GroupingKey, out keyFp);
+                                // select="descendant::NAME" (//NAME from a document): the rows walked by number below the context node.
+                                int descFp = fusedKey ? Trees.Tiny.TinyText.DescendantName(select) : -1;
+                                if (fusedKey
                                     && select is SlashExpression slash
                                     && slash.GetStep() is AxisExpression ax && ax.Axis == AxisInfo.CHILD)
                                 {
@@ -615,8 +598,14 @@ namespace OutSmart.DAXon.Expressions.Instructions
                                         if (p1 != null && start.Next() == null
                                             && p1 is Trees.Tiny.TinyParentNodeImpl tp && tp.tree.TypeArray == null)
                                         {
-                                            return new GroupByIterator(tp, rowFp, keyFp, expr.GroupingKey, context.NewMinorContext(), coll);
+                                            return new GroupByIterator(tp, rowFp, keyFp, false, expr.GroupingKey, context.NewMinorContext(), coll);
                                         }
+                                    }
+
+                                    if (descFp >= 0 && coll is CodepointCollator
+                                        && context.GetContextItem() is Trees.Tiny.TinyParentNodeImpl top && top.tree.TypeArray == null)
+                                    {
+                                        return new GroupByIterator(top, descFp, keyFp, true, expr.GroupingKey, context.NewMinorContext(), coll);
                                     }
 
                                     IXPathContext c2 = context.NewMinorContext();
@@ -710,14 +699,12 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 return (output, context) =>
                 {
                     Controller controller = context.GetController();
-                    PipelineConfiguration pipe = output.GetPipelineConfiguration();
                     IGroupIterator groupIterator = (IGroupIterator)grouper.Iterate(context);
                     XPathContextMajor c2 = context.NewContext();
                     c2.Origin = expr;
                     IFocusIterator focusIterator = c2.TrackFocus(groupIterator);
                     c2.SetCurrentGroupIterator(groupIterator);
                     c2.SetCurrentTemplateRule(null);
-                    pipe.XPathContext = c2;
                     if (controller.IsTracing())
                     {
                         ITraceListener listener = controller.GetTraceListener();
@@ -741,7 +728,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         }
                     }
 
-                    pipe.XPathContext = context;
                     return null;
                 };
             }

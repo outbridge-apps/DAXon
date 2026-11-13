@@ -13,8 +13,10 @@ using OutSmart.DAXon.Types;
 using OutSmart.DAXon.Values;
 using OutSmart.DAXon.Collections;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Internal.Collections;
 namespace OutSmart.DAXon.Trees.Linked
@@ -26,13 +28,16 @@ namespace OutSmart.DAXon.Trees.Linked
         internal static readonly Func<object, long> HeldSizer = d => ((DocumentImpl)d).heldBytes;
 
         private ElementImpl documentElement;
-        private Dictionary<string, NodeInfo> idTable;
+        // Built whole before it is published, like elementList: runs over a shared document call id() at once.
+        private ConcurrentDictionary<string, NodeInfo> idTable;
         private long documentNumber;
         private string baseURI;
         private Dictionary<string, string[]> entityTable;
         private HashSet<ElementImpl> nilledElements;
         private HashSet<ElementImpl> topWithinEntityElements;
-        private IntHashMap<IList<NodeInfo>> elementList;
+        // The elements of each name, built once and shared by the runs over this document, which may be at once: published
+        // whole into a concurrent map (an IntHashMap filled by two threads could lose or mix entries).
+        private ConcurrentDictionary<int, IList<NodeInfo>> elementList;
         private Dictionary<string, object> userData;
         private Configuration config;
         private LineNumberMap lineNumberMap;
@@ -311,28 +316,25 @@ namespace OutSmart.DAXon.Trees.Linked
 
         public IAxisIterator GetAllElements(int fingerprint)
         {
-            if (elementList == null)
+            ConcurrentDictionary<int, IList<NodeInfo>> eList = LazyInitializer.EnsureInitialized(ref elementList);
+            if (!eList.TryGetValue(fingerprint, out IList<NodeInfo> list))
             {
-                elementList = new IntHashMap<IList<NodeInfo>>(500);
-            }
-
-            IntHashMap<IList<NodeInfo>> eList = elementList;
-            IList<NodeInfo> list = eList[fingerprint];
-            if (list == null)
-            {
-                list = new List<NodeInfo>(500);
+                // The walk visits every node (350 ms for 400 000 elements) under the run's time limit; a walk the limit
+                // stops is not kept.
+                var found = new List<NodeInfo>(500);
                 NodeImpl next = GetNextInDocument(this);
                 while (next != null)
                 {
+                    Controller.CheckActiveTimeout();
                     if (next.GetNodeKind() == Types.Type.ELEMENT && next.Fingerprint == fingerprint)
                     {
-                        list.Add(next);
+                        found.Add(next);
                     }
 
                     next = next.GetNextInDocument(this);
                 }
 
-                eList.Put(fingerprint, list);
+                list = eList.GetOrAdd(fingerprint, found);
             }
 
             return new NodeListIterator(list);
@@ -342,11 +344,10 @@ namespace OutSmart.DAXon.Trees.Linked
         {
             if (node is ElementImpl)
             {
-                IntHashMap<IList<NodeInfo>> eList = elementList;
+                ConcurrentDictionary<int, IList<NodeInfo>> eList = elementList;
                 if (eList != null)
                 {
-                    IList<NodeInfo> list = eList[node.Fingerprint];
-                    if (list == null)
+                    if (!eList.TryGetValue(node.Fingerprint, out IList<NodeInfo> list))
                     {
                         return;
                     }
@@ -368,25 +369,22 @@ namespace OutSmart.DAXon.Trees.Linked
             }
         }
 
-        private void IndexIDs()
+        private ConcurrentDictionary<string, NodeInfo> IndexIDs()
         {
-            if (idTable != null)
-            {
-                return; // ID's are already indexed
-            }
-
-            idTable = new Dictionary<string, NodeInfo>(256);
+            // The walk visits every node under the run's time limit; a walk the limit stops is not kept.
+            var table = new ConcurrentDictionary<string, NodeInfo>();
             NodeImpl curr = this;
             NodeImpl root = curr;
             while (curr != null)
             {
+                Controller.CheckActiveTimeout();
                 if (curr.GetNodeKind() == Types.Type.ELEMENT)
                 {
 
                     ElementImpl e = (ElementImpl)curr;
                     if (e.IsId())
                     {
-                        RegisterID(e, Whitespace.Trim(e.GetStringValue()));
+                        table.TryAdd(Whitespace.Trim(e.GetStringValue()), e);
                     }
 
                     IAttributeMap atts = e.Attributes();
@@ -396,36 +394,28 @@ namespace OutSmart.DAXon.Trees.Linked
                         {
 
                             // don't index any invalid IDs - these can arise when using a non-validating parser
-                            RegisterID(e, Whitespace.Trim(att.Value));
+                            table.TryAdd(Whitespace.Trim(att.Value), e);
                         }
                     }
                 }
 
                 curr = curr.GetNextInDocument(root);
             }
+
+            return Interlocked.CompareExchange(ref idTable, table, null) ?? table;
         }
 
         public void RegisterID(NodeInfo e, string id)
         {
 
             // the XPath spec (5.2.1) says ignore the second ID if it's not unique
-            if (idTable == null)
-            {
-                idTable = new Dictionary<string, NodeInfo>(256);
-            }
-
-            Dictionary<string, NodeInfo> table = idTable;
-            table.PutIfAbsent(id, e);
+            LazyInitializer.EnsureInitialized(ref idTable).TryAdd(id, e);
         }
 
         public NodeInfo SelectID(string id, bool getParent)
         {
-            if (idTable == null)
-            {
-                IndexIDs();
-            }
-
-            NodeInfo node = idTable.GetOrDefault(id);
+            ConcurrentDictionary<string, NodeInfo> table = Volatile.Read(ref idTable) ?? IndexIDs();
+            table.TryGetValue(id, out NodeInfo node);
             if (node != null && getParent && node.IsId() && node.UnicodeStringValue.Equals(id))
             {
                 node = node.GetParent();
@@ -437,10 +427,7 @@ namespace OutSmart.DAXon.Trees.Linked
         public void DeregisterID(string id)
         {
             id = Whitespace.Trim(id);
-            if (idTable != null)
-            {
-                idTable.Remove(id);
-            }
+            idTable?.TryRemove(id, out _);
         }
 
         public void SetUnparsedEntity(string name, string uri, string publicId)

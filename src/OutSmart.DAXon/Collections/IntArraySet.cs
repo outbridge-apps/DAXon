@@ -55,7 +55,6 @@ namespace OutSmart.DAXon.Collections
             i2.contents = new int[contents.Length];
             Array.Copy(contents, 0, i2.contents, 0, contents.Length);
 
-            //i2.contents = Arrays.copyOf(contents, contents.length);
             return i2;
         }
 
@@ -277,7 +276,6 @@ namespace OutSmart.DAXon.Collections
             return sb.ToString();
         }
 
-        //    }
         /// <summary>
         /// Test whether this set has exactly the same members as another set
         /// </summary>
@@ -292,7 +290,6 @@ namespace OutSmart.DAXon.Collections
                 return other is IntSet && contents.Length == ((IntSet)other).Count && ContainsAll((IntSet)other);
         }
 
-        //    }
         /// <summary>
         /// Construct a hash key that supports the equals() test
         /// </summary>
@@ -315,7 +312,6 @@ namespace OutSmart.DAXon.Collections
             return _hashCode;
         }
 
-        //    }
         /// <summary>
         /// IIterator class: iterate over an array of integers
         /// </summary>

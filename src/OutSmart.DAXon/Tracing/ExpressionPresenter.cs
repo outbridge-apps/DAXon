@@ -92,7 +92,6 @@ namespace OutSmart.DAXon.Tracing
             try
             {
                 receiver = config.SerializerFactory.GetReceiver(@out, props);
-                receiver = new NamespaceReducer(receiver);
                 if (checksum)
                 {
                     receiver = new CheckSumFilter(receiver);
@@ -120,7 +119,6 @@ namespace OutSmart.DAXon.Tracing
         public virtual void Init(Configuration config, IReceiver @out, bool checksum)
         {
             receiver = @out;
-            receiver = new NamespaceReducer(receiver);
             if (checksum)
             {
                 receiver = new CheckSumFilter(receiver);
@@ -276,7 +274,7 @@ namespace OutSmart.DAXon.Tracing
         {
 
             // Note that this will throw an NotSupportedException if the context does
-            // not allow namespace prefixes to be enumerated: that @is, if it is a JAXP static context.
+            // not allow namespace prefixes to be enumerated: that is, if it is a JAXP static context.
             // Fortunately we don't need to serialize XPath expressions in that scenario.
             UnicodeBuilder ub = new UnicodeBuilder();
             IEnumerator<string> iter = sc.IteratePrefixes();

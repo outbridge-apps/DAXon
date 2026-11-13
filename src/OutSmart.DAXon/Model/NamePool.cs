@@ -29,19 +29,11 @@ namespace OutSmart.DAXon.Model
         // Next fingerprint available to be allocated. Starts at 1024 as low-end fingerprints are statically allocated to system-defined
         // names
         private readonly AtomicCounter unique = new AtomicCounter(1024);
-        // A map containing suggested prefixes for particular URIs. Concurrent because
-        // SuggestPrefix is public and takes no lock at all.
-        private readonly ConcurrentDictionary<NamespaceUri, string> suggestedPrefixes = new ConcurrentDictionary<NamespaceUri, string>();
         /// <summary>
         /// Create a NamePool
         /// </summary>
         public NamePool()
         {
-        }
-
-        public void SuggestPrefix(string prefix, NamespaceUri uri)
-        {
-            suggestedPrefixes[uri] = prefix;
         }
 
         public StructuredQName GetUnprefixedQName(int nameCode)
@@ -65,15 +57,13 @@ namespace OutSmart.DAXon.Model
             return (nameCode & 0x3ff00000) != 0;
         }
 
+        // Only the XML namespace has a known prefix: nothing registers suggestions.
         public string SuggestPrefixForURI(NamespaceUri uri)
         {
-            if (uri.Equals(NamespaceUri.XML))
-            {
-                return "xml";
-            }
-
-            return suggestedPrefixes.GetOrDefault(uri);
+            return uri.Equals(NamespaceUri.XML) ? "xml" : null;
         }
+
+        private const long NameBytes = 240;   // the name, its string and the entries of both maps
 
         public int AllocateFingerprint(NamespaceUri uri, string local)
         {
@@ -118,10 +108,22 @@ namespace OutSmart.DAXon.Model
 
                 int next = (int)nextUnique;
                 // Reverse map first: a lock-free reader that finds the fingerprint must be able to resolve it
-                integerToQName[next] = new StructuredQName("", uri, local);
+                StructuredQName name = new StructuredQName("", uri, local);
+                integerToQName[next] = name;
                 qNameToInteger[key] = next;
-                return next;
+
+                // Stays with the Processor; the call that made a name up holds it for the length of the call, and answers for it.
+                OutSmart.DAXon.Core.MemoryLedger.SampleSmall(name, NameBytes + 2L * local.Length);
+                existing = next;
             }
+
+            // An element can bring a million new names at one go: no other loop looks at the limits meanwhile.
+            if ((existing & 0xFF) == 0)
+            {
+                OutSmart.DAXon.Core.Controller.CheckActiveTimeoutNow();
+            }
+
+            return existing;
         }
 
         /// <summary>
@@ -160,35 +162,6 @@ namespace OutSmart.DAXon.Model
         public string GetEQName(int nameCode)
         {
             return GetUnprefixedQName(nameCode).EQName;
-        }
-
-        public int AllocateClarkName(string expandedName)
-        {
-            NamespaceUri @namespace;
-            string localName;
-            if (expandedName[0] == '{')
-            {
-                int closeBrace = expandedName.IndexOf('}');
-                if (closeBrace < 0)
-                {
-                    throw new ArgumentException("No closing '}' in Clark name");
-                }
-
-                @namespace = NamespaceUri.Of(expandedName.Substring(1, closeBrace - 1) /*Java substring(begin,END) -> C# (start,LENGTH)*/);
-                if (closeBrace == expandedName.Length)
-                {
-                    throw new ArgumentException("Missing local part in Clark name");
-                }
-
-                localName = expandedName.Substring(closeBrace + 1);
-            }
-            else
-            {
-                @namespace = NamespaceUri.NULL;
-                localName = expandedName;
-            }
-
-            return AllocateFingerprint(@namespace, localName);
         }
 
         public int GetFingerprint(NamespaceUri uri, string localName)

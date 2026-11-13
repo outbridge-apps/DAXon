@@ -4,10 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.stream.Posture;
-//import com.saxonica.ee.stream.Streamability;
-//import com.saxonica.ee.stream.Sweep;
-//import com.saxonica.ee.trans.ContextItemStaticInfoEE;
 using OutSmart.DAXon.Expressions.Instructions;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Elaboration;
@@ -111,13 +107,13 @@ namespace OutSmart.DAXon.Patterns
                 }
                 // No StackOverflow catch: RecursionDepthError (a foreign type since round BC) is not
                 // an XPathException, so it propagates untouched; the old subtype is never thrown here.
-                catch (XPathException)
+                catch (XPathException e) when (!e.IsRunLimit())
                 {
 
                     // treat pattern matching errors as a non-match
                     return false;
                 }
-                catch (UncheckedXPathException)
+                catch (UncheckedXPathException e) when (!e.GetXPathException().IsRunLimit())
                 {
 
                     // treat pattern matching errors as a non-match

@@ -27,7 +27,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
         private readonly bool allowNameAsQName;
         private ItemType itemType;
 
-        /*defaultNamespace,*/
         public override int InstructionNameCode => StandardNames.XSL_ELEMENT;
         public ComputedElement(Expression elementName, Expression @namespace, ISchemaType schemaType, int validation, bool inheritNamespaces, bool allowQName)
         {
@@ -140,7 +139,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
             if (Literal.IsAtomic(GetNameExp()))
             {
 
-                // Check we have a valid lexical QName, whose prefix @is in scope where necessary
+                // Check we have a valid lexical QName, whose prefix is in scope where necessary
                 try
                 {
                     AtomicValue val = (AtomicValue)((Literal)GetNameExp()).GroundedValue;
@@ -177,7 +176,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return ce;
         }
 
-        /*defaultNamespace,*/
         public override ItemType GetItemType()
         {
             if (itemType == null)
@@ -188,7 +186,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             return itemType;
         }
 
-        /*defaultNamespace,*/
         public override void CheckPermittedContents(ISchemaType parentType, bool whole)
         {
             if (parentType is ISimpleType || ((IComplexType)parentType).IsSimpleContent())
@@ -215,7 +212,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
             // themselves have a simple type (not uncommon, perhaps) then this element must not have element content.
         }
 
-        /*defaultNamespace,*/
         public override void Export(ExpressionPresenter @out)
         {
             @out.StartElement("compElem", this);
@@ -244,19 +240,175 @@ namespace OutSmart.DAXon.Expressions.Instructions
             @out.EndElement();
         }
 
-        /*defaultNamespace,*/
         public override Elaborator GetElaborator()
         {
             return new ComputedElementElaborator();
         }
 
 
-        /*defaultNamespace,*/
         /// <summary>
         /// Elaborator for a FixedElement (literal result element) expression.
         /// </summary>
         internal sealed class ComputedElementElaborator : ComplexNodePushElaborator
         {
+            // The element's name: an xs:QName, or a string as a lexical QName or (XQuery) an EQName, its namespace
+            // checked as the spec asks. The attribute's rules differ (xmlns, the error codes): see ComputedAttribute.ValidateNodeName.
+            private static IItem ElementName(ComputedElement expr, bool isXsltInstruction, IItemEvaluator localNameEvaluator, IStringEvaluator namespaceEvaluator, IXPathContext context)
+            {
+                Controller controller = context.GetController();
+                string prefix;
+                string localName;
+                NamespaceUri uri = null;
+                AtomicValue nameValue = (AtomicValue)localNameEvaluator.Eval(context);
+                if (nameValue == null)
+                {
+                    string errorCode = isXsltInstruction ? "XTDE0820" : "XPTY0004";
+                    XPathException err1 = new XPathException("Invalid element name (empty sequence)", errorCode, expr.GetLocation());
+                    throw DynamicError(expr.GetLocation(), err1, context);
+                }
+
+                if (nameValue is StringValue)
+                {
+
+                    // which includes UntypedAtomic
+                    // this will always be the case in XSLT
+                    string rawName = nameValue.GetStringValue();
+                    rawName = Whitespace.Trim(rawName);
+
+                    // this will always be the case in XSLT
+                    if (rawName.StartsWith("Q{", StringComparison.Ordinal) && expr.allowNameAsQName)
+                    {
+
+                        // Unclear whether this is allowed: see https://github.com/w3c/qtspecs/issues/9
+                        // It clearly is NOT allowed in XSLT 3.0 (though for no good reason)
+                        try
+                        {
+                            StructuredQName qn = StructuredQName.FromEQName(rawName);
+                            prefix = "";
+                            localName = qn.GetLocalPart();
+                            uri = qn.GetNamespaceUri();
+                        }
+                        catch (ArgumentException e)
+                        {
+                            throw new XPathException("Invalid EQName in computed element constructor: " + e.Message, "XQDY0074");
+                        }
+
+                        if (!NameChecker.IsValidNCName(localName))
+                        {
+                            throw new XPathException("Local part of EQName in computed element constructor is invalid", "XQDY0074");
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            string[] parts = NameChecker.GetQNameParts(rawName);
+                            prefix = parts[0];
+                            localName = parts[1];
+                        }
+                        catch (QNameException err)
+                        {
+                            string message = "Invalid element name. " + err.GetMessage();
+                            if (rawName.Length == 0)
+                            {
+                                message = "Supplied element name is a zero-length string";
+                            }
+
+                            string errorCode = isXsltInstruction ? "XTDE0820" : "XQDY0074";
+                            XPathException err1 = new XPathException(message, errorCode, expr.GetLocation());
+                            throw DynamicError(expr.GetLocation(), err1, context);
+                        }
+                    }
+                }
+                else if (nameValue is QNameValue && expr.allowNameAsQName)
+                {
+
+                    // this is allowed in XQuery
+                    localName = ((QNameValue)nameValue).LocalName;
+                    uri = ((QNameValue)nameValue).GetNamespaceURI();
+                    prefix = ((QNameValue)nameValue).GetPrefix();
+                    if (prefix.Equals("xmlns"))
+                    {
+                        XPathException err = new XPathException("Computed element name has prefix xmlns", "XQDY0096", expr.GetLocation());
+                        throw DynamicError(expr.GetLocation(), err, context);
+                    }
+                }
+                else
+                {
+                    string errorCode = isXsltInstruction ? "XTDE0820" : "XPTY0004";
+                    XPathException err = new XPathException("Computed element name has incorrect type", errorCode, expr.GetLocation());
+                    err.SetIsTypeError(true);
+                    throw DynamicError(expr.GetLocation(), err, context);
+                }
+
+                if (namespaceEvaluator == null && uri == null)
+                {
+                    uri = expr.GetRetainedStaticContext().GetURIForPrefix(prefix, true);
+                    if (uri == null)
+                    {
+                        string errorCode = isXsltInstruction ? "XTDE0830" : prefix.Equals("xmlns") ? "XQDY0096" : "XQDY0074";
+                        XPathException err = new XPathException("Undeclared prefix in element name: " + prefix, errorCode, expr.GetLocation());
+                        throw DynamicError(expr.GetLocation(), err, context);
+                    }
+                }
+                else
+                {
+                    if (uri == null)
+                    {
+                        string nsUri = namespaceEvaluator.Eval(context);
+                        uri = NamespaceUri.Of(nsUri);
+
+                        // TODO: bypass check if it's a string literal
+                        if (!StandardURIChecker.GetInstance().IsValidURI(uri.ToString()))
+                        {
+                            XPathException de = new XPathException("The value of the namespace attribute must be a valid URI", "XTDE0835", expr.GetLocation());
+                            throw DynamicError(expr.GetLocation(), de, context);
+                        }
+                    }
+
+                    if (uri.IsEmpty())
+                    {
+
+                        // there is a special rule for this case in the specification;
+                        // we force the element to go in the null namespace
+                        prefix = "";
+                    }
+
+                    if (prefix.Equals("xmlns"))
+                    {
+
+                        // this isn't a legal prefix so we mustn't use it
+                        prefix = "x-xmlns";
+                    }
+                }
+
+                if (uri.Equals(NamespaceUri.XMLNS))
+                {
+                    string errorCode = isXsltInstruction ? "XTDE0835" : "XQDY0096";
+                    XPathException err = new XPathException("Cannot create element in namespace " + uri, errorCode, expr.GetLocation());
+                    throw DynamicError(expr.GetLocation(), err, context);
+                }
+
+                if (uri.Equals(NamespaceUri.XML) != prefix.Equals("xml"))
+                {
+                    string message;
+                    if (prefix.Equals("xml"))
+                    {
+                        message = "When the prefix is 'xml', the namespace URI must be " + NamespaceConstant.XML;
+                    }
+                    else
+                    {
+                        message = "When the namespace URI is " + NamespaceConstant.XML + ", the prefix must be 'xml'";
+                    }
+
+                    string errorCode = isXsltInstruction ? "XTDE0835" : "XQDY0096";
+                    XPathException err = new XPathException(message, errorCode, expr.GetLocation());
+                    throw DynamicError(expr.GetLocation(), err, context);
+                }
+
+                return new QNameValue(prefix, uri, localName);
+            }
+
             public override IPushEvaluator ElaborateForPush()
             {
                 ComputedElement expr = (ComputedElement)GetExpression();
@@ -264,161 +416,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
                 IPushEvaluator contentPusher = expr.GetContentExpression().MakeElaborator().ElaborateForPush();
                 IStringEvaluator namespaceEvaluator = expr.GetNamespaceExp() == null ? null : expr.GetNamespaceExp().MakeElaborator().ElaborateForString(true);
                 IItemEvaluator localNameEvaluator = expr.GetNameExp().MakeElaborator().ElaborateForItem();
-                IItemEvaluator nodeNameEvaluator = (context) =>
-                {
-                    Controller controller = context.GetController();
-                    string prefix;
-                    string localName;
-                    NamespaceUri uri = null;
-                    AtomicValue nameValue = (AtomicValue)localNameEvaluator.Eval(context);
-                    if (nameValue == null)
-                    {
-                        string errorCode = isXsltInstruction ? "XTDE0820" : "XPTY0004";
-                        XPathException err1 = new XPathException("Invalid element name (empty sequence)", errorCode, expr.GetLocation());
-                        throw DynamicError(expr.GetLocation(), err1, context);
-                    }
-
-                    if (nameValue is StringValue)
-                    {
-
-                        // which includes UntypedAtomic
-                        // this will always be the case in XSLT
-                        string rawName = nameValue.GetStringValue();
-                        rawName = Whitespace.Trim(rawName);
-
-                        // this will always be the case in XSLT
-                        if (rawName.StartsWith("Q{", StringComparison.Ordinal) && expr.allowNameAsQName)
-                        {
-
-                            // Unclear whether this is allowed: see https://github.com/w3c/qtspecs/issues/9
-                            // It clearly is NOT allowed in XSLT 3.0 (though for no good reason)
-                            try
-                            {
-                                StructuredQName qn = StructuredQName.FromEQName(rawName);
-                                prefix = "";
-                                localName = qn.GetLocalPart();
-                                uri = qn.GetNamespaceUri();
-                            }
-                            catch (ArgumentException e)
-                            {
-                                throw new XPathException("Invalid EQName in computed element constructor: " + e.Message, "XQDY0074");
-                            }
-
-                            if (!NameChecker.IsValidNCName(localName))
-                            {
-                                throw new XPathException("Local part of EQName in computed element constructor is invalid", "XQDY0074");
-                            }
-                        }
-                        else
-                        {
-                            try
-                            {
-                                string[] parts = NameChecker.GetQNameParts(rawName);
-                                prefix = parts[0];
-                                localName = parts[1];
-                            }
-                            catch (QNameException err)
-                            {
-                                string message = "Invalid element name. " + err.GetMessage();
-                                if (rawName.Length == 0)
-                                {
-                                    message = "Supplied element name is a zero-length string";
-                                }
-
-                                string errorCode = isXsltInstruction ? "XTDE0820" : "XQDY0074";
-                                XPathException err1 = new XPathException(message, errorCode, expr.GetLocation());
-                                throw DynamicError(expr.GetLocation(), err1, context);
-                            }
-                        }
-                    }
-                    else if (nameValue is QNameValue && expr.allowNameAsQName)
-                    {
-
-                        // this is allowed in XQuery
-                        localName = ((QNameValue)nameValue).LocalName;
-                        uri = ((QNameValue)nameValue).GetNamespaceURI();
-                        prefix = ((QNameValue)nameValue).GetPrefix();
-                        if (prefix.Equals("xmlns"))
-                        {
-                            XPathException err = new XPathException("Computed element name has prefix xmlns", "XQDY0096", expr.GetLocation());
-                            throw DynamicError(expr.GetLocation(), err, context);
-                        }
-                    }
-                    else
-                    {
-                        string errorCode = isXsltInstruction ? "XTDE0820" : "XPTY0004";
-                        XPathException err = new XPathException("Computed element name has incorrect type", errorCode, expr.GetLocation());
-                        err.SetIsTypeError(true);
-                        throw DynamicError(expr.GetLocation(), err, context);
-                    }
-
-                    if (namespaceEvaluator == null && uri == null)
-                    {
-                        uri = expr.GetRetainedStaticContext().GetURIForPrefix(prefix, true);
-                        if (uri == null)
-                        {
-                            string errorCode = isXsltInstruction ? "XTDE0830" : prefix.Equals("xmlns") ? "XQDY0096" : "XQDY0074";
-                            XPathException err = new XPathException("Undeclared prefix in element name: " + prefix, errorCode, expr.GetLocation());
-                            throw DynamicError(expr.GetLocation(), err, context);
-                        }
-                    }
-                    else
-                    {
-                        if (uri == null)
-                        {
-                            string nsUri = namespaceEvaluator.Eval(context);
-                            uri = NamespaceUri.Of(nsUri);
-
-                            // TODO: bypass check if it's a string literal
-                            if (!StandardURIChecker.GetInstance().IsValidURI(uri.ToString()))
-                            {
-                                XPathException de = new XPathException("The value of the namespace attribute must be a valid URI", "XTDE0835", expr.GetLocation());
-                                throw DynamicError(expr.GetLocation(), de, context);
-                            }
-                        }
-
-                        if (uri.IsEmpty())
-                        {
-
-                            // there is a special rule for this case in the specification;
-                            // we force the element to go in the null namespace
-                            prefix = "";
-                        }
-
-                        if (prefix.Equals("xmlns"))
-                        {
-
-                            // this isn't a legal prefix so we mustn't use it
-                            prefix = "x-xmlns";
-                        }
-                    }
-
-                    if (uri.Equals(NamespaceUri.XMLNS))
-                    {
-                        string errorCode = isXsltInstruction ? "XTDE0835" : "XQDY0096";
-                        XPathException err = new XPathException("Cannot create element in namespace " + uri, errorCode, expr.GetLocation());
-                        throw DynamicError(expr.GetLocation(), err, context);
-                    }
-
-                    if (uri.Equals(NamespaceUri.XML) != prefix.Equals("xml"))
-                    {
-                        string message;
-                        if (prefix.Equals("xml"))
-                        {
-                            message = "When the prefix is 'xml', the namespace URI must be " + NamespaceConstant.XML;
-                        }
-                        else
-                        {
-                            message = "When the namespace URI is " + NamespaceConstant.XML + ", the prefix must be 'xml'";
-                        }
-
-                        string errorCode = isXsltInstruction ? "XTDE0835" : "XQDY0096";
-                        XPathException err = new XPathException(message, errorCode, expr.GetLocation());
-                        throw DynamicError(expr.GetLocation(), err, context);
-                    }
-
-                    return new QNameValue(prefix, uri, localName);
-                };
+                IItemEvaluator nodeNameEvaluator = (context) => ElementName(expr, isXsltInstruction, localNameEvaluator, namespaceEvaluator, context);
                 ISchemaType typeCode = expr.GetValidationAction() == Validation.PRESERVE ? AnyType.INSTANCE : Untyped.INSTANCE;
                 return (@out, context) =>
                 {
@@ -463,10 +461,10 @@ namespace OutSmart.DAXon.Expressions.Instructions
                         // output the element end tag (which will fail if validation fails)
                         @out.EndElement();
                     }
-                    catch (XPathException e) when (!(e is XPathException.StackOverflow))
+                    catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context)))
                     {
-                        // Filtered: see FixedElement - xsl:element nests per recursion level too.
-                        throw e.MaybeWithLocation(expr.GetLocation()).MaybeWithContext(context);
+                        // Decorated in the filter, never handled: see FixedElement - xsl:element nests per level too.
+                        throw;
                     }
 
                     return null;

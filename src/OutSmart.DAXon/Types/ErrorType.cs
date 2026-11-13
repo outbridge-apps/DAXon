@@ -4,7 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.ee.schema.UserSimpleType;
 using OutSmart.DAXon.Expressions;
 
 using OutSmart.DAXon.Lib;
@@ -62,7 +61,6 @@ namespace OutSmart.DAXon.Types
 
         public SequenceType ResultTypeOfCast => SequenceType.OPTIONAL_ITEM;
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         private ErrorType()
         {
         }

@@ -272,7 +272,7 @@ namespace OutSmart.DAXon.Trees.Linked
 
             if (!chars.IsEmpty())
             {
-                UnicodeString t = chars.Tidy();
+                UnicodeString t = chars;
                 Charge(64 + 2 * t.Length());
                 NodeInfo prev = currentNode.GetNthChild(size[depth] - 1);
                 if (prev is TextImpl)
@@ -283,7 +283,6 @@ namespace OutSmart.DAXon.Trees.Linked
                 {
                     TextImpl n = nodeFactory.MakeTextNode(currentNode, t);
 
-                    //TextImpl n = new TextImpl(chars.toString());
                     currentNode.AddChild(n, size[depth]++);
                 }
             }
@@ -294,14 +293,14 @@ namespace OutSmart.DAXon.Trees.Linked
         /// </summary>
         public override void ProcessingInstruction(string name, UnicodeString remainder, ILocation locationId, int properties)
         {
-            ProcInstImpl pi = new ProcInstImpl(name, remainder.Tidy());
+            ProcInstImpl pi = new ProcInstImpl(name, remainder);
             currentNode.AddChild(pi, size[depth]++);
             pi.SetLocation(LeafSystemId(locationId), locationId.GetLineNumber(), locationId.GetColumnNumber());
         }
 
         public override void Comment(UnicodeString chars, ILocation locationId, int properties)
         {
-            CommentImpl comment = new CommentImpl(chars.Tidy());
+            CommentImpl comment = new CommentImpl(chars);
             currentNode.AddChild(comment, size[depth]++);
             comment.SetLocation(LeafSystemId(locationId), locationId.GetLineNumber(), locationId.GetColumnNumber());
         }
@@ -336,7 +335,7 @@ namespace OutSmart.DAXon.Trees.Linked
         // It can be overridden, e.g. when building the stylesheet tree
         private sealed class DefaultNodeFactory : INodeFactory
         {
-            public static DefaultNodeFactory THE_INSTANCE = new DefaultNodeFactory();
+            public static readonly DefaultNodeFactory THE_INSTANCE = new DefaultNodeFactory();
             public ElementImpl MakeElementNode(NodeInfo parent, INodeName nodeName, ISchemaType elementType, bool isNilled, IAttributeMap attlist, NamespaceMap namespaces, PipelineConfiguration pipe, ILocation locationId, int sequenceNumber)
             {
                 ElementImpl e = new ElementImpl();

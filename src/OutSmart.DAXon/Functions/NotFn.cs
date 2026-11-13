@@ -74,9 +74,10 @@ namespace OutSmart.DAXon.Functions
                 {
                     return !this.GetArg(0).EffectiveBooleanValue(c);
                 }
-                catch (XPathException e)
+                catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(this.GetLocation()).MaybeWithContext(c)))
                 {
-                    throw e.MaybeWithLocation(this.GetLocation()).MaybeWithContext(c);
+                    // Decorated in the filter, never handled (XPathException.PassOn).
+                    throw;
                 }
             }
         }

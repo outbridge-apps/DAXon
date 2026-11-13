@@ -13,8 +13,8 @@ namespace OutSmart.DAXon.Values
 {
     public class NestedIntegerValue : IComparable<NestedIntegerValue>
     {
-        public static NestedIntegerValue ONE = new NestedIntegerValue(new int[] { 1 });
-        public static NestedIntegerValue TWO = new NestedIntegerValue(new int[] { 2 });
+        public static readonly NestedIntegerValue ONE = new NestedIntegerValue(new int[] { 1 });
+        public static readonly NestedIntegerValue TWO = new NestedIntegerValue(new int[] { 2 });
         readonly int[] value;
 
         public virtual NestedIntegerValue Stem

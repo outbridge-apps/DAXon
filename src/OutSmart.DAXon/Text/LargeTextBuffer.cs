@@ -499,7 +499,7 @@ namespace OutSmart.DAXon.Text
 
             public UnicodeString AsUnicodeString()
             {
-                return new Twine16(chars);
+                return new BMPString(new string(chars));
             }
 
             public UnicodeString Substring(int start, int end)
@@ -539,7 +539,7 @@ namespace OutSmart.DAXon.Text
 
             public UnicodeString AsUnicodeString()
             {
-                return new Twine24(bytes);
+                return new Slice24(bytes);
             }
         }
     }

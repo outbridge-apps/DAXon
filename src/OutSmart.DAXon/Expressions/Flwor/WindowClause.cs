@@ -243,11 +243,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
-        public override void AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            throw new NotSupportedException("Cannot use document projection with windowing");
-        }
-
         public override void Explain(ExpressionPresenter @out)
         {
             @out.StartElement(IsSlidingWindow() ? "slidingWindow" : "tumblingWindow");
@@ -269,88 +264,63 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         protected internal bool MatchesStart(IItem previous, IItem current, IItem next, int position, IXPathContext context)
         {
-            WindowClause clause = this;
-            LocalVariableBinding binding;
-            binding = clause.GetVariableBinding(WindowClause.START_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, current);
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.START_ITEM_POSITION);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, new Int64Value(position));
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.START_NEXT_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, MakeValue(next));
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.START_PREVIOUS_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, MakeValue(previous));
-            }
-
-            return clause.StartConditionEvaluator(context);
+            BindPosition(START_ITEM, current, position, previous, next, context);
+            return StartConditionEvaluator(context);
         }
 
         protected internal bool MatchesEnd(Window window, IItem previous, IItem current, IItem next, int position, IXPathContext context)
         {
-            WindowClause clause = this;
-            LocalVariableBinding binding;
-            binding = clause.GetVariableBinding(WindowClause.START_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, window.startItem);
-            }
+            BindPosition(START_ITEM, window.startItem, window.startPosition, window.startPreviousItem, window.startNextItem, context);
+            BindPosition(END_ITEM, current, position, previous, next, context);
+            return EndConditionEvaluator(context);
+        }
 
-            binding = clause.GetVariableBinding(WindowClause.START_ITEM_POSITION);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, new Int64Value(window.startPosition));
-            }
+        // Binds a window and all its positional variables for the clauses that follow.
+        internal void BindWindow(Window w, IXPathContext context)
+        {
+            context.SetLocalVariable(GetVariableBinding(WINDOW_VAR).LocalSlotNumber, SequenceExtent.MakeSequenceExtent(w.contents));
+            BindPosition(START_ITEM, w.startItem, w.startPosition, w.startPreviousItem, w.startNextItem, context);
+            BindPosition(END_ITEM, w.endItem, w.endPosition, w.endPreviousItem, w.endNextItem, context);
+        }
 
-            binding = clause.GetVariableBinding(WindowClause.START_NEXT_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, MakeValue(window.startNextItem));
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.START_PREVIOUS_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, MakeValue(window.startPreviousItem));
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.END_ITEM);
-            if (binding != null)
-            {
-                context.SetLocalVariable(binding.LocalSlotNumber, current);
-            }
-
-            binding = clause.GetVariableBinding(WindowClause.END_ITEM_POSITION);
+        // The start and end variables are numbered alike: the item, then its position, previous and next item.
+        private void BindPosition(int itemVar, IItem item, int position, IItem previous, IItem next, IXPathContext context)
+        {
+            BindItem(itemVar, item, context);
+            LocalVariableBinding binding = GetVariableBinding(itemVar + 1);
             if (binding != null)
             {
                 context.SetLocalVariable(binding.LocalSlotNumber, new Int64Value(position));
             }
 
-            binding = clause.GetVariableBinding(WindowClause.END_NEXT_ITEM);
+            BindItem(itemVar + 2, previous, context);
+            BindItem(itemVar + 3, next, context);
+        }
+
+        private void BindItem(int var, IItem item, IXPathContext context)
+        {
+            LocalVariableBinding binding = GetVariableBinding(var);
             if (binding != null)
             {
-                context.SetLocalVariable(binding.LocalSlotNumber, MakeValue(next));
+                context.SetLocalVariable(binding.LocalSlotNumber, MakeValue(item));
             }
+        }
 
-            binding = clause.GetVariableBinding(WindowClause.END_PREVIOUS_ITEM);
-            if (binding != null)
+        // Windows are despatched in order of their start: the earliest one not yet despatched, once it is finished.
+        // visits counts the windows looked at, for Visited.
+        internal static Window EarliestFinished(List<Window> windows, ref long visits)
+        {
+            Visited(windows, ref visits);
+            Window earliest = null;
+            foreach (Window u in windows)
             {
-                context.SetLocalVariable(binding.LocalSlotNumber, MakeValue(previous));
+                if (!u.IsDespatched() && (earliest == null || u.startPosition < earliest.startPosition))
+                {
+                    earliest = u;
+                }
             }
 
-            return clause.EndConditionEvaluator(context);
+            return earliest != null && earliest.IsFinished() ? earliest : null;
         }
 
         protected internal static ISequence MakeValue(IItem item)
@@ -365,6 +335,41 @@ namespace OutSmart.DAXon.Expressions.Flwor
             }
         }
 
+        // Each open window holds its members, so sliding windows over n items can hold n^2/2: past BigCount additions the
+        // open windows are entered in the memory ledger (summed when it is), and the clock is read every 4096 additions.
+        // The read is direct: the strided check counts its own calls, so it ran every 4096 x 4096 additions.
+        internal static void Added(List<Window> windows, ref long added)
+        {
+            added++;
+            if ((added & 0xFFF) == 0)
+            {
+                if (added == MemoryLedger.BigCount)
+                {
+                    MemoryLedger.Hold(windows, OpenWindowsSizer);
+                }
+
+                Controller.CheckActiveTimeoutNow();
+            }
+        }
+
+        // Finished windows wait behind an unfinished one that started earlier, and every item scans them all: sliding
+        // windows that never close cost n^2 visits while adding n members, so the visits are counted towards the clock.
+        internal static void Visited(List<Window> windows, ref long visits)
+        {
+            Controller.CheckActiveTimeoutAfterWork(ref visits, windows.Count);
+        }
+
+        private static readonly Func<object, long> OpenWindowsSizer = o =>
+        {
+            long bytes = 32;
+            foreach (Window w in (List<Window>)o)
+            {
+                bytes += 96 + (w.contents == null ? 0 : MemoryLedger.ListBytes(w.contents));   // members too, as a few tell
+            }
+
+            return bytes;
+        };
+
         protected internal sealed class Window
         {
             public IItem startItem;
@@ -377,6 +382,24 @@ namespace OutSmart.DAXon.Expressions.Flwor
             public IItem endNextItem;
             public IList<IItem> contents;
             public bool despatched;
+
+            public Window(IItem item, int position, IItem previous, IItem next)
+            {
+                startItem = item;
+                startPosition = position;
+                startPreviousItem = previous;
+                startNextItem = next;
+                contents = new List<IItem>();
+            }
+
+            public void End(IItem item, int position, IItem previous, IItem next)
+            {
+                endItem = item;
+                endPosition = position;
+                endPreviousItem = previous;
+                endNextItem = next;
+            }
+
             public bool IsFinished()
             {
                 return endPosition > 0;

@@ -28,7 +28,6 @@ namespace OutSmart.DAXon.Xslt
     /// </summary>
     public sealed class XSLTemplate : StyleElement, IStylesheetComponent
     {
-        private readonly object syncLock = new object();
         private string matchAtt;
         private string modeAtt;
         private string nameAtt;
@@ -49,7 +48,6 @@ namespace OutSmart.DAXon.Xslt
         private ItemType requiredContextItemType = AnyItemType.GetInstance();
         private bool mayOmitContextItem = true;
         private bool absentFocus;
-        private bool jitCompilationDone;
         private bool explaining;
         private IList<Patterns.Pattern> subPatterns;
 
@@ -222,11 +220,6 @@ namespace OutSmart.DAXon.Xslt
         public override bool IsDeclaration()
         {
             return true;
-        }
-
-        public bool IsDeferredCompilation(Compilation compilation)
-        {
-            return compilation.IsPreScan() && TemplateName == null && !compilation.IsLibraryPackage();
         }
 
         protected override bool MayContainSequenceConstructor()
@@ -486,10 +479,12 @@ namespace OutSmart.DAXon.Xslt
                     // it's got to be a valid decimal, but we want it as a double, so parse it twice
                     if (!BigDecimalValue.CastableAsDecimal(priorityAtt))
                     {
-                        CompileError("Invalid numeric value for priority (" + priority + ')', "XTSE0530");
+                        CompileError("Invalid numeric value for priority (" + priorityAtt + ')', "XTSE0530");
                     }
-
-                    priority = double.Parse(priorityAtt, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
+                    else
+                    {
+                        priority = double.Parse(priorityAtt, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
+                    }
                 }
                 catch (OverflowException)
                 {
@@ -501,7 +496,7 @@ namespace OutSmart.DAXon.Xslt
                 {
 
                     // shouldn't happen
-                    CompileError("Invalid numeric value for priority (" + priority + ')', "XTSE0530");
+                    CompileError("Invalid numeric value for priority (" + priorityAtt + ')', "XTSE0530");
                 }
             }
 
@@ -579,23 +574,6 @@ namespace OutSmart.DAXon.Xslt
                 {
                     compiledNamedTemplate.DeclaredVisibility = GetVisibility();
                 }
-            }
-        }
-
-        public override void ProcessAllAttributes()
-        {
-
-            // With JIT compilation enabled, we don't process the attributes of descendant elements
-            if (!IsDeferredCompilation(GetCompilation()))
-            {
-                base.ProcessAllAttributes(); //TODO - sort out the duplicated code. This repeats the code below
-            }
-            else
-            {
-                ProcessDefaultCollationAttribute();
-                ProcessDefaultMode();
-                staticContext = new ExpressionContext(this, null);
-                ProcessAttributes();
             }
         }
 
@@ -754,25 +732,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        public override void ValidateSubtree(ComponentDeclaration decl, bool excludeStylesheet)
-        {
-            if (!IsDeferredCompilation(GetCompilation()))
-            {
-                base.ValidateSubtree(decl, excludeStylesheet);
-            }
-            else
-            {
-                try
-                {
-                    Validate(decl);
-                }
-                catch (XPathException err)
-                {
-                    CompileError(err);
-                }
-            }
-        }
-
         public override void Index(ComponentDeclaration decl, PrincipalStylesheetModule top)
         {
             if (TemplateName != null)
@@ -797,13 +756,6 @@ namespace OutSmart.DAXon.Xslt
 
         public override void CompileDeclaration(Compilation compilation, ComponentDeclaration decl)
         {
-            if (IsDeferredCompilation(compilation))
-            {
-                CreateSkeletonTemplate(compilation, decl);
-
-                return;
-            }
-
             if (compilation.GetCompilerInfo().GetOptimizerOptions().IsSet(OptimizerOptions.TAIL_CALLS))
             {
                 MarkTailCalls();
@@ -982,17 +934,6 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
-        private void CreateSkeletonTemplate(Compilation compilation, ComponentDeclaration decl)
-        {
-            foreach (TemplateRule templateRule in compiledTemplateRules)
-            {
-                templateRule.PrepareInitializer(compilation, decl);
-                RetainedStaticContext rsc = MakeRetainedStaticContext();
-                templateRule.SetPackageData(rsc.GetPackageData());
-                SetCompiledTemplateRuleProperties(templateRule, null);
-            }
-        }
-
         private void SetCompiledTemplateRuleProperties(TemplateRule templateRule, Expression body)
         {
 
@@ -1003,34 +944,6 @@ namespace OutSmart.DAXon.Xslt
             templateRule.SetColumnNumber(GetColumnNumber());
             templateRule.RequiredType = requiredType;
             templateRule.SetContextItemRequirements(requiredContextItemType, absentFocus);
-        }
-
-        public void JitCompile(Compilation compilation, ComponentDeclaration decl)
-        {
-            lock (syncLock)
-            {
-                if (!jitCompilationDone)
-                {
-                    jitCompilationDone = true;
-                    compilation.SetPreScan(false);
-                    ProcessAllAttributes();
-                    CheckForJitCompilationErrors(compilation);
-                    ValidateSubtree(decl, false);
-                    CheckForJitCompilationErrors(compilation);
-                    CompileDeclaration(compilation, decl);
-                    CheckForJitCompilationErrors(compilation);
-                }
-            }
-        }
-
-        private void CheckForJitCompilationErrors(Compilation compilation)
-        {
-            if (compilation.ErrorCount > 0)
-            {
-                XPathException e = new XPathException("Errors were reported during JIT compilation of template rule with match=\"" + matchAtt + "\"", DAXonErrorCode.SXST0001, this);
-                e.SetHasBeenReported(true); // only intended as an exception message, not something to report to ErrorListener
-                throw e;
-            }
         }
 
         public void Register(ComponentDeclaration declaration)
@@ -1125,9 +1038,10 @@ namespace OutSmart.DAXon.Xslt
                             {
                                 localPattern2 = localPattern.ConvertToTypedPattern(typed);
                             }
-                            catch (XPathException e)
+                            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(this)))
                             {
-                                throw e.MaybeWithLocation(this);
+                                // Decorated in the filter, never handled (XPathException.PassOn).
+                                throw;
                             }
 
                             if (localPattern2 != match)
@@ -1156,9 +1070,10 @@ namespace OutSmart.DAXon.Xslt
                                 {
                                     localSubPattern2 = localSubPattern1.ConvertToTypedPattern(typed);
                                 }
-                                catch (XPathException e)
+                                catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(this)))
                                 {
-                                    throw e.MaybeWithLocation(this);
+                                    // Decorated in the filter, never handled (XPathException.PassOn).
+                                    throw;
                                 }
 
                                 if (localSubPattern2 != localSubPattern1)
@@ -1252,47 +1167,44 @@ namespace OutSmart.DAXon.Xslt
                     }
                 }
 
-                if (!IsDeferredCompilation(GetCompilation()))
+                Optimizer opt = GetConfiguration().ObtainOptimizer();
+                try
                 {
-                    Optimizer opt = GetConfiguration().ObtainOptimizer();
-                    try
+                    foreach (TemplateRule compiledTemplateRule in compiledTemplateRules)
                     {
-                        foreach (TemplateRule compiledTemplateRule in compiledTemplateRules)
+                        if (!compiledTemplateRule.GetMode().ModeName.Equals(Mode.OMNI_MODE_NAME))
                         {
-                            if (!compiledTemplateRule.GetMode().ModeName.Equals(Mode.OMNI_MODE_NAME))
+                            Expression templateRuleBody = compiledTemplateRule.GetBody();
+                            visitor.SetOptimizeForStreaming(compiledTemplateRule.IsDeclaredStreamable());
+                            templateRuleBody = templateRuleBody.TypeCheck(visitor, cisi);
+                            templateRuleBody = ExpressionTool.OptimizeComponentBody(templateRuleBody, GetCompilation(), visitor, cisi, true);
+                            compiledTemplateRule.SetBody(templateRuleBody);
+                            opt.CheckStreamability(this, compiledTemplateRule);
+                            AllocateLocalSlots(templateRuleBody);
+                            foreach (Rule r in compiledTemplateRule.Rules)
                             {
-                                Expression templateRuleBody = compiledTemplateRule.GetBody();
-                                visitor.SetOptimizeForStreaming(compiledTemplateRule.IsDeclaredStreamable());
-                                templateRuleBody = templateRuleBody.TypeCheck(visitor, cisi);
-                                templateRuleBody = ExpressionTool.OptimizeComponentBody(templateRuleBody, GetCompilation(), visitor, cisi, true);
-                                compiledTemplateRule.SetBody(templateRuleBody);
-                                opt.CheckStreamability(this, compiledTemplateRule);
-                                AllocateLocalSlots(templateRuleBody);
-                                foreach (Rule r in compiledTemplateRule.Rules)
+                                Patterns.Pattern match = r.Pattern;
+                                ContextItemStaticInfo info = GetConfiguration().MakeContextItemStaticInfo(match.GetItemType(), mayOmitContextItem);
+                                info.SetContextPostureStriding();
+                                Patterns.Pattern m2 = (Patterns.Pattern)match.Optimize(visitor, info);
+                                if (m2 != match)
                                 {
-                                    Patterns.Pattern match = r.Pattern;
-                                    ContextItemStaticInfo info = GetConfiguration().MakeContextItemStaticInfo(match.GetItemType(), mayOmitContextItem);
-                                    info.SetContextPostureStriding();
-                                    Patterns.Pattern m2 = (Patterns.Pattern)match.Optimize(visitor, info);
-                                    if (m2 != match)
-                                    {
-                                        r.Pattern = m2;
-                                    }
+                                    r.Pattern = m2;
                                 }
+                            }
 
-                                if (explaining)
-                                {
-                                    Logger err = GetConfiguration().Logger;
-                                    err.Info("Optimized expression tree for template rule at line " + GetLineNumber() + " in " + GetSystemId() + ':');
-                                    templateRuleBody.Explain(err);
-                                }
+                            if (explaining)
+                            {
+                                Logger err = GetConfiguration().Logger;
+                                err.Info("Optimized expression tree for template rule at line " + GetLineNumber() + " in " + GetSystemId() + ':');
+                                templateRuleBody.Explain(err);
                             }
                         }
                     }
-                    catch (XPathException e)
-                    {
-                        CompileError(e.MaybeWithLocation(this));
-                    }
+                }
+                catch (XPathException e)
+                {
+                    CompileError(e.MaybeWithLocation(this));
                 }
             }
         }

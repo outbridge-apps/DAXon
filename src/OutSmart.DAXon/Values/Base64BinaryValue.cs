@@ -75,7 +75,8 @@ namespace OutSmart.DAXon.Values
 
         public override bool Equals(object other)
         {
-            return other is Base64BinaryValue && ArrayTools.Equals(binaryValue, ((Base64BinaryValue)other).binaryValue);
+            // The key of a string under a collation (CollationKeyBytes) equals no binary value of the same octets.
+            return other is Base64BinaryValue b && (b is CollationKeyBytes) == (this is CollationKeyBytes) && ArrayTools.Equals(binaryValue, b.binaryValue);
         }
 
         public override int GetHashCode()
@@ -83,20 +84,23 @@ namespace OutSmart.DAXon.Values
             return ByteArrayHashCode(binaryValue);
         }
 
+        // Every byte (FNV-1a). Upstream shifts one bit a byte over the first 64 and stops: values that differ in a few bytes
+        // collided wholesale (distinct-values of 300 000 values of 4 bytes: 26 s), and so did long ones with a common start.
         public static int ByteArrayHashCode(byte[] value)
         {
-            long h = 0;
-            for (int i = 0; i < Math.Min(value.Length, 64); i++)
+            uint h = 2166136261;
+            for (int i = 0; i < value.Length; i++)
             {
-                h = (h << 1) ^ value[i];
+                h = (h ^ value[i]) * 16777619;
             }
 
-            return (int)((h >> 32) ^ h);
+            return (int)h;
         }
 
         public static UnicodeString Encode(byte[] value)
         {
-            UnicodeBuilder buff = new UnicodeBuilder(value.Length * 2);
+            // The builder archives every 64K code points: room for more is never used, and twice a key of a billion bytes overflowed.
+            UnicodeBuilder buff = new UnicodeBuilder((int)Math.Min(value.Length / 3L * 4 + 4, 65536 + 4));
             int whole = value.Length - value.Length % 3;
 
             // process bytes 3 at a time: 3 bytes => 4 characters
@@ -149,7 +153,6 @@ namespace OutSmart.DAXon.Values
 
         public static byte[] Decode(UnicodeString @in)
         {
-            @in = @in.Tidy();
             int[] unit = new int[4];
             byte[] result = new byte[@in.Length32()];
             int bytesUsed = 0;

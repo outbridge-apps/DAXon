@@ -322,9 +322,10 @@ namespace OutSmart.DAXon.Expressions.Compatibility
 
                             seq1.Add(item1);
                         }
-                        catch (XPathException e)
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation()).MaybeWithContext(context)))
                         {
-                            throw e.MaybeWithLocation(GetLocation()).MaybeWithContext(context);
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
                     }
                 }

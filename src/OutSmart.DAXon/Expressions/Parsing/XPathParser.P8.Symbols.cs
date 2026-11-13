@@ -250,7 +250,6 @@ namespace OutSmart.DAXon.Expressions.Parsing
         {
             CheckLanguageVersion40();
 
-            //Tokenizer t = getTokenizer();
             int offset = t.currentTokenStartOffset;
             InlineFunctionDetails details = new InlineFunctionDetails();
             details.outerVariables = new IndexedStack<ILocalBinding>();
@@ -452,7 +451,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
 
             if (prefix.StartsWith("Q{", StringComparison.Ordinal))
             {
-                string uri = prefix.Substring(2, prefix.Length - 4) /*Java substring(begin,END) -> C# (start,LENGTH)*/;
+                string uri = prefix.Substring(2, prefix.Length - 4);
                 return new NamespaceTest(pool, nodeKind, NamespaceUri.Of(uri));
             }
 
@@ -541,7 +540,7 @@ namespace OutSmart.DAXon.Expressions.Parsing
         public virtual Expression MakeTracer(Expression exp, StructuredQName qName)
         {
             exp.SetRetainedStaticContextLocally(env.MakeRetainedStaticContext());
-            return exp; //        if (codeInjector != null) {
+            return exp;
         }
 
         protected virtual bool IsKeyword(string s)

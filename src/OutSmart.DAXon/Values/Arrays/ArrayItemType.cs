@@ -62,8 +62,29 @@ namespace OutSmart.DAXon.Values.Arrays
             return memberType.PrimaryType.GetAtomizedItemType() as IPlainType ?? BuiltInAtomicType.ANY_ATOMIC;
         }
 
+        public string ExplainMismatch(IItem item, TypeHierarchy th)
+        {
+            if (item is ArrayItem array)
+            {
+                for (int i = 0; i < array.ArrayLength(); i++)
+                {
+                    IGroundedValue member = array.Get(i);
+                    if (!MemberType.Matches(member, th))
+                    {
+                        string s = "The " + OutSmart.DAXon.Expressions.Parsing.RoleDiagnostic.Ordinal(i + 1) + " member of the supplied array {" + OutSmart.DAXon.Transformation.Err.DepictSequence(member) + "} does not match the required member type " + MemberType;
+                        string more = MemberType.ExplainMismatch(member, th);
+                        return more == null ? s : s + ". " + more;
+                    }
+                }
+            }
+
+            return null;
+        }
+
         public override bool Matches(IItem item, TypeHierarchy th)
         {
+            // array(array(...)) nests as deep as the parser allows (3000): every walk over it recurses, so each probes.
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             if (!(item is ArrayItem))
             {
                 return false;
@@ -94,6 +115,7 @@ namespace OutSmart.DAXon.Values.Arrays
 
         private string MakeString(Func<SequenceType, string> show)
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             if (this.Equals(ANY_ARRAY_TYPE))
             {
                 return "array(*)";
@@ -109,6 +131,7 @@ namespace OutSmart.DAXon.Values.Arrays
         /// </summary>
         public override bool Equals(object other)
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             if (this == other)
             {
                 return true;
@@ -125,11 +148,15 @@ namespace OutSmart.DAXon.Values.Arrays
 
         public override int GetHashCode()
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
             return memberType.GetHashCode();
         }
 
         public override Affinity Relationship(IFunctionItemType other, TypeHierarchy th)
         {
+            OutSmart.DAXon.Internal.StackGuard.Probe();
+            // Comparing two deep types is quadratic in their depth, and a type check may compare at every level: the clock.
+            OutSmart.DAXon.Core.Controller.CheckActiveTimeout();
             if (other == AnyFunctionType.GetInstance())
             {
                 return Affinity.SUBSUMED_BY;

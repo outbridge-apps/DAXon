@@ -43,7 +43,6 @@ namespace OutSmart.DAXon.Collections
             return "in {" + set + "}";
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public IIntPredicateProxy Union(IIntPredicateProxy other) => IntUnionPredicate.MakeUnion(this, other);
     }
 }

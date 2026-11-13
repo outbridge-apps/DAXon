@@ -153,7 +153,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
         }
 
         // The items being sorted: the array, a record each with its key, and the items as a few of them tell.
-        private static readonly Func<object, long> Sizer = o =>
+        protected static readonly Func<object, long> Sizer = o =>
         {
             var s = (SortedIterator)o;
             ObjectToBeSorted[] v = s.values;
@@ -161,16 +161,22 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return v == null || n == 0 ? 0 : 24 + 8L * v.Length + (72 + Core.MemoryLedger.MemberBytes(v[n / 2]?.value)) * n;
         };
 
+        private long weight;   // of medium strings, which few can make heavy (MemoryLedger.Weighs)
+        private bool held;
+
         protected virtual void BuildArray()
         {
             int allocated = SequenceTool.SupportsGetLength(@base) ? SequenceTool.GetLength(@base) : 100;
             values = new ObjectToBeSorted[allocated];
             count = 0;
 
+            bool[] asStrings = StringKeys();
+
             // initialise the array with data
             IItem item;
             while ((item = @base.Next()) != null)
             {
+                Core.Controller.CheckActiveTimeout();   // a key can cost microseconds: 400 000 of them take seconds
                 if (count == allocated)
                 {
                     allocated *= 2;
@@ -186,6 +192,10 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     itbs = new ObjectToBeSorted();
                     itbs.value = item;
                     itbs.key0 = sortKeyEvaluator.EvaluateSortKey(0, context);
+                    if (asStrings != null)
+                    {
+                        itbs.key0 = AsString(itbs.key0);
+                    }
                 }
                 else
                 {
@@ -196,7 +206,14 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     // sort key values will never be used. The only problem is with sort keys that depend on position().
                     for (int n = 0; n < comparators.Length; n++)
                     {
-                        itbs.sortKeyValues[n] = sortKeyEvaluator.EvaluateSortKey(n, context);
+                        AtomicValue key = sortKeyEvaluator.EvaluateSortKey(n, context);
+                        NumericComparer numeric = NumericKey(n);
+                        // A numeric key that is a string converts once, not on each comparison.
+                        itbs.sortKeyValues[n] = numeric != null && key != null && !(key is NumericValue) ? new DoubleValue(numeric.ToDouble(key)) : key;
+                        if (asStrings != null && asStrings[n])
+                        {
+                            itbs.sortKeyValues[n] = AsString(key);
+                        }
                     }
                 }
 
@@ -205,8 +222,9 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
                 // make the sort stable by adding the record number
                 itbs.originalPosition = count++;
-                if (count == Core.MemoryLedger.BigCount)
+                if (!held && (count == Core.MemoryLedger.BigCount || Core.MemoryLedger.Weighs(item, ref weight)))
                 {
+                    held = true;
                     Core.MemoryLedger.Hold(this, Sizer);   // summed as it grows
                 }
             }
@@ -221,6 +239,35 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
         }
 
+        // The keys a collation compares as .NET strings (a language's, case-order): each is made a string once here, where
+        // a key backed by bytes was copied into a new string on each of the n log n comparisons. Null when there is none.
+        private bool[] StringKeys()
+        {
+            bool[] keys = null;
+            for (int n = 0; n < comparators.Length; n++)
+            {
+                IAtomicComparer c = comparators[n] is DescendingComparer dc ? dc.BaseComparer : comparators[n];
+                if (c is CollatingAtomicComparer cac && (cac.Collator is SimpleCollation || cac.Collator is CaseFirstCollator))
+                {
+                    (keys ??= new bool[comparators.Length])[n] = true;
+                }
+            }
+
+            return keys;
+        }
+
+        private static AtomicValue AsString(AtomicValue key)
+        {
+            return key is StringValue sv ? sv.StringBacked() : key;
+        }
+
+        // The numeric comparer of key n (data-type="number"), descending or not; null for any other.
+        private NumericComparer NumericKey(int n)
+        {
+            IAtomicComparer c = comparators[n] is DescendingComparer dc ? dc.BaseComparer : comparators[n];
+            return c != null && (c.GetType() == typeof(NumericComparer) || c.GetType() == typeof(NumericComparer11)) ? (NumericComparer)c : null;
+        }
+
         private void DoSort()
         {
             BuildArray();
@@ -229,158 +276,56 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 return;
             }
 
-            if (TryCodepointRadixSort())
-            {
-                return;
-            }
-
-            if (TryTwoKeyRadixSort())
-            {
-                return;
-            }
-
-            if (TrySingleDoubleKeySort())
+            if (TryOrdinalSort())
             {
                 return;
             }
 
 
-            // sort the array
+            // sort the array; SortComparer looks at the deadline, as DeadlineSort's comparisons do
+            XPathException failure;
             try
             {
                 Array.Sort(values, 0, count, new SortComparer(comparators));
+                return;
             }
             catch (InvalidCastException e)
             {
-                throw new XPathException("Non-comparable types found while sorting: " + e.Message).WithErrorCode(hostLanguage == HostLanguage.XSLT ? "XTDE1030" : "XPTY0004");
-            }
-            catch (InvalidOperationException e) when (e.InnerException is XPathException x && x.IsRunLimit())
-            {
-                throw x;   // the time or memory limit, which SortComparer looks at
+                failure = ComparerFailure.Reported(e, hostLanguage == HostLanguage.XSLT);
             }
             catch (InvalidOperationException e)
             {
-                // .NET Array.Sort wraps comparator exceptions in InvalidOperationException ("Failed to
-                // compare two elements"); Java's Arrays.sort lets ComparisonException (a ClassCastException
-                // subclass) propagate straight to the catch above. Unwrap to the same XTDE1030/XPTY0004.
-                Exception inner = e.InnerException ?? e;
-                throw new XPathException("Non-comparable types found while sorting: " + inner.Message).WithErrorCode(hostLanguage == HostLanguage.XSLT ? "XTDE1030" : "XPTY0004");
+                failure = ComparerFailure.Reported(e, hostLanguage == HostLanguage.XSLT);
             }
+
+            throw failure;
         }
-        // ---- Codepoint-collation radix sort (fast path) ------------------------------------------
-        // A single xsl:sort / fn:sort key under the default (codepoint) collation makes every
-        // comparison UnicodeString.CompareTo: codepoint-by-codepoint lexicographic order, shorter
-        // string first, originalPosition as the final tie-break (SortComparer, above). For the
-        // surrogate-free string reps -- BMPString/BMPSlice (BMP chars) and Slice8/Twine8 (Latin1
-        // bytes) -- a 3-way radix (multikey) quicksort realises that exact total order with no
-        // key-to-key comparisons and no per-comparison virtual dispatch, so the result is
-        // byte-identical to Array.Sort + SortComparer. Any unmet condition (multi-key, descending,
-        // non-codepoint collation, an astral / StringView / wide rep, a non-string key) returns
-        // false and leaves the unchanged Array.Sort path to run.
+        // ---- Codepoint-collation radix sort -------------------------------------------------------
+        // A string key under the default (codepoint) collation makes every comparison UnicodeString.CompareTo:
+        // codepoint-by-codepoint lexicographic order, shorter string first, originalPosition as the final tie-break
+        // (SortComparer, above). For the surrogate-free string reps -- BMPString/BMPSlice (BMP chars) and Slice8/Twine8
+        // (Latin1 bytes) -- a radix sort realises that exact total order with no key-to-key comparisons and no
+        // per-comparison virtual dispatch, so the result is byte-identical to Array.Sort + SortComparer. An astral /
+        // StringView / wide rep or a non-string key leaves TryOrdinalSort, and the unchanged Array.Sort path runs.
         private const int RadixMinCount = 64;
         private const int RadixInsertionCutoff = 16;
-
-        private bool TryCodepointRadixSort()
-        {
-            if (comparators.Length != 1 || !(comparators[0] is CodepointCollatingComparer) || count < RadixMinCount)
-            {
-                return false;
-            }
-
-            // Flat per-key arrays: exactly one of sChars[e] / bBytes[e] is non-null (BMP string vs
-            // Latin1 bytes); klen[e] == -1 marks a null key (ranks below all, in original order).
-            string[] sChars = new string[count];
-            byte[][] bBytes = new byte[count][];
-            int[] koff = new int[count];
-            int[] klen = new int[count];
-            int nullCount = 0;
-            for (int e = 0; e < count; e++)
-            {
-                ObjectToBeSorted obj = values[e];
-                AtomicValue k = obj.sortKeyValues == null ? obj.key0 : obj.sortKeyValues[0];
-                if (k == null)
-                {
-                    klen[e] = -1;
-                    nullCount++;
-                    continue;
-                }
-
-                if (!(k is StringValue sv))
-                {
-                    return false;   // non-string key: let Array.Sort raise the type error
-                }
-
-                if (!KeySpan(sv, e, sChars, bBytes, koff, klen))
-                {
-                    return false;   // StringView (may hold surrogates) / Twine16 / Twine24 / composite
-                }
-            }
-
-            // Index array: null keys first in original order, then the keys to radix-sort.
-            int[] idx = new int[count];
-            int p = 0;
-            if (nullCount > 0)
-            {
-                for (int e = 0; e < count; e++)
-                {
-                    if (klen[e] == -1)
-                    {
-                        idx[p++] = e;
-                    }
-                }
-            }
-
-            int nonNullStart = p;
-            for (int e = 0; e < count; e++)
-            {
-                if (klen[e] != -1)
-                {
-                    idx[p++] = e;
-                }
-            }
-
-            if (!TryPrefix8Sort(idx, nonNullStart, count, sChars, bBytes, koff, klen))
-            {
-                RadixSort(idx, nonNullStart, count, sChars, bBytes, koff, klen, 0);
-            }
-
-            ObjectToBeSorted[] sorted = new ObjectToBeSorted[count];
-            for (int r = 0; r < count; r++)
-            {
-                sorted[r] = values[idx[r]];
-            }
-
-            values = sorted;
-            return true;
-        }
 
         // A string key's backing characters or Latin-1 bytes, with their span, for the radix sorts; false for a
         // representation they do not read flat.
         private static bool KeySpan(StringValue sv, int e, string[] sChars, byte[][] bBytes, int[] koff, int[] klen)
         {
             UnicodeString u = sv.UnicodeStringValue;
-            if (u is BMPSlice sl)
+            if (BMPSlice.CharSpan(u, out string chars, out int start, out int end))
             {
-                sChars[e] = sl.Backing;
-                koff[e] = sl.Start;
-                klen[e] = sl.End - sl.Start;
+                sChars[e] = chars;
+                koff[e] = start;
+                klen[e] = end - start;
             }
-            else if (u is BMPString bstr)
+            else if (Slice8.Latin1Span(u, out byte[] bytes, out start, out end))
             {
-                string s = bstr.ToString();   // backing string, no copy
-                sChars[e] = s;
-                klen[e] = s.Length;
-            }
-            else if (u is Slice8 s8)
-            {
-                bBytes[e] = s8.ByteArray;
-                koff[e] = s8.Start;
-                klen[e] = s8.End - s8.Start;
-            }
-            else if (u is Twine8 t8)
-            {
-                bBytes[e] = t8.ByteArray;
-                klen[e] = t8.ByteArray.Length;
+                bBytes[e] = bytes;
+                koff[e] = start;
+                klen[e] = end - start;
             }
             else if (u is EmptyUnicodeString)
             {
@@ -405,17 +350,19 @@ namespace OutSmart.DAXon.Expressions.Sorting
         private static bool TryPrefix8Sort(int[] idx, int lo, int hi, string[] sChars, byte[][] bBytes, int[] koff, int[] klen)
         {
             int n = hi - lo;
+            // The 8 codepoints after the prefix all keys share: ids of one series differ only at the end.
+            int d = CommonPrefix(idx, lo, hi, sChars, bBytes, koff, klen);
             ulong[] keys = new ulong[n];
             for (int i = lo; i < hi; i++)
             {
                 int e = idx[i];
-                int len = klen[e];
+                int len = klen[e] - d;
                 int m = len < 8 ? len : 8;
                 ulong k = 0;
                 string s = sChars[e];
                 if (s != null)
                 {
-                    int off = koff[e];
+                    int off = koff[e] + d;
                     for (int t = 0; t < m; t++)
                     {
                         int c = s[off + t];
@@ -430,7 +377,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 else
                 {
                     byte[] b = bBytes[e];
-                    int off = koff[e];
+                    int off = koff[e] + d;
                     for (int t = 0; t < m; t++)
                     {
                         k = (k << 8) | b[off + t];
@@ -463,7 +410,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                     bool longer = false;
                     for (int i = rs; i < re; i++)
                     {
-                        if (klen[idx[lo + i]] > 8)
+                        if (klen[idx[lo + i]] > d + 8)
                         {
                             longer = true;
                             break;
@@ -472,7 +419,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
                     if (longer)
                     {
-                        RadixSort(idx, lo + rs, lo + re, sChars, bBytes, koff, klen, 8);
+                        RadixSort(idx, lo + rs, lo + re, sChars, bBytes, koff, klen, d + 8);
                     }
                 }
 
@@ -482,95 +429,331 @@ namespace OutSmart.DAXon.Expressions.Sorting
             return true;
         }
 
-        // ---- Two-key fast sort: codepoint string key + numeric double key ------------------------
-        // xsl:sort pairs of the form (string key, codepoint collation) + (number() key, NumericComparer,
-        // optionally descending) realise the SortComparer order lexicographically: radix-sort by key 1
-        // (stable by index), then within each run of equal first keys order by the second key using
-        // NumericComparer's rules (NaN first, +-0 equal, ascending; descending = exact negation), with
-        // originalPosition as the final tie-break. Each double maps to an order-preserving ulong
-        // (NaN -> 0, -0 normalised to +0, IEEE sign-flip trick; descending = bitwise complement), so
-        // the per-run sorts are primitive-key Array.Sort calls with no comparator dispatch. The result
-        // is byte-identical to Array.Sort + SortComparer. Any unmet condition (other comparer kinds,
-        // a non-double/non-null second key, an astral/StringView first-key rep) returns false and
-        // leaves the general Array.Sort path to run.
-        private bool TryTwoKeyRadixSort()
+        // The length of the prefix all keys of idx[lo, hi) share.
+        private static int CommonPrefix(int[] idx, int lo, int hi, string[] sChars, byte[][] bBytes, int[] koff, int[] klen)
         {
-            if (comparators.Length != 2 || !(comparators[0] is CodepointCollatingComparer) || count < RadixMinCount)
+            if (hi - lo < 2)
+            {
+                return 0;
+            }
+
+            int e0 = idx[lo];
+            int l = klen[e0];
+            for (int i = lo + 1; i < hi && l > 0; i++)
+            {
+                Core.Controller.CheckActiveTimeout();   // each key is compared over the whole prefix
+                int e = idx[i];
+                l = Math.Min(l, klen[e]);
+                int t = 0;
+                while (t < l && CharAt(e, t, sChars, bBytes, koff, klen) == CharAt(e0, t, sChars, bBytes, koff, klen))
+                {
+                    t++;
+                }
+
+                l = t;
+            }
+
+            return l;
+        }
+
+        // Any number of keys, each a number (data-type="number", xs:double, xs:decimal) or a string under the codepoint
+        // collation: each key becomes once a ulong in the comparer's order (a decimal exactly, a string its rank), and an
+        // index array sorts on those, key by key within the runs of equal earlier keys, ties by index (= original order). A
+        // first key that is an ascending string is ordered by the radix sort itself. The comparator chain cost ~100 ns a
+        // comparison; anything else returns false. One path for every shape: the one-string, string-and-number and
+        // one-number sorts had a copy each.
+        private bool TryOrdinalSort()
+        {
+            if (count < RadixMinCount)
             {
                 return false;
             }
 
-            IAtomicComparer second = comparators[1];
-            bool descending2 = false;
-            if (second is DescendingComparer dc)
+            bool radixFirst = comparators[0] is CodepointCollatingComparer;
+            ulong[][] cols = new ulong[comparators.Length][];   // each key of each item, by item
+            for (int c = radixFirst ? 1 : 0; c < cols.Length; c++)
             {
-                descending2 = true;
-                second = dc.BaseComparer;
+                cols[c] = OrdinalColumn(c);
+                if (cols[c] == null)
+                {
+                    return false;
+                }
             }
 
-            // NumericComparer11 (data-type="number") differs from NumericComparer only in its
-            // string-to-double converter, and string second keys bail below — so both are safe here.
-            if (second == null || (second.GetType() != typeof(NumericComparer) && second.GetType() != typeof(NumericComparer11)))
+            int[] idx;
+            ulong[] buf = null;   // one key by place, for the Array.Sort at hand
+            if (radixFirst)
             {
-                return false;
+                // stable: the order itself for one key; the ranks show the runs of equal strings to the next
+                cols[0] = cols.Length > 1 ? new ulong[count] : null;
+                idx = StringOrder(0, cols[0]);
+                if (idx == null)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                idx = new int[count];
+                for (int e = 0; e < count; e++)
+                {
+                    idx[e] = e;
+                }
+
+                buf = cols.Length > 1 ? (ulong[])cols[0].Clone() : cols[0];
+                Array.Sort(buf, idx);
+                RestoreTies(idx, buf, 0, count);
             }
 
+            if (cols.Length > 1)
+            {
+                SortRuns(idx, 0, count, cols, 1, buf ?? new ulong[count]);
+            }
+
+            ObjectToBeSorted[] sorted = new ObjectToBeSorted[count];
+            for (int r = 0; r < count; r++)
+            {
+                sorted[r] = values[idx[r]];
+            }
+
+            values = sorted;
+            return true;
+        }
+
+        // Each run of items equal on key c - 1 in idx[lo, hi), in original order, sorted on key c and the keys after it,
+        // ties in original order. A run of the previous key is one whatever order its items take, so the runs are read
+        // through idx while buf, by place, holds key c for one Array.Sort at a time.
+        private static void SortRuns(int[] idx, int lo, int hi, ulong[][] cols, int c, ulong[] buf)
+        {
+            ulong[] prev = cols[c - 1];
+            ulong[] col = cols[c];
+            int runStart = lo;
+            for (int i = lo + 1; i <= hi; i++)
+            {
+                if (i == hi || prev[idx[i]] != prev[idx[i - 1]])
+                {
+                    if (i - runStart > 1)
+                    {
+                        Core.Controller.CheckActiveTimeout();
+                        for (int r = runStart; r < i; r++)
+                        {
+                            buf[r] = col[idx[r]];
+                        }
+
+                        Array.Sort(buf, idx, runStart, i - runStart);
+                        RestoreTies(idx, buf, runStart, i);
+                        if (c + 1 < cols.Length)
+                        {
+                            SortRuns(idx, runStart, i, cols, c + 1, buf);
+                        }
+                    }
+
+                    runStart = i;
+                }
+            }
+        }
+
+        // Array.Sort is not stable: the items of each run of equal keys in idx[lo, hi) go back to original order.
+        private static void RestoreTies(int[] idx, ulong[] keys, int lo, int hi)
+        {
+            int tieStart = lo;
+            for (int i = lo + 1; i <= hi; i++)
+            {
+                if (i == hi || keys[i] != keys[i - 1])
+                {
+                    if (i - tieStart > 1)
+                    {
+                        Array.Sort(idx, tieStart, i - tieStart);
+                    }
+
+                    tieStart = i;
+                }
+            }
+        }
+
+        // Key c of each item as a ulong in the order of comparator c, descending folded in; null for another comparer or
+        // a key it does not map.
+        private ulong[] OrdinalColumn(int c)
+        {
+            IAtomicComparer comp = comparators[c];
+            bool descending = false;
+            if (comp is DescendingComparer dc)
+            {
+                descending = true;
+                comp = dc.BaseComparer;
+            }
+
+            System.Type type = comp?.GetType();
+            ulong[] col;
+            if (type == typeof(CodepointCollatingComparer))
+            {
+                col = StringRanks(c);
+            }
+            else if (type == typeof(DecimalSortComparer))
+            {
+                col = DecimalOrdinals(c);
+            }
+            else if (type == typeof(DoubleSortComparer))
+            {
+                col = DoubleOrdinals(c);
+            }
+            else if (type == typeof(NumericComparer) || type == typeof(NumericComparer11))
+            {
+                var numeric = (NumericComparer)comp;
+                col = new ulong[count];
+                for (int e = 0; e < count; e++)
+                {
+                    col[e] = MapDoubleToOrdinal(numeric.ToDouble(KeyOf(e, c)), false);
+                }
+            }
+            else
+            {
+                return null;
+            }
+
+            if (col != null && descending)
+            {
+                for (int e = 0; e < count; e++)
+                {
+                    col[e] = ~col[e];
+                }
+            }
+
+            return col;
+        }
+
+        private AtomicValue KeyOf(int e, int c)
+        {
+            ObjectToBeSorted obj = values[e];
+            return obj.sortKeyValues == null ? obj.key0 : obj.sortKeyValues[c];
+        }
+
+        // DoubleSortComparer: the empty key first, then NaN, then the numbers (the zeros equal). xs:double and xs:float only.
+        private ulong[] DoubleOrdinals(int c)
+        {
+            var col = new ulong[count];
+            for (int e = 0; e < count; e++)
+            {
+                AtomicValue k = KeyOf(e, c);
+                if (k == null)
+                {
+                    col[e] = 0;
+                }
+                else if (k is DoubleValue || k is FloatValue)
+                {
+                    double d = ((NumericValue)k).GetDoubleValue();
+                    col[e] = double.IsNaN(d) ? 1 : MapDoubleToOrdinal(d, false);
+                }
+                else
+                {
+                    return null;
+                }
+            }
+
+            return col;
+        }
+
+        // DecimalSortComparer: the empty key first, then the exact value. Each decimal is scaled to the column's largest
+        // scale as a long under 2^62; a larger value, a negative scale or another type returns null.
+        private ulong[] DecimalOrdinals(int c)
+        {
+            var unscaled = new long[count];
+            var scales = new int[count];
+            var col = new ulong[count];
+            int maxScale = 0;
+            for (int e = 0; e < count; e++)
+            {
+                AtomicValue k = KeyOf(e, c);
+                if (k == null)
+                {
+                    scales[e] = -1;
+                    continue;
+                }
+
+                long u;
+                int s;
+                if (k is Int64Value i)
+                {
+                    u = i.LongValue();
+                    s = 0;
+                }
+                else if (!(k is BigDecimalValue bd) || !bd.GetDecimalValue().TryGetCompactParts(out u, out s) || s < 0 || s > 18)
+                {
+                    return null;
+                }
+
+                unscaled[e] = u;
+                scales[e] = s;
+                maxScale = Math.Max(maxScale, s);
+            }
+
+            const long Limit = (1L << 62) - 1;
+            for (int e = 0; e < count; e++)
+            {
+                if (scales[e] < 0)
+                {
+                    col[e] = 0;
+                    continue;
+                }
+
+                long p = Powers10[maxScale - scales[e]];
+                long u = unscaled[e];
+                if (u > Limit / p || u < -Limit / p)
+                {
+                    return null;
+                }
+
+                col[e] = (ulong)(u * p + (1L << 62)) + 1;
+            }
+
+            return col;
+        }
+
+        private static readonly long[] Powers10 =
+        {
+            1L, 10L, 100L, 1000L, 10000L, 100000L, 1000000L, 10000000L, 100000000L, 1000000000L, 10000000000L,
+            100000000000L, 1000000000000L, 10000000000000L, 100000000000000L, 1000000000000000L, 10000000000000000L,
+            100000000000000000L, 1000000000000000000L
+        };
+
+        // CodepointCollatingComparer: each key's rank among the distinct keys, the empty key first, from the radix sort.
+        private ulong[] StringRanks(int c)
+        {
+            var col = new ulong[count];
+            return StringOrder(c, col) == null ? null : col;
+        }
+
+        // The items by string key c under the codepoint collation (the radix sort), the empty key first and ties in
+        // original order; ranks, unless null, gets each item's rank among the distinct keys. Null for a key the radix
+        // sort does not read flat: another type, or a representation that may hold surrogates.
+        private int[] StringOrder(int c, ulong[] ranks)
+        {
             string[] sChars = new string[count];
             byte[][] bBytes = new byte[count][];
             int[] koff = new int[count];
             int[] klen = new int[count];
-            ulong[] k2 = new ulong[count];
             int nullCount = 0;
             for (int e = 0; e < count; e++)
             {
-                AtomicValue k = values[e].sortKeyValues[0];
+                AtomicValue k = KeyOf(e, c);
                 if (k == null)
                 {
                     klen[e] = -1;
                     nullCount++;
                 }
-                else if (!(k is StringValue sv))
+                else if (!(k is StringValue sv) || !KeySpan(sv, e, sChars, bBytes, koff, klen))
                 {
-                    return false;   // non-string key: let Array.Sort raise the type error
+                    return null;
                 }
-                else
-                {
-                    if (!KeySpan(sv, e, sChars, bBytes, koff, klen))
-                    {
-                        return false;   // StringView (may hold surrogates) / Twine16 / Twine24 / composite
-                    }
-                }
-
-                AtomicValue v2 = values[e].sortKeyValues[1];
-                double d;
-                if (v2 == null)
-                {
-                    d = double.NaN;   // NumericComparer: null compares as NaN
-                }
-                else if (v2 is DoubleValue dv)
-                {
-                    d = dv.GetDoubleValue();
-                }
-                else
-                {
-                    return false;     // non-double second key: general path
-                }
-
-                k2[e] = MapDoubleToOrdinal(d, descending2);
             }
 
-            // Index array: null first keys sort before every string (CompareAtomicValues(null, x) < 0),
-            // forming one equal run like any other; the radix pass covers the non-null tail.
             int[] idx = new int[count];
             int p = 0;
-            if (nullCount > 0)
+            for (int e = 0; e < count && p < nullCount; e++)
             {
-                for (int e = 0; e < count; e++)
+                if (klen[e] == -1)
                 {
-                    if (klen[e] == -1)
-                    {
-                        idx[p++] = e;
-                    }
+                    idx[p++] = e;
                 }
             }
 
@@ -583,125 +766,26 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 }
             }
 
-            RadixSort(idx, nonNullStart, count, sChars, bBytes, koff, klen);
-
-            // Order each run of equal first keys by the mapped second key; exact ties revert to
-            // ascending element index == originalPosition (the radix pass is stable by index, but
-            // Array.Sort over the ulong keys is not, so equal-key spans are re-sorted by index).
-            ulong[] keybuf = new ulong[count];
-            int runStart = 0;
-            for (int i = 1; i <= count; i++)
+            if (!TryPrefix8Sort(idx, nonNullStart, count, sChars, bBytes, koff, klen))
             {
-                if (i == count || !FirstKeyEqual(idx[i - 1], idx[i], sChars, bBytes, koff, klen))
+                RadixSort(idx, nonNullStart, count, sChars, bBytes, koff, klen, 0);
+            }
+
+            if (ranks != null)
+            {
+                ulong rank = 0;
+                for (int i = 0; i < count; i++)
                 {
-                    if (i - runStart > 1)
+                    if (i > 0 && !FirstKeyEqual(idx[i - 1], idx[i], sChars, bBytes, koff, klen))
                     {
-                        for (int r = runStart; r < i; r++)
-                        {
-                            keybuf[r] = k2[idx[r]];
-                        }
-
-                        Array.Sort(keybuf, idx, runStart, i - runStart);
-                        int tieStart = runStart;
-                        for (int r = runStart + 1; r <= i; r++)
-                        {
-                            if (r == i || keybuf[r] != keybuf[r - 1])
-                            {
-                                if (r - tieStart > 1)
-                                {
-                                    Array.Sort(idx, tieStart, r - tieStart);
-                                }
-
-                                tieStart = r;
-                            }
-                        }
+                        rank++;
                     }
 
-                    runStart = i;
+                    ranks[idx[i]] = rank;
                 }
             }
 
-            ObjectToBeSorted[] sorted = new ObjectToBeSorted[count];
-            for (int r = 0; r < count; r++)
-            {
-                sorted[r] = values[idx[r]];
-            }
-
-            values = sorted;
-            return true;
-        }
-
-        // Single numeric key under NumericComparer(11) (data-type="number", optionally descending):
-        // the same order-preserving ulong mapping as the two-key path, applied to the whole array —
-        // one primitive-key Array.Sort plus the index tie-fix, no comparator dispatch. Result is
-        // byte-identical to Array.Sort + SortComparer; any unmet condition falls back.
-        private bool TrySingleDoubleKeySort()
-        {
-            if (comparators.Length != 1 || count < RadixMinCount)
-            {
-                return false;
-            }
-
-            IAtomicComparer comp = comparators[0];
-            bool descending = false;
-            if (comp is DescendingComparer dc)
-            {
-                descending = true;
-                comp = dc.BaseComparer;
-            }
-
-            if (comp == null || (comp.GetType() != typeof(NumericComparer) && comp.GetType() != typeof(NumericComparer11)))
-            {
-                return false;
-            }
-
-            ulong[] keys = new ulong[count];
-            int[] idx = new int[count];
-            for (int e = 0; e < count; e++)
-            {
-                ObjectToBeSorted obj = values[e];
-                AtomicValue k = obj.sortKeyValues == null ? obj.key0 : obj.sortKeyValues[0];
-                double d;
-                if (k == null)
-                {
-                    d = double.NaN;   // NumericComparer: null compares as NaN
-                }
-                else if (k is DoubleValue dv)
-                {
-                    d = dv.GetDoubleValue();
-                }
-                else
-                {
-                    return false;     // non-double key (string conversion etc.): general path
-                }
-
-                keys[e] = MapDoubleToOrdinal(d, descending);
-                idx[e] = e;
-            }
-
-            Array.Sort(keys, idx);
-            int tieStart = 0;
-            for (int i = 1; i <= count; i++)
-            {
-                if (i == count || keys[i] != keys[i - 1])
-                {
-                    if (i - tieStart > 1)
-                    {
-                        Array.Sort(idx, tieStart, i - tieStart);
-                    }
-
-                    tieStart = i;
-                }
-            }
-
-            ObjectToBeSorted[] sorted = new ObjectToBeSorted[count];
-            for (int r = 0; r < count; r++)
-            {
-                sorted[r] = values[idx[r]];
-            }
-
-            values = sorted;
-            return true;
+            return idx;
         }
 
         private static ulong MapDoubleToOrdinal(double d, bool descending)
@@ -808,6 +892,9 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
                 for (; ; )
                 {
+                    // A pass per depth over the run: keys sharing a long prefix (substrings of one big string) cost n x
+                    // its length, so the clock is read per pass.
+                    Core.Controller.CheckActiveTimeout();
                     if (hi - lo <= RadixInsertionCutoff)
                     {
                         if (hi - lo > 1)
@@ -919,6 +1006,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
                 for (; ; )
                 {
+                    Core.Controller.CheckActiveTimeout();   // a pass per depth, as RadixSort
                     int n = hi - lo;
                     if (n <= RadixInsertionCutoff)
                     {
@@ -1092,6 +1180,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
         public virtual void Dispose() { }
 
+        // Items by the ordinal columns after the first, then by index (== originalPosition).
         private sealed class SortComparer : IComparer<ObjectToBeSorted>
         {
             private readonly IAtomicComparer[] comparators;
@@ -1147,8 +1236,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
                 }
 
 
-                // all sort keys equal: return the items in their original order
-                // TODO: unnecessary, we are now using a stable sort routine
+                // all sort keys equal: the original order decides, as the sort routines are not all stable
                 return a.originalPosition - b.originalPosition;
             }
         }

@@ -95,7 +95,6 @@ namespace OutSmart.DAXon.Xslt
                 else
                 {
 
-                    //                DocumentImpl includedDoc = (DocumentImpl)map.get(key);
                     DocumentImpl includedDoc = targetDoc;
                     ElementImpl outermost = includedDoc.DocumentElement;
                     if (outermost is LiteralResultElement)
@@ -140,20 +139,18 @@ namespace OutSmart.DAXon.Xslt
                 importer.InputTypeAnnotations = includedSheet.InputTypeAnnotationsAttribute | incModule.InputTypeAnnotations;
                 return incModule;
             }
-            catch (XPathException err)
+            catch (XPathException err) when (!err.IsRunLimit())
             {
                 CompileError(err.WithErrorCode("XTSE0165").AsStaticError());
                 return null;
             }
         }
 
-        /*&& !incSheet.forwardsCompatibleModeIsEnabled()*/
         public virtual void SetTargetDocument(DocumentImpl doc)
         {
             this.targetDoc = doc;
         }
 
-        /*&& !incSheet.forwardsCompatibleModeIsEnabled()*/
         private bool CheckForRecursion(StylesheetModule importer, NodeInfo source)
         {
             StylesheetModule anc = importer;
@@ -174,7 +171,6 @@ namespace OutSmart.DAXon.Xslt
             return false;
         }
 
-        /*&& !incSheet.forwardsCompatibleModeIsEnabled()*/
         public override void CompileDeclaration(Compilation compilation, ComponentDeclaration decl)
         {
         }

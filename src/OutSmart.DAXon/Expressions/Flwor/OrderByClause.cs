@@ -74,7 +74,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
         public override void ProcessOperands(IOperandProcessor processor)
         {
             processor.ProcessOperand(tupleOp);
-            processor.ProcessOperand(sortKeysOp); //        for (SortKeyDefinition sortKey : sortKeys) {
+            processor.ProcessOperand(sortKeysOp);
         }
 
         public override void TypeCheck(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
@@ -121,16 +121,6 @@ namespace OutSmart.DAXon.Expressions.Flwor
                 }
 
                 i++;
-            }
-        }
-
-        public override void AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            SortKeyDefinitionList sortKeys = SortKeyDefinitions;
-            foreach (SortKeyDefinition skd in sortKeys)
-            {
-                Expression sortKey = skd.SortKey;
-                sortKey.AddToPathMap(pathMap, pathMapNodeSet);
             }
         }
 

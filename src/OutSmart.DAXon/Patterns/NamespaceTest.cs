@@ -114,7 +114,7 @@ namespace OutSmart.DAXon.Patterns
                 return explanation;
             }
 
-            return ("The node @is in the wrong namespace");
+            return ("The node is in the wrong namespace");
         }
     }
 }

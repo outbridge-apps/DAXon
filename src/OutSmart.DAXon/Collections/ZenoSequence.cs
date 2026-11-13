@@ -152,7 +152,6 @@ namespace OutSmart.DAXon.Collections.Zeno
             }
         }
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public bool EffectiveBooleanValue() => OutSmart.DAXon.Expressions.Parsing.ExpressionTool.EffectiveBooleanValue(Iterate()); // upstream GroundedValue default
         public IGroundedValue Reduce() => this;
         // A ZenoSequence is already a GroundedValue, so materialize()/reduce() return itself
@@ -161,15 +160,8 @@ namespace OutSmart.DAXon.Collections.Zeno
         public IGroundedValue Materialize() => this;
         public string ToShortString() => OutSmart.DAXon.Transformation.Err.DepictSequence(this); // upstream GroundedValue default
         public IEnumerable<IItem> AsIterable() { ISequenceIterator it = Iterate(); IItem i; while ((i = it.Next()) != null) yield return i; } // upstream GroundedValue.asIterable
-        public bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
-        public IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public bool ContainsNode(NodeInfo sought) => GroundedValueDefaults.ContainsNode(this, sought);
+        public IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         // A ZenoSequence is an immutable grounded value (Materialize() => this), so it is already
         // repeatable — matches AtomicValue/EmptySequence/IntegerRange. Was a hollow stub that threw when a
         // `let $x := <zeno-seq>` binding is read more than once (XPathContextMinor.SetLocalVariable).

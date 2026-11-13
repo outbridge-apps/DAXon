@@ -6,6 +6,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Transformation;
+using System;
 namespace OutSmart.DAXon.Api
 {
     public class BuildingStreamWriterImpl : StreamWriterToReceiver
@@ -20,16 +21,17 @@ namespace OutSmart.DAXon.Api
                 {
                     builder.Close();
                 }
-                catch (XPathException e)
+                catch (Exception e) when (ApiErrors.IsEngineError(e))
                 {
-                    throw new DAXonApiException(e);
+                    throw ApiErrors.Wrap(e);
                 }
 
                 return new XdmNode(builder.CurrentRoot);
             }
         }
-        public BuildingStreamWriterImpl(IReceiver receiver, Builder builder) : base(receiver)
+        public BuildingStreamWriterImpl(IReceiver receiver, Builder builder) : base(ArgumentCheck.Checked(receiver, nameof(receiver)))
         {
+            ArgumentCheck.NotNull(builder, nameof(builder));
             this.builder = builder;
             builder.Open();
         }

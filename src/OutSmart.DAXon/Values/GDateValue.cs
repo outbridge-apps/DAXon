@@ -90,280 +90,16 @@ namespace OutSmart.DAXon.Values
         protected static void SetLexicalValue(MutableGDateValue m, UnicodeString s, bool allowYearZero)
         {
             m.hasNoYearZero = !allowYearZero;
-            StringTokenizer tok = new StringTokenizer(Whitespace.Trim(s).ToString(), "-:+TZ", true);
-            try
+            DateTimeLex tok = new DateTimeLex(Whitespace.Trim(s));
+            string wrong = tok.ReadDate(allowYearZero, out m.year, out m.month, out m.day, out bool yearRange)
+                ?? tok.ReadTail(false, false, out _, out m.tzMinutes);
+            if (wrong != null)
             {
-                if (!tok.HasMoreTokens())
-                {
-                    m.error = BadDate("Too short", s);
-                    return;
-                }
-
-                string part = tok.NextToken();
-                int era = +1;
-                if (part == "+")
-                {
-                    m.error = BadDate("Date must not start with '+' sign", s);
-                    return;
-                }
-                else if (part == "-")
-                {
-                    era = -1;
-                    if (!tok.HasMoreTokens())
-                    {
-                        m.error = BadDate("No year after '-'", s);
-                        return;
-                    }
-
-                    part = (string)tok.NextToken();
-                }
-
-                if (part.Length < 4)
-                {
-                    m.error = BadDate("Year is less than four digits", s);
-                    return;
-                }
-
-                if (part.Length > 4 && part[0] == '0')
-                {
-                    m.error = BadDate("When year exceeds 4 digits, leading zeroes are not allowed", s);
-                    return;
-                }
-
-                int value = DurationValue.SimpleInteger(part);
-                if (value < 0)
-                {
-                    if (value == -1)
-                    {
-                        m.error = BadDate("Non-numeric year component", s);
-                    }
-                    else
-                    {
-                        m.error = BadDate("Year is outside the range that Saxon can handle", s, "FODT0001");
-                    }
-
-                    return;
-                }
-
-                m.year = value * era;
-                if (m.year == 0 && !allowYearZero)
-                {
-                    m.error = BadDate("Year zero is not allowed", s);
-                    return;
-                }
-
-                if (era < 0 && !allowYearZero)
-                {
-                    m.year++; // if year zero not allowed, -0001 is the year before +0001, represented as 0 internally.
-                }
-
-                if (!tok.HasMoreTokens())
-                {
-                    m.error = BadDate("Too short", s);
-                    return;
-                }
-
-                if (tok.NextToken() != "-")
-                {
-                    m.error = BadDate("Wrong delimiter after year", s);
-                    return;
-                }
-
-                if (!tok.HasMoreTokens())
-                {
-                    m.error = BadDate("Too short", s);
-                    return;
-                }
-
-                part = tok.NextToken();
-                if (part.Length != 2)
-                {
-                    m.error = BadDate("Month must be two digits", s);
-                    return;
-                }
-
-                value = DurationValue.SimpleInteger(part);
-                if (value < 0)
-                {
-                    m.error = BadDate("Non-numeric month component", s);
-                    return;
-                }
-
-                m.month = (byte)value;
-                if (m.month < 1 || m.month > 12)
-                {
-                    m.error = BadDate("Month is out of range", s);
-                    return;
-                }
-
-                if (!tok.HasMoreTokens())
-                {
-                    m.error = BadDate("Too short", s);
-                    return;
-                }
-
-                if (tok.NextToken() != "-")
-                {
-                    m.error = BadDate("Wrong delimiter after month", s);
-                    return;
-                }
-
-                if (!tok.HasMoreTokens())
-                {
-                    m.error = BadDate("Too short", s);
-                    return;
-                }
-
-                part = (string)tok.NextToken();
-                if (part.Length != 2)
-                {
-                    m.error = BadDate("Day must be two digits", s);
-                    return;
-                }
-
-                value = DurationValue.SimpleInteger(part);
-                if (value < 0)
-                {
-                    m.error = BadDate("Non-numeric day component", s);
-                    return;
-                }
-
-                m.day = (byte)value;
-                if (m.day < 1 || m.day > 31)
-                {
-                    m.error = BadDate("Day is out of range", s);
-                    return;
-                }
-
-                ParseGDateTimezone(m, tok, s);
-                if (m.error != null)
-                {
-                    return;
-                }
-
-                if (!IsValidDate(m.year, m.month, m.day))
-                {
-                    m.error = BadDate("Non-existent date", s);
-                }
+                m.error = BadDate(wrong, s, yearRange ? "FODT0001" : "FORG0001");
             }
-            catch (FormatException)
+            else if (!IsValidDate(m.year, m.month, m.day))
             {
-                m.error = BadDate("Non-numeric component", s);
-            }
-        }
-
-        // Parse the optional timezone tail of a g-date value into m. Reports failure via m.error.
-        private static void ParseGDateTimezone(MutableGDateValue m, StringTokenizer tok, UnicodeString s)
-        {
-            string part;
-            int value;
-            int tzOffset;
-            if (tok.HasMoreTokens())
-            {
-                string delim = tok.NextToken();
-                if (delim == "T")
-                {
-                    m.error = BadDate("Value includes time", s);
-                    return;
-                }
-                else if (delim == "Z")
-                {
-                    tzOffset = 0;
-                    if (tok.HasMoreTokens())
-                    {
-                        m.error = BadDate("Continues after 'Z'", s);
-                        return;
-                    }
-
-                    m.tzMinutes = tzOffset;
-                }
-                else if (!(delim != "+" && delim != "-"))
-                {
-                    if (!tok.HasMoreTokens())
-                    {
-                        m.error = BadDate("Missing timezone", s);
-                        return;
-                    }
-
-                    part = (string)tok.NextToken();
-                    value = DurationValue.SimpleInteger(part);
-                    if (value < 0)
-                    {
-                        m.error = BadDate("Non-numeric timezone hour component", s);
-                        return;
-                    }
-
-                    int tzhour = value;
-                    if (part.Length != 2)
-                    {
-                        m.error = BadDate("Timezone hour must be two digits", s);
-                        return;
-                    }
-
-                    if (tzhour > 14)
-                    {
-                        m.error = BadDate("Timezone hour is out of range", s);
-                        return;
-                    }
-
-                    if (!tok.HasMoreTokens())
-                    {
-                        m.error = BadDate("No minutes in timezone", s);
-                        return;
-                    }
-
-                    if (tok.NextToken() != ":")
-                    {
-                        m.error = BadDate("Wrong delimiter after timezone hour", s);
-                        return;
-                    }
-
-                    if (!tok.HasMoreTokens())
-                    {
-                        m.error = BadDate("No minutes in timezone", s);
-                        return;
-                    }
-
-                    part = (string)tok.NextToken();
-                    value = DurationValue.SimpleInteger(part);
-                    if (value < 0)
-                    {
-                        m.error = BadDate("Non-numeric timezone minute component", s);
-                        return;
-                    }
-
-                    int tzminute = value;
-                    if (part.Length != 2)
-                    {
-                        m.error = BadDate("Timezone minute must be two digits", s);
-                        return;
-                    }
-
-                    if (tzminute > 59)
-                    {
-                        m.error = BadDate("Timezone minute is out of range", s);
-                        return;
-                    }
-
-                    if (tok.HasMoreTokens())
-                    {
-                        m.error = BadDate("Continues after timezone", s);
-                        return;
-                    }
-
-                    tzOffset = tzhour * 60 + tzminute;
-                    if (delim == "-")
-                    {
-                        tzOffset = -tzOffset;
-                    }
-
-                    m.tzMinutes = tzOffset;
-                }
-                else
-                {
-                    m.error = BadDate("Timezone format is incorrect", s);
-                    return;
-                }
+                m.error = BadDate("Non-existent date", s);
             }
         }
 
@@ -389,14 +125,6 @@ namespace OutSmart.DAXon.Values
         public static bool IsLeapYear(int year)
         {
             return (year % 4 == 0) && !(year % 100 == 0 && !(year % 400 == 0));
-        }
-
-        public override void CheckValidInJavascript()
-        {
-            if (year <= 0 || year > 9999)
-            {
-                throw new XPathException("Year out of range for SaxonJS", "FODT0001");
-            }
         }
 
         public override bool Equals(object o)
@@ -431,7 +159,7 @@ namespace OutSmart.DAXon.Values
                 // both values are in the same timezone (explicitly or implicitly)
                 if (year != v2.year)
                 {
-                    return IntegerValue.Signum(year - v2.year);
+                    return year.CompareTo(v2.year);   // not year - v2.year: it overflowed across +-2^31 and compared the wrong way
                 }
 
                 if (month != v2.month)

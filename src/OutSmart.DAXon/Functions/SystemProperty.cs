@@ -4,9 +4,6 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//import com.saxonica.functions.extfn.EXPathArchive.Archive;
-//import com.saxonica.functions.extfn.EXPathBinaryFunctionSet;
-//import com.saxonica.functions.extfn.EXPathFileFunctionSet;
 using OutSmart.DAXon.Core;
 using OutSmart.DAXon.Expressions;
 using OutSmart.DAXon.Expressions.Parsing;
@@ -48,7 +45,7 @@ namespace OutSmart.DAXon.Functions
             return null;
         }
 
-        public override ISequence Call(IXPathContext context, ISequence[] arguments) /*Java covariant StringValue widened (C# 7.3)*/
+        public override ISequence Call(IXPathContext context, ISequence[] arguments)
         {
             string name = arguments[0].Head().GetStringValue();
             try

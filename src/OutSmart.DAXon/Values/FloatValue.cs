@@ -23,10 +23,8 @@ namespace OutSmart.DAXon.Values
 
         public override BuiltInAtomicType PrimitiveType => BuiltInAtomicType.FLOAT;
 
-        //    }
         public override UnicodeString PrimitiveStringValue => FloatToString(value);
 
-        //    }
         public override UnicodeString CanonicalLexicalRepresentation
         {
             get
@@ -60,8 +58,7 @@ namespace OutSmart.DAXon.Values
             return value;
         }
 
-        public override //@CSharpReplaceBody(code="return Singulink.Numerics.BigDecimal.Parse(value.ToString(System.Globalization.CultureInfo.InvariantCulture));")
-        BigDecimal GetDecimalValue()
+        public override BigDecimal GetDecimalValue()
         {
             try
             {
@@ -100,13 +97,11 @@ namespace OutSmart.DAXon.Values
             return (value != 0 && !float.IsNaN(value));
         }
 
-        //    }
         public static UnicodeString FloatToString(float value)
         {
             return FloatingPointConverter.AppendFloat(new UnicodeBuilder(), value, false);
         }
 
-        //    }
         /// <summary>
         /// Negate the value
         /// </summary>
@@ -115,7 +110,6 @@ namespace OutSmart.DAXon.Values
             return new FloatValue(-value);
         }
 
-        //    }
         /// <summary>
         /// Implement the XPath floor() function
         /// </summary>
@@ -124,52 +118,29 @@ namespace OutSmart.DAXon.Values
             return new FloatValue((float)Math.Floor(value));
         }
 
-        //    }
         /// <summary>
         /// Implement the XPath ceiling() function
         /// </summary>
         public override NumericValue Ceiling()
         {
-            return new FloatValue((float)Math.Ceiling(value));
+            // -0 for -1 < value < 0, as Java's Math.ceil and DoubleValue.Ceiling.
+            float c = (float)Math.Ceiling(value);
+            if (c == 0.0f && value < 0.0f)
+            {
+                c = -0.0f;
+            }
+
+            return new FloatValue(c);
         }
 
-        //    }
         /// <summary>
         /// Implement the XPath round() function
         /// </summary>
         public override NumericValue Round(int scale)
         {
-            if (float.IsNaN(value))
-            {
-                return this;
-            }
-
-            if (float.IsInfinity(value))
-            {
-                return this;
-            }
-
-            if (value == 0)
-            {
-                return this; // handles the negative zero case
-            }
-
-            if (scale == 0 && value > int.MinValue && value < int.MaxValue)
-            {
-                if (value >= -0.5 && value < 0)
-                {
-                    return new FloatValue(-0F);
-                }
-
-                return new FloatValue((float)JavaMath.Round(value));
-            }
-
-            DoubleValue d = new DoubleValue(GetDoubleValue());
-            d = (DoubleValue)d.Round(scale);
-            return new FloatValue(d.GetFloatValue());
+            return Round(scale, Functions.Round.RoundingRule.HALF_TO_CEILING);
         }
 
-        //    }
         public override NumericValue Round(int scale, Round.RoundingRule roundingRule)
         {
             DoubleValue d = new DoubleValue(GetDoubleValue());
@@ -177,7 +148,6 @@ namespace OutSmart.DAXon.Values
             return new FloatValue(d.GetFloatValue());
         }
 
-        //    }
         public override int Signum()
         {
             if (float.IsNaN(value))
@@ -188,19 +158,16 @@ namespace OutSmart.DAXon.Values
             return CompareTo(0);
         }
 
-        //    }
         public override bool IsNegativeZero()
         {
             return value == 0 && (FloatingPointConverter.SingleToInt32Bits(value) & FloatingPointConverter.FLOAT_SIGN_MASK) != 0;
         }
 
-        //    }
         public override bool IsWholeNumber()
         {
             return value == Math.Floor(value) && !float.IsInfinity(value);
         }
 
-        //    }
         public override int AsSubscript()
         {
             if (IsWholeNumber() && value > 0 && value < 2147483648f)   // int.MaxValue as a float is 2^31, one past the range
@@ -213,7 +180,6 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override NumericValue Abs()
         {
             if (value > 0)
@@ -226,7 +192,6 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override int CompareTo(IXPathComparable other)
         {
             if (other is NumericValue)
@@ -263,7 +228,6 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override int CompareTo(long other)
         {
             float otherFloat = (float)other;
@@ -275,7 +239,6 @@ namespace OutSmart.DAXon.Values
             return value < otherFloat ? -1 : +1;
         }
 
-        //    }
         public override IAtomicMatchKey AsMapKey()
         {
             if (IsNaN())
@@ -301,13 +264,11 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        //    }
         public override bool IsIdentical(AtomicValue v)
         {
             return v is FloatValue && DoubleSortComparer.GetInstance().ComparesEqual(this, v);
         }
 
-        //    }
         public override AtomicValue AsAtomic()
         {
             return this;

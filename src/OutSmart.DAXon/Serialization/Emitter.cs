@@ -48,15 +48,22 @@ namespace OutSmart.DAXon.Serialization
 
         // A destination that stopped taking the output - a full disk, a closed pipe, a stream of the host's that
         // threw: SXRD0004, naming the destination when it has a name and giving the system's own reason.
-        internal static XPathException WriteFailure(IOException err, string systemId)
+        internal static XPathException WriteFailure(System.Exception err, string systemId)
         {
             return new XPathException("Failure writing to " + (string.IsNullOrEmpty(systemId) ? "the output" : systemId) + ": " + err.Message, err)
                 .WithErrorCode(DAXonErrorCode.SXRD0004);
         }
 
-        private protected XPathException WriteFailure(IOException err)
+        private protected XPathException WriteFailure(System.Exception err)
         {
             return WriteFailure(err, GetSystemId());
+        }
+
+        // What a write to the destination throws when it stops taking the output: an IOException, and from a host's
+        // stream or writer the ObjectDisposedException of a closed one or the NotSupportedException of a read-only one.
+        internal static bool IsWriteFailure(System.Exception e)
+        {
+            return e is IOException || e is System.ObjectDisposedException || e is System.NotSupportedException;
         }
 
         private bool markWritten;
@@ -123,7 +130,7 @@ namespace OutSmart.DAXon.Serialization
                 {
                     writer.Dispose();
                 }
-                catch (IOException e)
+                catch (System.Exception e) when (Emitter.IsWriteFailure(e))
                 {
                     throw WriteFailure(e);
                 }

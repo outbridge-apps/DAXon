@@ -97,7 +97,7 @@ namespace OutSmart.DAXon.Model
                     throw new XPathException("Invalid EQName: local part is missing", errorOnBadSyntax);
                 }
 
-                string uri = Whitespace.CollapseWhitespace(lexicalName.Substring(2, endBrace - 2) /*Java substring(begin,END) -> C# (start,LENGTH)*/);
+                string uri = Whitespace.CollapseWhitespace(lexicalName.Substring(2, endBrace - 2));
                 if (uri.Contains("{"))
                 {
                     throw new XPathException("Invalid EQName: URI contains opening brace", errorOnBadSyntax);

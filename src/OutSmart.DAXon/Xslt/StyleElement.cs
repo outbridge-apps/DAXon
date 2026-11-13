@@ -41,7 +41,7 @@ namespace OutSmart.DAXon.Xslt
         public const int ACTION_FIXUP = 16;
         public const int ACTION_PROCESS_ATTRIBUTES = 32;
 
-        public static readonly string[] YES_NO = new[]
+        internal static readonly string[] YES_NO = new[]
         {
             "0",
             "1",
@@ -894,6 +894,33 @@ namespace OutSmart.DAXon.Xslt
             }
         }
 
+        /// <summary>
+        /// The validation action of an instruction with validation and type attributes, and for type="..." the type it
+        /// names: XTSE1660 for a type with no schema-aware processor, XTSE1505 for the two attributes together.
+        /// </summary>
+        protected int ValidationAction(string validationAtt, string typeAtt, out ISchemaType type)
+        {
+            int validation = validationAtt == null ? DefaultValidation : ValidateValidationAttribute(validationAtt);
+            type = null;
+            if (typeAtt != null)
+            {
+                if (!IsSchemaAware())
+                {
+                    CompileError("The @type attribute is available only with a schema-aware XSLT processor", "XTSE1660");
+                }
+
+                type = GetSchemaType(typeAtt);
+                validation = Validation.BY_TYPE;
+            }
+
+            if (typeAtt != null && validationAtt != null)
+            {
+                CompileError("The @validation and @type attributes are mutually exclusive", "XTSE1505");
+            }
+
+            return validation;
+        }
+
         protected virtual int ValidateValidationAttribute(string value)
         {
             int code = Validation.GetCode(value);
@@ -1321,11 +1348,6 @@ namespace OutSmart.DAXon.Xslt
                 exp = exp.TypeCheck(MakeExpressionVisitor(), config.MakeContextItemStaticInfo(Types.Type.ITEM_TYPE, true));
                 exp = ExpressionTool.ResolveCallsToCurrentFunction(exp);
 
-                //            if (explaining) {
-                //                System.Console.Error.println("Static type: " +
-                //                exp.display(10, getNamePool(), System.Console.Error);
-                //                return injector.inject(exp, getStaticContext(), LocationKind.XPATH_IN_XSLT, new StructuredQName("", "", name));
-                //            }
                 return exp;
             }
             catch (XPathException err)
@@ -1768,10 +1790,6 @@ namespace OutSmart.DAXon.Xslt
                             Expression text = new ValueOf(new StringLiteral(node.UnicodeStringValue), false, false);
                             text.SetLocation(AllocateLocation());
 
-                            //                        if (injector != null) {
-                            //                            Expression tracer = injector.inject(text);
-                            //                            text = tracer;
-                            //                        }
                             contents.Add(text);
                         }
                     }
@@ -1797,12 +1815,8 @@ namespace OutSmart.DAXon.Xslt
                         locationId = ((StyleElement)node).AllocateLocation();
                         let.SetLocation(locationId);
 
-                        //                        TraceExpression t = new TraceExpression(let);
-                        //                        contents.add(t);
-                        //                    } else {
                         contents.Add(let);
 
-                        //                    }
                         if (var.ChangesRetainedStaticContext())
                         {
                             let.SetRetainedStaticContext(MakeRetainedStaticContext());
@@ -2065,6 +2079,11 @@ namespace OutSmart.DAXon.Xslt
 
         public virtual void CompileError(XPathException err)
         {
+            if (err.IsRunLimit())
+            {
+                throw err;   // the time or memory limit ends the compile; it is no error of the stylesheet
+            }
+
             if (err.GetLocator() == null)
             {
                 err.SetLocation(this);

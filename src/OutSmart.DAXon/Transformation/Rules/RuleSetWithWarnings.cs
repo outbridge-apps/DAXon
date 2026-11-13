@@ -32,7 +32,8 @@ namespace OutSmart.DAXon.Transformation.Rules
 
         public void OutputWarning(IItem item, IXPathContext context)
         {
-            string id = item is NodeInfo ? "the node " + Navigator.GetPath((NodeInfo)item) : "the atomic value " + item.UnicodeStringValue;
+            // Depicted as FailRuleSet does: a map, an array or a function item has no string value (FOTY0014 ended the run)
+            string id = item is NodeInfo ? "the node " + Navigator.GetPath((NodeInfo)item) : Err.Depict(item);
             XmlProcessingIncident warning = new XmlProcessingIncident("No user-defined template rule matches " + id, "XTDE0555").AsWarning();
             context.GetController().ErrorReporter.Report(warning);
         }

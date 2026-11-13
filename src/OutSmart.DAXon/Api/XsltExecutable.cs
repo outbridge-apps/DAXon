@@ -15,6 +15,7 @@ using OutSmart.DAXon.Internal.Collections;
 using System.Collections.Generic;
 using OutSmart.DAXon.Internal;
 using System.IO;
+using System;
 namespace OutSmart.DAXon.Api
 {
     public class XsltExecutable
@@ -41,6 +42,8 @@ namespace OutSmart.DAXon.Api
         public virtual PreparedStylesheet UnderlyingCompiledStylesheet => preparedStylesheet;
         public XsltExecutable(Processor processor, PreparedStylesheet preparedStylesheet)
         {
+            ArgumentCheck.NotNull(processor, nameof(processor));
+            ArgumentCheck.NotNull(preparedStylesheet, nameof(preparedStylesheet));
             this.processor = processor;
             this.preparedStylesheet = preparedStylesheet;
         }
@@ -69,19 +72,16 @@ namespace OutSmart.DAXon.Api
 
         public virtual void Explain(IDestination destination)
         {
+            ArgumentCheck.NotNull(destination, nameof(destination));
             Configuration config = processor.UnderlyingConfiguration;
             try
             {
                 IReceiver @out = destination.GetReceiver(config.MakePipelineConfiguration(), config.ObtainDefaultSerializationProperties());
                 preparedStylesheet.Explain(new ExpressionPresenter(config, @out));
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
         }
 
@@ -102,22 +102,13 @@ namespace OutSmart.DAXon.Api
             try
             {
                 StylesheetPackage topLevelPackage = preparedStylesheet.GetTopLevelPackage();
-                if (topLevelPackage.IsJustInTimeCompilation())
-                {
-                    throw new DAXonApiException("Cannot export a stylesheet compiled with just-in-time compilation enabled");
-                }
-
                 ExpressionPresenter presenter = config.NewExpressionExporter(target, destination, topLevelPackage);
                 presenter.GetOptions().relocatable = topLevelPackage.IsRelocatable();
                 topLevelPackage.Export(presenter);
             }
-            catch (XPathException e)
+            catch (Exception e) when (ApiErrors.IsEngineError(e))
             {
-                throw new DAXonApiException(e);
-            }
-            catch (RecursionDepthError e)
-            {
-                throw new DAXonApiException(e.ToXPathException());
+                throw ApiErrors.Wrap(e);
             }
 
             try

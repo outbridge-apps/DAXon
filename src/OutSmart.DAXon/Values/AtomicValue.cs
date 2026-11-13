@@ -186,10 +186,6 @@ namespace OutSmart.DAXon.Values
             }
         }
 
-        public virtual void CheckValidInJavascript()
-        {
-        }
-
         public virtual AtomicValue AsAtomic()
         {
             return this;
@@ -198,7 +194,6 @@ namespace OutSmart.DAXon.Values
         public override string ToString()
         {
             return GetStringValue(); //throw new NotSupportedException();
-            //return typeLabel + "(\"" + getStringValueCS() + "\")";
         }
 
         public virtual string ToShortString()
@@ -231,7 +226,7 @@ namespace OutSmart.DAXon.Values
         IItem IGroundedValue.Head() => Head();
         IItem ISequence.Head() => Head();
         ISequenceIterator ISequence.Iterate() => Iterate();
-        public virtual IGroundedValue Subsequence(int arg0, int arg1) => (arg0 <= 0 && (long)arg0 + arg1 > 0) ? (IGroundedValue)this : OutSmart.DAXon.Values.EmptySequence.GetInstance(); // singleton item (upstream GroundedValue default)
+        public virtual IGroundedValue Subsequence(int arg0, int arg1) => GroundedValueDefaults.Subsequence(this, arg0, arg1);
         public virtual string GetStringValue() => UnicodeStringValue.ToString();
         public IEnumerator<AtomicValue> GetEnumerator() { yield return this; }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
@@ -239,20 +234,12 @@ namespace OutSmart.DAXon.Values
         IItem IItem.ItemAt(int arg0) => ItemAt(arg0);
         SingletonIterator IItem.Iterate() => Iterate();
 
-        // === Auto-generated stubs (StubGenerator Phase 3.1f) ===
         public virtual IGroundedValue Reduce() => this;
         public virtual bool IsStreamed() => false;
         public virtual IGroundedValue Materialize() => this;
         public virtual IEnumerable<IItem> AsIterable() => new IItem[] { this };
-        public virtual bool ContainsNode(NodeInfo sought) => OutSmart.DAXon.Expressions.SingletonIntersectExpression.ContainsNode(((OutSmart.DAXon.Model.ISequence)this).Iterate(), sought); // upstream GroundedValue default
-        public virtual IGroundedValue Concatenate(IGroundedValue[] others)
-        {
-            // upstream GroundedValue default: chain this value's items with the others
-            var __chain = new OutSmart.DAXon.Collections.Zeno.ZenoChain<OutSmart.DAXon.Model.IItem>().AddAll(((OutSmart.DAXon.Model.IGroundedValue)this).AsIterable());
-            foreach (OutSmart.DAXon.Model.IGroundedValue __v in others)
-                __chain = __chain.AddAll(__v.AsIterable());
-            return new OutSmart.DAXon.Collections.Zeno.ZenoSequence(__chain);
-        }
+        public virtual bool ContainsNode(NodeInfo sought) => false; // holds no node
+        public virtual IGroundedValue Concatenate(IGroundedValue[] others) => GroundedValueDefaults.Concatenate(this, others);
         public virtual ISequence MakeRepeatable() => this;
     }
 }

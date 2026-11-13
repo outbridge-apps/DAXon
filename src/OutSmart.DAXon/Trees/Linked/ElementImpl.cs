@@ -511,7 +511,7 @@ namespace OutSmart.DAXon.Trees.Linked
             if (!nodeName.HasURI(NamespaceUri.NULL))
             {
 
-                // The new attribute name @is in a namespace
+                // The new attribute name is in a namespace
                 NamespaceBinding binding = nodeName.GetNamespaceBinding();
                 string prefix = binding.GetPrefix();
                 NamespaceUri uc = GetURIForPrefix(prefix, false);

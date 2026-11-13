@@ -56,7 +56,7 @@ namespace OutSmart.DAXon.Events
                     return; // ignore whitespace outside the outermost element
                 }
 
-                throw new XPathException("A valid document must contain no text outside the outermost element (found \"" + Err.Truncate30(chars.Tidy()) + "\")", errorCode);
+                throw new XPathException("A valid document must contain no text outside the outermost element (found \"" + Err.Truncate30(chars) + "\")", errorCode);
             }
 
             nextReceiver.Characters(chars, locationId, properties);

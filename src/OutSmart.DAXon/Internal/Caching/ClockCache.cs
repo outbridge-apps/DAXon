@@ -32,7 +32,7 @@ namespace OutSmart.DAXon.Internal.Caching
         // workload had long moved on. The hand makes eviction age-ordered (oldest unreferenced
         // under the hand goes first), and a newcomer sits just BEHIND the hand, so it gets one
         // full revolution of grace before it can be considered.
-        private readonly Entry[] _ring;
+        private Entry[] _ring;   // grows to the capacity as it fills: allocated whole, 50M slots held 762 MB empty
         private int _hand;
         private int _filled;
 
@@ -46,9 +46,11 @@ namespace OutSmart.DAXon.Internal.Caching
             }
 
             _capacity = capacity;
-            _ring = new Entry[capacity];
-            _map = new ConcurrentDictionary<TKey, Entry>(Environment.ProcessorCount, capacity);
+            _ring = new Entry[Math.Min(capacity, InitialSlots)];
+            _map = new ConcurrentDictionary<TKey, Entry>(Environment.ProcessorCount, Math.Min(capacity, InitialSlots));
         }
+
+        private const int InitialSlots = 64;
 
         /// <summary>
         /// Returns the cached value for <paramref name="key"/>, computing it via
@@ -141,6 +143,12 @@ namespace OutSmart.DAXon.Internal.Caching
             int slot;
             if (_filled < _capacity)
             {
+                if (_filled == _ring.Length)
+                {
+                    // Full only when the ring has its capacity, so the hand never sweeps a partial ring.
+                    Array.Resize(ref _ring, (int)Math.Min(_capacity, 2L * _ring.Length));
+                }
+
                 slot = _filled++;
             }
             else

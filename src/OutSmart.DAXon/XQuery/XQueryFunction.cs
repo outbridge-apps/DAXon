@@ -283,9 +283,9 @@ namespace OutSmart.DAXon.XQuery
                 // bind all references to this function to the UserFunction object
                 FixupReferences();
             }
-            catch (XPathException e)
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(this)))
             {
-                e.MaybeSetLocation(this);
+                // Decorated in the filter, never handled (XPathException.PassOn).
                 throw;
             }
         }
@@ -323,7 +323,7 @@ namespace OutSmart.DAXon.XQuery
             body.ParentExpression = null;
             if (opt.IsOptionSet(OptimizerOptions.LOOP_LIFTING))
             {
-                body = LoopLifter.Process(body);
+                body = LoopLifter.Process(body, visitor, ContextItemStaticInfo.ABSENT);
             }
 
             if (opt.IsOptionSet(OptimizerOptions.EXTRACT_GLOBALS))
@@ -356,7 +356,6 @@ namespace OutSmart.DAXon.XQuery
             ExpressionTool.AllocateSlots(body, arity, compiledFunction.GetStackFrameMap());
         }
 
-        // module.
         public virtual void FixupReferences()
         {
             foreach (IUserFunctionResolvable ufc in references)
@@ -365,7 +364,6 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        // module.
         public virtual void CheckReferences(ExpressionVisitor visitor)
         {
             foreach (IUserFunctionResolvable ufr in references)
@@ -382,7 +380,6 @@ namespace OutSmart.DAXon.XQuery
             references = new List<IUserFunctionResolvable>(0);
         }
 
-        // module.
         public virtual void Explain(ExpressionPresenter @out)
         {
             @out.StartElement("declareFunction");
@@ -406,55 +403,46 @@ namespace OutSmart.DAXon.XQuery
             @out.EndElement();
         }
 
-        // module.
         public virtual UserFunction GetUserFunction()
         {
             return compiledFunction;
         }
 
-        // module.
         public virtual StructuredQName GetObjectName()
         {
             return functionName;
         }
 
-        // module.
         public virtual string GetSystemId()
         {
             return location.GetSystemId();
         }
 
-        // module.
         public virtual int GetLineNumber()
         {
             return location.GetLineNumber();
         }
 
-        // module.
         public virtual string GetPublicId()
         {
             return null;
         }
 
-        // module.
         public virtual int GetColumnNumber()
         {
             return -1;
         }
 
-        // module.
         public virtual ILocation SaveLocation()
         {
             return this;
         }
 
-        // module.
         public virtual INamespaceResolver GetNamespaceResolver()
         {
             return namespaceResolver;
         }
 
-        // module.
         public virtual object GetProperty(string name)
         {
             if (name == "name")
@@ -471,14 +459,12 @@ namespace OutSmart.DAXon.XQuery
             }
         }
 
-        // module.
         public virtual IEnumerator<string> GetProperties()
         {
             yield return "name";
             yield return "as";
         }
 
-        // module.
         public virtual HostLanguage GetHostLanguage()
         {
             return HostLanguage.XQUERY;

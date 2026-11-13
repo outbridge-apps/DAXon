@@ -34,7 +34,13 @@ namespace OutSmart.DAXon.Values
 
         public virtual int Months => _months % 12;
 
-        public virtual int Days => (int)(_seconds / (24 * 60 * 60));
+        // Checked: an int cannot hold the days of every duration; the canonical form and day components use WholeDays.
+        public virtual int Days => checked((int)WholeDays);
+
+        internal long WholeDays => _seconds / (24 * 60 * 60);
+        internal long AbsoluteSeconds => _seconds;
+        internal int AbsoluteNanoseconds => _nanoseconds;
+        internal bool IsNegative => _negative;
 
         public virtual int Hours => (int)(_seconds % (24 * 60 * 60) / (60 * 60));
 
@@ -82,7 +88,7 @@ namespace OutSmart.DAXon.Values
 
                 int years = Years;
                 int months = Months;
-                int days = Days;
+                long days = WholeDays;
                 int hours = Hours;
                 int minutes = Minutes;
                 int seconds = Seconds;
@@ -159,6 +165,24 @@ namespace OutSmart.DAXon.Values
                 return new DurationComparable(m, s, n);
             }
         }
+        // The components in whole seconds, refused past a long. Exact where the old sum in doubles let a total just past
+        // 2^63 through, and a component negated from its minimum stays negative (-2^63 seconds wrapped to garbage).
+        private static long WholeSecondsOf(int days, int hours, int minutes, long seconds)
+        {
+            if (days < 0 || hours < 0 || minutes < 0 || seconds < 0)
+            {
+                throw new ArgumentException("Duration seconds limit exceeded");
+            }
+
+            long whole = ((days * 24L + hours) * 60 + minutes) * 60;   // at most ~2e14
+            if (seconds > long.MaxValue - whole)
+            {
+                throw new ArgumentException("Duration seconds limit exceeded");
+            }
+
+            return whole + seconds;
+        }
+
         public DurationValue(bool positive, int years, int months, int days, int hours, int minutes, long seconds, int microseconds) : this(positive, years, months, days, hours, minutes, seconds, microseconds, BuiltInAtomicType.DURATION)
         {
         }
@@ -175,15 +199,8 @@ namespace OutSmart.DAXon.Values
                 throw new ArgumentException("Duration months limit exceeded");
             }
 
-            if ((double)days * (24 * 60 * 60) + (double)hours * (60 * 60) + (double)minutes * 60 + (double)seconds > long.MaxValue)
-            {
-                throw new ArgumentException("Duration seconds limit exceeded");
-            }
-
             this._months = years * 12 + months;
-            long h = days * 24L + hours;   // 24L: int overflow for large day counts (upstream days * 24L)
-            long m = h * 60 + minutes;
-            this._seconds = m * 60 + seconds;
+            this._seconds = WholeSecondsOf(days, hours, minutes, seconds);
             this._nanoseconds = microseconds * 1000;
             this._negative = IsNegativeDuration(!positive);
         }
@@ -213,15 +230,8 @@ namespace OutSmart.DAXon.Values
                 throw new ArgumentException("Duration months limit exceeded");
             }
 
-            if ((double)days * (24 * 60 * 60) + (double)hours * (60 * 60) + (double)minutes * 60 + (double)seconds > long.MaxValue)
-            {
-                throw new ArgumentException("Duration seconds limit exceeded");
-            }
-
             this._months = years * 12 + months;
-            long h = days * 24L + hours;   // 24L: int overflow for large day counts (upstream days * 24L)
-            long m = h * 60 + minutes;
-            this._seconds = m * 60 + seconds;
+            this._seconds = WholeSecondsOf(days, hours, minutes, seconds);
             this._nanoseconds = nanoseconds;
             this._negative = someNegative;
         }
@@ -243,7 +253,7 @@ namespace OutSmart.DAXon.Values
                 lastSigDigit--;
             }
 
-            sb.Append(mss.Substring(mss.Length - 9, lastSigDigit + 10 - mss.Length) /*Java substring(begin,END) -> C# (start,LENGTH)*/);
+            sb.Append(mss.Substring(mss.Length - 9, lastSigDigit + 10 - mss.Length));
             sb.Append('S');
         }
 
@@ -267,6 +277,7 @@ namespace OutSmart.DAXon.Values
         protected static IConversionResult MakeDuration(UnicodeString s, bool allowYM, bool allowDT)
         {
             int years = 0, months = 0, days = 0, hours = 0, minutes = 0, seconds = 0, nanoseconds = 0;
+            long daySeconds = 0;   // a day count past an int, as seconds
             bool negative = false;
             StringTokenizer tok = new StringTokenizer(Whitespace.Trim(s).ToString(), "-+.PYMDTHS", true);
             int components = 0;
@@ -314,7 +325,10 @@ namespace OutSmart.DAXon.Values
                 }
 
                 int value = SimpleInteger(part);
-                if (value < 0)
+                // A day count may pass an int: arithmetic makes such durations (P2000000000D * 2), and their string
+                // form must cast back. Any other component past an int is beyond the limits.
+                long bigDays = value == -2 && long.TryParse(part, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out long parsed) ? parsed : -1;
+                if (value < 0 && bigDays < 0)
                 {
                     if (value == -2)
                     {
@@ -332,6 +346,11 @@ namespace OutSmart.DAXon.Values
                 }
 
                 char delim = tok.NextToken()[0];
+                if (bigDays >= 0 && delim != 'D')
+                {
+                    return BadDuration("component of duration exceeds Saxon limits", s, "FODT0002");
+                }
+
                 switch (delim)
                 {
                     case 'Y':
@@ -390,7 +409,20 @@ namespace OutSmart.DAXon.Values
                             return BadDuration("Day component is not allowed in yearMonthDuration", s);
                         }
 
-                        days = value;
+                        if (bigDays >= 0)
+                        {
+                            if (bigDays > long.MaxValue / 86400)
+                            {
+                                return BadDuration("component of duration exceeds Saxon limits", s, "FODT0002");
+                            }
+
+                            daySeconds = bigDays * 86400;
+                        }
+                        else
+                        {
+                            days = value;
+                        }
+
                         state = 3;
                         components++;
                         break;
@@ -476,13 +508,14 @@ namespace OutSmart.DAXon.Values
                 days = -days;
                 hours = -hours;
                 minutes = -minutes;
+                daySeconds = -daySeconds;
                 seconds = -seconds;
                 nanoseconds = -nanoseconds;
             }
 
             try
             {
-                return new DurationValue(years, months, days, hours, minutes, seconds, nanoseconds, BuiltInAtomicType.DURATION);
+                return new DurationValue(years, months, days, hours, minutes, seconds + daySeconds, nanoseconds, BuiltInAtomicType.DURATION);
             }
             catch (ArgumentException err)
             {
@@ -571,7 +604,7 @@ namespace OutSmart.DAXon.Values
                 case AccessorFn.Component.MONTH:
                     return Int64Value.MakeIntegerValue(_negative ? -Months : Months);
                 case AccessorFn.Component.DAY:
-                    return Int64Value.MakeIntegerValue(_negative ? -Days : Days);
+                    return Int64Value.MakeIntegerValue(_negative ? -WholeDays : WholeDays);
                 case AccessorFn.Component.HOURS:
                     return Int64Value.MakeIntegerValue(_negative ? -Hours : Hours);
                 case AccessorFn.Component.MINUTES:

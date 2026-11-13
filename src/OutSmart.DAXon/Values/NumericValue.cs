@@ -26,7 +26,8 @@ namespace OutSmart.DAXon.Values
             {
                 try
                 {
-                    return new DoubleValue(double.Parse(@in, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture));
+                    string text = @in.Length > 100 ? StringToDouble.Shortened(@in) : @in;   // as xs:double() reads a long numeral
+                    return new DoubleValue(StringToDouble.ParseNearest(text, System.Globalization.NumberStyles.Float));
                 }
                 catch (OverflowException)
                 {

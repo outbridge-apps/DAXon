@@ -186,63 +186,6 @@ namespace OutSmart.DAXon.Model
             }
         }
 
-        public static object ConvertToJava(IItem item)
-        {
-            switch (item.GetGenre())
-            {
-                case Genre.NODE:
-                    object node = item;
-                    while (node is IVirtualNode)
-                    {
-
-                        // strip off any layers of wrapping
-                        node = ((IVirtualNode)node).RealNode;
-                    }
-
-                    return node;
-                case Genre.FUNCTION:
-                case Genre.ARRAY:
-                case Genre.MAP:
-                    return item;
-                case Genre.EXTERNAL:
-                    return ((IAnyExternalObject)item).WrappedObject;
-                case Genre.ATOMIC:
-                    AtomicValue value = (AtomicValue)item;
-                    switch (value.GetItemType().PrimitiveType)
-                    {
-                        case StandardNames.XS_STRING:
-                        case StandardNames.XS_UNTYPED_ATOMIC:
-                        case StandardNames.XS_ANY_URI:
-                        case StandardNames.XS_DURATION:
-                        case StandardNames.XS_TIME:
-                            return value.GetStringValue();
-                        case StandardNames.XS_BOOLEAN:
-                            return ((BooleanValue)value).GetBooleanValue() ? true : false;
-                        case StandardNames.XS_DECIMAL:
-                            return ((DecimalValue)value).GetDecimalValue();
-                        case StandardNames.XS_INTEGER:
-                            return ((NumericValue)value).LongValue();
-                        case StandardNames.XS_DOUBLE:
-                            return ((DoubleValue)value).GetDoubleValue();
-                        case StandardNames.XS_FLOAT:
-                            return ((FloatValue)value).GetFloatValue();
-                        case StandardNames.XS_DATE_TIME:
-                            return ((DateTimeValue)value).ToSystemDateTimeUtc();
-                        case StandardNames.XS_DATE:
-                            return ((DateValue)value).ToSystemDateTimeUtc();
-                        case StandardNames.XS_BASE64_BINARY:
-                            return ((Base64BinaryValue)value).BinaryValue;
-                        case StandardNames.XS_HEX_BINARY:
-                            return ((HexBinaryValue)value).BinaryValue;
-                        default:
-                            return item;
-                    }
-
-                default:
-                    return item;
-            }
-        }
-
         public static UnicodeString GetStringValue(ISequence sequence)
         {
             UnicodeBuilder ub = new UnicodeBuilder();
@@ -424,11 +367,9 @@ namespace OutSmart.DAXon.Model
             }
             else
             {
-                // Upstream uses LargeAttributeMap (immutable hash trie) above SmallAttributeMap.LIMIT — a
-                // PERFORMANCE structure only; the port's LargeAttributeMap is an empty shell not implementing
-                // IAttributeMap, so the cast crashed any element with >8 attributes (fn-doc-33). Linear
-                // SmallAttributeMap is semantically identical at any size; revisit only if a perf trace
-                // shows attribute lookup on wide elements.
+                // Upstream switches to LargeAttributeMap (a hash trie) above SmallAttributeMap.LIMIT; the port has no
+                // such class, so every attribute map is a linear SmallAttributeMap: the same answers, but finding an
+                // attribute by name on a wide constructed element is O(n).
                 return new SmallAttributeMap(list);
             }
         }

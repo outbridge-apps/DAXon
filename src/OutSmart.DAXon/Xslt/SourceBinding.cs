@@ -686,7 +686,6 @@ namespace OutSmart.DAXon.Xslt
         {
             Values.SequenceType type = GetInferredType(true);
 
-            //IGroundedValue constantValue = null;
             int properties = 0;
             if (!HasProperty(BindingProperty.ASSIGNABLE) && !HasProperty(BindingProperty.PARAM) && !(visibility == Visibility.PUBLIC || visibility == Visibility.ABSTRACT))
             {
@@ -723,7 +722,6 @@ namespace OutSmart.DAXon.Xslt
                 reference.Fixup(binding);
             }
         }
-        //private int properties;
         public enum BindingProperty
         {
             PRIVATE,

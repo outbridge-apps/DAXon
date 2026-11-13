@@ -150,7 +150,7 @@ namespace OutSmart.DAXon.Text
                     }
                 }
 
-                return new Twine24(triples);
+                return new Slice24(triples);
             }
         }
 
@@ -301,13 +301,12 @@ namespace OutSmart.DAXon.Text
                     array[j++] = (byte)@in[i++];
                 }
 
-                return new Twine8(array); //Use of `new String(@in, offset, len).getBytes(StandardCharsets.ISO_8859_1)` is slower
+                return new Twine8(array); //Use of `new String(in, offset, len).getBytes(StandardCharsets.ISO_8859_1)` is slower
             }
 
             if (surrogates == 0)
             {
-                char[] array = ArrayTools.CopyOfRange(@in, offset, offset + len);
-                return new Twine16(array);
+                return new BMPString(new string(@in, offset, len));
             }
             else
             {
@@ -330,7 +329,7 @@ namespace OutSmart.DAXon.Text
                     }
                 }
 
-                return new Twine24(array);
+                return new Slice24(array);
             }
         }
 
@@ -383,27 +382,14 @@ namespace OutSmart.DAXon.Text
             public override int Next()
             {
                 int c = value[i++];
-                if (UTF16CharacterSet.IsHighSurrogate(c))
+                // An unpaired surrogate comes back as itself, which no name test accepts; it used to escape raw from a
+                // name in a query string (Saxon 12.9 throws IllegalStateException).
+                if (UTF16CharacterSet.IsHighSurrogate(c) && i < value.Length && UTF16CharacterSet.IsLowSurrogate(value[i]))
                 {
-                    try
-                    {
-                        int d = HasNext() ? value[i++] : -1;
-                        if (!UTF16CharacterSet.IsLowSurrogate(d))
-                        {
-                            throw new InvalidOperationException("Unmatched surrogate code value " + c + " at position " + i);
-                        }
+                    return UTF16CharacterSet.CombinePair((char)c, value[i++]);
+                }
 
-                        return UTF16CharacterSet.CombinePair((char)c, (char)d);
-                    }
-                    catch (IndexOutOfRangeException)
-                    {
-                        throw new InvalidOperationException("Invalid surrogate at end of string");
-                    }
-                }
-                else
-                {
-                    return c;
-                }
+                return c;
             }
         }
     }

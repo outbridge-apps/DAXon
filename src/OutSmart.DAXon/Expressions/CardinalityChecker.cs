@@ -161,9 +161,10 @@ namespace OutSmart.DAXon.Expressions
             {
                 return new CardinalityCheckingIterator(@base, requiredCardinality, roleSupplier, GetLocation());
             }
-            catch (XPathException e)
+            catch (XPathException e) when (XPathException.PassOn(e.MaybeWithContext(context)))
             {
-                throw e.MaybeWithContext(context);
+                // Decorated in the filter, never handled (XPathException.PassOn).
+                throw;
             }
         }
 
@@ -374,9 +375,10 @@ namespace OutSmart.DAXon.Expressions
                         {
                             filter.FinalCheck();
                         }
-                        catch (XPathException e)
+                        catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(expr.GetLocation())))
                         {
-                            throw e.MaybeWithLocation(expr.GetLocation());
+                            // Decorated in the filter, never handled (XPathException.PassOn).
+                            throw;
                         }
 
                         return null;

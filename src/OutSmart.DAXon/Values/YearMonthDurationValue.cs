@@ -80,7 +80,8 @@ namespace OutSmart.DAXon.Values
         {
 
             // Fast path for simple cases
-            if (Math.Abs(factor) < 30000 && Math.Abs(_months) < 30000)
+            // Not Math.Abs(factor): it throws for -2^63.
+            if (factor > -30000 && factor < 30000 && Math.Abs(_months) < 30000)
             {
                 return YearMonthDurationValue.FromMonths((int)factor * LengthInMonths);
             }
@@ -102,7 +103,7 @@ namespace OutSmart.DAXon.Values
 
             double m = LengthInMonths;
             double product = n * m;
-            if (double.IsInfinity(product) || product > int.MaxValue || product < int.MinValue)
+            if (double.IsInfinity(product) || product > int.MaxValue || product < -int.MaxValue)   // int.MinValue months negate to themselves: -P-178956970Y-8M
             {
                 throw new XPathException("Overflow when multiplying a duration by a number", "FODT0002");
             }
@@ -138,7 +139,7 @@ namespace OutSmart.DAXon.Values
 
             double m = LengthInMonths;
             double product = m / n;
-            if (double.IsInfinity(product) || product > int.MaxValue || product < int.MinValue)
+            if (double.IsInfinity(product) || product > int.MaxValue || product < -int.MaxValue)   // int.MinValue months negate to themselves: -P-178956970Y-8M
             {
                 throw new XPathException("Overflow when dividing a duration by a number", "FODT0002");
             }

@@ -128,9 +128,6 @@ namespace OutSmart.DAXon.Expressions
                     else
                     {
 
-                        //                    if (Math.abs((i2 - i0) / i1) > int.MaxValue) {
-                        //                        throw new XPathException("Maximum length of sequence in Saxon is " + int.MaxValue, "XPDY0130");
-                        //                    }
                         return this;
                     }
                 }

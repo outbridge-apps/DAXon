@@ -26,7 +26,7 @@ namespace OutSmart.DAXon.Expressions.Instructions
         public const int SUPPLIED = 1;
         public const int SUPPLIED_AND_CHECKED = 2;
 
-        public static ParameterSet EMPTY_PARAMETER_SET = new ParameterSet(0);
+        public static readonly ParameterSet EMPTY_PARAMETER_SET = new ParameterSet(0);
         private StructuredQName[] keys;
         private ISequence[] values;
         private bool[] typeChecked;

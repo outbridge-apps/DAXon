@@ -4,13 +4,15 @@
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-using System;
 using System.Collections.Generic;
+using System;
 using OutSmart.DAXon.Events;
 using OutSmart.DAXon.Expressions.Sorting;
+using OutSmart.DAXon.Internal;
 using OutSmart.DAXon.Model;
 using OutSmart.DAXon.Transformation;
 using OutSmart.DAXon.Values;
+
 namespace OutSmart.DAXon.Expressions.Flwor
 {
     internal sealed class GroupByClausePush : TuplePush
@@ -35,6 +37,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void ProcessTuple(IXPathContext context)
         {
+            StackGuard.Probe();
             TupleExpression groupingTupleExpr = groupByClause.GroupingTupleExpression;
             TupleExpression retainedTupleExpr = groupByClause.RetainedTupleExpression;
             var otbg = new GroupByClause.ObjectToBeGrouped();
@@ -44,11 +47,18 @@ namespace OutSmart.DAXon.Expressions.Flwor
             otbg.retainedValues = (Tuple)retainedTupleExpr.EvaluateItem(context);
             object key = groupByClause.GetComparisonKey(otbg.groupingValues, comparers);
             map.TryGetValue(key, out var group);
-            AddToGroup(key, otbg, group, map);
+            AddToGroup(key, otbg, group, map, ref weight);
         }
 
-        internal static void AddToGroup(object key, GroupByClause.ObjectToBeGrouped objectToBeGrouped, List<GroupByClause.ObjectToBeGrouped> group, Dictionary<object, List<GroupByClause.ObjectToBeGrouped>> map)
+        private long weight;   // of medium strings in the tuples (MemoryLedger.Weighs)
+
+        internal static void AddToGroup(object key, GroupByClause.ObjectToBeGrouped objectToBeGrouped, List<GroupByClause.ObjectToBeGrouped> group, Dictionary<object, List<GroupByClause.ObjectToBeGrouped>> map, ref long weight)
         {
+            if (map.Count < Core.MemoryLedger.BigCount && Core.MemoryLedger.Weighs(objectToBeGrouped.retainedValues, ref weight))
+            {
+                Core.MemoryLedger.Hold(map, GroupsSizer);   // few tuples holding much, before the map has many groups
+            }
+
             if (group != null)
             {
                 group.Add(objectToBeGrouped);
@@ -63,7 +73,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
                 var list = new List<GroupByClause.ObjectToBeGrouped>();
                 list.Add(objectToBeGrouped);
                 map[key] = list;
-                if (map.Count == Core.MemoryLedger.BigCount)
+                if (map.Count == Core.MemoryLedger.BigCount && weight < Core.MemoryLedger.Big)
                 {
                     Core.MemoryLedger.Hold(map, GroupsSizer);   // many groups, summed as they grow
                 }
@@ -74,10 +84,24 @@ namespace OutSmart.DAXon.Expressions.Flwor
         private static readonly Func<object, long> GroupSizer = o =>
         {
             var group = (List<GroupByClause.ObjectToBeGrouped>)o;
-            return 24 + 8L * group.Capacity + 160L * group.Count;
+            int n = group.Count;
+            return n == 0 ? 0 : 24 + 8L * group.Capacity + (160 + Core.MemoryLedger.MemberBytes(group[n / 2].retainedValues)) * n;
         };
 
-        private static readonly Func<object, long> GroupsSizer = o => 48 + 280L * ((Dictionary<object, List<GroupByClause.ObjectToBeGrouped>>)o).Count;
+        // The groups below BigCount tuples (a larger one is entered on its own), their tuples as the middle one tells.
+        private static readonly Func<object, long> GroupsSizer = o =>
+        {
+            long bytes = 48;
+            foreach (List<GroupByClause.ObjectToBeGrouped> group in ((Dictionary<object, List<GroupByClause.ObjectToBeGrouped>>)o).Values)
+            {
+                if (group.Count < Core.MemoryLedger.BigCount)
+                {
+                    bytes += 120 + GroupSizer(group);
+                }
+            }
+
+            return bytes;
+        };
 
         internal static void CheckGroupingValues(ISequence[] groupingValues)
         {
@@ -105,6 +129,7 @@ namespace OutSmart.DAXon.Expressions.Flwor
 
         public override void Dispose()
         {
+            StackGuard.Probe();
             foreach (var group in map.Values)
             {
                 groupByClause.ProcessGroup(group, context);

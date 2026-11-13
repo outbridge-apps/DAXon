@@ -144,9 +144,10 @@ namespace OutSmart.DAXon.Expressions
                         return Literal.MakeEmptySequence();
                     }
                 }
-                catch (XPathException e)
+                catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation())))
                 {
-                    throw e.MaybeWithLocation(GetLocation());
+                    // Decorated in the filter, never handled (XPathException.PassOn).
+                    throw;
                 }
             }
 
@@ -255,15 +256,6 @@ namespace OutSmart.DAXon.Expressions
                 {
                     Optimizer.Trace(config, "Replaced [last()] predicate by test for following-sibling", this);
                 }
-            }
-
-
-            // rewrite axis::*[local-name() = 'literal'] as axis::*:local (people write this a lot in XSLT 1.0)
-            if (Base is AxisExpression && ((AxisExpression)Base).GetNodeTest() == NodeKindTest.ELEMENT && Filter is CompareToStringConstant && ((CompareToStringConstant)Filter).SingletonOperator == Token.FEQ && ((CompareToStringConstant)Filter).GetLhsExpression().IsCallOn(typeof(LocalNameFn1)) && ((SystemFunctionCall)((CompareToStringConstant)Filter).GetLhsExpression()).GetArg(0) is ContextItemExpression)
-            {
-                AxisExpression ax2 = new AxisExpression(((AxisExpression)Base).Axis, new LocalNameTest(config.GetNamePool(), Types.Type.ELEMENT, ((CompareToStringConstant)Filter).Comparand.ToString()));
-                ExpressionTool.CopyLocationInfo(this, ax2);
-                return ax2;
             }
 
 
@@ -441,13 +433,6 @@ namespace OutSmart.DAXon.Expressions
             }
 
             return null;
-        }
-
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            PathMap.PathMapNodeSet target = Base.AddToPathMap(pathMap, pathMapNodeSet);
-            Filter.AddToPathMap(pathMap, target);
-            return target;
         }
 
         private static Expression ForceToBoolean(Expression @in)
@@ -918,7 +903,8 @@ namespace OutSmart.DAXon.Expressions
             {
                 if (filter is Literal && ((Literal)filter).GroundedValue is IntegerValue)
                 {
-                    return new SimplePositionalPattern((NodeTest)basePattern.GetItemType(), (int)((IntegerValue)((Literal)filter).GroundedValue).LongValue());
+                    // AsSubscript: -1 for a position past int, which matches nothing, where (int) wrapped a[4294967297] to a[1]
+                    return new SimplePositionalPattern((NodeTest)basePattern.GetItemType(), ((IntegerValue)((Literal)filter).GroundedValue).AsSubscript());
                 }
                 else
                 {
@@ -1034,9 +1020,10 @@ namespace OutSmart.DAXon.Expressions
                         }
                     }
                 }
-                catch (XPathException e)
+                catch (XPathException e) when (XPathException.PassOn(e.MaybeWithLocation(GetLocation())))
                 {
-                    throw e.MaybeWithLocation(GetLocation());
+                    // Decorated in the filter, never handled (XPathException.PassOn).
+                    throw;
                 }
             }
 

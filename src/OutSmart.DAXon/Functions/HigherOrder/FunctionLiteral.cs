@@ -69,11 +69,6 @@ namespace OutSmart.DAXon.Functions.HigherOrder
             return fl2;
         }
 
-        public override void SetRetainedStaticContext(RetainedStaticContext rsc)
-        {
-            base.SetRetainedStaticContext(rsc);
-        }
-
         public override bool Equals(object obj)
         {
             return obj is FunctionLiteral && ((FunctionLiteral)obj).GroundedValue == GroundedValue;

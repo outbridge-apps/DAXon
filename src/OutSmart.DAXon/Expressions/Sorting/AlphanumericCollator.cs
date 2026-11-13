@@ -18,7 +18,9 @@ namespace OutSmart.DAXon.Expressions.Sorting
     internal sealed class AlphanumericCollator : IStringCollator
     {
         public const string PREFIX = "http://saxon.sf.net/collation/alphaNumeric?base=";
-        private static readonly ARegularExpression pattern = ARegularExpression.Compile("\\d+", "");
+        // Compiled on first use, not in the type initializer: see FormatDate.componentPattern.
+        private static ARegularExpression patternLazy;
+        private static ARegularExpression pattern => patternLazy ??= ARegularExpression.Compile("\\d+", "");
         private readonly IStringCollator baseCollator;
 
         public string CollationURI => PREFIX + baseCollator.CollationURI;
@@ -95,23 +97,38 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
                     // numeric part
                     BigInteger n = ParseDigits(sv.GetStringValue());
+                    // Big-endian, as Java's toByteArray: .NET's little-endian bytes put 256 before 255 in a key comparison.
                     byte[] bin = n.ToByteArray();
+                    Array.Reverse(bin);
                     int len = bin.Length;
 
-                    // Assume max length of numeric part 255
-                    WriteByte(baos, (byte)0); // separator from previous alpha part
-                    WriteByte(baos, (byte)len);
-                    baos.Write(bin, 0, bin.Length); // written this way to avoid checked exceptions
+                    // The length orders the numbers: under 255 bytes one byte, else 255 and four bytes big-endian, so a
+                    // longer number still sorts later. (byte)len made 614-617 digits sort before a 1-digit number.
+                    baos.WriteByte(0); // separator from previous alpha part
+                    if (len < 255)
+                    {
+                        baos.WriteByte((byte)len);
+                    }
+                    else
+                    {
+                        baos.WriteByte(255);
+                        baos.WriteByte((byte)(len >> 24));
+                        baos.WriteByte((byte)(len >> 16));
+                        baos.WriteByte((byte)(len >> 8));
+                        baos.WriteByte((byte)len);
+                    }
+
+                    baos.Write(bin, 0, bin.Length);
                 }
                 else
                 {
-                    Base64BinaryValue b64 = AlphanumericCollationKey(sv.UnicodeStringValue, baseCollator);
+                    Base64BinaryValue b64 = Functions.CollationKeyFn.GetCollationKey(sv.UnicodeStringValue, baseCollator);
                     byte[] bin = b64.BinaryValue;
                     baos.Write(bin, 0, bin.Length);
                 }
             }
 
-            return new Base64BinaryValue(baos.ToArray());
+            return new CollationKeyBytes(baos.ToArray());
         }
 
         // The pattern takes every Unicode decimal digit, as Java's BigInteger reads them; the ASCII-only parse threw on the rest.
@@ -158,25 +175,6 @@ namespace OutSmart.DAXon.Expressions.Sorting
             }
 
             return (codePoint - start) % 10;
-        }
-
-        // Inlined faithful copy of functions/CollationKeyFn.GetCollationKey (that class is <Compile Remove>'d).
-        private static Base64BinaryValue AlphanumericCollationKey(UnicodeString s, IStringCollator collator)
-        {
-            AtomicValue val = collator.GetCollationKey(s).AsAtomic();
-            if (val is Base64BinaryValue)
-            {
-                return (Base64BinaryValue)val;
-            }
-            if (val is StringValue)
-            {
-                return ((StringValue)val).CodepointCollationKey;
-            }
-            throw new InvalidOperationException("Collation key must be Base64Binary");
-        }
-        private static void WriteByte(MemoryStream baos, byte val)
-        {
-            baos.WriteByte(val);
         }
     }
 }

@@ -69,18 +69,8 @@ namespace OutSmart.DAXon.Expressions
 
         public virtual ISequenceEvaluator[] ArgumentEvaluators => argumentEvaluators;
 
-        //
-        //
-        //
-        //
-        //    }
         public override int IntrinsicDependencies => StaticProperty.DEPENDS_ON_USER_FUNCTIONS;
 
-        //
-        //
-        //
-        //
-        //    }
         public override int ImplementationMethod
         {
             get
@@ -96,11 +86,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override string ExpressionName => "userFunctionCall";
         /// <summary>
         /// Create a function call to a user-written function in a query or stylesheet
@@ -223,7 +208,7 @@ namespace OutSmart.DAXon.Expressions
                     // If the argument contains calls to position(), last(), regex-group(), current-group(),
                     // current-merge-group(), etc, then in general we can't save the values in a Closure
                     // so we need to evaluate the argument eagerly. (Tests position-0103, merge-096).
-                    evaluators[i] = arg.MakeElaborator().Eagerly(); //            } else if (!Cardinality.allowsMany(arg.getCardinality()) && arg.getCost() < 20) {
+                    evaluators[i] = arg.MakeElaborator().Eagerly();
                     //                // the argument is cheap to evaluate and doesn't use much memory...
                     //                argumentEvaluators[i] = new OptionalItemEvaluator(argEval);
                 }
@@ -250,11 +235,6 @@ namespace OutSmart.DAXon.Expressions
             argumentEvaluators = evaluators;
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override Expression PreEvaluate(ExpressionVisitor visitor)
         {
             return this;
@@ -274,11 +254,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override UType GetStaticUType(UType contextItemType)
         {
             UserFunction f = GetFunction();
@@ -335,11 +310,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override Expression Copy(RebindingMap rebindings)
         {
             if (function == null)
@@ -364,11 +334,6 @@ namespace OutSmart.DAXon.Expressions
             return ufc;
         }
 
-        //
-        //
-        //
-        //
-        //    }
         protected override int ComputeCardinality()
         {
             if (staticType == null)
@@ -383,11 +348,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override Expression TypeCheck(ExpressionVisitor visitor, ContextItemStaticInfo contextInfo)
         {
             Expression e = base.TypeCheck(visitor, contextInfo);
@@ -410,11 +370,6 @@ namespace OutSmart.DAXon.Expressions
             return this;
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override Expression Optimize(ExpressionVisitor visitor, ContextItemStaticInfo contextItemType)
         {
             Expression e = base.Optimize(visitor, contextItemType);
@@ -426,73 +381,33 @@ namespace OutSmart.DAXon.Expressions
             return e;
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override void ResetLocalStaticProperties()
         {
             base.ResetLocalStaticProperties(); //argumentEvaluators = null;
         }
 
-        //
-        //
-        //
-        //
-        //    }
-        public override PathMap.PathMapNodeSet AddToPathMap(PathMap pathMap, PathMap.PathMapNodeSet pathMapNodeSet)
-        {
-            return AddExternalFunctionCallToPathMap(pathMap, pathMapNodeSet);
-        }
-
-        //
-        //
-        //
-        //
-        //    }
         public override int MarkTailFunctionCalls(StructuredQName qName, int arity)
         {
             tailCall = GetFunctionName().Equals(qName) && arity == GetArity() ? SELF_TAIL_CALL : FOREIGN_TAIL_CALL;
             return tailCall;
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override IItem EvaluateItem(IXPathContext c)
         {
             return MakeElaborator().ElaborateForItem().Eval(c);
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override ISequenceIterator Iterate(IXPathContext c)
         {
             return MakeElaborator().ElaborateForPull().Iterate(c);
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override void Process(Outputter output, IXPathContext context)
         {
             ITailCall tc = MakeElaborator().ElaborateForPush().ProcessLeavingTail(output, context);
             DispatchTailCall(tc);
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public virtual Component GetTargetComponent(IXPathContext context)
         {
             if (bindingSlot == -1)
@@ -507,21 +422,11 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override IFunctionItem GetTargetFunction(IXPathContext context)
         {
             return (UserFunction)GetTargetComponent(context).GetActor();
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public virtual ISequence[] EvaluateArguments(IXPathContext c, bool streamed)
         {
             int numArgs = GetArity();
@@ -596,11 +501,6 @@ namespace OutSmart.DAXon.Expressions
             return resolved ?? evaluators;
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override void Export(ExpressionPresenter @out)
         {
             @out.StartElement("ufCall", this);
@@ -626,11 +526,6 @@ namespace OutSmart.DAXon.Expressions
             @out.EndElement();
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override object GetProperty(string name)
         {
             if (name.Equals("target"))
@@ -641,21 +536,11 @@ namespace OutSmart.DAXon.Expressions
             return base.GetProperty(name);
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override StructuredQName GetObjectName()
         {
             return GetFunctionName();
         }
 
-        //
-        //
-        //
-        //
-        //    }
         public override Elaborator GetElaborator()
         {
             if (IsTailCall())
@@ -668,11 +553,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
-        //
-        //
-        //
-        //    }
         private sealed class TailCallElaborator : PullElaborator
         {
             public override IPullEvaluator ElaborateForPull()
@@ -710,11 +590,6 @@ namespace OutSmart.DAXon.Expressions
             }
         }
 
-        //
-        //
-        //
-        //
-        //    }
         private sealed class UserFunctionCallElaborator : PullElaborator
         {
             private void TestNotAbstract(UserFunctionCall expr, Component target)
@@ -798,6 +673,8 @@ namespace OutSmart.DAXon.Expressions
                 return true;
             }
 
+            // The pull and item paths stay written out twice: one builder with a finisher made every level of a recursion
+            // ~10% bigger on .NET 8 (2178 -> 1965 levels on 1 MB), its tier-0 frames being larger.
             public override IPullEvaluator ElaborateForPull()
             {
                 UserFunctionCall expr = (UserFunctionCall)GetExpression();

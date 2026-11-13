@@ -58,6 +58,7 @@ namespace OutSmart.DAXon.Expressions
 
         public IItem Next()
         {
+            UncheckedXPathException failure;
             try
             {
                 while (true)
@@ -80,8 +81,10 @@ namespace OutSmart.DAXon.Expressions
             }
             catch (XPathException e)
             {
-                throw new UncheckedXPathException(e);
+                failure = new UncheckedXPathException(e);   // thrown below: see SingletonClosure.Iterate
             }
+
+            throw failure;
         }
 
         public void Dispose()

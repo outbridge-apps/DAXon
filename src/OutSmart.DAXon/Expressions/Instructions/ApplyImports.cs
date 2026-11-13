@@ -99,7 +99,6 @@ namespace OutSmart.DAXon.Expressions.Instructions
                     {
                         XPathContextMajor c2 = context.NewContext();
                         TemplateRule nh = (TemplateRule)rule.GetAction();
-                        nh.Initialize();
                         c2.Origin = expr;
                         c2.SetLocalParameters(@params);
                         c2.SetTunnelParameters(tunnels);

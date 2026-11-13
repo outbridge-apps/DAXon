@@ -149,7 +149,7 @@ namespace OutSmart.DAXon.Expressions.Sorting
 
             if (ordinal)
             {
-                return source.IndexOf(target, StringComparison.Ordinal);
+                return OutSmart.DAXon.Text.BMPString.OrdinalIndexOf(source, target, 0);   // a long target in windows, under the time limit
             }
 
             return compareInfo.IndexOf(source, target, options);

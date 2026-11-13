@@ -160,11 +160,22 @@ namespace OutSmart.DAXon.Transformation
         public abstract HashSet<NamespaceUri> GetExplicitNamespaces(NamePool pool);
 
         public abstract void ProcessRules(IRuleAction action);
+        // The frame layout of the patterns, made once: it was made again for every item a rule was looked for, with the
+        // frame. Nothing allocates slots on it at run time.
+        private SlotManager patternSlots;
+
         public virtual IXPathContext MakeNewContext(IXPathContext context)
         {
             XPathContextMajor c2 = context.NewContext();
             c2.Origin = context.GetController(); // WHY?
-            c2.OpenStackFrame(GetStackFrameSlotsNeeded());
+            int slots = GetStackFrameSlotsNeeded();
+            SlotManager map = patternSlots;
+            if (map == null || map.NumberOfVariables != slots)
+            {
+                patternSlots = map = new SlotManager(slots);
+            }
+
+            c2.OpenStackFrame(map);
             if (!(context.GetCurrentComponent().GetActor() is Accumulator))
             {
                 c2.SetCurrentComponent(context.GetCurrentMode()); // bug 3706
@@ -173,7 +184,6 @@ namespace OutSmart.DAXon.Transformation
             return c2;
         }
 
-        // WHY?
         public abstract Rule GetRule(IItem item, IXPathContext context);
         public abstract Rule GetRule(IItem item, IXPathContext context, Func<Rule, bool> filter);
         public virtual Rule GetRule(IItem item, int min, int max, IXPathContext context)
@@ -216,8 +226,6 @@ namespace OutSmart.DAXon.Transformation
                 return false;
             });
         }
-
-        public abstract void ExportTemplateRules(ExpressionPresenter @out);
         public abstract void ExplainTemplateRules(ExpressionPresenter @out);
         public virtual ITailCall ApplyTemplates(ParameterSet parameters, ParameterSet tunnelParameters, NodeInfo separator, Outputter output, XPathContextMajor context, ILocation locationId)
         {
@@ -373,8 +381,10 @@ namespace OutSmart.DAXon.Transformation
                     GetBuiltInRuleSet().Process(item, parameters, tunnelParameters, output, context, locationId);
                 }
                 else if (traceListener == null && !modeTracing
-                    && rule.GetAction() is TemplateRule emptyTemplate && Expressions.Literal.IsEmptySequence(emptyTemplate.GetBody()))
+                    && rule.GetAction() is TemplateRule emptyTemplate && Expressions.Literal.IsEmptySequence(emptyTemplate.GetBody())
+                    && emptyTemplate.GetRequiredContextItemType() == AnyItemType.GetInstance())
                 {
+                    // Only without xsl:context-item as=: the template still checks the item it is given (XTTE0590).
                     // An empty template body (match="text()" suppression and friends) executes to
                     // nothing — skip the frame/current-rule ceremony entirely. The reuse frame
                     // stays the PREVIOUS template's, which is exactly what the next node matching
@@ -397,7 +407,6 @@ namespace OutSmart.DAXon.Transformation
             return tc;
         }
 
-        // WHY?
         private void CheckMustBeTyped(IItem item)
         {
             if (item is NodeInfo)
@@ -441,7 +450,6 @@ namespace OutSmart.DAXon.Transformation
 
                 // Reuse the previous stackframe unless it's a different template rule
                 previousTemplate = template;
-                template.Initialize();
                 context.OpenStackFrame(template.StackFrameMap);
                 context.SetLocalParameters(parameters);
                 context.SetTunnelParameters(tunnelParameters);
@@ -475,7 +483,6 @@ namespace OutSmart.DAXon.Transformation
             return tc;
         }
 
-        // WHY?
         private TemplateRuleTraceListener HandleRuleTraceListener(TemplateRuleTraceListener ruleTraceListener, Controller controller, ILocation locationId, IItem item, Rule rule)
         {
             ruleTraceListener = ((XsltController)controller).TemplateRuleTraceListener;
@@ -584,69 +591,6 @@ namespace OutSmart.DAXon.Transformation
             }
 
             return @base;
-        }
-
-        public override void Export(ExpressionPresenter presenter)
-        {
-            int s = presenter.StartElement("mode");
-            if (!IsUnnamedMode())
-            {
-                presenter.EmitAttribute("name", ModeName);
-            }
-
-            presenter.EmitAttribute("onNo", GetCodeForBuiltInRuleSet(GetBuiltInRuleSet()));
-            string flags = "";
-            if (IsDeclaredStreamable())
-            {
-                flags += "s";
-            }
-
-            if (IsUnnamedMode())
-            {
-                flags += "d";
-            }
-
-            if (mustBeTyped)
-            {
-                flags += "t";
-            }
-
-            if (mustBeUntyped)
-            {
-                flags += "u";
-            }
-
-            if (recoveryPolicy == RecoveryPolicy.DO_NOT_RECOVER)
-            {
-                flags += "F";
-            }
-            else if (recoveryPolicy == RecoveryPolicy.RECOVER_WITH_WARNINGS)
-            {
-                flags += "W";
-            }
-
-            if (!hasRules)
-            {
-                flags += "e";
-            }
-
-            if (!(flags.Length == 0))
-            {
-                presenter.EmitAttribute("flags", flags);
-            }
-
-            ExportUseAccumulators(presenter);
-            presenter.EmitAttribute("patternSlots", GetStackFrameSlotsNeeded() + "");
-            ExportTemplateRules(presenter);
-            int e = presenter.EndElement();
-            if (s != e)
-            {
-                throw new InvalidOperationException("Export tree unbalanced for mode " + ModeName);
-            }
-        }
-
-        protected virtual void ExportUseAccumulators(ExpressionPresenter presenter)
-        {
         }
 
         public virtual bool IsMustBeTyped()
