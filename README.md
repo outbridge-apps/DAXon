@@ -148,6 +148,22 @@ corpora at pinned revisions, so the result above can be reproduced locally. Besi
 499 cases taken from the specifications and a concurrency test for a shared `Processor`; how to
 build and run each: [`tests/README.md`](tests/README.md).
 
+## Performance
+
+DAXon 1.5.0 (.NET Framework 4.8) and Saxon-HE 12.9 (Java 17) ran 12 stylesheets on one machine, with default
+settings for both. The inputs were the same 20,000 generated sales orders as XML (15.8 MB), JSON (10.6 MB) and CSV
+(7.0 MB). Both engines produced identical output in every test.
+
+| | Result |
+|---|---|
+| Speed in a running program (engine loaded, input read and transformed again and again) | even in 6 tests, DAXon 1.6x faster in 2, Saxon 1.2-1.3x faster in 4 |
+| Speed of one whole program run (start, one transformation, exit) | DAXon faster in 11 tests, by 1.2-2.1x, and even in 1 |
+| Memory of the whole process | DAXon 28-177 MB, Java 654-1,239 MB: 4-26x less |
+| Where DAXon is slower | reading XML (about 15%, the .NET `XmlReader`), sorting (1.3x), regular expressions (1.2x) |
+
+Treat these figures as a guide, not a promise. The data, the 12 tests, how they were measured and every figure for
+speed and memory are in [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
+
 ## How this port was produced
 
 The translation from the Saxon-HE 12.9 Java sources, and all the refactoring, hardening and
